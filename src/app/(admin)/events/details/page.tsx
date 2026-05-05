@@ -363,33 +363,68 @@ function ClusterCard({ cluster, reports }: { cluster: string; reports: EventRepo
 
             {/* Incident details */}
             {(r.missing_persons.length > 0 || r.casualties.length > 0 || r.damages.length > 0) && (
-              <div className="mt-3 space-y-2 rounded-lg border border-gray-100 bg-gray-50 p-3 text-xs dark:border-white/5 dark:bg-white/2">
+              <div className="mt-3 space-y-3">
                 {r.missing_persons.length > 0 && (
-                  <div>
-                    <span className="text-warning-600 dark:text-warning-400 font-medium">
-                      Missing:{' '}
-                    </span>
-                    <span className="text-gray-600 dark:text-gray-300">
-                      {r.missing_persons.map((p) => p.name).join(', ')}
-                    </span>
+                  <div className="border-warning-200 bg-warning-50 dark:border-warning-500/20 dark:bg-warning-500/10 rounded-lg border p-3">
+                    <p className="text-warning-700 dark:text-warning-400 mb-1.5 text-xs font-semibold tracking-wide uppercase">
+                      Missing Persons ({r.missing_persons.length})
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {r.missing_persons.map((p) => (
+                        <span
+                          key={p.name}
+                          className="text-warning-800 dark:text-warning-300 rounded-md bg-white px-2 py-0.5 text-xs font-medium dark:bg-white/10"
+                        >
+                          {p.name}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
+
                 {r.casualties.length > 0 && (
-                  <div>
-                    <span className="text-error-600 dark:text-error-400 font-medium">
-                      Casualties:{' '}
-                    </span>
-                    <span className="text-gray-600 dark:text-gray-300">
-                      {r.casualties.map((c) => `${c.condition.name} (${c.count})`).join(', ')}
-                    </span>
+                  <div className="border-error-200 bg-error-50 dark:border-error-500/20 dark:bg-error-500/10 rounded-lg border p-3">
+                    <p className="text-error-700 dark:text-error-400 mb-1.5 text-xs font-semibold tracking-wide uppercase">
+                      Casualties ({r.casualties.reduce((s, c) => s + c.count, 0)} total)
+                    </p>
+                    <div className="space-y-1">
+                      {r.casualties.map((c) => (
+                        <div key={c.id} className="flex items-start justify-between gap-2 text-xs">
+                          <span className="text-error-700 dark:text-error-300">
+                            {c.condition.name}
+                          </span>
+                          <span className="text-error-800 dark:text-error-200 shrink-0 font-semibold">
+                            ×{c.count}
+                          </span>
+                        </div>
+                      ))}
+                      {r.casualties.some((c) => c.names) && (
+                        <div className="text-error-600 dark:text-error-400 mt-1.5 border-t border-red-200 pt-1.5 dark:border-red-500/20">
+                          {r.casualties
+                            .filter((c) => c.names)
+                            .map((c) => c.names)
+                            .join(', ')}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
+
                 {r.damages.length > 0 && (
-                  <div>
-                    <span className="font-medium text-gray-600 dark:text-gray-300">Damage: </span>
-                    <span className="text-gray-600 dark:text-gray-300">
-                      {r.damages.map((d) => d.damage_report.name).join(', ')}
-                    </span>
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-white/5 dark:bg-white/2">
+                    <p className="mb-1.5 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+                      Structural Damage ({r.damages.length})
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {r.damages.map((d) => (
+                        <span
+                          key={d.id}
+                          className="rounded-md border border-gray-300 bg-white px-2 py-0.5 text-xs text-gray-600 dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
+                        >
+                          {d.damage_report.name}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
