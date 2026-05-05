@@ -26,7 +26,6 @@ type Tab = 'verified' | 'unverified';
 const PER_PAGE = 10;
 
 export default function ReportsPage() {
-  // ✅ use selector, not the whole store
   const user = useAuthStore((state) => state.user);
 
   const [activeTab, setActiveTab] = useState<Tab>('verified');

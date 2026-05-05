@@ -17,6 +17,7 @@ import {
   useReportCasualties,
   useReportMissingPersons,
   useReportDamages,
+  useOngoingEvents,
 } from '@/hooks';
 import { reportSchema, type ReportFormData } from '@/lib';
 import { useAuthStore } from '@/store';
@@ -53,7 +54,11 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
   const { data: existingReport, isLoading: isReportLoading } = useReport(editId);
 
   // ─── Dropdown options ───────────────────────────────────────
-  const { data: events = [] } = useEvents();
+  const { data: allEvents = [] } = useEvents();
+  const { data: ongoingEvents = [] } = useOngoingEvents();
+
+  const events = isBystander ? ongoingEvents : allEvents;
+
   const { data: clusters = [] } = useClusters();
   const { data: casualtyConditions = [] } = useCasualtyConditions();
   const { data: damageConditions = [] } = useDamageConditions();
