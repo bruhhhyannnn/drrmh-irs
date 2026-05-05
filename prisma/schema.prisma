@@ -120,7 +120,7 @@ model Report {
   location                         Location?             @relation(fields: [location_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   unit                             Unit?                 @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   user                             User?                 @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  users_reports_verified_byTousers User?                 @relation("reports_verified_byTousers", fields: [verified_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users_reports_verified_byTousers User?                 @relation("reports_verified_byTousers", fields: [verified_by], references: [auth_id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([event_id])
   @@index([user_id])
