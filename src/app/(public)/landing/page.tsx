@@ -837,11 +837,12 @@ export default function LandingPage() {
           </Reveal>
         </section>
 
-        {/* ── TESTIMONIAL ── */}
+        {/* ── ABOUT / QUOTE SECTION ── */}
         <div
-          className="relative overflow-hidden px-6 py-24 text-center"
+          className="relative overflow-hidden text-center"
           style={{ background: 'var(--maroon)' }}
         >
+          {/* big decorative quote mark */}
           <div
             className="display pointer-events-none absolute select-none"
             style={{
@@ -855,25 +856,92 @@ export default function LandingPage() {
           >
             "
           </div>
-          <blockquote
-            className="display relative mx-auto mb-7 font-normal italic"
-            style={{
-              fontSize: 'clamp(18px, 2.8vw, 30px)',
-              color: 'white',
-              maxWidth: '720px',
-              lineHeight: 1.5,
-            }}
-          >
-            "The IRS has transformed how we evaluate our emergency response drills — what used to
-            take hours of manual compilation now happens automatically, giving us more time to act
-            on the insights."
-          </blockquote>
-          <p className="text-[14px] font-light" style={{ color: 'rgba(255,255,255,0.6)' }}>
-            <strong className="mb-0.5 block font-medium" style={{ color: 'white' }}>
-              Dr. Carlos Primero D. Gundran
-            </strong>
-            Head, DRRM-H Center — University of the Philippines Manila
-          </p>
+
+          <div className="relative mx-auto max-w-225 px-6 py-24">
+            {/* eyebrow */}
+            <p
+              className="mb-6 text-[11px] font-medium tracking-[1.4px] uppercase"
+              style={{ color: 'rgba(255,255,255,0.45)' }}
+            >
+              From the Director
+            </p>
+
+            {/* real verified quote */}
+            <blockquote
+              className="display mx-auto mb-8 font-normal italic"
+              style={{
+                fontSize: 'clamp(18px, 2.8vw, 30px)',
+                color: 'white',
+                maxWidth: '780px',
+                lineHeight: 1.55,
+              }}
+            >
+              "The Philippines is one of the most disaster-prone countries in the world. Through UPM
+              DRRM-H, we seek to conduct training and seminars that will prepare our responders,
+              even ordinary employees, in disaster preparedness through our state-of-the-art
+              facilities."
+            </blockquote>
+
+            {/* attribution */}
+            <p className="mb-12 text-[14px] font-light" style={{ color: 'rgba(255,255,255,0.6)' }}>
+              <strong className="mb-0.5 block font-medium" style={{ color: 'white' }}>
+                Dr. Carlos Primero D. Gundran
+              </strong>
+              Head, UPM DRRM-H — at its launch on June 8, 2022
+            </p>
+
+            {/* divider */}
+            <div
+              className="mx-auto mb-12 h-px w-24"
+              style={{ background: 'rgba(255,255,255,0.15)' }}
+            />
+
+            {/* founding stat cards */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {[
+                {
+                  value: 'June 8, 2022',
+                  label: 'Officially launched',
+                  sub: 'Joaquin Gonzales Hall, UP Manila',
+                },
+                {
+                  value: 'NICER Program',
+                  label: 'Funded under',
+                  sub: 'DOST-PCHRD research initiative',
+                },
+                {
+                  value: 'DRRM Act 2010',
+                  label: 'Aligned with',
+                  sub: 'Republic Act 10121 thematic pillars',
+                },
+              ].map((card) => (
+                <div
+                  key={card.value}
+                  className="rounded-[14px] px-6 py-5 text-left"
+                  style={{
+                    background: 'rgba(255,255,255,0.07)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                  }}
+                >
+                  <p
+                    className="display mb-1 font-normal"
+                    style={{ fontSize: '18px', color: 'white', lineHeight: 1.2 }}
+                  >
+                    {card.value}
+                  </p>
+                  <p
+                    className="mb-0.5 text-[12px] font-medium"
+                    style={{ color: 'rgba(255,255,255,0.55)' }}
+                  >
+                    {card.label}
+                  </p>
+                  <p className="text-[11px] font-light" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                    {card.sub}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* ── CTA ── */}
