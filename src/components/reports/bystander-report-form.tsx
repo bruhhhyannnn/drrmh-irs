@@ -15,7 +15,7 @@ export function BystanderReportForm() {
     <div className="mx-auto max-w-2xl px-6 py-8">
       <button
         onClick={() => router.push('/report-select')}
-        className="mb-6 inline-flex items-center gap-2 text-sm text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
+        className="mb-6 inline-flex items-center gap-2 text-sm text-gray-400 transition-colors hover:text-gray-700 dark:hover:text-gray-200"
       >
         <ArrowLeft size={15} />
         Back
@@ -28,7 +28,7 @@ export function BystanderReportForm() {
         </p>
       </div>
 
-      <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800/40 dark:bg-amber-950/40">
+      <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-sm dark:border-amber-800/40 dark:bg-amber-950/40">
         <p className="text-sm leading-relaxed text-amber-700 dark:text-amber-300">
           <span className="font-semibold">Anonymous submission.</span> Your identity will not be
           stored. For life-threatening emergencies, call <span className="font-semibold">911</span>{' '}

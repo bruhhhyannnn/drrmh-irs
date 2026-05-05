@@ -12,7 +12,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses = {
   primary:
-    'bg-brand-500 text-white hover:bg-brand-600 disabled:bg-brand-300 dark:disabled:bg-brand-800 ',
+    'bg-brand-500 text-white shadow-lg hover:bg-brand-600 disabled:bg-brand-300 dark:disabled:bg-brand-800 ',
   outline:
     'bg-white text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:ring-gray-700 dark:hover:bg-white/5',
   ghost:

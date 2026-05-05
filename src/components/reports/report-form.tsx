@@ -296,7 +296,7 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
     <div className="space-y-6">
       {!isBystander && <PageBreadcrumb pageTitle={isEdit ? 'Edit Report' : 'Submit Report'} />}
 
-      <div className="max-w-2xl rounded-xl border border-gray-200 bg-white p-6 dark:border-white/5 dark:bg-white/3">
+      <div className="max-w-2xl rounded-xl border border-gray-200 bg-white p-6 shadow-md dark:border-white/5 dark:bg-white/3">
         {isEdit && isReportLoading ? (
           <Spinner center />
         ) : (

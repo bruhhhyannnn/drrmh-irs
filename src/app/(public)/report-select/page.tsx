@@ -4,12 +4,12 @@ import { REPORT_TYPES } from '@/types/constants';
 
 export default function ReportSelectPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <div className="mx-auto max-w-2xl px-6 py-12">
         {/* Back */}
         <Link
           href="/signin"
-          className="mb-8 inline-flex items-center gap-2 text-sm text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
+          className="mb-8 inline-flex items-center gap-2 text-sm text-gray-400 transition-colors hover:text-gray-700 dark:hover:text-gray-200"
         >
           <ArrowLeft size={15} />
           Back to sign in
@@ -31,7 +31,7 @@ export default function ReportSelectPage() {
             <Link
               key={item.id}
               href={{ pathname: '/report-submit', query: { type: item.id, title: item.title } }}
-              className="group hover:border-opacity-60 flex items-center gap-4 rounded-2xl border border-gray-200 bg-gray-50 p-5 transition-all duration-200 hover:shadow-sm dark:border-white/10 dark:bg-white/5"
+              className="group hover:border-opacity-60 flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-5 transition-all duration-200 hover:shadow-md dark:border-white/10 dark:bg-white/5"
               style={{
                 ['--accent' as string]: item.accentColor,
               }}

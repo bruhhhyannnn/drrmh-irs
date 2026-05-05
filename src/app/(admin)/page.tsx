@@ -54,7 +54,7 @@ export default function DashboardPage() {
   ).map(([name, value]) => ({ name, value }));
 
   return (
-    <div className="flex flex-col gap-4 pb-4">
+    <div className="flex flex-col">
       <PageBreadcrumb pageTitle="Dashboard" />
 
       <div className="flex flex-col gap-4 xl:h-[calc(100vh-240px)] xl:flex-row">
