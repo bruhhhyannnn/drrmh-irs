@@ -38,11 +38,12 @@ type MissingPersonRow = { id?: string; name: string };
 interface ReportFormProps {
   editId?: string;
   eventId?: string;
+  isBystander?: boolean;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export function ReportForm({ editId, eventId, onSuccess, onCancel }: ReportFormProps) {
+export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }: ReportFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const isEdit = !!editId;
@@ -210,6 +211,7 @@ export function ReportForm({ editId, eventId, onSuccess, onCancel }: ReportFormP
           ...(data.unit_id && { unit: { connect: { id: data.unit_id } } }),
           ...(data.location_id && { location: { connect: { id: data.location_id } } }),
           ...(userId && { user: { connect: { id: userId } } }),
+          is_verified: !isBystander,
           ...headcounts,
         });
         reportId = report.id;
@@ -287,7 +289,7 @@ export function ReportForm({ editId, eventId, onSuccess, onCancel }: ReportFormP
 
   return (
     <div className="space-y-6">
-      <PageBreadcrumb pageTitle={isEdit ? 'Edit Report' : 'Submit Report'} />
+      {!isBystander && <PageBreadcrumb pageTitle={isEdit ? 'Edit Report' : 'Submit Report'} />}
 
       <div className="max-w-2xl rounded-xl border border-gray-200 bg-white p-6 dark:border-white/5 dark:bg-white/3">
         {isEdit && isReportLoading ? (

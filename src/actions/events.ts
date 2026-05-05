@@ -62,3 +62,5 @@ export async function deleteEvent(id: string) {
   await prisma.event.delete({ where: { id: id } });
   revalidatePath('/events');
 }
+
+

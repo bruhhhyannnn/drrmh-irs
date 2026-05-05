@@ -209,3 +209,13 @@ export const USER_TYPES = {
 } as const;
 
 export const FORBIDDEN_USER_TYPES = ['ERT Member', 'Bystander'];
+
+export const REPORT_TYPES = [
+  {
+    id: 'incident',
+    title: 'Incident Report',
+    subtitle: 'Report an incident or hazard',
+    description: 'Report any safety incidents, hazards, or near misses.',
+    accentColor: '#DC2626',
+    dimColor: '#FEE2E2',
+  },]
