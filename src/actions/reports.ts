@@ -6,22 +6,26 @@ import type { Prisma } from '@prisma/client';
 
 const PER_PAGE = 10;
 
-export async function getReports(page: number = 1, query?: string) {
-  const where = query
-    ? {
-        OR: [
-          { cluster: { name: { contains: query, mode: 'insensitive' as const } } },
-          { unit: { name: { contains: query, mode: 'insensitive' as const } } },
-          { event: { name: { contains: query, mode: 'insensitive' as const } } },
-        ],
-      }
-    : undefined;
+export async function getReports(
+  page: number = 1,
+  query?: string,
+  isVerified: boolean = true
+) {
+  const where: Prisma.ReportWhereInput = {
+    is_verified: isVerified,
+    ...(query && {
+      OR: [
+        { cluster: { name: { contains: query, mode: 'insensitive' } } },
+        { unit: { name: { contains: query, mode: 'insensitive' } } },
+        { event: { name: { contains: query, mode: 'insensitive' } } },
+      ],
+    }),
+  };
 
-  const [data, total] = await Promise.all([
+  const [data, total, unverifiedCount] = await Promise.all([
     prisma.report.findMany({
       where,
       include: {
-        // TODO: might select only a few
         event: true,
         user: {
           select: {
@@ -39,9 +43,10 @@ export async function getReports(page: number = 1, query?: string) {
       take: PER_PAGE,
     }),
     prisma.report.count({ where }),
+    prisma.report.count({ where: { is_verified: false } }),
   ]);
 
-  return { data, total };
+  return { data, total, unverifiedCount };
 }
 
 export async function getReport(id: string) {
@@ -147,4 +152,18 @@ export async function getReportTotals() {
     casualties: result._sum.casualties_count ?? 0,
     missing: result._sum.missing_count ?? 0,
   };
+}
+
+export async function verifyReport(
+  reportId: string,
+  approved: boolean,
+  adminId: string
+) {
+  return prisma.report.update({
+    where: { id: reportId },
+    data: {
+      is_verified: approved,
+      verified_by: adminId, // supabase auth uuid matches auth.users.id
+    },
+  });
 }

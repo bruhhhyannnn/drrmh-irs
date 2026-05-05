@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
-import { useReports, useDeleteReport } from '@/hooks';
+import { CheckCircle, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { useReports, useDeleteReport, useVerifyReport } from '@/hooks';
 import { PageBreadcrumb } from '@/components/common';
 import type { getReports } from '@/actions/reports';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -18,29 +18,49 @@ import {
   ConfirmDialog,
 } from '@/components/ui';
 import { ReportForm } from '@/components/reports';
+import { useAuthStore } from '@/store';
 
 type ReportRow = Awaited<ReturnType<typeof getReports>>['data'][number];
+type Tab = 'verified' | 'unverified';
 
 const PER_PAGE = 10;
 
 export default function ReportsPage() {
+  // ✅ use selector, not the whole store
+  const user = useAuthStore((state) => state.user);
+
+  const [activeTab, setActiveTab] = useState<Tab>('verified');
   const [query, setQuery] = useState('');
   const [debounceQuery, setDebounceQuery] = useState('');
   const [page, setPage] = useState(1);
-  const { data, isPending, isFetching, error } = useReports(page, debounceQuery);
+
+  const { data, isPending, isFetching, error } = useReports(
+    page,
+    debounceQuery,
+    activeTab === 'verified'
+  );
   const deleteReport = useDeleteReport();
+  const verifyReport = useVerifyReport();
+
   const [editId, setEditId] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState('');
+  const [verifyId, setVerifyId] = useState('');
 
   const handleClose = () => {
     setIsModalOpen(false);
     setEditId('');
   };
 
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+    setPage(1);
+    setQuery('');
+  };
+
   const totalPages = Math.ceil((data?.total ?? 0) / PER_PAGE);
 
-  const columns: ColumnDef<ReportRow, unknown>[] = [
+  const baseColumns: ColumnDef<ReportRow, unknown>[] = [
     {
       id: 'cluster',
       header: 'Cluster',
@@ -81,7 +101,7 @@ export default function ReportsPage() {
             {r.casualties_count}
           </Badge>
         ) : (
-          <span className="text-gray-400">0</span>
+          <span className="text-gray-500 dark:text-gray-600">0</span>
         ),
     },
     {
@@ -94,7 +114,7 @@ export default function ReportsPage() {
             {r.missing_count}
           </Badge>
         ) : (
-          <span className="text-gray-400">0</span>
+          <span className="text-gray-500 dark:text-gray-600">0</span>
         ),
     },
     {
@@ -104,31 +124,60 @@ export default function ReportsPage() {
       cell: ({ row: { original: r } }) =>
         r.created_at ? format(new Date(r.created_at), 'MMM d, yyyy') : '—',
     },
-    {
-      id: 'actions',
-      header: 'Actions',
-      cell: ({ row: { original: r } }) => (
-        <div className="flex flex-row items-center gap-3">
-          <button
-            className="hover:text-brand-600 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100"
-            onClick={() => {
-              setIsModalOpen(true);
-              setEditId(r.id);
-            }}
-          >
-            <Pencil size={17} />
-          </button>
-          <button
-            className="hover:text-error-500 text-gray-400 transition-all duration-100"
-            onClick={() => setDeleteId(r.id)}
-          >
-            <Trash2 size={17} />
-          </button>
-        </div>
-      ),
-      enableSorting: false,
-    },
   ];
+
+  const verifiedActions: ColumnDef<ReportRow, unknown> = {
+    id: 'actions',
+    header: 'Actions',
+    cell: ({ row: { original: r } }) => (
+      <div className="flex flex-row items-center gap-3">
+        <button
+          className="hover:text-brand-600 dark:hover:text-brand-400 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100 dark:text-gray-500"
+          onClick={() => {
+            setIsModalOpen(true);
+            setEditId(r.id);
+          }}
+        >
+          <Pencil size={17} />
+        </button>
+        <button
+          className="hover:text-error-500 text-gray-400 transition-all duration-100 dark:text-gray-500"
+          onClick={() => setDeleteId(r.id)}
+        >
+          <Trash2 size={17} />
+        </button>
+      </div>
+    ),
+    enableSorting: false,
+  };
+
+  const unverifiedActions: ColumnDef<ReportRow, unknown> = {
+    id: 'actions',
+    header: 'Actions',
+    cell: ({ row: { original: r } }) => (
+      <div className="flex flex-row items-center gap-3">
+        <button
+          className="inline-flex items-center gap-1.5 rounded-md bg-green-100 px-2.5 py-1 text-sm font-medium text-green-700 transition-colors duration-150 hover:bg-green-200 dark:bg-green-900/40 dark:text-green-300 dark:hover:bg-green-900/60"
+          onClick={() => setVerifyId(r.id)}
+        >
+          <CheckCircle size={15} />
+          Verify
+        </button>
+        <button
+          className="hover:text-error-500 text-gray-400 transition-all duration-100 dark:text-gray-500"
+          onClick={() => setDeleteId(r.id)}
+        >
+          <Trash2 size={17} />
+        </button>
+      </div>
+    ),
+    enableSorting: false,
+  };
+
+  const columns =
+    activeTab === 'verified'
+      ? [...baseColumns, verifiedActions]
+      : [...baseColumns, unverifiedActions];
 
   useEffect(() => {
     const timer = setTimeout(() => setDebounceQuery(query), 400);
@@ -142,16 +191,29 @@ export default function ReportsPage() {
       <div className="space-y-6">
         <PageBreadcrumb pageTitle="Reports" />
 
+        {/* Tabs */}
+        <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700">
+          <TabButton
+            label="Verified Reports"
+            active={activeTab === 'verified'}
+            onClick={() => handleTabChange('verified')}
+          />
+          <TabButton
+            label="Unverified Reports"
+            active={activeTab === 'unverified'}
+            onClick={() => handleTabChange('unverified')}
+          />
+        </div>
+
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="relative max-w-sm flex-1">
               <Search
                 size={16}
-                // TODO: icon on dark mode not showing
-                className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400 dark:text-gray-600"
+                className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400 dark:text-gray-500"
               />
               <Input
-                placeholder="Search reports..."
+                placeholder={`Search ${activeTab} reports...`}
                 className="pl-9"
                 value={query}
                 onChange={(e) => {
@@ -160,18 +222,20 @@ export default function ReportsPage() {
                 }}
               />
             </div>
-            <p className="text-sm text-gray-500">{data?.total ?? 0} total</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{data?.total ?? 0} total</p>
           </div>
-          <Button onClick={() => setIsModalOpen(true)} startIcon={<Plus size={16} />}>
-            Add Report
-          </Button>
+          {activeTab === 'verified' && (
+            <Button onClick={() => setIsModalOpen(true)} startIcon={<Plus size={16} />}>
+              Add Report
+            </Button>
+          )}
         </div>
 
         <DataTable
           columns={columns}
           data={data?.data ?? []}
           loading={isPending || isFetching}
-          emptyMessage="No reports found"
+          emptyMessage={`No ${activeTab} reports found`}
         />
 
         <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
@@ -190,7 +254,52 @@ export default function ReportsPage() {
         confirmLabel="Delete"
         isLoading={deleteReport.isPending}
       />
+
+      <ConfirmDialog
+        isOpen={!!verifyId}
+        onClose={() => setVerifyId('')}
+        onConfirm={() =>
+          verifyReport.mutate(
+            { reportId: verifyId, approved: true, adminId: user?.id ?? '' },
+            { onSuccess: () => setVerifyId('') }
+          )
+        }
+        title="Verify report"
+        message="Mark this report as verified? It will move to the Verified Reports tab."
+        confirmLabel="Verify"
+        isLoading={verifyReport.isPending}
+      />
     </>
+  );
+}
+
+function TabButton({
+  label,
+  active,
+  onClick,
+  count,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  count?: number;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors duration-150 ${
+        active
+          ? 'border-brand-600 text-brand-600 dark:border-brand-400 dark:text-brand-400'
+          : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-300'
+      }`}
+    >
+      {label}
+      {typeof count === 'number' && count > 0 && (
+        <span className="bg-warning-100 dark:bg-warning-900/40 text-warning-700 dark:text-warning-400 rounded-full px-2 py-0.5 text-xs font-semibold">
+          {count}
+        </span>
+      )}
+    </button>
   );
 }
 

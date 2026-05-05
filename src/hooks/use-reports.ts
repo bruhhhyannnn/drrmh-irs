@@ -8,13 +8,28 @@ import {
   deleteReport,
   getReportClusterSummary,
   getReportTotals,
+  verifyReport,
 } from '@/actions/reports';
 import type { Prisma, Report } from '@prisma/client';
 
-export function useReports(page: number = 1, query?: string) {
+export function useReports(page: number, query: string, isVerified: boolean) {
   return useQuery({
-    queryKey: ['reports', page, query],
-    queryFn: () => getReports(page, query),
+    queryKey: ['reports', page, query, isVerified],
+    queryFn: () => getReports(page, query, isVerified),
+  });
+}
+
+export function useVerifyReport() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ reportId, approved, adminId }: {
+      reportId: string;
+      approved: boolean;
+      adminId: string;
+    }) => verifyReport(reportId, approved, adminId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reports'], exact: false });
+    },
   });
 }
 
