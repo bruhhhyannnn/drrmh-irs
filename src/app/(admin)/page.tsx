@@ -31,7 +31,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function DashboardPage() {
   const { data: events } = useEvents();
-  const { data: reportsData } = useReports(1);
+  const { data: reportsData } = useReports(1, '', true);
   const { data: users = [] } = useUsers();
   const { data: clusterSummary = [] } = useReportClusterSummary();
   const { data: totalAffected } = useReportTotals();
