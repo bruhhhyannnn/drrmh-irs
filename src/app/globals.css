@@ -122,7 +122,7 @@
     background-color: var(--color-gray-800);
   }
   body {
-    @apply font-outfit bg-gray-50 relative font-normal dark:bg-gray-950;
+    @apply font-outfit relative bg-gray-50 font-normal dark:bg-gray-950;
   }
 }
 

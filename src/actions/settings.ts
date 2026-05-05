@@ -25,7 +25,6 @@ const MODEL_MAP = {
   damage_conditions: 'damageCondition',
 } as const;
 
-
 const TITLE_MAP: Record<SettingsTable, string> = {
   clusters: 'Clusters',
   units: 'Units',
@@ -56,7 +55,11 @@ export async function createSettingsItem(table: SettingsTable, data: Record<stri
   return result;
 }
 
-export async function updateSettingsItem(table: SettingsTable, id: string, data: Record<string, unknown>) {
+export async function updateSettingsItem(
+  table: SettingsTable,
+  id: string,
+  data: Record<string, unknown>
+) {
   const model = MODEL_MAP[table];
   // @ts-expect-error dynamic model access
   const result = await prisma[model].update({ where: { id }, data });

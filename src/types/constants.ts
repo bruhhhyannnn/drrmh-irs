@@ -87,6 +87,12 @@ export const LOCATIONS: Record<Cluster, string[]> = {
     'PGH Zone 4',
     'PGH Zone 5',
     'PGH Zone 6',
+    'PGH Zone 7',
+    'PGH Zone 8',
+    'PGH Zone 9',
+    'PGH Zone 10',
+    'PGH Zone 11',
+    'PGH Zone 12',
   ],
 };
 
@@ -135,6 +141,7 @@ export const POSITIONS = [
   'Administrative Officer V',
   'Supervising Administrative Officer',
   // ERT roles
+  // TODO: cluster commander will report to IC and building martial IC per building ... each unit has
   'Incident Commander',
   'Liaison Officer',
   'Safety Officer',
@@ -201,4 +208,4 @@ export const USER_TYPES = {
   3: 'Super Admin',
 } as const;
 
-export const FORBIDDEN_USER_TYPES = ['ERT Member', 'Bystander']
+export const FORBIDDEN_USER_TYPES = ['ERT Member', 'Bystander'];
