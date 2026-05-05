@@ -15,7 +15,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!loading && !user) {
       const path = window.location.pathname + window.location.search;
-      router.push(`/signin?from=${encodeURIComponent(path)}`);
+      router.push(`/landing?from=${encodeURIComponent(path)}`);
     }
   }, [user, loading, router]);
 
