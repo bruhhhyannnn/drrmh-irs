@@ -143,7 +143,7 @@ export default function LandingPage() {
         {/* ── HERO ── */}
         <section
           className="relative flex flex-col items-center justify-center overflow-hidden text-center"
-          style={{ paddingTop: 'calc(72px + 80px)', paddingBottom: '80px', minHeight: '100vh' }}
+          style={{ paddingTop: 'calc(72px + 64px)', paddingBottom: '80px', minHeight: '100vh' }}
         >
           {/* radial glow */}
           <div
@@ -159,20 +159,38 @@ export default function LandingPage() {
           />
 
           <div className="relative z-10 mx-auto w-full max-w-5xl px-6">
-            {/* eyebrow */}
-            <div
-              className="hero-anim-0 mb-7 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-[12px] font-medium tracking-[0.8px] uppercase"
-              style={{
-                background: 'var(--maroon-pale)',
-                borderColor: '#F2D9D9',
-                color: 'var(--maroon)',
-              }}
-            >
-              <span
-                className="pulse-dot h-1.5 w-1.5 rounded-full"
-                style={{ background: 'var(--maroon)' }}
+            <div className="hero-anim-0 mb-8 flex flex-wrap items-center justify-center gap-2">
+              <Image
+                src="/up-logo.png"
+                alt="UP Manila Logo"
+                width={64}
+                height={64}
+                sizes="64px"
+                className="object-contain"
               />
-              UP Manila DRRM-H — NICER Program
+              <Image
+                src="/upm-drrmh-logo.png"
+                alt="DRRM-H Logo"
+                width={64}
+                height={64}
+                sizes="64px"
+                className="object-contain"
+              />
+              {/* eyebrow */}
+              <div
+                className="inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-[12px] font-medium tracking-[0.8px] uppercase"
+                style={{
+                  background: 'var(--maroon-pale)',
+                  borderColor: '#F2D9D9',
+                  color: 'var(--maroon)',
+                }}
+              >
+                <span
+                  className="pulse-dot h-1.5 w-1.5 rounded-full"
+                  style={{ background: 'var(--maroon)' }}
+                />
+                UP Manila DRRM-H — NICER Program
+              </div>
             </div>
 
             {/* headline */}
@@ -883,16 +901,28 @@ export default function LandingPage() {
             </blockquote>
 
             {/* attribution */}
-            <p className="mb-12 text-[14px] font-light" style={{ color: 'rgba(255,255,255,0.6)' }}>
-              <strong className="mb-0.5 block font-medium" style={{ color: 'white' }}>
-                Dr. Carlos Primero D. Gundran
-              </strong>
-              Head, UPM DRRM-H — at its launch on June 8, 2022
-            </p>
+            <div>
+              <div className="mb-2 flex items-center justify-center">
+                <Image
+                  src="/carlos-gundran-profile-image.png"
+                  alt="UP Manila Logo"
+                  width={128}
+                  height={128}
+                  sizes="128px"
+                  className="object-contain"
+                />
+              </div>
+              <p className="text-[14px] font-light" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                <strong className="mb-0.5 block font-medium" style={{ color: 'white' }}>
+                  Dr. Carlos Primero D. Gundran
+                </strong>
+                Head, UPM DRRM-H — at its launch on June 8, 2022
+              </p>
+            </div>
 
             {/* divider */}
             <div
-              className="mx-auto mb-12 h-px w-24"
+              className="mx-auto mt-10 mb-10 h-px w-24"
               style={{ background: 'rgba(255,255,255,0.15)' }}
             />
 
@@ -1099,6 +1129,22 @@ export default function LandingPage() {
           >
             <div className="md:col-span-2">
               <div className="mb-4 flex items-center gap-2.5">
+                <Image
+                  src="/up-logo.png"
+                  alt="UP Manila Logo"
+                  width={42}
+                  height={42}
+                  sizes="42px"
+                  className="object-contain"
+                />
+                <Image
+                  src="/upm-drrmh-logo.png"
+                  alt="DRRM-H Logo"
+                  width={42}
+                  height={42}
+                  sizes="42px"
+                  className="object-contain"
+                />
                 <Image
                   src="/irs-favicon.png"
                   alt="IRS Logo"
