@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { CLUSTERS } from '@/types';
 
 type HeadcountRow = {
   students: number | null;
@@ -16,23 +17,6 @@ type HeadcountRow = {
   guests: number | null;
 };
 
-function totalAffected(r: HeadcountRow): number {
-  return (
-    (r.students ?? 0) +
-    (r.faculty_members ?? 0) +
-    (r.admin_members ?? 0) +
-    (r.reps_members ?? 0) +
-    (r.ra_members ?? 0) +
-    (r.philcare_staff ?? 0) +
-    (r.security_personnel ?? 0) +
-    (r.construction_workers ?? 0) +
-    (r.tenants ?? 0) +
-    (r.health_workers ?? 0) +
-    (r.non_academic_staff ?? 0) +
-    (r.guests ?? 0)
-  );
-}
-
 /* ── Aggregate stats ──────────────────────────────────────── */
 export function useLandingStats() {
   return useQuery({
@@ -40,7 +24,10 @@ export function useLandingStats() {
     queryFn: async () => {
       const [eventsRes, reportsRes, usersRes, allEventsRes] = await Promise.all([
         supabase.from('events').select('*', { count: 'exact', head: true }),
-        supabase.from('reports').select('*', { count: 'exact', head: true }),
+        supabase
+          .from('reports')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_verified', true),
         supabase.from('users').select('*', { count: 'exact', head: true }),
         // Fetch with status join to filter ongoing events client-side
         supabase.from('events').select('id, status:event_statuses(name)'),
@@ -50,6 +37,7 @@ export function useLandingStats() {
         (e: any) => e.status?.name === 'ongoing'
       ).length;
 
+      console.log(reportsRes);
       return {
         totalEvents: eventsRes.count ?? 0,
         totalReports: reportsRes.count ?? 0,
@@ -62,9 +50,8 @@ export function useLandingStats() {
 }
 
 /* ── Cluster breakdown from reports ──────────────────────── */
-const CLUSTERS = ['Pedro Gil', 'Padre Faura', 'Taft', 'SHS', 'PGH'] as const;
 
-export interface ClusterStat {
+interface ClusterStat {
   cluster: string;
   reports: number;
   affected: number;
@@ -133,4 +120,21 @@ export function useLandingEvents() {
     },
     staleTime: 5 * 60 * 1000,
   });
+}
+
+function totalAffected(r: HeadcountRow): number {
+  return (
+    (r.students ?? 0) +
+    (r.faculty_members ?? 0) +
+    (r.admin_members ?? 0) +
+    (r.reps_members ?? 0) +
+    (r.ra_members ?? 0) +
+    (r.philcare_staff ?? 0) +
+    (r.security_personnel ?? 0) +
+    (r.construction_workers ?? 0) +
+    (r.tenants ?? 0) +
+    (r.health_workers ?? 0) +
+    (r.non_academic_staff ?? 0) +
+    (r.guests ?? 0)
+  );
 }

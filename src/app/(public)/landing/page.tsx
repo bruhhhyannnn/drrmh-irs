@@ -909,7 +909,7 @@ export default function LandingPage() {
                   width={128}
                   height={128}
                   sizes="128px"
-                  className="object-contain"
+                  className="rounded-full object-contain"
                 />
               </div>
               <p className="text-[14px] font-light" style={{ color: 'rgba(255,255,255,0.6)' }}>
