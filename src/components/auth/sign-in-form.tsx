@@ -15,7 +15,7 @@ export function SignInForm() {
   const [authError, setAuthError] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams?.get('from') ?? '/';
+  const redirectTo = searchParams?.get('from') ?? '/dashboard';
   const { user } = useAuthStore();
 
   const {

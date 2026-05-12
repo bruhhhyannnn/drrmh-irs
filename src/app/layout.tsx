@@ -8,7 +8,7 @@ const outfit = Outfit({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'DRRM-H - IRS',
   description:
-    'UP Manila Disaster Risk Reduction Management and Health Program - Incident Reporting System',
+    'UP Manila Disaster Risk Reduction Management in Health Program - Incident Reporting System',
   icons: {
     icon: '/irs-favicon.png',
   },

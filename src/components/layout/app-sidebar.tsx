@@ -26,7 +26,7 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { icon: <LayoutDashboard size={20} />, name: 'Home', path: '/' },
+  { icon: <LayoutDashboard size={20} />, name: 'Home', path: '/dashboard' },
   { icon: <CalendarDays size={20} />, name: 'Events', path: '/events' },
   { icon: <BarChart2 size={20} />, name: 'Reports', path: '/reports' },
   { icon: <Calendar size={20} />, name: 'Calendar', path: '/calendar' },
@@ -66,7 +66,7 @@ export function AppSidebar() {
   const isActive = useCallback(
     (path?: string) => {
       if (!path) return false;
-      if (path === '/') return pathname === '/';
+      if (path === '/dashboard') return pathname === '/dashboard';
       return pathname.startsWith(path);
     },
     [pathname]
