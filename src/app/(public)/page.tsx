@@ -24,12 +24,16 @@ export default function LandingPage() {
   /* hero stat cards */
   const heroStats = [
     { label: 'Active Events', value: stats?.activeEvents, sub: 'Drills in progress', accent: true },
-    { label: 'Reports Submitted', value: stats?.totalReports?.toLocaleString(), sub: 'All time' },
-    { label: 'ERT Members', value: stats?.totalUsers, sub: 'Enrolled users' },
+    { label: 'Total Drills', value: stats?.totalEvents, sub: 'Conducted since 2022' },
+    { label: 'Clusters Covered', value: 4, sub: 'Pedro Gil · Padre Faura · Taft · SHS' },
   ];
 
   /* cluster bar colors cycle */
   const barColors: Array<'maroon' | 'gold'> = ['maroon', 'gold', 'maroon', 'gold'];
+
+  /* tab filter in feature 1 */
+  const [activeTab, setActiveTab] = useState<'ongoing' | 'upcoming' | 'completed'>('ongoing');
+  const filteredEvents = events?.filter((ev) => ev.status?.name?.toLowerCase() === activeTab);
 
   return (
     <>
@@ -159,23 +163,34 @@ export default function LandingPage() {
           />
 
           <div className="relative z-10 mx-auto w-full max-w-5xl px-6">
-            <div className="hero-anim-0 mb-8 flex flex-wrap items-center justify-center gap-2">
-              <Image
-                src="/up-logo.png"
-                alt="UP Manila Logo"
-                width={64}
-                height={64}
-                sizes="64px"
-                className="object-contain"
-              />
-              <Image
-                src="/upm-drrmh-logo.png"
-                alt="DRRM-H Logo"
-                width={64}
-                height={64}
-                sizes="64px"
-                className="object-contain"
-              />
+            <div className="hero-anim-0 mb-8 flex flex-col flex-wrap items-center justify-center gap-2">
+              {/* IMAGES LOGO */}
+              <div className="mb-2 flex flex-wrap items-center justify-center gap-2">
+                <Image
+                  src="/up-logo.png"
+                  alt="UP Manila Logo"
+                  width={64}
+                  height={64}
+                  sizes="64px"
+                  className="object-contain"
+                />
+                <Image
+                  src="/upm-drrmh-logo.png"
+                  alt="DRRM-H Logo"
+                  width={64}
+                  height={64}
+                  sizes="64px"
+                  className="object-contain"
+                />
+                <Image
+                  src="/irs-favicon.png"
+                  alt="DRRM-H Logo"
+                  width={64}
+                  height={64}
+                  sizes="64px"
+                  className="object-contain"
+                />
+              </div>
               {/* eyebrow */}
               <div
                 className="inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-[12px] font-medium tracking-[0.8px] uppercase"
@@ -189,7 +204,7 @@ export default function LandingPage() {
                   className="pulse-dot h-1.5 w-1.5 rounded-full"
                   style={{ background: 'var(--maroon)' }}
                 />
-                UP Manila DRRM-H — NICER Program
+                UP Manila · Disaster Risk Reduction Management in Health
               </div>
             </div>
 
@@ -282,7 +297,7 @@ export default function LandingPage() {
                   style={{ background: 'var(--cream)', border: '1px solid var(--border)' }}
                 >
                   <p className="mb-4 text-[13px] font-medium" style={{ color: 'var(--text-mid)' }}>
-                    Reports by Cluster
+                    Drills by Cluster
                   </p>
                   <div className="flex flex-col gap-3">
                     {clusterStats && clusterStats.length > 0
@@ -495,12 +510,13 @@ export default function LandingPage() {
               }}
             >
               <div className="mb-6 flex gap-2">
-                {['Active', 'Upcoming', 'Completed'].map((t, i) => (
+                {(['ongoing', 'upcoming', 'completed'] as const).map((t) => (
                   <span
                     key={t}
-                    className="cursor-default rounded-full border px-3.5 py-1.5 text-[12px] font-medium"
+                    onClick={() => setActiveTab(t)}
+                    className="cursor-pointer rounded-full border px-3.5 py-1.5 text-[12px] font-medium capitalize transition-all duration-200"
                     style={
-                      i === 0
+                      activeTab === t
                         ? {
                             background: 'var(--maroon)',
                             color: 'white',
@@ -513,14 +529,15 @@ export default function LandingPage() {
                           }
                     }
                   >
-                    {t}
+                    {t.charAt(0).toUpperCase() + t.slice(1)}
                   </span>
                 ))}
               </div>
+
               <table className="w-full text-[13px]" style={{ borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
-                    {['Event Name', 'Cluster', 'Status'].map((h) => (
+                    {['Event Name', 'Location', 'Status'].map((h) => (
                       <th
                         key={h}
                         className="px-2.5 py-2 text-left text-[11px] font-medium tracking-[0.6px] uppercase"
@@ -535,53 +552,41 @@ export default function LandingPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {events && events.length > 0
-                    ? events.slice(0, 4).map((ev) => (
-                        <tr key={ev.id} style={{ borderBottom: '1px solid rgba(139,26,26,0.05)' }}>
-                          <td
-                            className="px-2.5 py-2.5 font-medium"
-                            style={{ color: 'var(--text-dark)' }}
-                          >
-                            {ev.name.length > 22 ? ev.name.slice(0, 22) + '…' : ev.name}
-                          </td>
-                          <td className="px-2.5 py-2.5" style={{ color: 'var(--text-muted)' }}>
-                            {ev.location?.name ?? '—'}
-                          </td>
-                          <td className="px-2.5 py-2.5">
-                            <StatusBadge status={ev.status?.name ?? ''} />
-                          </td>
-                        </tr>
-                      ))
-                    : [
-                        { name: 'Q2 Fire Drill 2025', cluster: 'Pedro Gil', status: 'active' },
-                        { name: 'Earthquake Response', cluster: 'Taft', status: 'upcoming' },
-                        { name: 'Medical Emergency Sim', cluster: 'SHS', status: 'completed' },
-                        { name: 'Evacuation Protocol', cluster: 'Padre Faura', status: 'active' },
-                      ].map((row) => (
-                        <tr
-                          key={row.name}
-                          style={{ borderBottom: '1px solid rgba(139,26,26,0.05)' }}
+                  {filteredEvents && filteredEvents.length > 0 ? (
+                    filteredEvents.slice(0, 4).map((ev) => (
+                      <tr key={ev.id} style={{ borderBottom: '1px solid rgba(139,26,26,0.05)' }}>
+                        <td
+                          className="px-2.5 py-2.5 font-medium"
+                          style={{ color: 'var(--text-dark)' }}
                         >
-                          <td
-                            className="px-2.5 py-2.5 font-medium"
-                            style={{ color: 'var(--text-dark)' }}
-                          >
-                            {row.name}
-                          </td>
-                          <td className="px-2.5 py-2.5" style={{ color: 'var(--text-muted)' }}>
-                            {row.cluster}
-                          </td>
-                          <td className="px-2.5 py-2.5">
-                            <StatusBadge status={row.status} />
-                          </td>
-                        </tr>
-                      ))}
+                          {ev.name.length > 22 ? ev.name.slice(0, 22) + '…' : ev.name}
+                        </td>
+                        <td className="px-2.5 py-2.5" style={{ color: 'var(--text-muted)' }}>
+                          {ev.location?.name ?? '—'}
+                        </td>
+                        <td className="px-2.5 py-2.5">
+                          <StatusBadge status={ev.status?.name ?? ''} />
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={3}
+                        className="px-2.5 py-6 text-center text-[13px]"
+                        style={{ color: 'var(--text-muted)' }}
+                      >
+                        No {activeTab} events
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
           </Reveal>
         </section>
 
+        {/* DIVIDER */}
         <div
           style={{
             height: '1px',
@@ -607,40 +612,39 @@ export default function LandingPage() {
                 className="mb-3 text-[11px] font-medium tracking-[0.8px] uppercase"
                 style={{ color: 'var(--text-muted)' }}
               >
-                Latest Drill — Headcount Summary
+                What gets captured in every drill
               </p>
+
+              {/* feature capability pills */}
               <div className="mb-4 grid grid-cols-2 gap-3">
                 {[
-                  {
-                    label: 'Total Affected',
-                    value: stats?.totalReports ? (stats.totalReports * 14).toLocaleString() : '—',
-                    accent: false,
-                  },
-                  { label: 'Casualties', value: '—', accent: true },
-                  { label: 'Missing', value: '0', accent: false },
-                  {
-                    label: 'Reports Filed',
-                    value: stats?.totalReports?.toLocaleString() ?? '—',
-                    accent: false,
-                  },
+                  { label: 'Headcount tracking', icon: <IconHeadcount /> },
+                  { label: 'Casualty documentation', icon: <IconCasualty /> },
+                  { label: 'Damage reporting', icon: <IconDamage /> },
+                  { label: 'GPS location tagging', icon: <IconGPS /> },
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className="rounded-[10px] p-3.5"
+                    className="flex items-center gap-2.5 rounded-[10px] p-3.5"
                     style={{ background: 'var(--cream)', border: '1px solid var(--border)' }}
                   >
-                    <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-                      {item.label}
-                    </p>
-                    <p
-                      className="display mt-1 text-[26px] leading-tight"
-                      style={{ color: item.accent ? 'var(--maroon)' : 'var(--text-dark)' }}
+                    <div
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                      style={{ background: 'var(--maroon-pale)' }}
                     >
-                      {item.value}
+                      {item.icon}
+                    </div>
+                    <p
+                      className="text-[13px] leading-tight font-medium"
+                      style={{ color: 'var(--text-dark)' }}
+                    >
+                      {item.label}
                     </p>
                   </div>
                 ))}
               </div>
+
+              {/* personnel roles the system covers */}
               <div
                 className="rounded-[10px] p-3.5"
                 style={{ background: 'var(--cream)', border: '1px solid var(--border)' }}
@@ -649,7 +653,7 @@ export default function LandingPage() {
                   className="mb-2.5 text-[11px] font-medium tracking-[0.6px] uppercase"
                   style={{ color: 'var(--text-muted)' }}
                 >
-                  Personnel Breakdown
+                  Personnel categories tracked
                 </p>
                 {[
                   'Students',
@@ -657,14 +661,22 @@ export default function LandingPage() {
                   'Admin Staff',
                   'Security Personnel',
                   'Health Workers',
+                  'Non-Academic Staff',
+                  'Guests & Visitors',
                 ].map((role) => (
                   <div
                     key={role}
-                    className="flex justify-between py-1.5 text-[13px]"
-                    style={{ color: 'var(--text-mid)' }}
+                    className="flex items-center gap-2 py-1.5 text-[13px]"
+                    style={{
+                      color: 'var(--text-mid)',
+                      borderBottom: '1px solid rgba(139,26,26,0.05)',
+                    }}
                   >
+                    <span
+                      className="h-1.5 w-1.5 shrink-0 rounded-full"
+                      style={{ background: 'var(--maroon)', opacity: 0.4 }}
+                    />
                     <span>{role}</span>
-                    <span className="font-medium">—</span>
                   </div>
                 ))}
               </div>
@@ -1066,14 +1078,14 @@ export default function LandingPage() {
                   sub: 'All time',
                 },
                 {
-                  label: 'Reports Filed',
-                  value: stats?.totalReports?.toLocaleString(),
-                  sub: 'Across all clusters',
+                  label: 'Clusters Covered',
+                  value: '4',
+                  sub: 'Across UP Manila campuses',
                 },
                 {
-                  label: 'Active Users',
-                  value: stats?.totalUsers?.toLocaleString(),
-                  sub: 'ERT members enrolled',
+                  label: 'Established',
+                  value: '2022',
+                  sub: 'UP Manila DRRM-H launch',
                 },
                 {
                   label: 'Active Drills',
@@ -1169,27 +1181,6 @@ export default function LandingPage() {
                 className="mb-4 text-[12px] font-medium tracking-[1px] uppercase"
                 style={{ color: 'rgba(255,255,255,0.35)' }}
               >
-                System
-              </h4>
-              <ul className="flex list-none flex-col gap-2.5">
-                {['Dashboard', 'Events', 'Reports', 'Activity Logs', 'Calendar'].map((item) => (
-                  <li key={item}>
-                    <Link
-                      href="/signin"
-                      className="text-[13px] font-light no-underline transition-colors duration-200"
-                      style={{ color: 'rgba(255,255,255,0.55)' }}
-                    >
-                      {item}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h4
-                className="mb-4 text-[12px] font-medium tracking-[1px] uppercase"
-                style={{ color: 'rgba(255,255,255,0.35)' }}
-              >
                 Contact
               </h4>
               <ul className="flex list-none flex-col gap-2.5">
@@ -1211,12 +1202,43 @@ export default function LandingPage() {
                 ))}
               </ul>
             </div>
+            <div>
+              <h4
+                className="mb-4 text-[12px] font-medium tracking-[1px] uppercase"
+                style={{ color: 'rgba(255,255,255,0.35)' }}
+              >
+                Emergency Contact
+              </h4>
+              <ul className="flex list-none flex-col gap-2.5">
+                {[
+                  { label: 'National Hotline', href: '911' },
+                  { label: 'UPM Police / UP PGH', href: '(02) 8554-8400' },
+                  { label: 'Manila DRRMO', href: '(02) 8463-3295' },
+                ].map((item) => (
+                  <li key={item.label}>
+                    <p
+                      className="text-[13px] font-light no-underline"
+                      style={{ color: 'rgba(255,255,255,0.55)' }}
+                    >
+                      {item.label}
+                    </p>
+                    <a
+                      href={item.href}
+                      className="ml-2 text-[13px] font-medium no-underline"
+                      style={{ color: 'rgba(255,255,255,0.55)' }}
+                    >
+                      {item.href}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
           <div
             className="mx-auto mt-6 flex max-w-300 flex-wrap items-center justify-between gap-3 text-[12px]"
             style={{ color: 'rgba(255,255,255,0.28)' }}
           >
-            <span>© 2025 UP Manila DRRM-H — Incident Reporting System. All rights reserved.</span>
+            <span>© 2026 UP Manila DRRM-H — Incident Reporting System. All rights reserved.</span>
             <span>Developed under the NICER Program · Dr. Carlos Primero D. Gundran</span>
           </div>
         </footer>
@@ -1304,7 +1326,7 @@ function ProgressRow({
         />
       </div>
       <span className="min-w-13 text-right text-[12px] font-medium text-[#4A3728]">
-        {reports} reports
+        {reports} {reports === 1 ? 'drill' : 'drills'}
       </span>
     </div>
   );
@@ -1459,5 +1481,58 @@ const IconSearch = () => (
 const IconShield = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8">
     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+  </svg>
+);
+const IconHeadcount = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="var(--maroon)"
+    strokeWidth="1.8"
+  >
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+);
+const IconCasualty = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="var(--maroon)"
+    strokeWidth="1.8"
+  >
+    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+  </svg>
+);
+const IconDamage = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="var(--maroon)"
+    strokeWidth="1.8"
+  >
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    <path d="M9 22V12h6v10" />
+    <path d="M12 7l-2 4h4l-2 4" />
+  </svg>
+);
+const IconGPS = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="var(--maroon)"
+    strokeWidth="1.8"
+  >
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+    <circle cx="12" cy="10" r="3" />
   </svg>
 );

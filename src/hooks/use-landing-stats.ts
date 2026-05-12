@@ -1,21 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { CLUSTERS } from '@/types';
-
-type HeadcountRow = {
-  students: number | null;
-  faculty_members: number | null;
-  admin_members: number | null;
-  reps_members: number | null;
-  ra_members: number | null;
-  philcare_staff: number | null;
-  security_personnel: number | null;
-  construction_workers: number | null;
-  tenants: number | null;
-  health_workers: number | null;
-  non_academic_staff: number | null;
-  guests: number | null;
-};
 
 /* ── Aggregate stats ──────────────────────────────────────── */
 export function useLandingStats() {
@@ -37,7 +21,6 @@ export function useLandingStats() {
         (e: any) => e.status?.name === 'ongoing'
       ).length;
 
-      console.log(reportsRes);
       return {
         totalEvents: eventsRes.count ?? 0,
         totalReports: reportsRes.count ?? 0,
@@ -51,49 +34,29 @@ export function useLandingStats() {
 
 /* ── Cluster breakdown from reports ──────────────────────── */
 
-interface ClusterStat {
-  cluster: string;
-  reports: number;
-  affected: number;
-  pct: number;
-}
-
 export function useClusterStats() {
   return useQuery({
     queryKey: ['landing-cluster-stats'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('reports')
-        .select(
-          'cluster:clusters(name), students, faculty_members, admin_members, reps_members, ra_members, philcare_staff, security_personnel, construction_workers, tenants, health_workers, non_academic_staff, guests'
-        )
-        .limit(500);
+      const { data, error } = await supabase.from('reports').select('clusters(name)');
 
       if (error) throw error;
 
-      const clusterMap: Record<string, { count: number; affected: number }> = {};
-      for (const cluster of CLUSTERS) {
-        clusterMap[cluster] = { count: 0, affected: 0 };
-      }
+      const clusterMap: Record<string, number> = {};
 
-      let maxReports = 0;
-      for (const r of data ?? []) {
-        const key = (r.cluster as any)?.name ?? '';
+      for (const row of data ?? []) {
+        const key = (row.clusters as unknown as { name: string } | null)?.name ?? '';
         if (!key) continue;
-        if (!clusterMap[key]) clusterMap[key] = { count: 0, affected: 0 };
-        clusterMap[key].count += 1;
-        clusterMap[key].affected += totalAffected(r as HeadcountRow);
-        if (clusterMap[key].count > maxReports) maxReports = clusterMap[key].count;
+        clusterMap[key] = (clusterMap[key] ?? 0) + 1;
       }
 
-      const stats: ClusterStat[] = CLUSTERS.map((c) => ({
-        cluster: c,
-        reports: clusterMap[c]?.count ?? 0,
-        affected: clusterMap[c]?.affected ?? 0,
-        pct: maxReports > 0 ? Math.round(((clusterMap[c]?.count ?? 0) / maxReports) * 100) : 0,
-      }));
+      const max = Math.max(...Object.values(clusterMap), 1);
 
-      return stats;
+      return Object.entries(clusterMap).map(([cluster, count]) => ({
+        cluster,
+        reports: count,
+        pct: Math.round((count / max) * 100),
+      }));
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -120,21 +83,4 @@ export function useLandingEvents() {
     },
     staleTime: 5 * 60 * 1000,
   });
-}
-
-function totalAffected(r: HeadcountRow): number {
-  return (
-    (r.students ?? 0) +
-    (r.faculty_members ?? 0) +
-    (r.admin_members ?? 0) +
-    (r.reps_members ?? 0) +
-    (r.ra_members ?? 0) +
-    (r.philcare_staff ?? 0) +
-    (r.security_personnel ?? 0) +
-    (r.construction_workers ?? 0) +
-    (r.tenants ?? 0) +
-    (r.health_workers ?? 0) +
-    (r.non_academic_staff ?? 0) +
-    (r.guests ?? 0)
-  );
 }
