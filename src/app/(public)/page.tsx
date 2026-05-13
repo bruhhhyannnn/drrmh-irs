@@ -635,7 +635,7 @@ export default function LandingPage() {
                       {item.icon}
                     </div>
                     <p
-                      className="text-[13px] leading-tight font-medium"
+                      className="truncate text-[13px] leading-tight font-medium text-wrap"
                       style={{ color: 'var(--text-dark)' }}
                     >
                       {item.label}
@@ -1211,9 +1211,13 @@ export default function LandingPage() {
               </h4>
               <ul className="flex list-none flex-col gap-2.5">
                 {[
-                  { label: 'National Hotline', href: '911' },
-                  { label: 'UPM Police / UP PGH', href: '(02) 8554-8400' },
-                  { label: 'Manila DRRMO', href: '(02) 8463-3295' },
+                  { label: 'National Hotline', href: 'tel:911', display: '911' },
+                  {
+                    label: 'UPM Police / UP PGH',
+                    href: 'tel:(02) 8554-8400',
+                    display: '(02) 8554-8400',
+                  },
+                  { label: 'Manila DRRMO', href: 'tel:(02) 8463-3295', display: '(02) 8463-3295' },
                 ].map((item) => (
                   <li key={item.label}>
                     <p
@@ -1227,7 +1231,7 @@ export default function LandingPage() {
                       className="ml-2 text-[13px] font-medium no-underline"
                       style={{ color: 'rgba(255,255,255,0.55)' }}
                     >
-                      {item.href}
+                      {item.display}
                     </a>
                   </li>
                 ))}
