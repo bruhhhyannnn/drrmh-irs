@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib';
 import { useAuthStore } from '@/store';
 import { Spinner } from '../ui';
-import { FORBIDDEN_USER_TYPES } from '@/types';
+
+const FORBIDDEN_USER_TYPES = ['ERT Member', 'Bystander'];
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, userProfile, loading } = useAuthStore();

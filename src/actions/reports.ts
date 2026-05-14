@@ -6,11 +6,7 @@ import type { Prisma } from '@prisma/client';
 
 const PER_PAGE = 10;
 
-export async function getReports(
-  page: number = 1,
-  query?: string,
-  isVerified: boolean = true
-) {
+export async function getReports(page: number = 1, query?: string, isVerified: boolean = true) {
   const where: Prisma.ReportWhereInput = {
     is_verified: isVerified,
     ...(query && {
@@ -53,7 +49,6 @@ export async function getReport(id: string) {
   return prisma.report.findUnique({
     where: { id },
     include: {
-      // TODO: might select only a few
       event: true,
       user: {
         select: {
@@ -70,7 +65,6 @@ export async function getReport(id: string) {
         include: { condition: { select: { name: true } } },
       },
       damages: {
-        // TODO: possibly change the damage_report to damage_condition
         include: { damage_report: { select: { name: true } } },
       },
     },
@@ -97,7 +91,6 @@ export async function getReportsByEvent(eventId: string) {
         include: { condition: { select: { name: true } } },
       },
       damages: {
-        // TODO: possibly change the damage_report to damage_condition
         include: { damage_report: { select: { name: true } } },
       },
     },
@@ -154,11 +147,7 @@ export async function getReportTotals() {
   };
 }
 
-export async function verifyReport(
-  reportId: string,
-  approved: boolean,
-  adminId: string
-) {
+export async function verifyReport(reportId: string, approved: boolean, adminId: string) {
   return prisma.report.update({
     where: { id: reportId },
     data: {

@@ -35,14 +35,6 @@ export function Spinner({ size = 'md', center = false, className }: SpinnerProps
   );
 }
 
-export function PageLoader() {
-  return (
-    <div className="flex h-[50vh] items-center justify-center">
-      <Spinner size="md" />
-    </div>
-  );
-}
-
 export function PageError({ message }: { message: string }) {
   return (
     <div className="flex h-[50vh] items-center justify-center">

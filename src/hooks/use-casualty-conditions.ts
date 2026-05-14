@@ -14,14 +14,6 @@ export function useCasualtyConditions() {
   });
 }
 
-// export function useCasualtyCondition(id?: string) {
-//   return useQuery({
-//     queryKey: ['casualty_condition', id],
-//     queryFn: () => getCasualtyCondition(id!),
-//     enabled: !!id,
-//   });
-// }
-
 export function useCreateCasualtyCondition() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -4,13 +4,14 @@ import type { User, Session } from '@supabase/supabase-js';
 import { Prisma } from '@prisma/client';
 
 //DEV NOTE: This is needed for the userProfile type to work
-export type UserProfileType = Prisma.UserGetPayload<{
+type UserProfileType = Prisma.UserGetPayload<{
   include: {
     unit: { include: { cluster: true } };
     position: true;
     user_type: true;
   };
 }>;
+
 interface AuthState {
   user: User | null;
   session: Session | null;

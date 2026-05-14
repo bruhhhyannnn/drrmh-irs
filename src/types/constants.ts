@@ -1,6 +1,23 @@
 export const CLUSTERS = ['Pedro Gil', 'Padre Faura', 'Taft', 'SHS', 'PGH'] as const;
-export type Cluster = (typeof CLUSTERS)[number];
+type Cluster = (typeof CLUSTERS)[number];
 
+// Used to render headcount rows in forms and tables
+export const HEADCOUNT_FIELDS = [
+  { key: 'faculty_members', label: 'Faculty Members' },
+  { key: 'admin_members', label: 'Administrative Members' },
+  { key: 'reps_members', label: 'REPS Members' },
+  { key: 'ra_members', label: 'RA Members' },
+  { key: 'students', label: 'Students' },
+  { key: 'philcare_staff', label: 'Philcare Staff' },
+  { key: 'security_personnel', label: 'Security Personnel' },
+  { key: 'construction_workers', label: 'Construction Workers' },
+  { key: 'tenants', label: 'Tenants' },
+  { key: 'health_workers', label: 'Health Workers' },
+  { key: 'non_academic_staff', label: 'Non-Academic Staff' },
+  { key: 'guests', label: 'Visitors / Guests / Patients' },
+] as const;
+
+// All below are used in seeding data
 export const UNITS: Record<Cluster, string[]> = {
   'Pedro Gil': [
     'College of Nursing',
@@ -104,7 +121,6 @@ export const CASUALTY_CONDITIONS = [
   'Fatality',
   'Other (please specify)',
 ] as const;
-export type CasualtyCondition = (typeof CASUALTY_CONDITIONS)[number];
 
 export const DAMAGE_CONDITION = [
   'No visible damage',
@@ -115,7 +131,6 @@ export const DAMAGE_CONDITION = [
   'Unsafe for occupancy — condemned',
   'Other (please specify)',
 ] as const;
-export type DamageCondition = (typeof DAMAGE_CONDITION)[number];
 
 export const POSITIONS = [
   // From the form dropdown
@@ -175,47 +190,11 @@ export const POSITIONS = [
   'SRE',
   'Other (please specify)',
 ] as const;
-export type Position = (typeof POSITIONS)[number];
 
 export const EVENT_STATUSES = ['upcoming', 'ongoing', 'completed'] as const;
-export type EventStatus = (typeof EVENT_STATUSES)[number];
 
-export const USER_TYPE_OPTIONS = [
-  { value: 1, label: 'ERT Member' },
-  { value: 2, label: 'Administrator' },
-] as const;
-
-// Used to render headcount rows in forms and tables
-export const HEADCOUNT_FIELDS = [
-  { key: 'faculty_members', label: 'Faculty Members' },
-  { key: 'admin_members', label: 'Administrative Members' },
-  { key: 'reps_members', label: 'REPS Members' },
-  { key: 'ra_members', label: 'RA Members' },
-  { key: 'students', label: 'Students' },
-  { key: 'philcare_staff', label: 'Philcare Staff' },
-  { key: 'security_personnel', label: 'Security Personnel' },
-  { key: 'construction_workers', label: 'Construction Workers' },
-  { key: 'tenants', label: 'Tenants' },
-  { key: 'health_workers', label: 'Health Workers' },
-  { key: 'non_academic_staff', label: 'Non-Academic Staff' },
-  { key: 'guests', label: 'Visitors / Guests / Patients' },
-] as const;
-
-// TODO: revalidate if this will be used
 export const USER_TYPES = {
   1: 'ERT Member',
   2: 'Administrator',
   3: 'Super Admin',
 } as const;
-
-export const FORBIDDEN_USER_TYPES = ['ERT Member', 'Bystander'];
-
-export const REPORT_TYPES = [
-  {
-    id: 'incident',
-    title: 'Incident Report',
-    subtitle: 'Report an incident or hazard',
-    description: 'Report any safety incidents, hazards, or near misses.',
-    accentColor: '#DC2626',
-    dimColor: '#FEE2E2',
-  },]

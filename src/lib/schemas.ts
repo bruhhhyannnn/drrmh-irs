@@ -20,20 +20,6 @@ export const updatePasswordSchema = z
     path: ['confirmPassword'],
   });
 
-// TODO: might remove this one since we dont have signup form
-export const signUpSchema = z
-  .object({
-    firstName: z.string().min(1, 'First name is required'),
-    lastName: z.string().min(1, 'Last name is required'),
-    email: z.string().email('Invalid email address'),
-    password: z.string().min(8, 'Password must be at least 8 characters'),
-    confirmPassword: z.string(),
-  })
-  .refine((d) => d.password === d.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
-  });
-
 /* ─── User ─── */
 export const userCreateSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -138,19 +124,24 @@ export const reportSchema = z.object({
 
 /* ─── Inferred types ─── */
 export type SignInFormData = z.infer<typeof signInSchema>;
-export type SignUpFormData = z.infer<typeof signUpSchema>;
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 export type UpdatePasswordFormData = z.infer<typeof updatePasswordSchema>;
 export type UserCreateFormData = z.infer<typeof userCreateSchema>;
 export type UserEditFormData = z.infer<typeof userEditSchema>;
-export type UserFormData = UserCreateFormData;
-export type ClusterFormData = z.infer<typeof clusterSchema>;
-export type UnitFormData = z.infer<typeof unitSchema>;
-export type LocationFormData = z.infer<typeof locationSchema>;
-export type PositionFormData = z.infer<typeof positionSchema>;
-export type UserTypeFormData = z.infer<typeof userTypeSchema>;
-export type EventStatusFormData = z.infer<typeof eventStatusSchema>;
-export type CasualtyConditionFormData = z.infer<typeof casualtyConditionSchema>;
-export type DamageConditionFormData = z.infer<typeof damageConditionSchema>;
 export type EventFormData = z.infer<typeof eventSchema>;
 export type ReportFormData = z.infer<typeof reportSchema>;
+
+// TODO: might remove this one since we dont have signup form
+export type SignUpFormData = z.infer<typeof signUpSchema>;
+export const signUpSchema = z
+  .object({
+    firstName: z.string().min(1, 'First name is required'),
+    lastName: z.string().min(1, 'Last name is required'),
+    email: z.string().email('Invalid email address'),
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  });
