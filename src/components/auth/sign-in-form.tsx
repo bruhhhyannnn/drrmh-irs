@@ -137,11 +137,11 @@ export function SignInForm() {
       {/* Bystander report card */}
       <div>
         <Link
-          href="/report-select"
-          className="group flex items-center gap-4 rounded-xl border border-red-200 bg-white p-4 transition-all duration-200 hover:border-red-300 hover:shadow-sm dark:border-red-900/50 dark:bg-white/5 dark:hover:border-red-800"
+          href="/report-submit"
+          className="group border-brand-200 hover:border-brand-400 dark:border-brand-900/50 dark:hover:border-brand-800 flex items-center gap-4 rounded-xl border bg-white p-4 transition-all duration-200 hover:shadow-md dark:bg-white/5"
         >
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-red-50 dark:bg-red-950">
-            <div className="h-2.5 w-2.5 rounded-full bg-red-500" />
+          <div className="bg-brand-50 dark:bg-brand-950 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg">
+            <div className="bg-brand-500 h-2.5 w-2.5 rounded-full" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -153,12 +153,9 @@ export function SignInForm() {
           </div>
           <ArrowRight
             size={16}
-            className="shrink-0 text-gray-300 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-red-400 dark:text-gray-600"
+            className="group-hover:text-brand-400 shrink-0 text-gray-300 transition-transform duration-200 group-hover:translate-x-0.5 dark:text-gray-600"
           />
         </Link>
-        <p className="mt-2 text-center text-xs text-gray-400 dark:text-gray-600">
-          Your identity will not be stored
-        </p>
       </div>
     </div>
   );
