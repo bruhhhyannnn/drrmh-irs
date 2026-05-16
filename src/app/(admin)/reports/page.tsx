@@ -5,7 +5,6 @@ import { format } from 'date-fns';
 import { CheckCircle, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { useReports, useDeleteReport, useVerifyReport } from '@/hooks';
 import { PageBreadcrumb } from '@/components/common';
-import type { getReports } from '@/actions/reports';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
   DataTable,
@@ -19,7 +18,9 @@ import {
 } from '@/components/ui';
 import { ReportForm } from '@/components/reports';
 import { useAuthStore } from '@/store';
+import type { getReports } from '@/actions';
 
+// TODO: revalidate
 type ReportRow = Awaited<ReturnType<typeof getReports>>['data'][number];
 type Tab = 'verified' | 'unverified';
 

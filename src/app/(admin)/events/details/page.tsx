@@ -8,9 +8,10 @@ import { PageBreadcrumb } from '@/components/common';
 import { Badge, Spinner } from '@/components/ui';
 import { CLUSTERS, HEADCOUNT_FIELDS } from '@/types';
 import { getInitials } from '@/lib';
-import type { getReportsByEvent } from '@/actions/reports';
 import { Users, MapPin, Calendar, Clock, AlertTriangle, UserX, FileText } from 'lucide-react';
+import type { getReportsByEvent } from '@/actions';
 
+// TODO: revalidate
 type EventReport = Awaited<ReturnType<typeof getReportsByEvent>>[number];
 
 // ─── Main content ─────────────────────────────────────────

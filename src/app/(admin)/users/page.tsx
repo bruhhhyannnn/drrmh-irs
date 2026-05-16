@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import { Search, Plus, UserPen } from 'lucide-react';
 import { useUsers, useToggleUserStatus } from '@/hooks';
 import { PageBreadcrumb } from '@/components/common';
-import type { getUsers } from '@/actions/users';
 import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable, Badge, Input, Button, PageError, Modal } from '@/components/ui';
 import { UserForm } from '@/components/users';
+import type { getUsers } from '@/actions';
 
+// TODO: revalidate
 type UserRow = Awaited<ReturnType<typeof getUsers>>[number];
 
 export default function UsersPage() {

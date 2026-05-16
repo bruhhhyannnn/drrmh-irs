@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getReportDamages, toggleReportDamage, deleteReportDamage } from '@/actions/report-damages';
+import { getReportDamages, toggleReportDamage, deleteReportDamage } from '@/actions';
 
 export function useReportDamages(reportId?: string) {
   return useQuery({

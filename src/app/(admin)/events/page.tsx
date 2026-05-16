@@ -100,6 +100,7 @@ export default function EventsPage() {
                   </Badge>
                 </TableCell>
                 <TableCell>
+                  {/* TODO: add delete button */}
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => {

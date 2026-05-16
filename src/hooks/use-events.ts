@@ -1,5 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getEvents, getEvent, createEvent, updateEvent, deleteEvent, getOngoingEvents } from '@/actions/events';
+import {
+  getEvents,
+  getEvent,
+  createEvent,
+  updateEvent,
+  deleteEvent,
+  getOngoingEvents,
+} from '@/actions';
 import type { Prisma } from '@prisma/client';
 
 export function useEvents(query?: string) {
@@ -44,7 +51,6 @@ export function useDeleteEvent() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['events'] }),
   });
 }
-
 
 export function useOngoingEvents() {
   return useQuery({

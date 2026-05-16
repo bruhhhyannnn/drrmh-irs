@@ -7,7 +7,6 @@ import {
   toggleUserStatus,
   type CreateUserInput,
   type UpdateUserInput,
-  getUserByAuthId,
 } from '@/actions';
 
 /* ─── Users ──────────────────────────────────────────────── */
@@ -23,14 +22,6 @@ export function useUser(id?: string) {
     queryKey: ['user', id],
     queryFn: () => getUser(id!),
     enabled: !!id,
-  });
-}
-
-export function useUserByAuthId(authId?: string) {
-  return useQuery({
-    queryKey: ['user-by-auth', authId],
-    queryFn: () => getUserByAuthId(authId!),
-    enabled: !!authId,
   });
 }
 

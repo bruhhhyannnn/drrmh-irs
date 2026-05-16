@@ -24,12 +24,16 @@ import { useAuthStore } from '@/store';
 import { HEADCOUNT_FIELDS } from '@/types';
 import { PageBreadcrumb } from '@/components/common';
 import { Input, Label, Select, Button, Spinner } from '@/components/ui';
+// TODO: use the hook one not from the actions
 import { createReport, updateReport } from '@/actions/reports';
+// TODO: use the hook one not from the actions
 import { upsertReportCasualty, deleteReportCasualty } from '@/actions/report-casualties';
+// TODO: use the hook one not from the actions
 import {
   createReportMissingPerson,
   deleteReportMissingPerson,
 } from '@/actions/report-missing-persons';
+// TODO: use the hook one not from the actions
 import { toggleReportDamage, deleteReportDamage } from '@/actions/report-damages';
 import toast from 'react-hot-toast';
 
@@ -201,6 +205,7 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
       // 1. Save main report
       let reportId: string;
       if (isEdit) {
+        // TODO: this is both wrong, must use the hook useUpdateReport
         await updateReport(editId!, {
           event: { connect: { id: data.event_id } },
           cluster: { connect: { id: data.cluster_id } },
@@ -210,6 +215,7 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
         });
         reportId = editId!;
       } else {
+        // TODO: this is both wrong, must use the hook useCreateReport
         const report = await createReport({
           event: { connect: { id: data.event_id } },
           cluster: { connect: { id: data.cluster_id } },

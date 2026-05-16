@@ -2,9 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getReportMissingPersons,
   createReportMissingPerson,
-  updateReportMissingPerson,
   deleteReportMissingPerson,
-} from '@/actions/report-missing-persons';
+} from '@/actions';
 
 export function useReportMissingPersons(reportId?: string) {
   return useQuery({
@@ -22,17 +21,6 @@ export function useCreateReportMissingPerson() {
       queryClient.invalidateQueries({
         queryKey: ['report-missing-persons', variables.report_id],
       });
-    },
-  });
-}
-
-export function useUpdateReportMissingPerson() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { name: string } }) =>
-      updateReportMissingPerson(id, data),
-    onSuccess: (_data, _variables) => {
-      queryClient.invalidateQueries({ queryKey: ['report-missing-persons'] });
     },
   });
 }

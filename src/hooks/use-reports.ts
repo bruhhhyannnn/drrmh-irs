@@ -9,8 +9,8 @@ import {
   getReportClusterSummary,
   getReportTotals,
   verifyReport,
-} from '@/actions/reports';
-import type { Prisma, Report } from '@prisma/client';
+} from '@/actions';
+import type { Prisma } from '@prisma/client';
 
 export function useReports(page: number, query: string, isVerified: boolean) {
   return useQuery({
@@ -22,7 +22,11 @@ export function useReports(page: number, query: string, isVerified: boolean) {
 export function useVerifyReport() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ reportId, approved, adminId }: {
+    mutationFn: ({
+      reportId,
+      approved,
+      adminId,
+    }: {
       reportId: string;
       approved: boolean;
       adminId: string;
@@ -82,23 +86,6 @@ export function useReportClusterSummary() {
     queryKey: ['report-cluster-summary'],
     queryFn: () => getReportClusterSummary(),
   });
-}
-
-export function useTotalAffected(report: Report): number {
-  return (
-    (report.faculty_members ?? 0) +
-    (report.admin_members ?? 0) +
-    (report.reps_members ?? 0) +
-    (report.ra_members ?? 0) +
-    (report.students ?? 0) +
-    (report.philcare_staff ?? 0) +
-    (report.security_personnel ?? 0) +
-    (report.construction_workers ?? 0) +
-    (report.tenants ?? 0) +
-    (report.health_workers ?? 0) +
-    (report.non_academic_staff ?? 0) +
-    (report.guests ?? 0)
-  );
 }
 
 export function useReportTotals() {

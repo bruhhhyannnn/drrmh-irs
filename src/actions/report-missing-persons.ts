@@ -16,12 +16,6 @@ export async function createReportMissingPerson(data: { report_id: string; name:
   return result;
 }
 
-export async function updateReportMissingPerson(id: string, data: { name: string }) {
-  const result = await prisma.reportMissingPerson.update({ where: { id }, data });
-  revalidatePath('/reports');
-  return result;
-}
-
 export async function deleteReportMissingPerson(id: string) {
   await prisma.reportMissingPerson.delete({ where: { id } });
   revalidatePath('/reports');
