@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useLandingStats, useClusterStats, useLandingEvents } from '@/hooks';
 import Image from 'next/image';
+import { cn } from '@/lib';
 
 /* ─────────────────────────────────────────────────────────────
    MAIN PAGE
@@ -35,6 +36,27 @@ export default function LandingPage() {
   const [activeTab, setActiveTab] = useState<'ongoing' | 'upcoming' | 'completed'>('ongoing');
   const filteredEvents = events?.filter((ev) => ev.status?.name?.toLowerCase() === activeTab);
 
+  /* smooth scroll */
+  const smoothScroll = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  /* hero background images */
+  const BG_IMAGES = [
+    '/upm-drrmh-background-1.jpg',
+    '/upm-drrmh-background-2.jpg',
+    '/upm-drrmh-background-3.jpg',
+    '/upm-drrmh-background-4.jpg',
+  ];
+  const track = [...BG_IMAGES, ...BG_IMAGES]; // doubled for seamless loop
+  const [current, setCurrent] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % track.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [track.length]);
+
   return (
     <>
       {/* Google Fonts */}
@@ -48,9 +70,15 @@ export default function LandingPage() {
           --cream: #FAF8F5;
           --cream2: #F3EFE8;
           --border: rgba(139,26,26,0.1);
+          --text-light: #FAF8F5;
           --text-dark: #1A1208;
           --text-mid: #4A3728;
           --text-muted: #8A7868;
+          --gold-light: #E8C97A;
+        }
+
+        html {
+          scroll-behavior: smooth;
         }
 
         body { font-family: 'Roboto', sans-serif; }
@@ -92,8 +120,8 @@ export default function LandingPage() {
           className="fixed top-0 right-0 left-0 z-50 flex items-center justify-between px-6 transition-all duration-300 lg:px-16"
           style={{
             height: '72px',
-            background: navScrolled ? 'rgba(250,248,245,0.92)' : 'rgba(250,248,245,0.6)',
-            backdropFilter: 'blur(16px)',
+            background: navScrolled ? 'rgba(250,248,245,0.92)' : 'transparent',
+            backdropFilter: navScrolled ? 'blur(16px)' : 'none',
             borderBottom: navScrolled ? '1px solid var(--border)' : '1px solid transparent',
           }}
         >
@@ -101,16 +129,22 @@ export default function LandingPage() {
             <Image
               src="/irs-favicon.png"
               alt="IRS Logo"
-              width={42}
-              height={42}
-              sizes="42px"
+              width={38}
+              height={38}
+              sizes="38px"
               className="object-contain"
             />
             <div className="flex flex-col leading-tight">
-              <span className="text-[13px] font-semibold" style={{ color: 'var(--text-dark)' }}>
+              <span
+                className="text-[13px] font-semibold"
+                style={{ color: navScrolled ? 'var(--text-dark)' : 'white' }}
+              >
                 UPM DRRM-H
               </span>
-              <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+              <span
+                className="text-[11px]"
+                style={{ color: navScrolled ? 'var(--text-muted)' : 'rgba(255,255,255,0.6)' }}
+              >
                 Incident Reporting System
               </span>
             </div>
@@ -125,10 +159,22 @@ export default function LandingPage() {
               <a
                 key={item.href}
                 href={item.href}
+                onClick={(e) => {
+                  e.preventDefault();
+                  smoothScroll(item.href.replace('#', ''));
+                }}
                 className="text-[14px] no-underline transition-colors duration-200"
-                style={{ color: 'var(--text-mid)' }}
-                onMouseEnter={(e) => ((e.target as HTMLElement).style.color = 'var(--maroon)')}
-                onMouseLeave={(e) => ((e.target as HTMLElement).style.color = 'var(--text-mid)')}
+                style={{ color: navScrolled ? 'var(--text-mid)' : 'rgba(255,255,255,0.85)' }}
+                onMouseEnter={(e) =>
+                  ((e.target as HTMLElement).style.color = navScrolled
+                    ? 'var(--maroon)'
+                    : 'var(--gold-light)')
+                }
+                onMouseLeave={(e) =>
+                  ((e.target as HTMLElement).style.color = navScrolled
+                    ? 'var(--text-mid)'
+                    : 'rgba(255,255,255,0.85)')
+                }
               >
                 {item.label}
               </a>
@@ -164,30 +210,30 @@ export default function LandingPage() {
 
           <div className="relative z-10 mx-auto w-full max-w-5xl px-6">
             <div className="hero-anim-0 mb-8 flex flex-col flex-wrap items-center justify-center gap-2">
-              {/* IMAGES LOGO */}
-              <div className="mb-2 flex flex-wrap items-center justify-center gap-2">
+              {/* logo images */}
+              <div className="mb-2 flex flex-wrap items-center justify-center gap-3">
                 <Image
                   src="/up-logo.png"
                   alt="UP Manila Logo"
-                  width={64}
-                  height={64}
-                  sizes="64px"
+                  width={72}
+                  height={72}
+                  sizes="72px"
                   className="object-contain"
                 />
                 <Image
                   src="/upm-drrmh-logo.png"
                   alt="DRRM-H Logo"
-                  width={64}
-                  height={64}
-                  sizes="64px"
+                  width={72}
+                  height={72}
+                  sizes="72px"
                   className="object-contain"
                 />
                 <Image
                   src="/irs-favicon.png"
                   alt="DRRM-H Logo"
-                  width={64}
-                  height={64}
-                  sizes="64px"
+                  width={72}
+                  height={72}
+                  sizes="72px"
                   className="object-contain"
                 />
               </div>
@@ -195,9 +241,9 @@ export default function LandingPage() {
               <div
                 className="inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-[12px] font-medium tracking-[0.8px] uppercase"
                 style={{
-                  background: 'var(--maroon-pale)',
-                  borderColor: '#F2D9D9',
-                  color: 'var(--maroon)',
+                  background: 'rgba(255,255,255,0.35)',
+                  borderColor: 'rgba(255,255,255,0.25)',
+                  color: 'white',
                 }}
               >
                 <span
@@ -214,12 +260,12 @@ export default function LandingPage() {
               style={{
                 fontSize: 'clamp(40px, 7vw, 70px)',
                 lineHeight: 1.1,
-                color: 'var(--text-dark)',
+                color: 'white',
               }}
             >
               Smarter incident reporting
               <br />
-              for <em style={{ color: 'var(--maroon)' }}>emergency response</em> teams
+              for <em style={{ color: 'var(--gold-light)' }}>emergency response</em> teams
             </h1>
 
             {/* subtext */}
@@ -227,7 +273,7 @@ export default function LandingPage() {
               className="hero-anim-2 mx-auto mb-10 font-light"
               style={{
                 fontSize: 'clamp(15px, 2vw, 18px)',
-                color: 'var(--text-muted)',
+                color: 'rgba(255,255,255,0.75)',
                 maxWidth: '560px',
                 lineHeight: 1.7,
               }}
@@ -389,6 +435,36 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="absolute inset-0 h-dvh overflow-hidden">
+            {track.map((src, i) => (
+              <div
+                key={i}
+                className={cn(
+                  'absolute inset-0 transition-opacity duration-1000',
+                  i === current ? 'opacity-100' : 'opacity-0'
+                )}
+              >
+                <Image src={src} alt="" fill className="object-cover" priority={i === 0} />
+              </div>
+            ))}
+            <div className="bg-brand-900/60 absolute inset-0" />
+            <div
+              className="absolute right-0 bottom-0 left-0"
+              style={{
+                height: '380px',
+                background: `linear-gradient(
+                            to bottom,
+                            transparent 0%,
+                            transparent 20%,
+                            rgba(250,248,245,0.2) 40%,
+                            rgba(250,248,245,0.6) 65%,
+                            rgba(250,248,245,0.9) 92%,
+                            var(--cream) 100%
+                          )`,
+              }}
+            />
           </div>
         </section>
 
@@ -1136,7 +1212,7 @@ export default function LandingPage() {
         {/* ── FOOTER ── */}
         <footer style={{ background: '#1A1208', padding: '60px clamp(20px, 6vw, 80px) 36px' }}>
           <div
-            className="mx-auto grid max-w-300 grid-cols-1 gap-12 pb-12 md:grid-cols-4"
+            className="mx-auto grid max-w-300 grid-cols-1 gap-12 pb-16 md:grid-cols-4"
             style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}
           >
             <div className="md:col-span-2">
