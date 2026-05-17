@@ -18,23 +18,20 @@ import {
   useReportMissingPersons,
   useReportDamages,
   useOngoingEvents,
+  useToggleReportDamage,
+  useDeleteReportDamage,
+  useCreateReport,
+  useUpdateReport,
+  useUpsertReportCasualty,
+  useDeleteReportCasualty,
+  useCreateReportMissingPerson,
+  useDeleteReportMissingPerson,
 } from '@/hooks';
 import { reportSchema, type ReportFormData } from '@/lib';
 import { useAuthStore } from '@/store';
 import { HEADCOUNT_FIELDS } from '@/types';
 import { PageBreadcrumb } from '@/components/common';
 import { Input, Label, Select, Button, Spinner } from '@/components/ui';
-// TODO: use the hook one not from the actions
-import { createReport, updateReport } from '@/actions/reports';
-// TODO: use the hook one not from the actions
-import { upsertReportCasualty, deleteReportCasualty } from '@/actions/report-casualties';
-// TODO: use the hook one not from the actions
-import {
-  createReportMissingPerson,
-  deleteReportMissingPerson,
-} from '@/actions/report-missing-persons';
-// TODO: use the hook one not from the actions
-import { toggleReportDamage, deleteReportDamage } from '@/actions/report-damages';
 import toast from 'react-hot-toast';
 
 type CasualtyRow = { id?: string; condition_id: string; count: number; names: string };
@@ -56,6 +53,8 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
 
   // ─── Main report data ───────────────────────────────────────
   const { data: existingReport, isLoading: isReportLoading } = useReport(editId);
+  const createReportMutation = useCreateReport();
+  const updateReportMutation = useUpdateReport();
 
   // ─── Dropdown options ───────────────────────────────────────
   const { data: allEvents = [] } = useEvents();
@@ -66,6 +65,8 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
   const { data: clusters = [] } = useClusters();
   const { data: casualtyConditions = [] } = useCasualtyConditions();
   const { data: damageConditions = [] } = useDamageConditions();
+  const upsertReportMutation = useUpsertReportCasualty();
+  const deleteReportMutation = useDeleteReportCasualty();
 
   const [selectedClusterId, setSelectedClusterId] = useState('');
   const { data: units = [] } = useUnits(selectedClusterId || undefined);
@@ -74,7 +75,11 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
   // ─── Related records (edit only) ────────────────────────────
   const { data: existingCasualties = [] } = useReportCasualties(editId);
   const { data: existingMissingPersons = [] } = useReportMissingPersons(editId);
+  const createReportMissingPersonMutation = useCreateReportMissingPerson();
+  const deleteReportMissingPersonMutation = useDeleteReportMissingPerson();
   const { data: existingDamages = [] } = useReportDamages(editId);
+  const toggleDamageMutation = useToggleReportDamage();
+  const deleteDamageMutation = useDeleteReportDamage();
 
   // ─── Dynamic section state ───────────────────────────────────
   const [casualties, setCasualties] = useState<CasualtyRow[]>([]);
@@ -205,18 +210,21 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
       // 1. Save main report
       let reportId: string;
       if (isEdit) {
-        // TODO: this is both wrong, must use the hook useUpdateReport
-        await updateReport(editId!, {
-          event: { connect: { id: data.event_id } },
-          cluster: { connect: { id: data.cluster_id } },
-          unit: data.unit_id ? { connect: { id: data.unit_id } } : { disconnect: true },
-          location: data.location_id ? { connect: { id: data.location_id } } : { disconnect: true },
-          ...headcounts,
+        await updateReportMutation.mutateAsync({
+          id: editId!,
+          data: {
+            event: { connect: { id: data.event_id } },
+            cluster: { connect: { id: data.cluster_id } },
+            unit: data.unit_id ? { connect: { id: data.unit_id } } : { disconnect: true },
+            location: data.location_id
+              ? { connect: { id: data.location_id } }
+              : { disconnect: true },
+            ...headcounts,
+          },
         });
         reportId = editId!;
       } else {
-        // TODO: this is both wrong, must use the hook useCreateReport
-        const report = await createReport({
+        const report = await createReportMutation.mutateAsync({
           event: { connect: { id: data.event_id } },
           cluster: { connect: { id: data.cluster_id } },
           ...(data.unit_id && { unit: { connect: { id: data.unit_id } } }),
@@ -234,7 +242,7 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
         casualties
           .filter((c) => c.condition_id)
           .map((c) =>
-            upsertReportCasualty({
+            upsertReportMutation.mutateAsync({
               report_id: reportId,
               condition_id: c.condition_id,
               count: c.count,
@@ -245,7 +253,7 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
       await Promise.all(
         existingCasualties
           .filter((c) => !currentConditionIds.has(c.condition_id))
-          .map((c) => deleteReportCasualty(c.id))
+          .map((c) => deleteReportMutation.mutateAsync({ id: c.id, reportId }))
       );
 
       // 3. Save missing persons — delete removed, create new
@@ -253,12 +261,17 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
       await Promise.all(
         existingMissingPersons
           .filter((p) => !keepPersonIds.has(p.id))
-          .map((p) => deleteReportMissingPerson(p.id))
+          .map((p) => deleteReportMissingPersonMutation.mutateAsync({ id: p.id, reportId }))
       );
       await Promise.all(
         missingPersons
           .filter((p) => !p.id && p.name.trim())
-          .map((p) => createReportMissingPerson({ report_id: reportId, name: p.name.trim() }))
+          .map((p) =>
+            createReportMissingPersonMutation.mutateAsync({
+              report_id: reportId,
+              name: p.name.trim(),
+            })
+          )
       );
 
       // 4. Save damages — add new selections, remove deselected
@@ -266,12 +279,14 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
       await Promise.all(
         Array.from(selectedDamageIds)
           .filter((id) => !existingDamageCondIds.has(id))
-          .map((id) => toggleReportDamage({ report_id: reportId, damage_condition_id: id }))
+          .map((id) =>
+            toggleDamageMutation.mutateAsync({ report_id: reportId, damage_condition_id: id })
+          )
       );
       await Promise.all(
         existingDamages
           .filter((d) => !selectedDamageIds.has(d.damage_condition_id))
-          .map((d) => deleteReportDamage(d.id))
+          .map((d) => deleteDamageMutation.mutateAsync({ id: d.id, reportId }))
       );
 
       // 5. Invalidate cache
