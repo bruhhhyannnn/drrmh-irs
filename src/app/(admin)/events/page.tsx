@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { Search, Eye, Plus, Pencil } from 'lucide-react';
-import { useEvents } from '@/hooks';
+import { Search, Eye, Plus, Pencil, Trash2 } from 'lucide-react';
+import { useDeleteEvent, useEvents } from '@/hooks';
 import { PageBreadcrumb } from '@/components/common';
 import {
   Table,
@@ -19,6 +19,7 @@ import {
   PageError,
   Button,
   Modal,
+  ConfirmDialog,
 } from '@/components/ui';
 import { EventForm } from '@/components/events';
 
@@ -26,7 +27,9 @@ export default function EventsPage() {
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const { data: events, isPending, isFetching, error } = useEvents(debouncedQuery);
+  const deleteEventMutation = useDeleteEvent();
   const [editId, setEditId] = useState('');
+  const [deleteId, setDeleteId] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleClose = () => {
@@ -102,6 +105,12 @@ export default function EventsPage() {
                 <TableCell>
                   {/* TODO: add delete button */}
                   <div className="flex items-center gap-3">
+                    <Link
+                      href={`/events/details?id=${event.id}`}
+                      className="hover:text-brand-600 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100"
+                    >
+                      <Eye size={17} />
+                    </Link>
                     <button
                       onClick={() => {
                         setEditId(event.id);
@@ -111,12 +120,12 @@ export default function EventsPage() {
                     >
                       <Pencil size={17} />
                     </button>
-                    <Link
-                      href={`/events/details?id=${event.id}`}
-                      className="hover:text-brand-600 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100"
+                    <button
+                      className="hover:text-error-500 text-gray-400 transition-all duration-100 dark:text-gray-500"
+                      onClick={() => setDeleteId(event.id)}
                     >
-                      <Eye size={17} />
-                    </Link>
+                      <Trash2 size={17} />
+                    </button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -142,6 +151,16 @@ export default function EventsPage() {
       <Modal isOpen={isModalOpen} onClose={handleClose}>
         <EventForm editId={editId} onSuccess={handleClose} onCancel={handleClose} />
       </Modal>
+
+      <ConfirmDialog
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId('')}
+        onConfirm={() => deleteEventMutation.mutate(deleteId, { onSuccess: () => setDeleteId('') })}
+        title="Delete event"
+        message="This event will be permanently deleted. This cannot be undone."
+        confirmLabel="Delete"
+        isLoading={deleteEventMutation.isPending}
+      />
     </>
   );
 }
