@@ -17,7 +17,7 @@ export default function LandingPage() {
   const [navScrolled, setNavScrolled] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => setNavScrolled(window.scrollY > 20);
+    const handleScroll = () => setNavScrolled(window.scrollY > 350);
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -304,7 +304,7 @@ export default function LandingPage() {
                   background: 'rgba(255,255,255,0.6)',
                 }}
               >
-                Explore Features →
+                Explore Features &rarr;
               </a>
             </div>
 
@@ -1121,7 +1121,7 @@ export default function LandingPage() {
                 background: 'rgba(255,255,255,0.6)',
               }}
             >
-              Contact DRRM-H →
+              Contact DRRM-H &rarr;
             </a> */}
           </div>
 
