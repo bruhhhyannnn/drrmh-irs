@@ -4,15 +4,16 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, AlertTriangle } from 'lucide-react';
 import { SignInFormData, signInSchema, supabase } from '@/lib';
-import { useAuthStore } from '@/store';
+import { useAuthStore, useThemeStore } from '@/store';
 import { Button, Input, Label } from '@/components/ui';
 import Link from 'next/link';
 
 export function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState('');
+  const { theme } = useThemeStore();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams?.get('from') ?? '/dashboard';
@@ -138,22 +139,24 @@ export function SignInForm() {
       <div>
         <Link
           href="/report-submit"
-          className="group border-brand-200 hover:border-brand-400 dark:border-brand-900/50 dark:hover:border-brand-800 flex items-center gap-4 rounded-xl border bg-white p-4 transition-all duration-200 hover:shadow-md dark:bg-white/5"
+          className="group border-brand-200 hover:border-brand-400 dark:border-brand-700 dark:hover:border-brand-600 flex items-center gap-4 rounded-xl border bg-white p-4 transition-all duration-200 hover:shadow-md dark:bg-white/5"
         >
           <div className="bg-brand-50 dark:bg-brand-950 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg">
-            <div className="bg-brand-500 h-2.5 w-2.5 rounded-full" />
+            <div className="animate-pulse">
+              <AlertTriangle size={20} color={theme === 'dark' ? '#d65a5a' : '#a11d1d'} />
+            </div>
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">
               Report an Incident
             </p>
             <p className="text-xs text-gray-400 dark:text-gray-500">
-              Anonymous bystander submission — no account needed
+              Anonymous submission — no account needed
             </p>
           </div>
           <ArrowRight
             size={16}
-            className="group-hover:text-brand-400 shrink-0 text-gray-300 transition-transform duration-200 group-hover:translate-x-0.5 dark:text-gray-600"
+            className="group-hover:text-brand-500 dark:group-hover:text-brand-500 shrink-0 text-gray-300 transition-transform duration-200 group-hover:translate-x-0.5 dark:text-gray-600"
           />
         </Link>
       </div>

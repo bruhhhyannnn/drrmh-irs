@@ -4,7 +4,11 @@ import { cn } from '@/lib';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
-export function AuthHeader({ children }: { children: React.ReactNode }) {
+interface AuthHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+  maxWidth?: 'md' | 'xl';
+}
+
+export function AuthHeader({ children, maxWidth = 'md', className, ...props }: AuthHeaderProps) {
   const BG_IMAGES = [
     '/upm-drrmh-background-1.jpg',
     '/upm-drrmh-background-2.jpg',
@@ -21,7 +25,7 @@ export function AuthHeader({ children }: { children: React.ReactNode }) {
   }, [track.length]);
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center px-4">
+    <div className="relative flex min-h-screen items-center justify-center">
       <div className="absolute inset-0 overflow-hidden">
         {track.map((src, i) => (
           <div
@@ -36,7 +40,15 @@ export function AuthHeader({ children }: { children: React.ReactNode }) {
         ))}
         <div className="bg-brand-900/60 absolute inset-0" />
       </div>
-      <div className="shadow-theme-md z-1 my-4 w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 dark:border-gray-800 dark:bg-gray-900">
+      <div
+        className={cn(
+          'shadow-theme-md z-1 my-12 w-full rounded-2xl border border-gray-200 bg-white p-8 dark:border-gray-800 dark:bg-gray-900',
+          maxWidth === 'md' && 'max-w-md',
+          maxWidth === 'xl' && 'max-w-xl',
+          className
+        )}
+        {...props}
+      >
         <div className="mb-8 flex flex-wrap items-center gap-2">
           <Image
             src="/up-logo.png"

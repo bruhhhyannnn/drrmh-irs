@@ -1,7 +1,6 @@
 export { Button } from './button';
 export { Input } from './input';
-export { Label } from './label';
-export { Select, Textarea } from './form';
+export { Label, Select, Textarea } from './form';
 export { Badge } from './badge';
 export { Modal } from './modal';
 export { ConfirmDialog } from './confirm-dialog';

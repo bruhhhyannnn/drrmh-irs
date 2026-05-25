@@ -1,10 +1,10 @@
 import { AuthHeader } from '@/components/auth';
-import { BystanderReportForm } from '@/components/reports/bystander-report-form';
+import { BystanderReportForm } from '@/components/reports';
 import { Suspense } from 'react';
 
 export default function ReportSubmitPage() {
   return (
-    <AuthHeader>
+    <AuthHeader maxWidth="xl">
       <Suspense>
         <BystanderReportForm />
       </Suspense>
