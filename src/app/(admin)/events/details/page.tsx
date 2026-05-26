@@ -363,7 +363,9 @@ function ClusterCard({ cluster, reports }: { cluster: string; reports: EventRepo
             </div>
 
             {/* Incident details */}
-            {(r.missing_persons.length > 0 || r.casualties.length > 0 || r.damages.length > 0) && (
+            {(r.missing_persons.length > 0 ||
+              r.casualties.length > 0 ||
+              r.damage_conditions !== null) && (
               <div className="mt-3 space-y-3">
                 {r.missing_persons.length > 0 && (
                   <div className="border-warning-200 bg-warning-50 dark:border-warning-500/20 dark:bg-warning-500/10 rounded-lg border p-3">
@@ -411,21 +413,14 @@ function ClusterCard({ cluster, reports }: { cluster: string; reports: EventRepo
                   </div>
                 )}
 
-                {r.damages.length > 0 && (
+                {r.damage_conditions && (
                   <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-white/5 dark:bg-white/2">
                     <p className="mb-1.5 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
-                      Structural Damage ({r.damages.length})
+                      Structural Damage
                     </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {r.damages.map((d) => (
-                        <span
-                          key={d.id}
-                          className="rounded-md border border-gray-300 bg-white px-2 py-0.5 text-xs text-gray-600 dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
-                        >
-                          {d.damage_report.name}
-                        </span>
-                      ))}
-                    </div>
+                    <span className="rounded-md border border-gray-300 bg-white px-2 py-0.5 text-xs text-gray-600 dark:border-white/10 dark:bg-white/5 dark:text-gray-300">
+                      {r.damage_conditions.name}
+                    </span>
                   </div>
                 )}
               </div>

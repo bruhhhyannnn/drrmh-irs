@@ -16,10 +16,7 @@ import {
   useDamageConditions,
   useReportCasualties,
   useReportMissingPersons,
-  useReportDamages,
   useOngoingEvents,
-  useToggleReportDamage,
-  useDeleteReportDamage,
   useCreateReport,
   useUpdateReport,
   useUpsertReportCasualty,
@@ -59,14 +56,16 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
   // ─── Dropdown options ───────────────────────────────────────
   const { data: allEvents = [] } = useEvents();
   const { data: ongoingEvents = [] } = useOngoingEvents();
-
   const events = isBystander ? ongoingEvents : allEvents;
 
   const { data: clusters = [] } = useClusters();
   const { data: casualtyConditions = [] } = useCasualtyConditions();
   const { data: damageConditions = [] } = useDamageConditions();
-  const upsertReportMutation = useUpsertReportCasualty();
-  const deleteReportMutation = useDeleteReportCasualty();
+
+  const upsertCasualtyMutation = useUpsertReportCasualty();
+  const deleteCasualtyMutation = useDeleteReportCasualty();
+  const createMissingPersonMutation = useCreateReportMissingPerson();
+  const deleteMissingPersonMutation = useDeleteReportMissingPerson();
 
   const [selectedClusterId, setSelectedClusterId] = useState('');
   const { data: units = [] } = useUnits(selectedClusterId || undefined);
@@ -75,16 +74,10 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
   // ─── Related records (edit only) ────────────────────────────
   const { data: existingCasualties = [] } = useReportCasualties(editId);
   const { data: existingMissingPersons = [] } = useReportMissingPersons(editId);
-  const createReportMissingPersonMutation = useCreateReportMissingPerson();
-  const deleteReportMissingPersonMutation = useDeleteReportMissingPerson();
-  const { data: existingDamages = [] } = useReportDamages(editId);
-  const toggleDamageMutation = useToggleReportDamage();
-  const deleteDamageMutation = useDeleteReportDamage();
 
   // ─── Dynamic section state ───────────────────────────────────
   const [casualties, setCasualties] = useState<CasualtyRow[]>([]);
   const [missingPersons, setMissingPersons] = useState<MissingPersonRow[]>([]);
-  const [selectedDamageIds, setSelectedDamageIds] = useState<Set<string>>(new Set());
 
   // ─── Main form ───────────────────────────────────────────────
   const {
@@ -112,6 +105,7 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
       guests: 0,
       missing_count: 0,
       casualties_count: 0,
+      damage_condition_id: '',
     },
   });
 
@@ -137,6 +131,7 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
       guests: existingReport.guests,
       missing_count: existingReport.missing_count,
       casualties_count: existingReport.casualties_count,
+      damage_condition_id: existingReport.damage_condition_id ?? '',
     });
     if (existingReport.cluster_id) setSelectedClusterId(existingReport.cluster_id);
   }, [existingReport, reset]);
@@ -160,12 +155,6 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
     }
   }, [existingMissingPersons]);
 
-  useEffect(() => {
-    if (existingDamages.length > 0) {
-      setSelectedDamageIds(new Set(existingDamages.map((d) => d.damage_condition_id)));
-    }
-  }, [existingDamages]);
-
   // ─── Missing persons helpers ─────────────────────────────────
   const addMissingPerson = () => setMissingPersons((p) => [...p, { name: '' }]);
   const removeMissingPerson = (i: number) =>
@@ -178,14 +167,6 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
   const removeCasualty = (i: number) => setCasualties((p) => p.filter((_, idx) => idx !== i));
   const updateCasualty = (i: number, patch: Partial<CasualtyRow>) =>
     setCasualties((p) => p.map((item, idx) => (idx === i ? { ...item, ...patch } : item)));
-
-  // ─── Damage helpers ──────────────────────────────────────────
-  const toggleDamage = (id: string) =>
-    setSelectedDamageIds((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
 
   // ─── Submit ──────────────────────────────────────────────────
   const onSubmit = handleSubmit(async (data) => {
@@ -207,7 +188,7 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
     };
 
     try {
-      // 1. Save main report
+      // 1. Save main report (damage_condition_id is now a direct field)
       let reportId: string;
       if (isEdit) {
         await updateReportMutation.mutateAsync({
@@ -219,6 +200,9 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
             location: data.location_id
               ? { connect: { id: data.location_id } }
               : { disconnect: true },
+            damage_conditions: data.damage_condition_id
+              ? { connect: { id: data.damage_condition_id } }
+              : { disconnect: true },
             ...headcounts,
           },
         });
@@ -229,6 +213,9 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
           cluster: { connect: { id: data.cluster_id } },
           ...(data.unit_id && { unit: { connect: { id: data.unit_id } } }),
           ...(data.location_id && { location: { connect: { id: data.location_id } } }),
+          ...(data.damage_condition_id && {
+            damage_condition: { connect: { id: data.damage_condition_id } },
+          }),
           ...(userId && { user: { connect: { id: userId } } }),
           is_verified: !isBystander,
           ...headcounts,
@@ -242,7 +229,7 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
         casualties
           .filter((c) => c.condition_id)
           .map((c) =>
-            upsertReportMutation.mutateAsync({
+            upsertCasualtyMutation.mutateAsync({
               report_id: reportId,
               condition_id: c.condition_id,
               count: c.count,
@@ -253,7 +240,7 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
       await Promise.all(
         existingCasualties
           .filter((c) => !currentConditionIds.has(c.condition_id))
-          .map((c) => deleteReportMutation.mutateAsync({ id: c.id, reportId }))
+          .map((c) => deleteCasualtyMutation.mutateAsync({ id: c.id, reportId }))
       );
 
       // 3. Save missing persons — delete removed, create new
@@ -261,41 +248,25 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
       await Promise.all(
         existingMissingPersons
           .filter((p) => !keepPersonIds.has(p.id))
-          .map((p) => deleteReportMissingPersonMutation.mutateAsync({ id: p.id, reportId }))
+          .map((p) => deleteMissingPersonMutation.mutateAsync({ id: p.id, reportId }))
       );
       await Promise.all(
         missingPersons
           .filter((p) => !p.id && p.name.trim())
           .map((p) =>
-            createReportMissingPersonMutation.mutateAsync({
+            createMissingPersonMutation.mutateAsync({
               report_id: reportId,
               name: p.name.trim(),
             })
           )
       );
 
-      // 4. Save damages — add new selections, remove deselected
-      const existingDamageCondIds = new Set(existingDamages.map((d) => d.damage_condition_id));
-      await Promise.all(
-        Array.from(selectedDamageIds)
-          .filter((id) => !existingDamageCondIds.has(id))
-          .map((id) =>
-            toggleDamageMutation.mutateAsync({ report_id: reportId, damage_condition_id: id })
-          )
-      );
-      await Promise.all(
-        existingDamages
-          .filter((d) => !selectedDamageIds.has(d.damage_condition_id))
-          .map((d) => deleteDamageMutation.mutateAsync({ id: d.id, reportId }))
-      );
-
-      // 5. Invalidate cache
+      // 4. Invalidate cache
       queryClient.invalidateQueries({ queryKey: ['reports'] });
       if (isEdit) {
         queryClient.invalidateQueries({ queryKey: ['report', editId] });
         queryClient.invalidateQueries({ queryKey: ['report-casualties', editId] });
         queryClient.invalidateQueries({ queryKey: ['report-missing-persons', editId] });
-        queryClient.invalidateQueries({ queryKey: ['report-damages', editId] });
       }
 
       toast.success(isEdit ? 'Report updated' : 'Report submitted');
@@ -305,11 +276,16 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
     }
   });
 
+  // ─── Select options ──────────────────────────────────────────
   const eventOptions = events.map((e) => ({ value: e.id, label: e.name }));
   const clusterOptions = clusters.map((c) => ({ value: c.id, label: c.name }));
   const unitOptions = units.map((u) => ({ value: u.id, label: u.name }));
   const locationOptions = locations.map((l) => ({ value: l.id, label: l.name }));
   const casualtyConditionOptions = casualtyConditions.map((c) => ({ value: c.id, label: c.name }));
+  const damageConditionOptions = [
+    { value: '', label: 'None' },
+    ...damageConditions.map((d) => ({ value: d.id, label: d.name })),
+  ];
 
   const usedConditionIds = new Set(casualties.map((c) => c.condition_id));
 
@@ -526,31 +502,15 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
               )}
             </div>
 
-            {/* ── Structural damage ────────────────────────── */}
+            {/* ── Structural Damage ────────────────────────── */}
             <div>
-              <p className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
-                Structural Damage
-              </p>
-              {damageConditions.length === 0 ? (
-                <p className="text-sm text-gray-400">No damage conditions available</p>
-              ) : (
-                <div className="space-y-2">
-                  {damageConditions.map((dc) => (
-                    <label
-                      key={dc.id}
-                      className="flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 px-3 py-2.5 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/3"
-                    >
-                      <input
-                        type="checkbox"
-                        className="mt-0.5 h-4 w-4 rounded accent-blue-600"
-                        checked={selectedDamageIds.has(dc.id)}
-                        onChange={() => toggleDamage(dc.id)}
-                      />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">{dc.name}</span>
-                    </label>
-                  ))}
-                </div>
-              )}
+              <Label>Structural Damage</Label>
+              <Select
+                options={damageConditionOptions}
+                placeholder="Select damage type..."
+                value={watch('damage_condition_id') ?? ''}
+                onChange={(e) => setValue('damage_condition_id', e.target.value)}
+              />
             </div>
 
             {/* ── Actions ──────────────────────────────────── */}
