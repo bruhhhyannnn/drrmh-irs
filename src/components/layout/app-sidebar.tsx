@@ -13,6 +13,7 @@ import {
   Calendar,
   Settings,
   ChevronDown,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib';
 import Image from 'next/image';
@@ -29,6 +30,7 @@ const navItems: NavItem[] = [
   { icon: <LayoutDashboard size={20} />, name: 'Home', path: '/dashboard' },
   { icon: <CalendarDays size={20} />, name: 'Events', path: '/events' },
   { icon: <BarChart2 size={20} />, name: 'Reports', path: '/reports' },
+  { icon: <AlertTriangle size={20} />, name: 'Emergency Reports', path: '/emergency-reports' },
   { icon: <Calendar size={20} />, name: 'Calendar', path: '/calendar' },
   { icon: <Users size={20} />, name: 'Users', path: '/users' },
   { icon: <ScrollText size={20} />, name: 'Activity Logs', path: '/activity-logs' },
