@@ -33,52 +33,51 @@ model User {
 }
 
 model Cluster {
-  id                 String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name               String             @unique
-  is_active          Boolean            @default(true)
-  created_at         DateTime           @default(now()) @db.Timestamptz(6)
-  updated_at         DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
-  locations          Location[]
-  report_assignments ReportAssignment[]
-  reports            Report[]
-  units              Unit[]
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String              @unique
+  is_active         Boolean             @default(true)
+  created_at        DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime            @default(now()) @updatedAt @db.Timestamptz(6)
+  bystander_reports bystander_reports[]
+  locations         Location[]
+  reports           Report[]
+  units             Unit[]
 
   @@map("clusters")
 }
 
 model Unit {
-  id                 String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name               String
-  cluster_id         String             @db.Uuid
-  is_active          Boolean            @default(true)
-  created_at         DateTime           @default(now()) @db.Timestamptz(6)
-  updated_at         DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
-  report_assignments ReportAssignment[]
-  reports            Report[]
-  cluster            Cluster            @relation(fields: [cluster_id], references: [id], onDelete: Cascade)
-  users              User[]
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String
+  cluster_id        String              @db.Uuid
+  is_active         Boolean             @default(true)
+  created_at        DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime            @default(now()) @updatedAt @db.Timestamptz(6)
+  bystander_reports bystander_reports[]
+  reports           Report[]
+  cluster           Cluster             @relation(fields: [cluster_id], references: [id], onDelete: Cascade)
+  users             User[]
 
   @@unique([name, cluster_id])
   @@map("units")
 }
 
 model Event {
-  id                 String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id            String?            @db.Uuid
-  location_id        String?            @db.Uuid
-  status_id          String             @db.Uuid
-  name               String
-  description        String?
-  quarter            String?
-  started_at         DateTime?          @db.Timestamptz(6)
-  ended_at           DateTime?          @db.Timestamptz(6)
-  created_at         DateTime           @default(now()) @db.Timestamptz(6)
-  updated_at         DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
-  location           Location?          @relation(fields: [location_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  status             EventStatus        @relation(fields: [status_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  user               User?              @relation("CreatedBy", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  report_assignments ReportAssignment[]
-  reports            Report[]
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id     String?     @db.Uuid
+  location_id String?     @db.Uuid
+  status_id   String      @db.Uuid
+  name        String
+  description String?
+  quarter     String?
+  started_at  DateTime?   @db.Timestamptz(6)
+  ended_at    DateTime?   @db.Timestamptz(6)
+  created_at  DateTime    @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime    @default(now()) @updatedAt @db.Timestamptz(6)
+  location    Location?   @relation(fields: [location_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  status      EventStatus @relation(fields: [status_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user        User?       @relation("CreatedBy", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  reports     Report[]
 
   @@index([user_id])
   @@map("events")
@@ -112,10 +111,11 @@ model Report {
   reporter_type                    String                @default("authenticated")
   is_verified                      Boolean?
   verified_by                      String?               @db.Uuid
+  damage_condition_id              String?               @db.Uuid
   casualties                       ReportCasualty[]
-  damages                          ReportDamage[]
   missing_persons                  ReportMissingPerson[]
   cluster                          Cluster               @relation(fields: [cluster_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  damage_conditions                DamageCondition?      @relation(fields: [damage_condition_id], references: [id], onUpdate: NoAction)
   event                            Event                 @relation(fields: [event_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   location                         Location?             @relation(fields: [location_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   unit                             Unit?                 @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -126,22 +126,6 @@ model Report {
   @@index([user_id])
   @@index([cluster_id])
   @@map("reports")
-}
-
-model ReportAssignment {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  event_id   String   @db.Uuid
-  cluster_id String   @db.Uuid
-  unit_id    String?  @db.Uuid
-  created_at DateTime @default(now()) @db.Timestamptz(6)
-  cluster    Cluster  @relation(fields: [cluster_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  event      Event    @relation(fields: [event_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  unit       Unit?    @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-  @@unique([event_id, cluster_id])
-  @@index([event_id])
-  @@index([cluster_id])
-  @@map("report_assignments")
 }
 
 model ActivityLog {
@@ -189,53 +173,51 @@ model CasualtyCondition {
 }
 
 model ReportCasualty {
-  id           String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  report_id    String            @db.Uuid
-  condition_id String            @db.Uuid
-  count        Int               @default(0)
-  names        String?
-  created_at   DateTime          @default(now()) @db.Timestamptz(6)
-  condition    CasualtyCondition @relation(fields: [condition_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  report       Report            @relation(fields: [report_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id                  String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  report_id           String?            @db.Uuid
+  condition_id        String             @db.Uuid
+  count               Int                @default(0)
+  names               String?
+  created_at          DateTime           @default(now()) @db.Timestamptz(6)
+  age                 Int?
+  sex                 String?
+  bystander_report_id String?            @db.Uuid
+  bystander_reports   bystander_reports? @relation(fields: [bystander_report_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  condition           CasualtyCondition  @relation(fields: [condition_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  report              Report?            @relation(fields: [report_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([report_id, condition_id])
   @@index([report_id])
+  @@index([bystander_report_id], map: "idx_report_casualties_bystander")
   @@map("report_casualties")
 }
 
 model ReportMissingPerson {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  report_id  String   @db.Uuid
-  name       String
-  created_at DateTime @default(now()) @db.Timestamptz(6)
-  report     Report   @relation(fields: [report_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id                  String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  report_id           String?            @db.Uuid
+  name                String
+  created_at          DateTime           @default(now()) @db.Timestamptz(6)
+  age                 Int?
+  sex                 String?
+  bystander_report_id String?            @db.Uuid
+  bystander_reports   bystander_reports? @relation(fields: [bystander_report_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  report              Report?            @relation(fields: [report_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([report_id])
+  @@index([bystander_report_id], map: "idx_report_missing_persons_bystander")
   @@map("report_missing_persons")
 }
 
 model DamageCondition {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name           String         @unique
-  is_active      Boolean        @default(true)
-  created_at     DateTime       @default(now()) @db.Timestamptz(6)
-  updated_at     DateTime       @default(now()) @updatedAt @db.Timestamptz(6)
-  report_damages ReportDamage[]
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String              @unique
+  is_active         Boolean             @default(true)
+  created_at        DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime            @default(now()) @updatedAt @db.Timestamptz(6)
+  bystander_reports bystander_reports[]
+  reports           Report[]
 
   @@map("damage_conditions")
-}
-
-model ReportDamage {
-  id                  String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  report_id           String          @db.Uuid
-  damage_condition_id String          @db.Uuid
-  created_at          DateTime        @default(now()) @db.Timestamptz(6)
-  damage_report       DamageCondition @relation(fields: [damage_condition_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  report              Report          @relation(fields: [report_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@unique([report_id, damage_condition_id])
-  @@index([report_id])
-  @@map("report_damages")
 }
 
 model Position {
@@ -269,4 +251,47 @@ model EventStatus {
   events     Event[]
 
   @@map("event_statuses")
+}
+
+model bystander_incident_types {
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String              @unique
+  is_active         Boolean             @default(true)
+  created_at        DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime            @default(now()) @db.Timestamptz(6)
+  bystander_reports bystander_reports[]
+}
+
+model bystander_report_statuses {
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String              @unique
+  is_active         Boolean             @default(true)
+  created_at        DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime            @default(now()) @db.Timestamptz(6)
+  bystander_reports bystander_reports[]
+}
+
+model bystander_reports {
+  id                        String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cluster_id                String                     @db.Uuid
+  unit_id                   String?                    @db.Uuid
+  latitude                  Decimal                    @db.Decimal(10, 8)
+  longitude                 Decimal                    @db.Decimal(11, 8)
+  submitted_at              DateTime                   @default(now()) @db.Timestamptz(6)
+  created_at                DateTime                   @default(now()) @db.Timestamptz(6)
+  incident_type_id          String?                    @db.Uuid
+  status_id                 String?                    @db.Uuid
+  description               String?
+  location_description      String?
+  damage_condition_id       String?                    @db.Uuid
+  clusters                  Cluster                    @relation(fields: [cluster_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  damage_conditions         DamageCondition?           @relation(fields: [damage_condition_id], references: [id], onUpdate: NoAction)
+  bystander_incident_types  bystander_incident_types?  @relation(fields: [incident_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  bystander_report_statuses bystander_report_statuses? @relation(fields: [status_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  units                     Unit?                      @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  report_casualties         ReportCasualty[]
+  report_missing_persons    ReportMissingPerson[]
+
+  @@index([incident_type_id])
+  @@index([status_id])
 }
