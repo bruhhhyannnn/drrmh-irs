@@ -64,8 +64,8 @@ export async function getReport(id: string) {
       casualties: {
         include: { condition: { select: { name: true } } },
       },
-      damages: {
-        include: { damage_report: { select: { name: true } } },
+      damage_conditions: {
+        select: { name: true },
       },
     },
   });
@@ -90,8 +90,8 @@ export async function getReportsByEvent(eventId: string) {
       casualties: {
         include: { condition: { select: { name: true } } },
       },
-      damages: {
-        include: { damage_report: { select: { name: true } } },
+      damage_conditions: {
+        select: { name: true },
       },
     },
   });
