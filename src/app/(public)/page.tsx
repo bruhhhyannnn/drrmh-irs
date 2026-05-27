@@ -1306,18 +1306,18 @@ export default function LandingPage() {
             >
               Access the System
             </Link>
-            <a
-              href="mailto:upm-drrmh-list@up.edu.ph"
-              className="rounded-[10px] border px-6 py-3.5 no-underline transition-all duration-200"
+            <Link
+              href="/bystander-report"
+              className="rounded-[10px] border px-6 py-3.5 no-underline transition-all duration-200 hover:-translate-y-0.5"
               style={{
-                color: 'var(--text-mid)',
+                color: 'var(--maroon)',
                 borderColor: 'var(--border)',
                 background: 'rgba(255,255,255,0.6)',
                 fontSize: 'var(--text-md)',
               }}
             >
-              Contact DRRM-H &rarr;
-            </a>
+              Submit a Bystander Report →
+            </Link>
           </div>
 
           {/* live CTA stat strip */}

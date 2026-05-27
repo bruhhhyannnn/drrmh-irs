@@ -126,7 +126,10 @@ export default function UsersPage() {
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="relative max-w-sm min-w-2xs flex-1">
-            <Search size={16} className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400" />
+            <Search
+              size={16}
+              className="absolute top-1/2 z-1 left-3 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+            />
             <Input
               placeholder="Search users..."
               className="pl-9"
