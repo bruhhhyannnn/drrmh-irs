@@ -67,8 +67,8 @@ export default function EventsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Date & Time</TableHead>
               <TableHead>Event Name</TableHead>
+              <TableHead>Date & Time</TableHead>
               <TableHead>Reports Submitted</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Action</TableHead>
@@ -77,18 +77,19 @@ export default function EventsPage() {
           <TableBody>
             {events?.map((event) => (
               <TableRow key={event.id}>
-                <TableCell>
-                  {event.started_at
-                    ? format(new Date(event.started_at), 'MMM d, yyyy h:mm a')
-                    : '—'}
-                </TableCell>
                 <TableCell className="font-medium text-gray-900 dark:text-white">
                   {event.name}
+                </TableCell>
+                <TableCell>
+                  {event.started_at
+                    ? format(new Date(event.started_at), 'MMM d, yyyy | h:mm a')
+                    : '—'}
                 </TableCell>
                 <TableCell className="font-medium text-gray-900 dark:text-white">
                   {event._count.reports}
                 </TableCell>
                 <TableCell>
+                  {/* TODO: change colors */}
                   <Badge
                     color={
                       event.status.name.toLocaleLowerCase() === 'active'
@@ -103,7 +104,6 @@ export default function EventsPage() {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {/* TODO: add delete button */}
                   <div className="flex items-center gap-3">
                     <Link
                       href={`/events/details?id=${event.id}`}
