@@ -75,6 +75,22 @@ export default function LandingPage() {
           --text-mid: #4A3728;
           --text-muted: #8A7868;
           --gold-light: #E8C97A;
+          
+          --text-2xs: 11px;
+          --text-xs: 12px;
+          --text-sm: 14px;
+          --text-base: 15px;
+          --text-md: 16px;
+          --text-lg: 17px;
+          --text-xl: 19px;
+          --text-2xl: 28px;
+          --text-3xl: 36px;
+
+          --text-quote:    clamp(18px, 2.8vw, 30px);    /* testimonial quote */
+          --text-section:  clamp(28px, 4vw, 48px);      /* section headings */
+          --text-cta:      clamp(28px, 5vw, 52px);      /* CTA heading */
+          --text-hero-sub: clamp(15px, 2vw, 18px);      /* hero subtext */
+          --text-hero:     clamp(44px, 7vw, 76px);      /* hero h1 */
         }
 
         html {
@@ -114,7 +130,10 @@ export default function LandingPage() {
         }
       `}</style>
 
-      <div style={{ background: 'var(--cream)', color: 'var(--text-dark)', overflowX: 'hidden' }}>
+      <div
+        className="textlg"
+        style={{ background: 'var(--cream)', color: 'var(--text-dark)', overflowX: 'hidden' }}
+      >
         {/* ── NAV ── */}
         <nav
           className="fixed top-0 right-0 left-0 z-50 flex items-center justify-between px-6 transition-all duration-300 lg:px-16"
@@ -136,13 +155,16 @@ export default function LandingPage() {
             />
             <div className="flex flex-col leading-tight">
               <span
-                className="text-[13px] font-semibold"
-                style={{ color: navScrolled ? 'var(--text-dark)' : 'white' }}
+                className="font-semibold"
+                style={{
+                  color: navScrolled ? 'var(--text-dark)' : 'white',
+                  fontSize: 'var(--text-sm)',
+                }}
               >
                 UPM DRRM-H
               </span>
               <span
-                className="text-[11px]"
+                className="text-xs"
                 style={{ color: navScrolled ? 'var(--text-muted)' : 'rgba(255,255,255,0.6)' }}
               >
                 Incident Reporting System
@@ -163,8 +185,11 @@ export default function LandingPage() {
                   e.preventDefault();
                   smoothScroll(item.href.replace('#', ''));
                 }}
-                className="text-[14px] no-underline transition-colors duration-200"
-                style={{ color: navScrolled ? 'var(--text-mid)' : 'rgba(255,255,255,0.85)' }}
+                className="no-underline transition-colors duration-200"
+                style={{
+                  color: navScrolled ? 'var(--text-mid)' : 'rgba(255,255,255,0.85)',
+                  fontSize: 'var(--text-base)',
+                }}
                 onMouseEnter={(e) =>
                   ((e.target as HTMLElement).style.color = navScrolled
                     ? 'var(--maroon)'
@@ -182,8 +207,12 @@ export default function LandingPage() {
             <Link
               href="/signin"
               target="_blank"
-              className="rounded-lg px-5 py-2.5 text-[13px] font-medium text-white no-underline transition-all duration-200 hover:-translate-y-px"
-              style={{ background: 'var(--maroon)', boxShadow: '0 4px 14px rgba(139,26,26,0.3)' }}
+              className="rounded-lg px-5 py-2.5 font-medium text-white no-underline transition-all duration-200 hover:-translate-y-px"
+              style={{
+                background: 'var(--maroon)',
+                boxShadow: '0 4px 14px rgba(139,26,26,0.3)',
+                fontSize: 'var(--text-sm)',
+              }}
             >
               Access System
             </Link>
@@ -238,19 +267,25 @@ export default function LandingPage() {
                 />
               </div>
               {/* eyebrow */}
-              <div
-                className="inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-[12px] font-medium tracking-[0.8px] uppercase"
-                style={{
-                  background: 'rgba(255,255,255,0.35)',
-                  borderColor: 'rgba(255,255,255,0.25)',
-                  color: 'white',
-                }}
-              >
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="pulse-dot h-1.5 w-1.5 shrink-0 rounded-full"
+                    style={{ background: 'var(--gold-light)' }}
+                  />
+                  <span
+                    className="text-[13px] font-semibold tracking-wide text-white"
+                    style={{ fontSize: 'var(--text-xl)' }}
+                  >
+                    University of the Philippines Manila
+                  </span>
+                </div>
                 <span
-                  className="pulse-dot h-1.5 w-1.5 rounded-full"
-                  style={{ background: 'var(--maroon)' }}
-                />
-                UP Manila · Disaster Risk Reduction Management in Health
+                  className="font-light"
+                  style={{ color: 'rgba(255,255,255,0.6)', fontSize: 'var(--text-lg)' }}
+                >
+                  Disaster Risk Reduction & Management in Health Program
+                </span>
               </div>
             </div>
 
@@ -258,7 +293,7 @@ export default function LandingPage() {
             <h1
               className="display hero-anim-1 mb-6 font-normal"
               style={{
-                fontSize: 'clamp(40px, 7vw, 70px)',
+                fontSize: 'var(--text-hero)',
                 lineHeight: 1.1,
                 color: 'white',
               }}
@@ -272,13 +307,13 @@ export default function LandingPage() {
             <p
               className="hero-anim-2 mx-auto mb-10 font-light"
               style={{
-                fontSize: 'clamp(15px, 2vw, 18px)',
+                fontSize: 'var(--text-hero-sub)',
                 color: 'rgba(255,255,255,0.75)',
                 maxWidth: '560px',
                 lineHeight: 1.7,
               }}
             >
-              The HEAD Incident Reporting System automates documentation during emergency drills,
+              The Incident Reporting System automates documentation during emergency drills,
               generates real-time summaries, and helps evaluate ERT performance over time.
             </p>
 
@@ -287,21 +322,23 @@ export default function LandingPage() {
               <Link
                 href="/signin"
                 target="_blank"
-                className="rounded-[10px] px-7 py-3.5 text-[15px] font-medium text-white no-underline transition-all duration-200 hover:-translate-y-0.5"
+                className="rounded-[10px] px-7 py-3.5 font-medium text-white no-underline transition-all duration-200 hover:-translate-y-0.5"
                 style={{
                   background: 'var(--maroon)',
                   boxShadow: '0 4px 20px rgba(139,26,26,0.28)',
+                  fontSize: 'var(--text-md)',
                 }}
               >
                 Access the System
               </Link>
               <a
                 href="#features"
-                className="rounded-[10px] border px-6 py-3.5 text-[15px] font-normal no-underline transition-all duration-200"
+                className="rounded-[10px] border px-6 py-3.5 font-normal no-underline transition-all duration-200"
                 style={{
                   color: 'var(--text-mid)',
                   borderColor: 'var(--border)',
                   background: 'rgba(255,255,255,0.6)',
+                  fontSize: 'var(--text-md)',
                 }}
               >
                 Explore Features &rarr;
@@ -309,6 +346,7 @@ export default function LandingPage() {
             </div>
 
             {/* ── Dashboard Preview ── */}
+            {/* TODO: remove live data, replace it with offline data not showing any data from the app */}
             <div
               className="hero-anim-4 w-full overflow-hidden rounded-[20px] text-left"
               style={{
@@ -342,7 +380,10 @@ export default function LandingPage() {
                   className="rounded-[14px] p-5 md:col-span-3"
                   style={{ background: 'var(--cream)', border: '1px solid var(--border)' }}
                 >
-                  <p className="mb-4 text-[13px] font-medium" style={{ color: 'var(--text-mid)' }}>
+                  <p
+                    className="mb-4 font-medium"
+                    style={{ color: 'var(--text-mid)', fontSize: 'var(--text-sm)' }}
+                  >
                     Drills by Cluster
                   </p>
                   <div className="flex flex-col gap-3">
@@ -359,7 +400,7 @@ export default function LandingPage() {
                       : ['Pedro Gil', 'Padre Faura', 'Taft', 'SHS'].map((name) => (
                           <div key={name} className="flex items-center gap-3">
                             <span
-                              className="min-w-25 text-[12px]"
+                              className="min-w-25 text-xs"
                               style={{ color: 'var(--text-muted)' }}
                             >
                               {name}
@@ -369,7 +410,7 @@ export default function LandingPage() {
                               style={{ height: '8px' }}
                             />
                             <span
-                              className="min-w-13 text-[12px]"
+                              className="min-w-13 text-xs"
                               style={{ color: 'var(--text-muted)' }}
                             >
                               —
@@ -389,13 +430,16 @@ export default function LandingPage() {
                     style={{ borderBottom: '1px solid var(--border)', background: 'var(--cream2)' }}
                   >
                     <p
-                      className="text-[11px] font-medium tracking-[0.8px] uppercase"
-                      style={{ color: 'var(--text-muted)' }}
+                      className="font-medium tracking-[0.8px] uppercase"
+                      style={{ color: 'var(--text-muted)', fontSize: 'var(--text-2xs)' }}
                     >
                       Recent Events
                     </p>
                   </div>
-                  <table className="w-full text-[13px]" style={{ borderCollapse: 'collapse' }}>
+                  <table
+                    className="w-full"
+                    style={{ borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}
+                  >
                     <tbody>
                       {events && events.length > 0
                         ? events.map((ev) => (
@@ -478,7 +522,7 @@ export default function LandingPage() {
           }}
         >
           <p
-            className="mb-7 text-[12px] font-medium tracking-[1.2px] uppercase"
+            className="mb-7 text-xs font-medium tracking-[1.2px] uppercase"
             style={{ color: 'var(--text-muted)' }}
           >
             Developed under the NICER Program for
@@ -487,16 +531,16 @@ export default function LandingPage() {
             {[
               { abbr: 'UP', name: 'UP Manila', variant: 'maroon' },
               { abbr: 'DRRM', name: 'DRRM-H Center', variant: 'gold' },
-              { abbr: 'NICER', name: 'NICER Program', variant: 'dark' },
               { abbr: 'ERT', name: 'Emergency Response Teams', variant: 'maroon' },
               { abbr: 'HEAD', name: 'HEAD IRS Initiative', variant: 'dark' },
             ].map((item) => (
               <div key={item.abbr} className="flex flex-col items-center gap-1.5">
                 <div
-                  className="flex h-13 w-13 items-center justify-center rounded-full text-[11px] font-bold tracking-[0.5px]"
+                  className="flex h-13 w-13 items-center justify-center rounded-full font-bold tracking-[0.5px]"
                   style={{
                     width: '52px',
                     height: '52px',
+                    fontSize: 'var(--text-xs)',
                     background:
                       item.variant === 'maroon'
                         ? '#F9ECEC'
@@ -514,8 +558,8 @@ export default function LandingPage() {
                   {item.abbr}
                 </div>
                 <span
-                  className="max-w-20 text-center text-[11px]"
-                  style={{ color: 'var(--text-muted)' }}
+                  className="max-w-20 text-center"
+                  style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}
                 >
                   {item.name}
                 </span>
@@ -529,7 +573,7 @@ export default function LandingPage() {
           <Reveal className="grid grid-cols-1 items-center gap-20 lg:grid-cols-2">
             <div>
               <p
-                className="mb-3.5 text-[12px] font-medium tracking-[1.2px] uppercase"
+                className="mb-3.5 text-xs font-medium tracking-[1.2px] uppercase"
                 style={{ color: 'var(--maroon)' }}
               >
                 Event Management
@@ -537,7 +581,7 @@ export default function LandingPage() {
               <h2
                 className="display mb-4 font-normal"
                 style={{
-                  fontSize: 'clamp(28px, 4vw, 48px)',
+                  fontSize: 'var(--text-section)',
                   lineHeight: 1.15,
                   color: 'var(--text-dark)',
                 }}
@@ -549,10 +593,10 @@ export default function LandingPage() {
               <p
                 className="mb-10 font-light"
                 style={{
-                  fontSize: '16px',
                   color: 'var(--text-muted)',
                   lineHeight: 1.7,
                   maxWidth: '480px',
+                  fontSize: 'var(--text-lg)',
                 }}
               >
                 Track drills and incidents from start to resolution — assign roles, monitor status,
@@ -590,7 +634,7 @@ export default function LandingPage() {
                   <span
                     key={t}
                     onClick={() => setActiveTab(t)}
-                    className="cursor-pointer rounded-full border px-3.5 py-1.5 text-[12px] font-medium capitalize transition-all duration-200"
+                    className="cursor-pointer rounded-full border px-3.5 py-1.5 text-xs font-medium capitalize transition-all duration-200"
                     style={
                       activeTab === t
                         ? {
@@ -610,14 +654,18 @@ export default function LandingPage() {
                 ))}
               </div>
 
-              <table className="w-full text-[13px]" style={{ borderCollapse: 'collapse' }}>
+              <table
+                className="w-full"
+                style={{ borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}
+              >
                 <thead>
                   <tr>
                     {['Event Name', 'Location', 'Status'].map((h) => (
                       <th
                         key={h}
-                        className="px-2.5 py-2 text-left text-[11px] font-medium tracking-[0.6px] uppercase"
+                        className="px-2.5 py-2 text-left font-medium tracking-[0.6px] uppercase"
                         style={{
+                          fontSize: 'var(--text-2xs)',
                           color: 'var(--text-muted)',
                           borderBottom: '1px solid var(--border)',
                         }}
@@ -649,8 +697,8 @@ export default function LandingPage() {
                     <tr>
                       <td
                         colSpan={3}
-                        className="px-2.5 py-6 text-center text-[13px]"
-                        style={{ color: 'var(--text-muted)' }}
+                        className="px-2.5 py-6 text-center"
+                        style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}
                       >
                         No {activeTab} events
                       </td>
@@ -685,8 +733,8 @@ export default function LandingPage() {
               }}
             >
               <p
-                className="mb-3 text-[11px] font-medium tracking-[0.8px] uppercase"
-                style={{ color: 'var(--text-muted)' }}
+                className="mb-3 font-medium tracking-[0.8px] uppercase"
+                style={{ color: 'var(--text-muted)', fontSize: 'var(--text-xs)' }}
               >
                 What gets captured in every drill
               </p>
@@ -711,8 +759,8 @@ export default function LandingPage() {
                       {item.icon}
                     </div>
                     <p
-                      className="truncate text-[13px] leading-tight font-medium text-wrap"
-                      style={{ color: 'var(--text-dark)' }}
+                      className="truncate leading-tight font-medium text-wrap"
+                      style={{ color: 'var(--text-dark)', fontSize: 'var(--text-sm)' }}
                     >
                       {item.label}
                     </p>
@@ -726,8 +774,8 @@ export default function LandingPage() {
                 style={{ background: 'var(--cream)', border: '1px solid var(--border)' }}
               >
                 <p
-                  className="mb-2.5 text-[11px] font-medium tracking-[0.6px] uppercase"
-                  style={{ color: 'var(--text-muted)' }}
+                  className="mb-2.5 font-medium tracking-[0.6px] uppercase"
+                  style={{ color: 'var(--text-muted)', fontSize: 'var(--text-xs)' }}
                 >
                   Personnel categories tracked
                 </p>
@@ -742,17 +790,18 @@ export default function LandingPage() {
                 ].map((role) => (
                   <div
                     key={role}
-                    className="flex items-center gap-2 py-1.5 text-[13px]"
+                    className="flex items-center gap-2 py-1.5"
                     style={{
                       color: 'var(--text-mid)',
                       borderBottom: '1px solid rgba(139,26,26,0.05)',
+                      fontSize: 'var(--text-sm)',
                     }}
                   >
                     <span
                       className="h-1.5 w-1.5 shrink-0 rounded-full"
                       style={{ background: 'var(--maroon)', opacity: 0.4 }}
                     />
-                    <span>{role}</span>
+                    <span style={{ fontSize: 'var(--text-sm)' }}>{role}</span>
                   </div>
                 ))}
               </div>
@@ -760,7 +809,7 @@ export default function LandingPage() {
 
             <div className="order-1 lg:order-2">
               <p
-                className="mb-3.5 text-[12px] font-medium tracking-[1.2px] uppercase"
+                className="mb-3.5 text-xs font-medium tracking-[1.2px] uppercase"
                 style={{ color: 'var(--maroon)' }}
               >
                 Incident Reporting
@@ -768,7 +817,7 @@ export default function LandingPage() {
               <h2
                 className="display mb-4 font-normal"
                 style={{
-                  fontSize: 'clamp(28px, 4vw, 48px)',
+                  fontSize: 'var(--text-section)',
                   lineHeight: 1.15,
                   color: 'var(--text-dark)',
                 }}
@@ -780,7 +829,7 @@ export default function LandingPage() {
               <p
                 className="mb-10 font-light"
                 style={{
-                  fontSize: '16px',
+                  fontSize: 'var(--text-lg)',
                   color: 'var(--text-muted)',
                   lineHeight: 1.7,
                   maxWidth: '480px',
@@ -815,7 +864,7 @@ export default function LandingPage() {
           <div className="mx-auto max-w-300">
             <Reveal className="mx-auto mb-12 max-w-140 text-center">
               <p
-                className="mb-3.5 text-[12px] font-medium tracking-[1.2px] uppercase"
+                className="mb-3.5 text-xs font-medium tracking-[1.2px] uppercase"
                 style={{ color: 'var(--maroon)' }}
               >
                 Built for simplicity
@@ -823,7 +872,7 @@ export default function LandingPage() {
               <h2
                 className="display mb-3 font-normal"
                 style={{
-                  fontSize: 'clamp(28px, 4vw, 48px)',
+                  fontSize: 'var(--text-section)',
                   lineHeight: 1.15,
                   color: 'var(--text-dark)',
                 }}
@@ -834,14 +883,17 @@ export default function LandingPage() {
               </h2>
               <p
                 className="font-light"
-                style={{ fontSize: '16px', color: 'var(--text-muted)', lineHeight: 1.7 }}
+                style={{ color: 'var(--text-muted)', lineHeight: 1.7, fontSize: 'var(--text-lg)' }}
               >
                 Designed for UP Manila's emergency response workflow — from real-time field
                 submission to post-drill evaluation.
               </p>
             </Reveal>
 
-            <Reveal delay={100} className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+            <Reveal
+              delay={100}
+              className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 lg:justify-items-center"
+            >
               <FCard
                 icon={<IconLayers />}
                 title="Mobile Field Reporting"
@@ -872,6 +924,12 @@ export default function LandingPage() {
                 title="Cross-drill Search"
                 desc="Search and filter across all drills, reports, and clusters to find the data you need for evaluation and planning."
               />
+              <FCard
+                icon={<IconOffline />}
+                title="Offline Functionality"
+                desc="Reports can be submitted even without internet connection. Data is queued locally and automatically synced once connectivity is restored."
+                className="lg:col-start-2 lg:max-w-90"
+              />
             </Reveal>
           </div>
         </div>
@@ -880,7 +938,7 @@ export default function LandingPage() {
         <section id="how-it-works" className="mx-auto max-w-300 px-6 py-24 lg:px-20">
           <Reveal className="mx-auto mb-16 max-w-130 text-center">
             <p
-              className="mb-3.5 text-[12px] font-medium tracking-[1.2px] uppercase"
+              className="mb-3.5 text-xs font-medium tracking-[1.2px] uppercase"
               style={{ color: 'var(--maroon)' }}
             >
               How It Works
@@ -888,7 +946,7 @@ export default function LandingPage() {
             <h2
               className="display font-normal"
               style={{
-                fontSize: 'clamp(28px, 4vw, 48px)',
+                fontSize: 'var(--text-section)',
                 lineHeight: 1.15,
                 color: 'var(--text-dark)',
               }}
@@ -929,12 +987,15 @@ export default function LandingPage() {
                 >
                   {step.num}
                 </p>
-                <h3 className="mb-2 text-[16px] font-medium" style={{ color: 'var(--text-dark)' }}>
+                <h3
+                  className="mb-2 font-medium"
+                  style={{ color: 'var(--text-dark)', fontSize: 'var(--text-lg)' }}
+                >
                   {step.title}
                 </h3>
                 <p
-                  className="text-[14px] leading-relaxed font-light"
-                  style={{ color: 'var(--text-muted)' }}
+                  className="leading-relaxed font-light"
+                  style={{ color: 'var(--text-muted)', fontSize: 'var(--text-base)' }}
                 >
                   {step.desc}
                 </p>
@@ -966,17 +1027,17 @@ export default function LandingPage() {
           <div className="relative mx-auto max-w-225 px-6 py-24">
             {/* eyebrow */}
             <p
-              className="mb-6 text-[11px] font-medium tracking-[1.4px] uppercase"
-              style={{ color: 'rgba(255,255,255,0.45)' }}
+              className="mb-6 font-medium tracking-[1.4px] uppercase"
+              style={{ color: 'rgba(255,255,255,0.45)', fontSize: 'var(--text-2xs)' }}
             >
-              From the Director
+              From the Head of Unit
             </p>
 
             {/* real verified quote */}
             <blockquote
               className="display mx-auto mb-8 font-normal italic"
               style={{
-                fontSize: 'clamp(18px, 2.8vw, 30px)',
+                fontSize: 'var(--text-quote)',
                 color: 'white',
                 maxWidth: '780px',
                 lineHeight: 1.55,
@@ -1000,7 +1061,10 @@ export default function LandingPage() {
                   className="rounded-full object-contain"
                 />
               </div>
-              <p className="text-[14px] font-light" style={{ color: 'rgba(255,255,255,0.6)' }}>
+              <p
+                className="font-light"
+                style={{ color: 'rgba(255,255,255,0.6)', fontSize: 'var(--text-base)' }}
+              >
                 <strong className="mb-0.5 block font-medium" style={{ color: 'white' }}>
                   Dr. Carlos Primero D. Gundran
                 </strong>
@@ -1015,17 +1079,12 @@ export default function LandingPage() {
             />
 
             {/* founding stat cards */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {[
                 {
                   value: 'June 8, 2022',
                   label: 'Officially launched',
                   sub: 'Joaquin Gonzales Hall, UP Manila',
-                },
-                {
-                  value: 'NICER Program',
-                  label: 'Funded under',
-                  sub: 'DOST-PCHRD research initiative',
                 },
                 {
                   value: 'DRRM Act 2010',
@@ -1043,21 +1102,153 @@ export default function LandingPage() {
                 >
                   <p
                     className="display mb-1 font-normal"
-                    style={{ fontSize: '18px', color: 'white', lineHeight: 1.2 }}
+                    style={{ color: 'white', lineHeight: 1.2, fontSize: 'var(--text-xl)' }}
                   >
                     {card.value}
                   </p>
                   <p
-                    className="mb-0.5 text-[12px] font-medium"
-                    style={{ color: 'rgba(255,255,255,0.55)' }}
+                    className="mb-0.5 text-xs font-medium"
+                    style={{ color: 'rgba(255,255,255,0.55)', fontSize: 'var(--text-sm)' }}
                   >
                     {card.label}
                   </p>
-                  <p className="text-[11px] font-light" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  <p
+                    className="font-light"
+                    style={{ color: 'rgba(255,255,255,0.35)', fontSize: 'var(--text-xs)' }}
+                  >
                     {card.sub}
                   </p>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── VISION & MISSION ── */}
+        <div style={{ background: 'var(--white)', padding: '96px clamp(20px, 6vw, 80px)' }}>
+          <div className="mx-auto max-w-200">
+            <Reveal className="mb-12 text-center">
+              <p
+                className="section-eyebrow mb-3.5 text-xs font-medium tracking-[1.2px] uppercase"
+                style={{ color: 'var(--maroon)' }}
+              >
+                Who We Are
+              </p>
+              <h2
+                className="display font-normal"
+                style={{
+                  fontSize: 'var(--text-section)',
+                  lineHeight: 1.15,
+                  color: 'var(--text-dark)',
+                }}
+              >
+                Our Vision & <em style={{ color: 'var(--maroon)' }}>Mission</em>
+              </h2>
+            </Reveal>
+
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-1">
+              {/* Vision */}
+              <Reveal>
+                <div
+                  className="max- h-full rounded-[20px] p-8"
+                  style={{ background: 'var(--cream)', border: '1px solid var(--border)' }}
+                >
+                  <div className="mb-5 flex items-center gap-3">
+                    <div
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px]"
+                      style={{ background: 'var(--maroon)' }}
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="1.8"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <circle cx="12" cy="12" r="3" />
+                        <line x1="12" y1="2" x2="12" y2="5" />
+                        <line x1="12" y1="19" x2="12" y2="22" />
+                        <line x1="2" y1="12" x2="5" y2="12" />
+                        <line x1="19" y1="12" x2="22" y2="12" />
+                      </svg>
+                    </div>
+                    <h3
+                      className="font-medium"
+                      style={{ color: 'var(--text-dark)', fontSize: 'var(--text-lg)' }}
+                    >
+                      Vision
+                    </h3>
+                  </div>
+                  <p
+                    className="leading-relaxed font-light"
+                    style={{
+                      color: 'var(--text-mid)',
+                      lineHeight: 1.75,
+                      fontSize: 'var(--text-md)',
+                    }}
+                  >
+                    The academe's center for world-class capacity building, research, and public
+                    services in DRRM-H-related issues in the Philippines by 2030.
+                  </p>
+                </div>
+              </Reveal>
+
+              {/* Mission */}
+              <Reveal delay={100}>
+                <div
+                  className="h-full rounded-[20px] p-8"
+                  style={{ background: 'var(--cream)', border: '1px solid var(--border)' }}
+                >
+                  <div className="mb-5 flex items-center gap-3">
+                    <div
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px]"
+                      style={{ background: 'var(--maroon)' }}
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="1.8"
+                      >
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                      </svg>
+                    </div>
+                    <h3
+                      className="font-medium"
+                      style={{ color: 'var(--text-dark)', fontSize: 'var(--text-lg)' }}
+                    >
+                      Mission
+                    </h3>
+                  </div>
+                  <ul className="flex flex-col items-center justify-center gap-3">
+                    {[
+                      'UPlift the value and status of the organization as the lead resource in disaster risk reduction and management in health.',
+                      "Develop individuals' competence in DRRM-H to minimize disaster-related injuries, disabilities, diseases, and deaths through capacity-building, research, and public service.",
+                      'Revitalize institutional linkages with multiple stakeholders, enabling enhanced collaboration among healthcare providers, community leaders, and the academe.',
+                      'Reinforce research agendas to gather evidence-based data, create policies, programs, and publications toward a health-resilient community.',
+                      'Motivate internal stakeholders toward professional and personal upliftment while managing resources to achieve sustainability.',
+                      'Harness technological advancements to create world-class processes promoting innovative programs and quality of life.',
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-center justify-center gap-3">
+                        <span
+                          className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+                          style={{ background: 'var(--maroon)', opacity: 0.5 }}
+                        />
+                        <span
+                          className="leading-relaxed font-light"
+                          style={{ color: 'var(--text-mid)', fontSize: 'var(--text-base)' }}
+                        >
+                          {item}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </Reveal>
             </div>
           </div>
         </div>
@@ -1082,7 +1273,7 @@ export default function LandingPage() {
           <h2
             className="display mb-4 font-normal"
             style={{
-              fontSize: 'clamp(28px, 5vw, 52px)',
+              fontSize: 'var(--text-cta)',
               lineHeight: 1.15,
               color: 'var(--text-dark)',
             }}
@@ -1094,10 +1285,10 @@ export default function LandingPage() {
           <p
             className="mx-auto mb-9 font-light"
             style={{
-              fontSize: '17px',
               color: 'var(--text-muted)',
               maxWidth: '440px',
               lineHeight: 1.65,
+              fontSize: 'var(--text-lg)',
             }}
           >
             Access the IRS dashboard or reach out to the DRRM-H Center to get your team onboarded.
@@ -1106,23 +1297,27 @@ export default function LandingPage() {
             <Link
               href="/signin"
               target="_blank"
-              className="rounded-[10px] px-7 py-3.5 text-[15px] font-medium text-white no-underline transition-all duration-200 hover:-translate-y-0.5"
-              style={{ background: 'var(--maroon)', boxShadow: '0 4px 20px rgba(139,26,26,0.28)' }}
+              className="rounded-[10px] px-7 py-3.5 font-medium text-white no-underline transition-all duration-200 hover:-translate-y-0.5"
+              style={{
+                background: 'var(--maroon)',
+                boxShadow: '0 4px 20px rgba(139,26,26,0.28)',
+                fontSize: 'var(--text-md)',
+              }}
             >
               Access the System
             </Link>
-            {/* TODO: revalidate */}
-            {/* <a
-              href="mailto:drrm-h@up.edu.ph"
-              className="rounded-[10px] border px-6 py-3.5 text-[15px] no-underline transition-all duration-200"
+            <a
+              href="mailto:upm-drrmh-list@up.edu.ph"
+              className="rounded-[10px] border px-6 py-3.5 no-underline transition-all duration-200"
               style={{
                 color: 'var(--text-mid)',
                 borderColor: 'var(--border)',
                 background: 'rgba(255,255,255,0.6)',
+                fontSize: 'var(--text-md)',
               }}
             >
               Contact DRRM-H &rarr;
-            </a> */}
+            </a>
           </div>
 
           {/* live CTA stat strip */}
@@ -1179,15 +1374,21 @@ export default function LandingPage() {
                   }}
                 >
                   <p
-                    className="mb-2 text-[11px] tracking-[0.7px] uppercase"
-                    style={{ color: item.accent ? 'rgba(255,255,255,0.6)' : 'var(--text-muted)' }}
+                    className="mb-2 tracking-[0.7px] uppercase"
+                    style={{
+                      color: item.accent ? 'rgba(255,255,255,0.6)' : 'var(--text-muted)',
+                      fontSize: 'var(--text-2xs)',
+                    }}
                   >
                     {item.label}
                   </p>
                   {item.value !== undefined ? (
                     <p
-                      className="display text-[28px] leading-none"
-                      style={{ color: item.accent ? 'white' : 'var(--text-dark)' }}
+                      className="display leading-none"
+                      style={{
+                        color: item.accent ? 'white' : 'var(--text-dark)',
+                        fontSize: 'var(--text-2xl)',
+                      }}
                     >
                       {item.value}
                     </p>
@@ -1198,7 +1399,7 @@ export default function LandingPage() {
                     />
                   )}
                   <p
-                    className="mt-1 text-[12px]"
+                    className="mt-1 text-xs"
                     style={{ color: item.accent ? 'rgba(255,255,255,0.55)' : 'var(--text-muted)' }}
                   >
                     {item.sub}
@@ -1210,9 +1411,17 @@ export default function LandingPage() {
         </div>
 
         {/* ── FOOTER ── */}
-        <footer style={{ background: '#1A1208', padding: '60px clamp(20px, 6vw, 80px) 36px' }}>
+        <footer
+          style={{
+            background: '#1A1208',
+            paddingTop: '90px',
+            paddingLeft: 'clamp(20px, 6vw, 80px)',
+            paddingRight: 'clamp(20px, 6vw, 80px)',
+            paddingBottom: '0px',
+          }}
+        >
           <div
-            className="mx-auto grid max-w-300 grid-cols-1 gap-12 pb-16 md:grid-cols-4"
+            className="mx-auto grid max-w-325 grid-cols-1 gap-12 pb-28 lg:grid-cols-4"
             style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}
           >
             <div className="md:col-span-2">
@@ -1241,36 +1450,41 @@ export default function LandingPage() {
                   sizes="42px"
                   className="object-contain"
                 />
-                <span className="text-[14px] font-medium text-white">UPM DRRM-H — IRS</span>
+                <span className="font-medium text-white" style={{ fontSize: 'var(--text-base)' }}>
+                  UPM DRRM-H — IRS
+                </span>
               </div>
               <p
-                className="max-w-75 text-[13px] leading-relaxed font-light"
-                style={{ color: 'rgba(255,255,255,0.5)' }}
+                className="max-w-75 leading-relaxed font-light"
+                style={{ color: 'rgba(255,255,255,0.5)', fontSize: 'var(--text-sm)' }}
               >
-                The HEAD Incident Reporting System automates emergency drill documentation for the
-                UP Manila DRRM-H Center, improving ERT skills and protocol compliance through
+                The Incident Reporting System automates emergency drill documentation for the UP
+                Manila DRRM-H Center, improving ERT skills and protocol compliance through
                 data-driven evaluation.
               </p>
             </div>
             <div>
               <h4
-                className="mb-4 text-[12px] font-medium tracking-[1px] uppercase"
+                className="mb-4 text-xs font-medium tracking-[1px] uppercase"
                 style={{ color: 'rgba(255,255,255,0.35)' }}
               >
                 Contact
               </h4>
               <ul className="flex list-none flex-col gap-2.5">
                 {[
-                  { label: 'drrm-h@up.edu.ph', href: 'mailto:drrm-h@up.edu.ph' },
-                  { label: 'UP Manila', href: '#' },
-                  { label: 'Pedro Gil St., Ermita, Manila', href: '#' },
-                  { label: 'NICER Program', href: '#' },
+                  { label: 'upm-drrmh-list@up.edu.ph', href: 'mailto:upm-drrmh-list@up.edu.ph' },
+                  {
+                    label: 'DRRM-H Facebook',
+                    href: 'https://www.facebook.com/UPSimulationCenter',
+                  },
+                  { label: 'DRRM-H Hotline 811-41-279', href: 'tel:81141279' },
+                  { label: 'Padre Faura St., Ermita, Manila', href: '#' },
                 ].map((item) => (
                   <li key={item.label}>
                     <a
                       href={item.href}
-                      className="text-[13px] font-light no-underline"
-                      style={{ color: 'rgba(255,255,255,0.55)' }}
+                      className="font-light no-underline"
+                      style={{ color: 'rgba(255,255,255,0.55)', fontSize: 'var(--text-sm)' }}
                     >
                       {item.label}
                     </a>
@@ -1280,32 +1494,50 @@ export default function LandingPage() {
             </div>
             <div>
               <h4
-                className="mb-4 text-[12px] font-medium tracking-[1px] uppercase"
+                className="mb-4 text-xs font-medium tracking-[1px] uppercase"
                 style={{ color: 'rgba(255,255,255,0.35)' }}
               >
                 Emergency Contact
               </h4>
-              <ul className="flex list-none flex-col gap-2.5">
+              <ul className="grid list-none grid-cols-2 gap-x-4 gap-y-3">
                 {[
                   { label: 'National Hotline', href: 'tel:911', display: '911' },
                   {
-                    label: 'UPM Police / UP PGH',
-                    href: 'tel:(02) 8554-8400',
+                    label: 'UPM Police',
+                    href: 'tel:0285548400',
                     display: '(02) 8554-8400',
                   },
-                  { label: 'Manila DRRMO', href: 'tel:(02) 8463-3295', display: '(02) 8463-3295' },
+                  {
+                    label: 'UP PGH',
+                    href: 'tel:0285548400',
+                    display: '(02) 8554-8400',
+                  },
+                  { label: 'PAGASA', href: 'tel:0280271541', display: '(02) 8027-1541' },
+                  { label: 'NDDRMC', href: 'tel:0289115061', display: '(02) 8911-5061' },
+                  { label: 'Manila DRRMO', href: 'tel:0284633295', display: '(02) 8463-3295' },
+                  {
+                    label: 'Philippine Coast Guard',
+                    href: 'tel:0285273877',
+                    display: '(02) 8527-3877',
+                  },
+                  {
+                    label: 'Bureau of Fire Protection',
+                    href: 'tel:024260219',
+                    display: '(02) 426-0219',
+                  },
+                  { label: 'Red Cross', href: 'tel:143', display: '143' },
                 ].map((item) => (
                   <li key={item.label}>
                     <p
-                      className="text-[13px] font-light no-underline"
-                      style={{ color: 'rgba(255,255,255,0.55)' }}
+                      className="font-light"
+                      style={{ color: 'rgba(255,255,255,0.4)', fontSize: 'var(--text-xs)' }}
                     >
                       {item.label}
                     </p>
                     <a
                       href={item.href}
-                      className="ml-2 text-[13px] font-medium no-underline"
-                      style={{ color: 'rgba(255,255,255,0.55)' }}
+                      className="ml-2 text-xs font-medium no-underline"
+                      style={{ color: 'rgba(255,255,255,0.65)' }}
                     >
                       {item.display}
                     </a>
@@ -1315,11 +1547,25 @@ export default function LandingPage() {
             </div>
           </div>
           <div
-            className="mx-auto mt-6 flex max-w-300 flex-wrap items-center justify-between gap-3 text-[12px]"
-            style={{ color: 'rgba(255,255,255,0.28)' }}
+            className="relative mx-auto mt-6 flex max-w-300 flex-wrap items-center justify-between gap-3 overflow-hidden text-xs"
+            style={{ color: 'rgba(255,255,255,0.28)', paddingBottom: 'clamp(80px, 16vw, 160px)' }}
           >
             <span>© 2026 UP Manila DRRM-H — Incident Reporting System. All rights reserved.</span>
             <span>Developed under the NICER Program · Dr. Carlos Primero D. Gundran</span>
+            {/* oversized IRS watermark */}
+            <div className="pointer-events-none absolute right-0 bottom-0 left-0 overflow-hidden leading-none select-none">
+              <p
+                className="display text-center font-bold"
+                style={{
+                  fontSize: 'clamp(120px, 18vw, 320px)',
+                  color: 'rgba(255,255,255,0.15)',
+                  lineHeight: 0.85,
+                  marginBottom: '-0.30em',
+                }}
+              >
+                IRS
+              </p>
+            </div>
           </div>
         </footer>
       </div>
@@ -1339,7 +1585,8 @@ function StatusBadge({ status }: { status: string }) {
   };
   return (
     <span
-      className={`inline-block rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${map[status] ?? 'border-gray-200 bg-gray-100 text-gray-600'}`}
+      style={{ fontSize: 'var(--text-xs)' }}
+      className={`inline-block rounded-full border px-2.5 py-0.5 font-medium ${map[status] ?? 'border-gray-200 bg-gray-100 text-gray-600'}`}
     >
       {status}
     </span>
@@ -1359,20 +1606,23 @@ function StatCard({
 }) {
   return (
     <div className="rounded-xl border border-[rgba(139,26,26,0.1)] bg-[#F3EFE8] p-5">
-      <p className="mb-2 text-[11px] font-medium tracking-[0.8px] text-[#8A7868] uppercase">
+      <p
+        className="mb-2 font-medium tracking-[0.8px] text-[#8A7868] uppercase"
+        style={{ fontSize: 'var(--text-2xs)' }}
+      >
         {label}
       </p>
       {value === undefined ? (
         <div className="h-9 w-20 animate-pulse rounded-md bg-[#E8E2D8]" />
       ) : (
         <p
-          className="font-['Instrument_Serif'] text-[36px] leading-none"
-          style={{ color: accent ? '#8B1A1A' : '#1A1208' }}
+          className="font-['Instrument_Serif'] leading-none"
+          style={{ color: accent ? '#8B1A1A' : '#1A1208', fontSize: 'var(--text-3xl)' }}
         >
           {value}
         </p>
       )}
-      {sub && <p className="mt-1 text-[12px] text-[#8A7868]">{sub}</p>}
+      {sub && <p className="mt-1 text-xs text-[#8A7868]">{sub}</p>}
     </div>
   );
 }
@@ -1398,14 +1648,14 @@ function ProgressRow({
 
   return (
     <div className="flex items-center gap-3">
-      <span className="min-w-25 text-[12px] text-[#8A7868]">{name}</span>
+      <span className="min-w-25 text-xs text-[#8A7868]">{name}</span>
       <div className="h-2 flex-1 overflow-hidden rounded-full bg-[#E8E2D8]">
         <div
           className="h-full rounded-full transition-all duration-1000 ease-out"
           style={{ width: `${width}%`, backgroundColor: barColor }}
         />
       </div>
-      <span className="min-w-13 text-right text-[12px] font-medium text-[#4A3728]">
+      <span className="min-w-13 text-right text-xs font-medium text-[#4A3728]">
         {reports} {reports === 1 ? 'drill' : 'drills'}
       </span>
     </div>
@@ -1433,21 +1683,47 @@ function FeatureListItem({
     <li className="flex items-start gap-4">
       <FeatureIcon>{icon}</FeatureIcon>
       <div>
-        <p className="mb-1 text-[15px] font-medium text-[#1A1208]">{title}</p>
-        <p className="text-[14px] leading-relaxed font-light text-[#8A7868]">{desc}</p>
+        <p className="mb-1 font-medium text-[#1A1208]" style={{ fontSize: 'var(--text-md)' }}>
+          {title}
+        </p>
+        <p
+          className="leading-relaxed font-light text-[#8A7868]"
+          style={{ fontSize: 'var(--text-base)' }}
+        >
+          {desc}
+        </p>
       </div>
     </li>
   );
 }
 
-function FCard({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+function FCard({
+  icon,
+  title,
+  desc,
+  className = '',
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+  className?: string;
+}) {
   return (
-    <div className="rounded-[18px] border border-[rgba(139,26,26,0.1)] bg-[#FAF8F5] p-7 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
+    <div
+      className={`${className} rounded-[18px] border border-[rgba(139,26,26,0.1)] bg-[#FAF8F5] p-7 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg`}
+    >
       <div className="mb-5 flex h-11.5 w-11.5 items-center justify-center rounded-xl bg-[#8B1A1A]">
         {icon}
       </div>
-      <h3 className="mb-2 text-[16px] font-medium text-[#1A1208]">{title}</h3>
-      <p className="text-[14px] leading-relaxed font-light text-[#8A7868]">{desc}</p>
+      <h3 className="mb-2 font-medium text-[#1A1208]" style={{ fontSize: 'var(--text-lg)' }}>
+        {title}
+      </h3>
+      <p
+        className="leading-relaxed font-light text-[#8A7868]"
+        style={{ fontSize: 'var(--text-base)' }}
+      >
+        {desc}
+      </p>
     </div>
   );
 }
@@ -1614,5 +1890,12 @@ const IconGPS = () => (
   >
     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
     <circle cx="12" cy="10" r="3" />
+  </svg>
+);
+const IconOffline = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8">
+    <path d="M1 6l4 4a9 9 0 0 1 14 0l4-4A15 15 0 0 0 1 6z" />
+    <path d="M5 12.5l4 4a5 5 0 0 1 6 0l4-4a11 11 0 0 0-14 0z" />
+    <line x1="2" y1="2" x2="22" y2="22" />
   </svg>
 );
