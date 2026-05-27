@@ -1,4 +1,4 @@
-import { getActivityLogs } from '@/actions';
+import { getActivityLogs } from '@/actions/activity-logs';
 import { useQuery } from '@tanstack/react-query';
 
 /* ─── Activity Logs ──────────────────────────────────────── */

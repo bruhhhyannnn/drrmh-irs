@@ -3,7 +3,7 @@ import {
   getBystanderIncidentTypes,
   getBystanderReports,
   updateBystanderReportStatus,
-} from '@/actions/bystander-reports';
+} from '@/actions/emergency-reports';
 import { BystanderReportFormData } from '@/lib';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';

@@ -14,10 +14,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui';
-import { useActivityLogs } from '@/hooks';
 import { format } from 'date-fns';
 import { Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useActivityLogs } from './use-activity-logs';
 
 const PER_PAGE = 10;
 

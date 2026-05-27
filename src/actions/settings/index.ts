@@ -73,3 +73,45 @@ export async function deleteSettingsItem(table: SettingsTable, id: string) {
   await prisma[model].delete({ where: { id } });
   revalidateTable(table);
 }
+
+// Individual Settings Item
+
+export async function getUnits(clusterId?: string) {
+  return prisma.unit.findMany({
+    where: clusterId ? { cluster_id: clusterId } : undefined,
+    include: { cluster: { select: { name: true } } },
+    orderBy: { name: 'asc' },
+  });
+}
+
+export async function getUserTypes() {
+  return prisma.userType.findMany({ orderBy: { name: 'asc' } });
+}
+
+export async function getPositions() {
+  return prisma.position.findMany({ orderBy: { name: 'asc' } });
+}
+
+export async function getLocations(clusterId?: string) {
+  return prisma.location.findMany({
+    where: clusterId ? { cluster_id: clusterId } : undefined,
+    include: { cluster: { select: { name: true } } },
+    orderBy: { name: 'asc' },
+  });
+}
+
+export async function getEventStatuses() {
+  return prisma.eventStatus.findMany({ orderBy: { updated_at: 'asc' } });
+}
+
+export async function getDamageConditions() {
+  return prisma.damageCondition.findMany({ orderBy: { name: 'asc' } });
+}
+
+export async function getClusters() {
+  return prisma.cluster.findMany({ orderBy: { name: 'asc' } });
+}
+
+export async function getCasualtyConditions() {
+  return prisma.casualtyCondition.findMany({ orderBy: { name: 'asc' } });
+}

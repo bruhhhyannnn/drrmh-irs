@@ -1,8 +1,8 @@
 'use client';
 
+import { useEvents } from '@/app/(admin)/events/use-events';
 import { PageBreadcrumb } from '@/components/common';
 import { Badge } from '@/components/ui';
-import { useEvents } from '@/hooks';
 import {
   addMonths,
   eachDayOfInterval,

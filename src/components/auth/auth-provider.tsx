@@ -1,6 +1,6 @@
 'use client';
 
-import { getUserByAuthId } from '@/actions';
+import { getUserByAuthId } from '@/actions/users';
 import { supabase } from '@/lib';
 import { useAuthStore } from '@/store';
 import { useEffect, useRef } from 'react';

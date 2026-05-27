@@ -1,7 +1,6 @@
 'use client';
 
 import { PageBreadcrumb } from '@/components/common';
-import { EventForm } from '@/components/events';
 import {
   Badge,
   Button,
@@ -17,11 +16,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui';
-import { useDeleteEvent, useEvents } from '@/hooks';
 import { format } from 'date-fns';
 import { Eye, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { EventForm } from './event-form';
+import { useDeleteEvent, useEvents } from './use-events';
 
 export default function EventsPage() {
   const [query, setQuery] = useState('');

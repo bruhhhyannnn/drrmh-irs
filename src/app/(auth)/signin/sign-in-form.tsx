@@ -138,7 +138,7 @@ export function SignInForm() {
       {/* Bystander report card */}
       <div>
         <Link
-          href="/report-submit"
+          href="/bystander-report"
           className="group border-brand-200 hover:border-brand-400 dark:border-brand-700 dark:hover:border-brand-600 flex items-center gap-4 rounded-xl border bg-white p-4 transition-all duration-200 hover:shadow-md dark:bg-white/5"
         >
           <div className="bg-brand-50 dark:bg-brand-950 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg">

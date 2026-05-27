@@ -1,8 +1,9 @@
 'use client';
 
-import type { getBystanderReports, getReports } from '@/actions';
+import type { getBystanderReports } from '@/actions/emergency-reports';
+import type { getReports } from '@/actions/reports';
+import { useBystanderReports } from '@/app/(admin)/emergency-reports/use-bystander-reports';
 import { PageBreadcrumb } from '@/components/common';
-import { ReportForm } from '@/components/reports';
 import {
   Badge,
   Button,
@@ -13,12 +14,13 @@ import {
   PageError,
   Pagination,
 } from '@/components/ui';
-import { useBystanderReports, useDeleteReport, useReports, useVerifyReport } from '@/hooks';
 import { useAuthStore } from '@/store';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { CheckCircle, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { ReportForm } from './report-form';
+import { useDeleteReport, useReports, useVerifyReport } from './use-reports';
 
 type ReportRow = Awaited<ReturnType<typeof getReports>>['data'][number];
 type BystanderRow = Awaited<ReturnType<typeof getBystanderReports>>[number];

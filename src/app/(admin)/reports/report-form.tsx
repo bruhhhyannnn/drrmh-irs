@@ -1,25 +1,15 @@
 'use client';
 
-import { PageBreadcrumb } from '@/components/common';
-import { Button, Input, Label, Select, Spinner } from '@/components/ui';
+import { useEvents, useOngoingEvents } from '@/app/(admin)/events/use-events';
 import {
   useCasualtyConditions,
   useClusters,
-  useCreateReport,
-  useCreateReportMissingPerson,
   useDamageConditions,
-  useDeleteReportCasualty,
-  useDeleteReportMissingPerson,
-  useEvents,
   useLocations,
-  useOngoingEvents,
-  useReport,
-  useReportCasualties,
-  useReportMissingPersons,
   useUnits,
-  useUpdateReport,
-  useUpsertReportCasualty,
-} from '@/hooks';
+} from '@/app/(admin)/settings/use-settings';
+import { PageBreadcrumb } from '@/components/common';
+import { Button, Input, Label, Select, Spinner } from '@/components/ui';
 import { reportSchema, type ReportFormData } from '@/lib';
 import { useAuthStore } from '@/store';
 import { HEADCOUNT_FIELDS } from '@/types';
@@ -30,6 +20,17 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
+import {
+  useCreateReport,
+  useCreateReportMissingPerson,
+  useDeleteReportCasualty,
+  useDeleteReportMissingPerson,
+  useReport,
+  useReportCasualties,
+  useReportMissingPersons,
+  useUpdateReport,
+  useUpsertReportCasualty,
+} from './use-reports';
 
 type CasualtyRow = { id?: string; condition_id: string; count: number; names: string };
 type MissingPersonRow = { id?: string; name: string };

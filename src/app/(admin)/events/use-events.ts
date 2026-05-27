@@ -5,7 +5,7 @@ import {
   getEvents,
   getOngoingEvents,
   updateEvent,
-} from '@/actions';
+} from '@/actions/events';
 import type { Prisma } from '@prisma/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 

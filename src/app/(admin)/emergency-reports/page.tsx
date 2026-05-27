@@ -1,13 +1,14 @@
 'use client';
 
-import type { getBystanderReports } from '@/actions';
+import type { getBystanderReports } from '@/actions/emergency-reports';
+import { useDeleteReport } from '@/app/(admin)/reports/use-reports';
 import { PageBreadcrumb } from '@/components/common';
 import { Badge, ConfirmDialog, DataTable, Input, Modal, PageError } from '@/components/ui';
-import { useBystanderReports, useDeleteReport, useUpdateBystanderReportStatus } from '@/hooks';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { BookOpen, CheckCircle, Eye, Search, Trash2, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useBystanderReports, useUpdateBystanderReportStatus } from './use-bystander-reports';
 
 type BystanderRow = Awaited<ReturnType<typeof getBystanderReports>>[number];
 type StatusFilter = 'all' | 'pending' | 'reviewed' | 'verified' | 'dismissed';

@@ -156,3 +156,56 @@ export async function verifyReport(reportId: string, approved: boolean, adminId:
     },
   });
 }
+
+// Report Casualties
+export async function getReportCasualties(reportId: string) {
+  return prisma.reportCasualty.findMany({
+    where: { report_id: reportId },
+    include: { condition: { select: { name: true } } },
+    orderBy: { condition: { name: 'asc' } },
+  });
+}
+
+export async function upsertReportCasualty(data: {
+  report_id: string;
+  condition_id: string;
+  count: number;
+  names?: string | null;
+}) {
+  const result = await prisma.reportCasualty.upsert({
+    where: {
+      report_id_condition_id: {
+        report_id: data.report_id,
+        condition_id: data.condition_id,
+      },
+    },
+    create: data,
+    update: { count: data.count, names: data.names },
+  });
+  revalidatePath('/reports');
+  return result;
+}
+
+export async function deleteReportCasualty(id: string) {
+  await prisma.reportCasualty.delete({ where: { id } });
+  revalidatePath('/reports');
+}
+
+// Report Missing Persons
+export async function getReportMissingPersons(reportId: string) {
+  return prisma.reportMissingPerson.findMany({
+    where: { report_id: reportId },
+    orderBy: { created_at: 'asc' },
+  });
+}
+
+export async function createReportMissingPerson(data: { report_id: string; name: string }) {
+  const result = await prisma.reportMissingPerson.create({ data });
+  revalidatePath('/reports');
+  return result;
+}
+
+export async function deleteReportMissingPerson(id: string) {
+  await prisma.reportMissingPerson.delete({ where: { id } });
+  revalidatePath('/reports');
+}

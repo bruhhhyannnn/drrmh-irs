@@ -6,7 +6,7 @@ import {
   updateUser,
   type CreateUserInput,
   type UpdateUserInput,
-} from '@/actions';
+} from '@/actions/users';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 /* ─── Users ──────────────────────────────────────────────── */

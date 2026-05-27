@@ -1,10 +1,10 @@
 'use client';
 
-import type { SettingsTable } from '@/actions';
+import type { SettingsTable } from '@/actions/settings';
+import { useDeleteSetting, useSettingsTable } from '@/app/(admin)/settings/use-settings';
 import { PageBreadcrumb } from '@/components/common';
 import { SettingsForm } from '@/components/settings';
 import { Badge, Button, ConfirmDialog, DataTable, Input, Modal, PageError } from '@/components/ui';
-import { useDeleteSetting, useSettingsTable } from '@/hooks';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { Pencil, Plus, Search, Trash2 } from 'lucide-react';

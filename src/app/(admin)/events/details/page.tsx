@@ -1,9 +1,10 @@
 'use client';
 
-import type { getReportsByEvent } from '@/actions';
+import type { getReportsByEvent } from '@/actions/reports';
+import { useEvent } from '@/app/(admin)/events/use-events';
+import { useEventReports } from '@/app/(admin)/reports/use-reports';
 import { PageBreadcrumb } from '@/components/common';
 import { Badge, Spinner } from '@/components/ui';
-import { useEvent, useEventReports } from '@/hooks';
 import { getInitials } from '@/lib';
 import { CLUSTERS, HEADCOUNT_FIELDS } from '@/types';
 import { format } from 'date-fns';

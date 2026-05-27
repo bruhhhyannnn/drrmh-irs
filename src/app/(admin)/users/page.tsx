@@ -1,13 +1,13 @@
 'use client';
 
-import type { getUsers } from '@/actions';
+import type { getUsers } from '@/actions/users';
 import { PageBreadcrumb } from '@/components/common';
 import { Badge, Button, DataTable, Input, Modal, PageError } from '@/components/ui';
-import { UserForm } from '@/components/users';
-import { useToggleUserStatus, useUsers } from '@/hooks';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Plus, Search, UserPen } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useToggleUserStatus, useUsers } from './use-users';
+import { UserForm } from './user-form';
 
 // TODO: revalidate
 type UserRow = Awaited<ReturnType<typeof getUsers>>[number];

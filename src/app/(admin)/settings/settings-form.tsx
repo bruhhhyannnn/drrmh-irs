@@ -1,8 +1,7 @@
 'use client';
 
-import type { SettingsTable } from '@/actions';
+import type { SettingsTable } from '@/actions/settings';
 import { Button, Input, Label, Select } from '@/components/ui';
-import { useCreateSetting, useSettingsTable, useUpdateSetting } from '@/hooks';
 import {
   casualtyConditionSchema,
   clusterSchema,
@@ -17,6 +16,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { useCreateSetting, useSettingsTable, useUpdateSetting } from './use-settings';
 
 const SCHEMA_MAP = {
   clusters: clusterSchema,

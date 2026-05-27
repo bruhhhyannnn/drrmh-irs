@@ -1,6 +1,6 @@
 import { AuthHeader } from '@/components/auth';
-import { BystanderReportForm } from '@/components/reports';
 import { Suspense } from 'react';
+import { BystanderReportForm } from './bystander-report-form';
 
 export default function ReportSubmitPage() {
   return (

@@ -1,14 +1,20 @@
 import {
   createReport,
+  createReportMissingPerson,
   deleteReport,
+  deleteReportCasualty,
+  deleteReportMissingPerson,
   getReport,
+  getReportCasualties,
   getReportClusterSummary,
+  getReportMissingPersons,
   getReports,
   getReportsByEvent,
   getReportTotals,
   updateReport,
+  upsertReportCasualty,
   verifyReport,
-} from '@/actions';
+} from '@/actions/reports';
 import type { Prisma } from '@prisma/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -92,5 +98,70 @@ export function useReportTotals() {
   return useQuery({
     queryKey: ['report-totals'],
     queryFn: () => getReportTotals(),
+  });
+}
+
+// Report Casualties
+export function useReportCasualties(reportId?: string) {
+  return useQuery({
+    queryKey: ['report-casualties', reportId],
+    queryFn: () => getReportCasualties(reportId!),
+    enabled: !!reportId,
+  });
+}
+
+export function useUpsertReportCasualty() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: {
+      report_id: string;
+      condition_id: string;
+      count: number;
+      names?: string | null;
+    }) => upsertReportCasualty(data),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['report-casualties', variables.report_id] });
+    },
+  });
+}
+
+export function useDeleteReportCasualty() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id }: { id: string; reportId: string }) => deleteReportCasualty(id),
+    onSuccess: (_data, { reportId }) => {
+      queryClient.invalidateQueries({ queryKey: ['report-casualties', reportId] });
+    },
+  });
+}
+
+// Report Missing Persons
+export function useReportMissingPersons(reportId?: string) {
+  return useQuery({
+    queryKey: ['report-missing-persons', reportId],
+    queryFn: () => getReportMissingPersons(reportId!),
+    enabled: !!reportId,
+  });
+}
+
+export function useCreateReportMissingPerson() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { report_id: string; name: string }) => createReportMissingPerson(data),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['report-missing-persons', variables.report_id],
+      });
+    },
+  });
+}
+
+export function useDeleteReportMissingPerson() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id }: { id: string; reportId: string }) => deleteReportMissingPerson(id),
+    onSuccess: (_data, { reportId }) => {
+      queryClient.invalidateQueries({ queryKey: ['report-missing-persons', reportId] });
+    },
   });
 }
