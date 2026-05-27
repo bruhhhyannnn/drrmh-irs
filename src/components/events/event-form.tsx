@@ -19,7 +19,9 @@ interface EventFormProps {
 
 const toDatetimeLocal = (val?: string | Date | null) => {
   if (!val) return '';
-  return new Date(val).toISOString().slice(0, 16);
+  const date = new Date(val);
+  const offset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
 };
 
 export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
