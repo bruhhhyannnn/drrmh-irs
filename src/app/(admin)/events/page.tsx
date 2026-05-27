@@ -89,10 +89,9 @@ export default function EventsPage() {
                   {event._count.reports}
                 </TableCell>
                 <TableCell>
-                  {/* TODO: change colors */}
                   <Badge
                     color={
-                      event.status.name.toLocaleLowerCase() === 'active'
+                      event.status.name.toLocaleLowerCase() === 'ongoing'
                         ? 'success'
                         : event.status.name.toLocaleLowerCase() === 'completed'
                           ? 'primary'

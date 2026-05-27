@@ -13,11 +13,11 @@ export function PageBreadcrumb({ pageTitle }: PageBreadcrumbProps) {
         <ol className="flex items-center gap-1.5">
           <li>
             <Link
-              href="/"
+              href="/dashboard"
               className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             >
               Home
-              <ChevronRight size={14} className="stroke-current" />
+              <ChevronRight size={14} color="#1d2939" />
             </Link>
           </li>
           <li className="text-sm text-gray-800 dark:text-white/90">{pageTitle}</li>

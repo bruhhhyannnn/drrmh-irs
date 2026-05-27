@@ -62,7 +62,7 @@ export function TableHead({
     <th
       onClick={onClick}
       className={cn(
-        'text-theme-xs bg-gray-50 px-5 py-3 text-start font-medium text-gray-500 dark:bg-white/3 dark:text-gray-400',
+        'text-md bg-gray-50 px-5 py-3 text-start font-medium text-gray-500 dark:bg-white/3 dark:text-gray-400',
         className
       )}
     >
@@ -81,10 +81,7 @@ export function TableCell({
   colSpan?: number;
 }) {
   return (
-    <td
-      colSpan={colSpan}
-      className={cn('text-theme-sm px-5 py-3 text-gray-600 dark:text-gray-300', className)}
-    >
+    <td colSpan={colSpan} className={cn('px-5 py-3 text-gray-600 dark:text-gray-300', className)}>
       {children}
     </td>
   );

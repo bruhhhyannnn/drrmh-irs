@@ -16,9 +16,18 @@ import {
   Legend,
   Tooltip,
 } from 'recharts';
-import { CalendarDays, FileText, Users, AlertTriangle, Activity, Inbox } from 'lucide-react';
+import {
+  CalendarDays,
+  FileText,
+  Users,
+  AlertTriangle,
+  Activity,
+  Inbox,
+  ChevronRight,
+} from 'lucide-react';
 import { useEvents, useReports, useUsers, useReportClusterSummary, useReportTotals } from '@/hooks';
 import Link from 'next/link';
+import { useThemeStore } from '@/store';
 
 const CLUSTER_COLOR = '#a11d1d';
 
@@ -35,6 +44,7 @@ export default function DashboardPage() {
   const { data: users = [] } = useUsers();
   const { data: clusterSummary = [] } = useReportClusterSummary();
   const { data: totalAffected } = useReportTotals();
+  const { theme } = useThemeStore();
 
   const stats = {
     events: events?.length,
@@ -58,6 +68,79 @@ export default function DashboardPage() {
       <PageBreadcrumb pageTitle="Dashboard" />
 
       <div className="flex flex-col gap-4 xl:h-[calc(100vh-240px)] xl:flex-row">
+        {/* RIGHT COLUMN */}
+        <div className="w-full xl:h-full xl:w-1/3">
+          <div className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-900">
+            <div className="mb-4 flex items-start justify-between border-b border-gray-100 pb-3 dark:border-white/10">
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white">Recent events</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Latest updates across the platform
+                </p>
+              </div>
+            </div>
+
+            <div className="custom-scrollbar flex-1 space-y-2 overflow-y-auto pr-1">
+              {events?.length ? (
+                events.map((event) => {
+                  const statusLower = event.status.name.toLocaleLowerCase();
+                  const badgeColor =
+                    statusLower === 'ongoing'
+                      ? 'success'
+                      : statusLower === 'completed'
+                        ? 'primary'
+                        : 'warning';
+
+                  return (
+                    <Link
+                      key={event.id}
+                      href={`/events/details?id=${event.id}`}
+                      className="group flex flex-col gap-2 rounded-xl border border-gray-100 bg-gray-50 p-3 transition-all hover:border-gray-200 hover:bg-white hover:shadow-sm dark:border-white/5 dark:bg-white/5 dark:hover:border-white/10 dark:hover:bg-white/10"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="group-hover:text-brand-600 dark:group-hover:text-brand-400 truncate text-sm font-medium text-gray-900 dark:text-white">
+                            {event.name}
+                          </p>
+                          <div className="mt-1 flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                            <CalendarDays size={12} />
+                            <span>
+                              {event.started_at
+                                ? format(new Date(event.started_at), 'MMM d, yyyy')
+                                : 'No date set'}
+                            </span>
+                          </div>
+                        </div>
+                        <Badge
+                          color={badgeColor}
+                          size="sm"
+                          className="shrink-0 px-2 py-1 text-[10px] leading-none font-medium"
+                        >
+                          {event.status.name}
+                        </Badge>
+                      </div>
+                    </Link>
+                  );
+                })
+              ) : (
+                <EmptyState message="No recent events" />
+              )}
+            </div>
+
+            {events && events.length > 0 && (
+              <div className="mt-4 border-t border-gray-100 pt-3 dark:border-white/10">
+                <Link
+                  href="/events"
+                  className="text-brand-600 hover:text-brand-400 dark:text-brand-400 dark:hover:text-brand-300 flex items-center justify-center gap-1 text-xs font-medium transition-colors"
+                >
+                  View all events
+                  <ChevronRight size={14} />
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* LEFT COLUMN */}
         <div className="flex w-full flex-col gap-4 xl:w-2/3">
           {/* Stats grid — 2 cols on sm+, 4 on xl */}
@@ -132,19 +215,20 @@ export default function DashboardPage() {
                       </Pie>
                       <Tooltip
                         contentStyle={{
-                          background: 'rgba(17,24,39,0.95)',
-                          border: 'none',
+                          background:
+                            theme === 'dark' ? 'rgba(17,24,39,0.95)' : 'rgba(255,255,255,0.95)',
+                          border: theme === 'dark' ? '1px solid #374151' : '1px solid #e5e7eb',
                           borderRadius: '8px',
-                          color: '#f9fafb',
-                          fontSize: '12px',
+                          color: theme === 'dark' ? '#f9fafb' : '#111827',
+                          fontSize: '14px',
                         }}
-                        itemStyle={{ color: '#fff' }}
+                        itemStyle={{ color: theme === 'dark' ? '#f9fafb' : '#111827' }}
                       />
                       <Legend
                         verticalAlign="bottom"
                         height={24}
                         iconType="circle"
-                        wrapperStyle={{ fontSize: '12px', paddingTop: '10px', color: 'inherit' }}
+                        wrapperStyle={{ fontSize: '14px', paddingTop: '10px', color: 'inherit' }}
                       />
                     </PieChart>
                   </ResponsiveContainer>
@@ -176,7 +260,7 @@ export default function DashboardPage() {
                       />
                       <XAxis
                         dataKey="cluster"
-                        tick={{ fontSize: 11, fill: '#6b7280' }}
+                        tick={{ fontSize: 12, fill: '#6b7280' }}
                         axisLine={false}
                         tickLine={false}
                         dy={8}
@@ -188,18 +272,22 @@ export default function DashboardPage() {
                         tickLine={false}
                       />
                       <Tooltip
-                        cursor={{ fill: 'rgba(156,163,175,0.05)' }}
-                        contentStyle={{
-                          background: 'rgba(17,24,39,0.95)',
-                          border: 'none',
-                          borderRadius: '8px',
-                          color: '#f9fafb',
-                          fontSize: '12px',
+                        cursor={{
+                          fill: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
                         }}
+                        contentStyle={{
+                          background:
+                            theme === 'dark' ? 'rgba(17,24,39,0.95)' : 'rgba(255,255,255,0.95)',
+                          border: theme === 'dark' ? '1px solid #374151' : '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          color: theme === 'dark' ? '#f9fafb' : '#111827',
+                          fontSize: '14px',
+                        }}
+                        itemStyle={{ color: theme === 'dark' ? '#f9fafb' : '#111827' }}
                       />
                       <Legend
                         iconType="circle"
-                        wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
+                        wrapperStyle={{ fontSize: '14px', paddingTop: '10px' }}
                       />
                       <Bar
                         dataKey="reports"
@@ -229,80 +317,6 @@ export default function DashboardPage() {
                 )}
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN */}
-        <div className="w-full xl:h-full xl:w-1/3">
-          <div className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-900">
-            <div className="mb-4 flex items-start justify-between border-b border-gray-100 pb-3 dark:border-white/10">
-              <div>
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                  Recent events
-                </h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Latest updates across the platform
-                </p>
-              </div>
-            </div>
-
-            <div className="custom-scrollbar flex-1 space-y-2 overflow-y-auto pr-1">
-              {events?.length ? (
-                events.map((event) => {
-                  const statusLower = event.status.name.toLocaleLowerCase();
-                  const badgeColor =
-                    statusLower === 'ongoing'
-                      ? 'success'
-                      : statusLower === 'completed'
-                        ? 'primary'
-                        : 'warning';
-
-                  return (
-                    <Link
-                      key={event.id}
-                      href={`/events/details?id=${event.id}`}
-                      className="group flex flex-col gap-2 rounded-xl border border-gray-100 bg-gray-50 p-3 transition-all hover:border-gray-200 hover:bg-white hover:shadow-sm dark:border-white/5 dark:bg-white/5 dark:hover:border-white/10 dark:hover:bg-white/10"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <p className="group-hover:text-brand-600 dark:group-hover:text-brand-400 truncate text-sm font-medium text-gray-900 dark:text-white">
-                            {event.name}
-                          </p>
-                          <div className="mt-1 flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                            <CalendarDays size={12} />
-                            <span>
-                              {event.started_at
-                                ? format(new Date(event.started_at), 'MMM d, yyyy')
-                                : 'No date set'}
-                            </span>
-                          </div>
-                        </div>
-                        <Badge
-                          color={badgeColor}
-                          size="sm"
-                          className="shrink-0 px-2 py-1 text-[10px] leading-none font-medium"
-                        >
-                          {event.status.name}
-                        </Badge>
-                      </div>
-                    </Link>
-                  );
-                })
-              ) : (
-                <EmptyState message="No recent events" />
-              )}
-            </div>
-
-            {events && events.length > 0 && (
-              <div className="mt-4 border-t border-gray-100 pt-3 text-center dark:border-white/10">
-                <Link
-                  href="/events"
-                  className="text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 text-xs font-medium transition-colors"
-                >
-                  View all events &rarr;
-                </Link>
-              </div>
-            )}
           </div>
         </div>
       </div>

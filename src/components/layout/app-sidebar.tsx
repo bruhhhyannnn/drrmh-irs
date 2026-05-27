@@ -102,7 +102,7 @@ export function AppSidebar() {
           isMobileOpen && 'mt-16'
         )}
       >
-        <Link href="/" className="flex items-center gap-3">
+        <Link href="/dashboard" className="flex items-center gap-3">
           <Image
             src="/irs-favicon.png"
             alt="IRS Logo"
@@ -166,10 +166,10 @@ export function AppSidebar() {
                             <Link
                               href={sub.path}
                               className={cn(
-                                'block rounded-lg px-4 py-2 text-sm transition',
+                                'block rounded-lg px-4 py-2 text-xs transition',
                                 isActive(sub.path)
                                   ? 'text-brand-500 dark:text-brand-400 font-medium'
-                                  : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+                                  : 'text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-white'
                               )}
                             >
                               {sub.name}

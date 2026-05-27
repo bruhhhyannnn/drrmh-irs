@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 import { cn } from '@/lib';
+import { ChevronsUpDown } from 'lucide-react';
 
 /* ─── Label ─── */
 interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
@@ -36,11 +37,11 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
   ({ options, placeholder = 'Select an option', error, hint, className, ...props }, ref) => (
-    <div>
+    <div className="relative">
       <select
         ref={ref}
         className={cn(
-          'shadow-theme-xs h-11 w-full appearance-none rounded-lg border px-4 py-2.5 pr-10 text-sm focus:ring-3 focus:outline-none dark:bg-gray-900 dark:text-white/90',
+          'shadow-theme-xs h-11 w-full appearance-none rounded-lg border bg-gray-100 px-4 py-2.5 pr-10 text-sm focus:ring-3 focus:outline-none dark:bg-gray-900 dark:text-white/90',
           error
             ? 'border-error-500 focus:ring-error-500/10'
             : 'focus:border-brand-300 focus:ring-brand-500/10 dark:focus:border-brand-800 border-gray-300 dark:border-gray-700',
@@ -57,6 +58,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           </option>
         ))}
       </select>
+      <ChevronsUpDown
+        size={16}
+        className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+      />
       {hint && (
         <p className={cn('mt-1.5 text-xs', error ? 'text-error-500' : 'text-gray-500')}>{hint}</p>
       )}
@@ -89,7 +94,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         id={id}
         required={required}
         className={cn(
-          'shadow-theme-xs w-full rounded-lg border px-4 py-2.5 text-sm placeholder:text-gray-400 focus:ring-3 focus:outline-none dark:bg-gray-900 dark:text-white/90',
+          'shadow-theme-xs w-full rounded-lg border bg-gray-100 px-4 py-2.5 text-sm placeholder:text-gray-400 focus:ring-3 focus:outline-none dark:bg-gray-900 dark:text-white/90',
           error
             ? 'border-error-500 focus:ring-error-500/10'
             : 'focus:border-brand-300 focus:ring-brand-500/10 border-gray-300 dark:border-gray-700',

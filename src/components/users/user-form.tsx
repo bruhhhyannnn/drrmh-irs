@@ -50,7 +50,6 @@ export function UserForm({ editId, onSuccess, onCancel }: UserFormProps) {
     formState: { errors, isSubmitting },
   } = useForm<UserCreateFormData | UserEditFormData>({
     resolver: zodResolver(schema),
-    defaultValues: { is_active: true },
   });
 
   // Populate form when editing
