@@ -1,15 +1,15 @@
-import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
 import {
-  CLUSTERS,
-  UNITS,
-  LOCATIONS,
   CASUALTY_CONDITIONS,
-  POSITIONS,
-  USER_TYPES,
-  EVENT_STATUSES,
+  CLUSTERS,
   DAMAGE_CONDITION,
+  EVENT_STATUSES,
+  LOCATIONS,
+  POSITIONS,
+  UNITS,
+  USER_TYPES,
 } from '@/types';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '@prisma/client';
 import 'dotenv/config';
 
 const adapter = new PrismaPg({ connectionString: process.env.SHADOW_DATABASE_URL! });

@@ -1,4 +1,5 @@
 export * from './activity-logs';
+export * from './bystander-reports';
 export * from './casualty-conditions';
 export * from './clusters';
 export * from './damage-conditions';
@@ -13,4 +14,3 @@ export * from './settings';
 export * from './units';
 export * from './user-types';
 export * from './users';
-export * from './bystander-reports';

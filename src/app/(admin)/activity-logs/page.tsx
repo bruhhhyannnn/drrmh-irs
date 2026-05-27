@@ -1,23 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { format } from 'date-fns';
-import { Search } from 'lucide-react';
-import { useActivityLogs } from '@/hooks';
 import { PageBreadcrumb } from '@/components/common';
 import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
   Badge,
   Input,
+  PageError,
   Pagination,
   Spinner,
-  PageError,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@/components/ui';
+import { useActivityLogs } from '@/hooks';
+import { format } from 'date-fns';
+import { Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 const PER_PAGE = 10;
 

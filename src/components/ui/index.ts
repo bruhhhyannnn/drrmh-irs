@@ -1,11 +1,11 @@
-export { Button } from './button';
-export { Input } from './input';
-export { Label, Select, Textarea } from './form';
 export { Badge } from './badge';
-export { Modal } from './modal';
+export { Button } from './button';
 export { ConfirmDialog } from './confirm-dialog';
-export { Dropdown, DropdownItem } from './dropdown';
-export { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './table';
 export { DataTable } from './data-table';
+export { Dropdown, DropdownItem } from './dropdown';
+export { Label, Select, Textarea } from './form';
+export { Input } from './input';
+export { Modal } from './modal';
 export { Pagination } from './pagination';
-export { Spinner, PageError } from './spinner';
+export { PageError, Spinner } from './spinner';
+export { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';

@@ -1,8 +1,8 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { revalidatePath } from 'next/cache';
 import type { Prisma } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
 
 const PER_PAGE = 10;
 

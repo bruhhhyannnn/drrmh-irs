@@ -1,18 +1,18 @@
 'use client';
 
 import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
   flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  useReactTable,
   type ColumnDef,
   type SortingState,
 } from '@tanstack/react-table';
+import { ChevronDown, ChevronsUpDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
-import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './table';
 import { Spinner } from './spinner';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';
 
 interface DataTableProps<TData> {
   columns: ColumnDef<TData, unknown>[];

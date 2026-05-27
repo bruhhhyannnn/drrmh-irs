@@ -1,13 +1,12 @@
 'use client';
 
-import Link from 'next/link';
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { Button, Input, Label, Spinner } from '@/components/ui';
 import { supabase, UpdatePasswordFormData, updatePasswordSchema } from '@/lib';
-import { Button, Input, Label } from '@/components/ui';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, Eye, EyeOff, ShieldAlert } from 'lucide-react';
-import { Spinner } from '@/components/ui';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 
 type Status = 'waiting' | 'ready' | 'invalid' | 'success';
 

@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
-import { useLandingStats, useClusterStats, useLandingEvents } from '@/hooks';
-import Image from 'next/image';
+import { useClusterStats, useLandingEvents, useLandingStats } from '@/hooks';
 import { cn } from '@/lib';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
 
 /* ─────────────────────────────────────────────────────────────
    MAIN PAGE

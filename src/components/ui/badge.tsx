@@ -1,5 +1,5 @@
-import React from 'react';
 import { cn } from '@/lib';
+import React from 'react';
 
 type BadgeVariant = 'light' | 'solid';
 type BadgeColor = 'primary' | 'success' | 'error' | 'warning' | 'info' | 'light' | 'dark';

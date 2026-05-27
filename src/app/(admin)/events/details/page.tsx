@@ -1,15 +1,15 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
-import { Suspense, useState } from 'react';
-import { format } from 'date-fns';
-import { useEvent, useEventReports } from '@/hooks';
+import type { getReportsByEvent } from '@/actions';
 import { PageBreadcrumb } from '@/components/common';
 import { Badge, Spinner } from '@/components/ui';
-import { CLUSTERS, HEADCOUNT_FIELDS } from '@/types';
+import { useEvent, useEventReports } from '@/hooks';
 import { getInitials } from '@/lib';
-import { Users, MapPin, Calendar, Clock, AlertTriangle, UserX, FileText } from 'lucide-react';
-import type { getReportsByEvent } from '@/actions';
+import { CLUSTERS, HEADCOUNT_FIELDS } from '@/types';
+import { format } from 'date-fns';
+import { AlertTriangle, Calendar, Clock, FileText, MapPin, Users, UserX } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 
 // TODO: revalidate
 type EventReport = Awaited<ReturnType<typeof getReportsByEvent>>[number];

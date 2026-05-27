@@ -1,34 +1,34 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Trash2 } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
+import { PageBreadcrumb } from '@/components/common';
+import { Button, Input, Label, Select, Spinner } from '@/components/ui';
 import {
-  useReport,
-  useEvents,
-  useClusters,
-  useUnits,
-  useLocations,
   useCasualtyConditions,
+  useClusters,
+  useCreateReport,
+  useCreateReportMissingPerson,
   useDamageConditions,
+  useDeleteReportCasualty,
+  useDeleteReportMissingPerson,
+  useEvents,
+  useLocations,
+  useOngoingEvents,
+  useReport,
   useReportCasualties,
   useReportMissingPersons,
-  useOngoingEvents,
-  useCreateReport,
+  useUnits,
   useUpdateReport,
   useUpsertReportCasualty,
-  useDeleteReportCasualty,
-  useCreateReportMissingPerson,
-  useDeleteReportMissingPerson,
 } from '@/hooks';
 import { reportSchema, type ReportFormData } from '@/lib';
 import { useAuthStore } from '@/store';
 import { HEADCOUNT_FIELDS } from '@/types';
-import { PageBreadcrumb } from '@/components/common';
-import { Input, Label, Select, Button, Spinner } from '@/components/ui';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
+import { Plus, Trash2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 
 type CasualtyRow = { id?: string; condition_id: string; count: number; names: string };
@@ -408,6 +408,7 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
                         value={person.name}
                         onChange={(e) => updateMissingPerson(i, e.target.value)}
                       />
+                      {/* TODO: also add age and sex here */}
                       <button
                         type="button"
                         onClick={() => removeMissingPerson(i)}

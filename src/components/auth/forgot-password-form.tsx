@@ -1,12 +1,12 @@
 'use client';
 
+import { Button, Input, Label } from '@/components/ui';
+import { ForgotPasswordFormData, forgotPasswordSchema, supabase } from '@/lib';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { MailCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { ForgotPasswordFormData, forgotPasswordSchema, supabase } from '@/lib';
-import { Button, Input, Label } from '@/components/ui';
-import { MailCheck } from 'lucide-react';
 
 export function ForgotPasswordForm() {
   const [authError, setAuthError] = useState('');

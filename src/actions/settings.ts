@@ -1,8 +1,8 @@
 'use server';
 
+import { toSettingsPath } from '@/lib';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import { toSettingsPath } from '@/lib';
 
 export type SettingsTable =
   | 'clusters'

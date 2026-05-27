@@ -1,27 +1,27 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { format } from 'date-fns';
-import { Search, Eye, Plus, Pencil, Trash2 } from 'lucide-react';
-import { useDeleteEvent, useEvents } from '@/hooks';
 import { PageBreadcrumb } from '@/components/common';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-  Badge,
-  Input,
-  Spinner,
-  PageError,
-  Button,
-  Modal,
-  ConfirmDialog,
-} from '@/components/ui';
 import { EventForm } from '@/components/events';
+import {
+  Badge,
+  Button,
+  ConfirmDialog,
+  Input,
+  Modal,
+  PageError,
+  Spinner,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui';
+import { useDeleteEvent, useEvents } from '@/hooks';
+import { format } from 'date-fns';
+import { Eye, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 export default function EventsPage() {
   const [query, setQuery] = useState('');

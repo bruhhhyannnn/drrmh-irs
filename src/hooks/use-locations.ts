@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
 import { getLocations } from '@/actions';
+import { useQuery } from '@tanstack/react-query';
 
 export function useLocations(clusterId?: string) {
   return useQuery({

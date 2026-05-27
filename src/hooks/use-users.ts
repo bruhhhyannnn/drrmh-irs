@@ -1,13 +1,13 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  getUsers,
-  getUser,
   createUser,
-  updateUser,
+  getUser,
+  getUsers,
   toggleUserStatus,
+  updateUser,
   type CreateUserInput,
   type UpdateUserInput,
 } from '@/actions';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 /* ─── Users ──────────────────────────────────────────────── */
 export function useUsers(query?: string) {

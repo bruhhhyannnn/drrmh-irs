@@ -1,12 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { X, Sun, Moon, PanelRightClose, Menu } from 'lucide-react';
-import { useSidebarStore, useThemeStore } from '@/store';
-import { useAuthStore } from '@/store';
-import { Dropdown, DropdownItem } from '@/components/ui';
 import { SignOutButton } from '@/components/auth';
-import { ChevronDown } from 'lucide-react';
+import { Dropdown, DropdownItem } from '@/components/ui';
+import { useAuthStore, useSidebarStore, useThemeStore } from '@/store';
+import { ChevronDown, Menu, Moon, PanelRightClose, Sun, X } from 'lucide-react';
+import { useState } from 'react';
 
 export function AppHeader() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);

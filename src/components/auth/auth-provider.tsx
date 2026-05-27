@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { getUserByAuthId } from '@/actions';
 import { supabase } from '@/lib';
 import { useAuthStore } from '@/store';
-import { getUserByAuthId } from '@/actions';
+import { useEffect, useRef } from 'react';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { setUser, setSession, setUserProfile, setLoading } = useAuthStore();

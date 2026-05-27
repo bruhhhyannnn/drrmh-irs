@@ -1,7 +1,7 @@
+import { Prisma } from '@prisma/client';
+import type { Session, User } from '@supabase/supabase-js';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { User, Session } from '@supabase/supabase-js';
-import { Prisma } from '@prisma/client';
 
 //DEV NOTE: This is needed for the userProfile type to work
 type UserProfileType = Prisma.UserGetPayload<{

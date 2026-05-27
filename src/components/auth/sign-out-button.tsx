@@ -1,9 +1,9 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib';
 import { useAuthStore } from '@/store';
 import { LogOut } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
 export function SignOutButton() {

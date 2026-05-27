@@ -1,22 +1,22 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useEffect, useRef, useCallback } from 'react';
+import { cn } from '@/lib';
 import { useSidebarStore } from '@/store';
 import {
+  AlertTriangle,
+  BarChart2,
+  Calendar,
+  CalendarDays,
+  ChevronDown,
   LayoutDashboard,
   ScrollText,
-  CalendarDays,
-  BarChart2,
-  Users,
-  Calendar,
   Settings,
-  ChevronDown,
-  AlertTriangle,
+  Users,
 } from 'lucide-react';
-import { cn } from '@/lib';
 import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useCallback, useEffect, useRef } from 'react';
 import { version } from '../../../package.json';
 
 type NavItem = {

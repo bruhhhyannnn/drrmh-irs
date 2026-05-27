@@ -2,32 +2,32 @@
 
 import { PageBreadcrumb } from '@/components/common';
 import { Badge } from '@/components/ui';
+import { useEvents, useReportClusterSummary, useReports, useReportTotals, useUsers } from '@/hooks';
+import { useThemeStore } from '@/store';
 import { format } from 'date-fns';
 import {
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
+  Activity,
+  AlertTriangle,
+  CalendarDays,
+  ChevronRight,
+  FileText,
+  Inbox,
+  Users,
+} from 'lucide-react';
+import Link from 'next/link';
+import {
   Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-  Legend,
-  Tooltip,
 } from 'recharts';
-import {
-  CalendarDays,
-  FileText,
-  Users,
-  AlertTriangle,
-  Activity,
-  Inbox,
-  ChevronRight,
-} from 'lucide-react';
-import { useEvents, useReports, useUsers, useReportClusterSummary, useReportTotals } from '@/hooks';
-import Link from 'next/link';
-import { useThemeStore } from '@/store';
 
 const CLUSTER_COLOR = '#a11d1d';
 

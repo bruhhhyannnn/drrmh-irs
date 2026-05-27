@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
 import { getActivityLogs } from '@/actions';
+import { useQuery } from '@tanstack/react-query';
 
 /* ─── Activity Logs ──────────────────────────────────────── */
 export function useActivityLogs(page: number = 1, query?: string) {

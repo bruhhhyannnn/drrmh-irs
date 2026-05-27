@@ -1,7 +1,7 @@
 'use client';
 
-import { AppSidebar, AppHeader, Backdrop } from '@/components/layout';
 import { ProtectedRoute } from '@/components/auth';
+import { AppHeader, AppSidebar, Backdrop } from '@/components/layout';
 import { useSidebarStore } from '@/store';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

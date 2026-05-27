@@ -1,5 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getReportCasualties, upsertReportCasualty, deleteReportCasualty } from '@/actions';
+import { deleteReportCasualty, getReportCasualties, upsertReportCasualty } from '@/actions';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export function useReportCasualties(reportId?: string) {
   return useQuery({

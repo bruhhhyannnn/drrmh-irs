@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
 import { getEventStatuses } from '@/actions';
+import { useQuery } from '@tanstack/react-query';
 
 export function useEventStatuses() {
   return useQuery({

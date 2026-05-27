@@ -1,5 +1,5 @@
-import React from 'react';
 import { cn } from '@/lib';
+import React from 'react';
 
 export function Table({ children, className }: { children: React.ReactNode; className?: string }) {
   return (

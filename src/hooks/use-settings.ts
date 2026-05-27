@@ -1,11 +1,11 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  getSettingsItems,
   createSettingsItem,
-  updateSettingsItem,
   deleteSettingsItem,
+  getSettingsItems,
   SettingsTable,
+  updateSettingsItem,
 } from '@/actions';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export function useSettingsTable(table: SettingsTable) {
   return useQuery({

@@ -1,6 +1,6 @@
-import React, { forwardRef } from 'react';
 import { cn } from '@/lib';
 import { ChevronsUpDown } from 'lucide-react';
+import React, { forwardRef } from 'react';
 
 /* ─── Label ─── */
 interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {

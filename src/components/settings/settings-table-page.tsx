@@ -1,14 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { format } from 'date-fns';
-import { Plus, Pencil, Trash2, Search } from 'lucide-react';
-import { useSettingsTable, useDeleteSetting } from '@/hooks';
-import { PageBreadcrumb } from '@/components/common';
 import type { SettingsTable } from '@/actions';
-import type { ColumnDef } from '@tanstack/react-table';
-import { DataTable, Badge, Button, Input, PageError, ConfirmDialog, Modal } from '@/components/ui';
+import { PageBreadcrumb } from '@/components/common';
 import { SettingsForm } from '@/components/settings';
+import { Badge, Button, ConfirmDialog, DataTable, Input, Modal, PageError } from '@/components/ui';
+import { useDeleteSetting, useSettingsTable } from '@/hooks';
+import type { ColumnDef } from '@tanstack/react-table';
+import { format } from 'date-fns';
+import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface SettingsPageProps {
   title: string;

@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
 import { getCasualtyConditions } from '@/actions';
+import { useQuery } from '@tanstack/react-query';
 
 export function useCasualtyConditions() {
   return useQuery({
