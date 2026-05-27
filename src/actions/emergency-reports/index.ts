@@ -11,18 +11,27 @@ export async function createBystanderReport(data: BystanderReportFormData) {
     where: { name: 'pending' },
   });
 
-  return prisma.bystander_reports.create({
+  const report = await prisma.bystander_reports.create({
     data: {
       ...reportData,
+      unit_id: reportData.unit_id || null,
+      damage_condition_id: reportData.damage_condition_id || null,
       status_id: pendingStatus?.id,
       ...(report_missing_persons?.length && {
         report_missing_persons: {
-          create: report_missing_persons,
+          create: report_missing_persons.map((p) => ({
+            ...p,
+            age: p.age ? Number(p.age) : null,
+          })),
         },
       }),
       ...(report_casualties?.length && {
         report_casualties: {
-          create: report_casualties,
+          create: report_casualties.map((c) => ({
+            ...c,
+            age: c.age ? Number(c.age) : null,
+            count: c.count ? Number(c.count) : 1,
+          })),
         },
       }),
     },
@@ -34,6 +43,12 @@ export async function createBystanderReport(data: BystanderReportFormData) {
       bystander_report_statuses: true,
     },
   });
+
+  return {
+    ...report,
+    latitude: report.latitude.toNumber(),
+    longitude: report.longitude.toNumber(),
+  };
 }
 
 export async function getBystanderReports() {
@@ -50,8 +65,8 @@ export async function getBystanderReports() {
 
   return reports.map((r) => ({
     ...r,
-    latitude: r.latitude ? r.latitude.toNumber() : null,
-    longitude: r.longitude ? r.longitude.toNumber() : null,
+    latitude: r.latitude.toNumber(),
+    longitude: r.longitude.toNumber(),
   }));
 }
 
@@ -69,7 +84,11 @@ export async function updateBystanderReportStatus(
   });
 
   revalidatePath('/bystander-reports');
-  return report;
+  return {
+    ...report,
+    latitude: report.latitude.toNumber(),
+    longitude: report.longitude.toNumber(),
+  };
 }
 
 export async function getBystanderIncidentTypes() {

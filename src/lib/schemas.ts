@@ -90,6 +90,8 @@ export const bystanderReportSchema = z.object({
   unit_id: z.string().uuid().optional().nullable(),
   latitude: z.number({ required_error: 'Please capture your location' }),
   longitude: z.number({ required_error: 'Please capture your location' }),
+  description: z.string().optional(),
+  location_description: z.string().optional(),
   damage_condition_id: z.string().uuid().optional().nullable(),
   report_missing_persons: z.array(missingPersonSchema).default([]),
   report_casualties: z.array(casualtySchema).default([]),

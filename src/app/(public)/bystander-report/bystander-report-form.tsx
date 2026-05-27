@@ -51,14 +51,7 @@ export function BystanderReportForm() {
     setValue,
     watch,
     formState: { isSubmitting },
-  } = useForm<BystanderReportFormData>({
-    defaultValues: {
-      incident_type_id: '',
-      cluster_id: '',
-      report_missing_persons: [],
-      report_casualties: [],
-    },
-  });
+  } = useForm<BystanderReportFormData>();
 
   const {
     fields: missingFields,
@@ -238,6 +231,28 @@ export function BystanderReportForm() {
                 placeholder={selectedClusterId ? 'Select unit' : 'Select cluster first'}
                 disabled={!selectedClusterId}
                 {...register('unit_id')}
+              />
+            </div>
+          </div>
+        </SectionCard>
+
+        {/* ── Additional Details ──────────────────────────────────────────── */}
+        <SectionCard title="Additional Details">
+          <div className="space-y-4">
+            <div>
+              <Label>Location Description (optional)</Label>
+              <Input
+                placeholder="e.g. Near the main gate, beside the flagpole"
+                {...register('location_description')}
+              />
+            </div>
+            <div>
+              <Label>Description (optional)</Label>
+              <textarea
+                placeholder="Briefly describe what happened..."
+                rows={4}
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500"
+                {...register('description')}
               />
             </div>
           </div>
