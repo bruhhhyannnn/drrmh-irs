@@ -1,6 +1,8 @@
-import unusedImports from 'eslint-plugin-unused-imports';
-import tsParser from '@typescript-eslint/parser';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
+import tsParser from '@typescript-eslint/parser';
+import prettierConfig from 'eslint-config-prettier';
+import prettierPlugin from 'eslint-plugin-prettier';
+import unusedImports from 'eslint-plugin-unused-imports';
 
 const eslintConfig = [
   {
@@ -14,6 +16,7 @@ const eslintConfig = [
     plugins: {
       'unused-imports': unusedImports,
       '@typescript-eslint': tsPlugin,
+      prettier: prettierPlugin,
     },
     rules: {
       'unused-imports/no-unused-imports': 'error',
@@ -29,8 +32,10 @@ const eslintConfig = [
       '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
       'no-unused-vars': 'off',
+      'prettier/prettier': 'warn',
     },
   },
+  prettierConfig,
 ];
 
 export default eslintConfig;
