@@ -1,40 +1,41 @@
 'use client';
 
-import { useClusterStats, useLandingEvents, useLandingStats } from '@/hooks';
 import { cn } from '@/lib';
+import { ChevronRight } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { useLandingData } from './use-landing-stats';
 
 /* ─────────────────────────────────────────────────────────────
    MAIN PAGE
 ───────────────────────────────────────────────────────────── */
 export default function LandingPage() {
-  const { data: stats } = useLandingStats();
-  const { data: clusterStats } = useClusterStats();
-  const { data: events } = useLandingEvents();
+  const { data } = useLandingData();
 
   const [navScrolled, setNavScrolled] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => setNavScrolled(window.scrollY > 350);
+    const handleScroll = () => setNavScrolled(window.scrollY > 650);
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   /* hero stat cards */
   const heroStats = [
-    { label: 'Active Events', value: stats?.activeEvents, sub: 'Drills in progress', accent: true },
-    { label: 'Total Drills', value: stats?.totalEvents, sub: 'Conducted since 2022' },
+    {
+      label: 'Active Events',
+      value: data?.activeEvents,
+      sub: 'Drills in progress',
+      accent: true,
+    },
+    { label: 'Total Drills', value: data?.totalEvents, sub: 'Conducted since 2025' },
     { label: 'Clusters Covered', value: 4, sub: 'Pedro Gil · Padre Faura · Taft · SHS' },
   ];
 
-  /* cluster bar colors cycle */
-  const barColors: Array<'maroon' | 'gold'> = ['maroon', 'gold', 'maroon', 'gold'];
-
   /* tab filter in feature 1 */
   const [activeTab, setActiveTab] = useState<'ongoing' | 'upcoming' | 'completed'>('ongoing');
-  const filteredEvents = events?.filter((ev) => ev.status?.name?.toLowerCase() === activeTab);
+  const filteredEvents = data?.events?.filter((ev) => ev.status?.name?.toLowerCase() === activeTab);
 
   /* smooth scroll */
   const smoothScroll = (id: string) => {
@@ -130,10 +131,7 @@ export default function LandingPage() {
         }
       `}</style>
 
-      <div
-        className="textlg"
-        style={{ background: 'var(--cream)', color: 'var(--text-dark)', overflowX: 'hidden' }}
-      >
+      <div style={{ background: 'var(--cream)', color: 'var(--text-dark)', overflowX: 'hidden' }}>
         {/* ── NAV ── */}
         <nav
           className="fixed top-0 right-0 left-0 z-50 flex items-center justify-between px-6 transition-all duration-300 lg:px-16"
@@ -259,7 +257,7 @@ export default function LandingPage() {
                 />
                 <Image
                   src="/irs-favicon.png"
-                  alt="DRRM-H Logo"
+                  alt="IRS Logo"
                   width={72}
                   height={72}
                   sizes="72px"
@@ -333,7 +331,7 @@ export default function LandingPage() {
               </Link>
               <a
                 href="#features"
-                className="rounded-[10px] border px-6 py-3.5 font-normal no-underline transition-all duration-200"
+                className="rounded-[10px] flex items-center justify-center gap-2 border px-6 py-3.5 font-normal no-underline transition-all duration-200"
                 style={{
                   color: 'var(--text-mid)',
                   borderColor: 'var(--border)',
@@ -341,12 +339,12 @@ export default function LandingPage() {
                   fontSize: 'var(--text-md)',
                 }}
               >
-                Explore Features &rarr;
+                Explore Features
+                <ChevronRight size={14} />
               </a>
             </div>
 
             {/* ── Dashboard Preview ── */}
-            {/* TODO: remove live data, replace it with offline data not showing any data from the app */}
             <div
               className="hero-anim-4 w-full overflow-hidden rounded-[20px] text-left"
               style={{
@@ -387,36 +385,25 @@ export default function LandingPage() {
                     Drills by Cluster
                   </p>
                   <div className="flex flex-col gap-3">
-                    {clusterStats && clusterStats.length > 0
-                      ? clusterStats.map((c, i) => (
-                          <ProgressRow
-                            key={c.cluster}
-                            name={c.cluster}
-                            pct={c.pct}
-                            reports={c.reports}
-                            color={barColors[i % barColors.length]}
-                          />
-                        ))
-                      : ['Pedro Gil', 'Padre Faura', 'Taft', 'SHS'].map((name) => (
-                          <div key={name} className="flex items-center gap-3">
-                            <span
-                              className="min-w-25 text-xs"
-                              style={{ color: 'var(--text-muted)' }}
-                            >
-                              {name}
-                            </span>
-                            <div
-                              className="skeleton h-2 flex-1 rounded-full"
-                              style={{ height: '8px' }}
-                            />
-                            <span
-                              className="min-w-13 text-xs"
-                              style={{ color: 'var(--text-muted)' }}
-                            >
-                              —
-                            </span>
-                          </div>
-                        ))}
+                    {['Pedro Gil', 'Padre Faura', 'Taft', 'SHS', 'PGH'].map((name, i) => {
+                      const staticPcts = [85, 70, 90, 60, 75];
+                      const staticColors: Array<'maroon' | 'gold'> = [
+                        'maroon',
+                        'gold',
+                        'maroon',
+                        'gold',
+                        'maroon',
+                      ];
+                      return (
+                        <ProgressRow
+                          key={name}
+                          name={name}
+                          pct={staticPcts[i]}
+                          reports={Math.floor(staticPcts[i] / 20)}
+                          color={staticColors[i]}
+                        />
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -441,8 +428,8 @@ export default function LandingPage() {
                     style={{ borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}
                   >
                     <tbody>
-                      {events && events.length > 0
-                        ? events.map((ev) => (
+                      {data?.events && data.events.length > 0
+                        ? data.events.slice(0, 4).map((ev) => (
                             <tr
                               key={ev.id}
                               style={{ borderBottom: '1px solid rgba(139,26,26,0.05)' }}
@@ -461,7 +448,7 @@ export default function LandingPage() {
                               </td>
                             </tr>
                           ))
-                        : [1, 2, 3].map((n) => (
+                        : [1, 2, 3].slice(0, 4).map((n) => (
                             <tr key={n} style={{ borderBottom: '1px solid rgba(139,26,26,0.05)' }}>
                               <td className="px-5 py-3">
                                 <div className="skeleton h-4 w-40" />
@@ -1308,7 +1295,7 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/bystander-report"
-              className="rounded-[10px] border px-6 py-3.5 no-underline transition-all duration-200 hover:-translate-y-0.5"
+              className="rounded-[10px] flex items-center justify-center gap-2 border px-6 py-3.5 no-underline transition-all duration-200 hover:-translate-y-0.5"
               style={{
                 color: 'var(--maroon)',
                 borderColor: 'var(--border)',
@@ -1316,7 +1303,8 @@ export default function LandingPage() {
                 fontSize: 'var(--text-md)',
               }}
             >
-              Submit a Bystander Report →
+              Submit a Bystander Report
+              <ChevronRight size={14} />
             </Link>
           </div>
 
@@ -1345,8 +1333,8 @@ export default function LandingPage() {
               {[
                 {
                   label: 'Total Events',
-                  value: stats?.totalEvents?.toLocaleString(),
-                  sub: 'All time',
+                  value: data?.totalEvents?.toLocaleString(),
+                  sub: 'From 2025-2026',
                 },
                 {
                   label: 'Clusters Covered',
@@ -1359,8 +1347,8 @@ export default function LandingPage() {
                   sub: 'UP Manila DRRM-H launch',
                 },
                 {
-                  label: 'Active Drills',
-                  value: stats?.activeEvents?.toLocaleString(),
+                  label: 'Active Events',
+                  value: data?.activeEvents?.toLocaleString(),
                   sub: 'Currently running',
                   accent: true,
                 },
@@ -1579,8 +1567,8 @@ export default function LandingPage() {
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
-    active: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-    completed: 'bg-blue-50 text-blue-700 border-blue-100',
+    ongoing: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+    completed: 'bg-brand-50 text-brand-700 border-brand-100',
     upcoming: 'bg-amber-50 text-amber-700 border-amber-100',
   };
   return (
