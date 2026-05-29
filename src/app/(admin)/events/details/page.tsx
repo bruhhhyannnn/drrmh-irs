@@ -136,10 +136,10 @@ function EventDetailsContent() {
           <p className="text-sm text-gray-400">No reports submitted yet</p>
         </div>
       ) : (
-        <>
+        <div className="space-y-12">
           {/* Per-cluster board — Monday.com style */}
           <div>
-            <h2 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <h2 className="mb-3 text-sm font-semibold text-gray-500 dark:text-gray-300">
               Reports by Cluster
             </h2>
             <div className="space-y-6">
@@ -152,7 +152,7 @@ function EventDetailsContent() {
           {/* Pending clusters — clusters with no reports */}
           {pendingClusters.length > 0 && (
             <div>
-              <h2 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <h2 className="mb-3 text-sm font-semibold text-gray-500 dark:text-gray-300">
                 Pending ({pendingClusters.length})
               </h2>
               <div className="flex flex-wrap gap-2">
@@ -172,12 +172,12 @@ function EventDetailsContent() {
 
           {/* University grand total */}
           <div>
-            <h2 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <h2 className="mb-3 text-sm font-semibold text-gray-500 dark:text-gray-300">
               University Total
             </h2>
             <GrandTotalCard reports={reports} />
           </div>
-        </>
+        </div>
       )}
     </div>
   );

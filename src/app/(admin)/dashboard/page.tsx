@@ -343,19 +343,19 @@ function StatCard({
 }) {
   const styles = {
     brand: {
-      bg: 'bg-blue-50 dark:bg-blue-500/10',
+      bg: 'bg-blue-100 dark:bg-blue-500/10',
       iconBg: 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400',
     },
     success: {
-      bg: 'bg-green-50 dark:bg-green-500/10',
+      bg: 'bg-green-100 dark:bg-green-500/10',
       iconBg: 'bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400',
     },
     warning: {
-      bg: 'bg-amber-50 dark:bg-amber-500/10',
+      bg: 'bg-amber-100 dark:bg-amber-500/10',
       iconBg: 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400',
     },
     error: {
-      bg: 'bg-red-50 dark:bg-red-500/10',
+      bg: 'bg-red-100 dark:bg-red-500/10',
       iconBg: 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400',
     },
   };
