@@ -60,6 +60,9 @@ export async function getBystanderReports() {
       report_missing_persons: true,
       report_casualties: true,
     },
+    orderBy: {
+      submitted_at: 'desc',
+    },
   });
 
   return reports.map((r) => ({

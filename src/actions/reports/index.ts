@@ -103,6 +103,9 @@ export async function createReport(data: ReportFormData) {
   const report = await prisma.report.create({
     data: {
       ...reportData,
+      unit_id: reportData.unit_id || null,
+      location_id: reportData.location_id || null,
+      damage_condition_id: reportData.damage_condition_id || null,
       missing_persons: {
         create: report_missing_persons ?? [],
       },
