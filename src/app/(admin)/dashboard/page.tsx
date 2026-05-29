@@ -35,8 +35,6 @@ import {
   YAxis,
 } from 'recharts';
 
-const CLUSTER_COLOR = '#a11d1d';
-
 const STATUS_COLORS: Record<string, string> = {
   upcoming: '#f59e0b',
   ongoing: '#22c55e',
@@ -46,7 +44,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function DashboardPage() {
   const { data: events } = useEvents();
-  const { data: reportsData } = useReports(1, '', true);
+  const { data: reportsData } = useReports(1, '');
   const { data: users = [] } = useUsers();
   const { data: clusterSummary = [] } = useReportClusterSummary();
   const { data: totalAffected } = useReportTotals();
@@ -298,7 +296,7 @@ export default function DashboardPage() {
                       <Bar
                         dataKey="reports"
                         name="Reports"
-                        fill={CLUSTER_COLOR}
+                        fill="#a11d1d"
                         radius={[3, 3, 0, 0]}
                         maxBarSize={32}
                       />

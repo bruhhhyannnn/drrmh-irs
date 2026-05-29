@@ -1631,9 +1631,6 @@ async function main() {
         health_workers: r.health_workers,
         non_academic_staff: r.non_academic_staff,
         guests: r.guests,
-        missing_count: r.missing_count,
-        casualties_count: r.casualties_count,
-        external_item_id: r.external_item_id || null,
         submitted_at: QUARTER_DATES[r.quarter].started_at,
       },
     });

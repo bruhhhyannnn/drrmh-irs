@@ -336,13 +336,7 @@ function StatusTabButton({
   );
 }
 
-function BystanderReportDetail({
-  report: r,
-  onClose,
-}: {
-  report: BystanderRow;
-  onClose: () => void;
-}) {
+function BystanderReportDetail({ report: r }: { report: BystanderRow; onClose: () => void }) {
   const status = r.bystander_report_statuses?.name ?? 'pending';
   const statusColor =
     status === 'verified'
@@ -477,20 +471,13 @@ function BystanderReportDetail({
                 className="flex items-center justify-between rounded-xl border border-error-100 bg-error-50 px-4 py-2.5 dark:border-error-900/40 dark:bg-error-950/30"
               >
                 <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                  {c.names || `Casualty ${i + 1}`}
+                  {c.name || `Casualty ${i + 1}`}
                 </span>
-                <div className="flex items-center gap-2">
-                  {c.count > 1 && (
-                    <span className="rounded-full bg-error-100 px-2 py-0.5 text-xs font-semibold text-error-600 dark:bg-error-900/40 dark:text-error-400">
-                      ×{c.count}
-                    </span>
-                  )}
-                  {(c.age || c.sex) && (
-                    <span className="text-xs text-gray-400 dark:text-gray-500">
-                      {[c.age && `Age ${c.age}`, c.sex].filter(Boolean).join(' · ')}
-                    </span>
-                  )}
-                </div>
+                {(c.age || c.sex) && (
+                  <span className="text-xs text-gray-400 dark:text-gray-500">
+                    {[c.age && `Age ${c.age}`, c.sex].filter(Boolean).join(' · ')}
+                  </span>
+                )}
               </div>
             ))}
           </div>
@@ -507,27 +494,6 @@ function DetailItem({ label, value }: { label: string; value?: string | null }) 
         {label}
       </dt>
       <dd className="mt-0.5 font-medium text-gray-900 dark:text-white">{value ?? '—'}</dd>
-    </div>
-  );
-}
-
-function PersonList({ title, items }: { title: string; items?: { name?: string | null }[] }) {
-  if (!items?.length) return null;
-  return (
-    <div>
-      <p className="mb-2 text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
-        {title}
-      </p>
-      <ul className="space-y-1">
-        {items.map((p, i) => (
-          <li
-            key={i}
-            className="rounded-md bg-gray-50 px-3 py-1.5 text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-300"
-          >
-            {p.name ?? `Person ${i + 1}`}
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }

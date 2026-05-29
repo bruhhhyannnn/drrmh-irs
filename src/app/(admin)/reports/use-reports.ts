@@ -1,5 +1,6 @@
 import {
   createReport,
+  createReportCasualty,
   createReportMissingPerson,
   deleteReport,
   deleteReportCasualty,
@@ -12,34 +13,15 @@ import {
   getReportsByEvent,
   getReportTotals,
   updateReport,
-  upsertReportCasualty,
-  verifyReport,
 } from '@/actions/reports';
+import { CasualtyFormData, MissingPersonFormData, ReportFormData } from '@/lib';
 import type { Prisma } from '@prisma/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-export function useReports(page: number, query: string, isVerified: boolean) {
+export function useReports(page: number, query: string) {
   return useQuery({
-    queryKey: ['reports', page, query, isVerified],
-    queryFn: () => getReports(page, query, isVerified),
-  });
-}
-
-export function useVerifyReport() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({
-      reportId,
-      approved,
-      adminId,
-    }: {
-      reportId: string;
-      approved: boolean;
-      adminId: string;
-    }) => verifyReport(reportId, approved, adminId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reports'], exact: false });
-    },
+    queryKey: ['reports', page, query],
+    queryFn: () => getReports(page, query),
   });
 }
 
@@ -51,18 +33,10 @@ export function useReport(id?: string) {
   });
 }
 
-export function useEventReports(eventId?: string) {
-  return useQuery({
-    queryKey: ['event-reports', eventId],
-    queryFn: () => getReportsByEvent(eventId!),
-    enabled: !!eventId,
-  });
-}
-
 export function useCreateReport() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: Prisma.ReportCreateInput) => createReport(data),
+    mutationFn: (data: ReportFormData) => createReport(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reports'] }),
   });
 }
@@ -84,6 +58,14 @@ export function useDeleteReport() {
   return useMutation({
     mutationFn: (id: string) => deleteReport(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reports'] }),
+  });
+}
+
+export function useEventReports(eventId?: string) {
+  return useQuery({
+    queryKey: ['event-reports', eventId],
+    queryFn: () => getReportsByEvent(eventId!),
+    enabled: !!eventId,
   });
 }
 
@@ -110,15 +92,10 @@ export function useReportCasualties(reportId?: string) {
   });
 }
 
-export function useUpsertReportCasualty() {
+export function useCreateReportCasualty() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: {
-      report_id: string;
-      condition_id: string;
-      count: number;
-      names?: string | null;
-    }) => upsertReportCasualty(data),
+    mutationFn: (data: CasualtyFormData & { report_id: string }) => createReportCasualty(data),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['report-casualties', variables.report_id] });
     },
@@ -147,7 +124,8 @@ export function useReportMissingPersons(reportId?: string) {
 export function useCreateReportMissingPerson() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { report_id: string; name: string }) => createReportMissingPerson(data),
+    mutationFn: (data: MissingPersonFormData & { report_id: string }) =>
+      createReportMissingPerson(data),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ['report-missing-persons', variables.report_id],

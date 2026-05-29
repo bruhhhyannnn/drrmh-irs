@@ -30,7 +30,6 @@ export async function createBystanderReport(data: BystanderReportFormData) {
           create: report_casualties.map((c) => ({
             ...c,
             age: c.age ? Number(c.age) : null,
-            count: c.count ? Number(c.count) : 1,
           })),
         },
       }),

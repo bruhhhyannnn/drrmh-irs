@@ -352,23 +352,14 @@ export function BystanderReportForm() {
                 </div>
 
                 <div>
-                  <Label>Names (optional)</Label>
+                  <Label>Full Name</Label>
                   <Input
-                    placeholder="e.g. Maria Santos, Pedro Reyes"
-                    {...register(`report_casualties.${index}.names`)}
+                    placeholder="e.g. Maria Santos"
+                    {...register(`report_casualties.${index}.name`)}
                   />
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <Label>Count</Label>
-                    <Input
-                      type="number"
-                      placeholder="1"
-                      min={1}
-                      {...register(`report_casualties.${index}.count`)}
-                    />
-                  </div>
                   <div>
                     <Label>Age</Label>
                     <Input
@@ -393,9 +384,7 @@ export function BystanderReportForm() {
 
             <button
               type="button"
-              onClick={() =>
-                appendCasualty({ condition_id: '', count: 0, names: '', age: 0, sex: 'unknown' })
-              }
+              onClick={() => appendCasualty({ condition_id: '', name: '', age: 0, sex: 'unknown' })}
               className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 py-2.5 text-sm text-gray-500 transition hover:border-gray-400 hover:text-gray-700 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:text-gray-300"
             >
               <Plus size={14} />

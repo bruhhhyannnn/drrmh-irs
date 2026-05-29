@@ -1,6 +1,6 @@
 'use client';
 
-import { useEvents, useOngoingEvents } from '@/app/(admin)/events/use-events';
+import { useEvents } from '@/app/(admin)/events/use-events';
 import {
   useCasualtyConditions,
   useClusters,
@@ -10,8 +10,12 @@ import {
 } from '@/app/(admin)/settings/use-settings';
 import { PageBreadcrumb } from '@/components/common';
 import { Button, Input, Label, Select, Spinner } from '@/components/ui';
-import { reportSchema, type ReportFormData } from '@/lib';
-import { useAuthStore } from '@/store';
+import {
+  reportSchema,
+  type CasualtyFormData,
+  type MissingPersonFormData,
+  type ReportFormData,
+} from '@/lib';
 import { HEADCOUNT_FIELDS } from '@/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
@@ -22,6 +26,7 @@ import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import {
   useCreateReport,
+  useCreateReportCasualty,
   useCreateReportMissingPerson,
   useDeleteReportCasualty,
   useDeleteReportMissingPerson,
@@ -29,25 +34,22 @@ import {
   useReportCasualties,
   useReportMissingPersons,
   useUpdateReport,
-  useUpsertReportCasualty,
 } from './use-reports';
 
-type CasualtyRow = { id?: string; condition_id: string; count: number; names: string };
-type MissingPersonRow = { id?: string; name: string };
+type CasualtyRow = CasualtyFormData & { id?: string };
+type MissingPersonRow = MissingPersonFormData & { id?: string };
 
 interface ReportFormProps {
   editId?: string;
   eventId?: string;
-  isBystander?: boolean;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }: ReportFormProps) {
+export function ReportForm({ editId, eventId, onSuccess, onCancel }: ReportFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const isEdit = !!editId;
-  const userId = useAuthStore((s) => s.userProfile?.id);
 
   // ─── Main report data ───────────────────────────────────────
   const { data: existingReport, isLoading: isReportLoading } = useReport(editId);
@@ -55,15 +57,13 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
   const updateReportMutation = useUpdateReport();
 
   // ─── Dropdown options ───────────────────────────────────────
-  const { data: allEvents = [] } = useEvents();
-  const { data: ongoingEvents = [] } = useOngoingEvents();
-  const events = isBystander ? ongoingEvents : allEvents;
+  const { data: events = [] } = useEvents();
 
   const { data: clusters = [] } = useClusters();
   const { data: casualtyConditions = [] } = useCasualtyConditions();
   const { data: damageConditions = [] } = useDamageConditions();
 
-  const upsertCasualtyMutation = useUpsertReportCasualty();
+  const createCasualtyMutation = useCreateReportCasualty();
   const deleteCasualtyMutation = useDeleteReportCasualty();
   const createMissingPersonMutation = useCreateReportMissingPerson();
   const deleteMissingPersonMutation = useDeleteReportMissingPerson();
@@ -104,8 +104,6 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
       health_workers: 0,
       non_academic_staff: 0,
       guests: 0,
-      missing_count: 0,
-      casualties_count: 0,
       damage_condition_id: '',
     },
   });
@@ -130,8 +128,6 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
       health_workers: existingReport.health_workers,
       non_academic_staff: existingReport.non_academic_staff,
       guests: existingReport.guests,
-      missing_count: existingReport.missing_count,
-      casualties_count: existingReport.casualties_count,
       damage_condition_id: existingReport.damage_condition_id ?? '',
     });
     if (existingReport.cluster_id) setSelectedClusterId(existingReport.cluster_id);
@@ -143,8 +139,9 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
         existingCasualties.map((c) => ({
           id: c.id,
           condition_id: c.condition_id,
-          count: c.count,
-          names: c.names ?? '',
+          name: c.name ?? '',
+          age: c.age ?? 0,
+          sex: (c.sex as 'male' | 'female' | 'unknown') ?? 'unknown',
         }))
       );
     }
@@ -152,44 +149,36 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
 
   useEffect(() => {
     if (existingMissingPersons.length > 0) {
-      setMissingPersons(existingMissingPersons.map((p) => ({ id: p.id, name: p.name })));
+      setMissingPersons(
+        existingMissingPersons.map((p) => ({
+          id: p.id,
+          name: p.name,
+          age: p.age ?? 0,
+          sex: (p.sex as 'male' | 'female' | 'unknown') ?? 'unknown',
+        }))
+      );
     }
   }, [existingMissingPersons]);
 
   // ─── Missing persons helpers ─────────────────────────────────
-  const addMissingPerson = () => setMissingPersons((p) => [...p, { name: '' }]);
+  const addMissingPerson = () =>
+    setMissingPersons((p) => [...p, { name: '', age: 0, sex: 'unknown' }]);
   const removeMissingPerson = (i: number) =>
     setMissingPersons((p) => p.filter((_, idx) => idx !== i));
-  const updateMissingPerson = (i: number, name: string) =>
-    setMissingPersons((p) => p.map((item, idx) => (idx === i ? { ...item, name } : item)));
+  const updateMissingPerson = (i: number, patch: Partial<MissingPersonRow>) =>
+    setMissingPersons((p) => p.map((item, idx) => (idx === i ? { ...item, ...patch } : item)));
 
   // ─── Casualties helpers ──────────────────────────────────────
-  const addCasualty = () => setCasualties((p) => [...p, { condition_id: '', count: 1, names: '' }]);
+  const addCasualty = () =>
+    setCasualties((p) => [...p, { condition_id: '', name: '', age: 0, sex: 'unknown' }]);
   const removeCasualty = (i: number) => setCasualties((p) => p.filter((_, idx) => idx !== i));
   const updateCasualty = (i: number, patch: Partial<CasualtyRow>) =>
     setCasualties((p) => p.map((item, idx) => (idx === i ? { ...item, ...patch } : item)));
 
   // ─── Submit ──────────────────────────────────────────────────
   const onSubmit = handleSubmit(async (data) => {
-    const headcounts = {
-      faculty_members: data.faculty_members,
-      admin_members: data.admin_members,
-      reps_members: data.reps_members,
-      ra_members: data.ra_members,
-      students: data.students,
-      philcare_staff: data.philcare_staff,
-      security_personnel: data.security_personnel,
-      construction_workers: data.construction_workers,
-      tenants: data.tenants,
-      health_workers: data.health_workers,
-      non_academic_staff: data.non_academic_staff,
-      guests: data.guests,
-      missing_count: data.missing_count,
-      casualties_count: data.casualties_count,
-    };
-
     try {
-      // 1. Save main report (damage_condition_id is now a direct field)
+      // 1. Save main report
       let reportId: string;
       if (isEdit) {
         await updateReportMutation.mutateAsync({
@@ -204,60 +193,63 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
             damage_conditions: data.damage_condition_id
               ? { connect: { id: data.damage_condition_id } }
               : { disconnect: true },
-            ...headcounts,
+            faculty_members: data.faculty_members,
+            admin_members: data.admin_members,
+            reps_members: data.reps_members,
+            ra_members: data.ra_members,
+            students: data.students,
+            philcare_staff: data.philcare_staff,
+            security_personnel: data.security_personnel,
+            construction_workers: data.construction_workers,
+            tenants: data.tenants,
+            health_workers: data.health_workers,
+            non_academic_staff: data.non_academic_staff,
+            guests: data.guests,
           },
         });
         reportId = editId!;
       } else {
         const report = await createReportMutation.mutateAsync({
-          event: { connect: { id: data.event_id } },
-          cluster: { connect: { id: data.cluster_id } },
-          ...(data.unit_id && { unit: { connect: { id: data.unit_id } } }),
-          ...(data.location_id && { location: { connect: { id: data.location_id } } }),
-          ...(data.damage_condition_id && {
-            damage_condition: { connect: { id: data.damage_condition_id } },
-          }),
-          ...(userId && { user: { connect: { id: userId } } }),
-          is_verified: !isBystander,
-          ...headcounts,
+          ...data,
+          report_missing_persons: [],
+          report_casualties: [],
         });
         reportId = report.id;
       }
 
-      // 2. Save casualties — upsert all current, delete removed
-      const currentConditionIds = new Set(casualties.map((c) => c.condition_id));
+      // 2. Casualties — delete all existing, re-create all current
+      await Promise.all(
+        existingCasualties.map((c) => deleteCasualtyMutation.mutateAsync({ id: c.id, reportId }))
+      );
       await Promise.all(
         casualties
-          .filter((c) => c.condition_id)
+          .filter((c) => c.condition_id && c.name.trim())
           .map((c) =>
-            upsertCasualtyMutation.mutateAsync({
+            createCasualtyMutation.mutateAsync({
               report_id: reportId,
               condition_id: c.condition_id,
-              count: c.count,
-              names: c.names || null,
+              name: c.name.trim(),
+              age: c.age,
+              sex: c.sex,
             })
           )
       );
-      await Promise.all(
-        existingCasualties
-          .filter((c) => !currentConditionIds.has(c.condition_id))
-          .map((c) => deleteCasualtyMutation.mutateAsync({ id: c.id, reportId }))
-      );
 
-      // 3. Save missing persons — delete removed, create new
-      const keepPersonIds = new Set(missingPersons.filter((p) => p.id).map((p) => p.id));
+      // 3. Missing persons — delete all existing, re-create all current
       await Promise.all(
-        existingMissingPersons
-          .filter((p) => !keepPersonIds.has(p.id))
-          .map((p) => deleteMissingPersonMutation.mutateAsync({ id: p.id, reportId }))
+        existingMissingPersons.map((p) =>
+          deleteMissingPersonMutation.mutateAsync({ id: p.id, reportId })
+        )
       );
       await Promise.all(
         missingPersons
-          .filter((p) => !p.id && p.name.trim())
+          .filter((p) => p.name.trim())
           .map((p) =>
             createMissingPersonMutation.mutateAsync({
               report_id: reportId,
               name: p.name.trim(),
+              age: p.age,
+              sex: p.sex,
             })
           )
       );
@@ -288,11 +280,9 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
     ...damageConditions.map((d) => ({ value: d.id, label: d.name })),
   ];
 
-  const usedConditionIds = new Set(casualties.map((c) => c.condition_id));
-
   return (
     <div className="space-y-6">
-      {!isBystander && <PageBreadcrumb pageTitle={isEdit ? 'Edit Report' : 'Submit Report'} />}
+      <PageBreadcrumb pageTitle={isEdit ? 'Edit Report' : 'Submit Report'} />
 
       <div className="max-w-2xl rounded-xl border border-gray-200 bg-white p-6 shadow-md dark:border-white/5 dark:bg-white/3">
         {isEdit && isReportLoading ? (
@@ -363,18 +353,6 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
               </div>
             </div>
 
-            {/* ── Missing / Casualties summary counts ─────── */}
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <div>
-                <Label>Missing Persons Count</Label>
-                <Input type="number" min={0} {...register('missing_count')} />
-              </div>
-              <div>
-                <Label>Casualties Count</Label>
-                <Input type="number" min={0} {...register('casualties_count')} />
-              </div>
-            </div>
-
             <div className="border-t border-gray-100 dark:border-white/5" />
 
             {/* ── Missing persons (named) ──────────────────── */}
@@ -388,37 +366,87 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
                     </span>
                   )}
                 </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addMissingPerson}
-                  startIcon={<Plus size={13} />}
-                >
-                  Add Person
-                </Button>
+                {missingPersons.length === 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addMissingPerson}
+                    startIcon={<Plus size={13} />}
+                  >
+                    Add Person
+                  </Button>
+                )}
               </div>
               {missingPersons.length === 0 ? (
                 <p className="text-sm text-gray-400">No missing persons added</p>
               ) : (
                 <div className="space-y-2">
                   {missingPersons.map((person, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <Input
-                        placeholder="Full name"
-                        value={person.name}
-                        onChange={(e) => updateMissingPerson(i, e.target.value)}
-                      />
-                      {/* TODO: also add age and sex here */}
-                      <button
-                        type="button"
-                        onClick={() => removeMissingPerson(i)}
-                        className="hover:text-error-500 shrink-0 text-gray-400 transition-colors duration-100"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                    <div
+                      key={i}
+                      className="rounded-lg border border-gray-200 p-3 dark:border-white/5"
+                    >
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                          Person #{i + 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeMissingPerson(i)}
+                          className="hover:text-error-500 text-gray-400 transition-colors duration-100"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                        <div className="sm:col-span-3">
+                          <Label>Full Name</Label>
+                          <Input
+                            placeholder="Full name"
+                            value={person.name}
+                            onChange={(e) => updateMissingPerson(i, { name: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <Label>Age</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={person.age}
+                            onChange={(e) =>
+                              updateMissingPerson(i, { age: Number(e.target.value) || 0 })
+                            }
+                          />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <Label>Sex</Label>
+                          <Select
+                            options={[
+                              { value: 'male', label: 'Male' },
+                              { value: 'female', label: 'Female' },
+                              { value: 'unknown', label: 'Unknown' },
+                            ]}
+                            value={person.sex}
+                            onChange={(e) =>
+                              updateMissingPerson(i, {
+                                sex: e.target.value as MissingPersonRow['sex'],
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
                     </div>
                   ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addMissingPerson}
+                    startIcon={<Plus size={13} />}
+                  >
+                    Add Person
+                  </Button>
                 </div>
               )}
             </div>
@@ -434,15 +462,17 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
                     </span>
                   )}
                 </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addCasualty}
-                  startIcon={<Plus size={13} />}
-                >
-                  Add Casualty
-                </Button>
+                {casualties.length === 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addCasualty}
+                    startIcon={<Plus size={13} />}
+                  >
+                    Add Casualty
+                  </Button>
+                )}
               </div>
               {casualties.length === 0 ? (
                 <p className="text-sm text-gray-400">No casualty details added</p>
@@ -466,40 +496,60 @@ export function ReportForm({ editId, eventId, isBystander, onSuccess, onCancel }
                         </button>
                       </div>
                       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                        <div className="sm:col-span-2">
+                        <div className="sm:col-span-3">
                           <Label>Condition</Label>
                           <Select
-                            options={casualtyConditionOptions.filter(
-                              (opt) =>
-                                opt.value === c.condition_id || !usedConditionIds.has(opt.value)
-                            )}
+                            options={casualtyConditionOptions}
                             placeholder="Select condition..."
                             value={c.condition_id}
                             onChange={(e) => updateCasualty(i, { condition_id: e.target.value })}
                           />
                         </div>
+                        <div className="sm:col-span-3">
+                          <Label>Full Name</Label>
+                          <Input
+                            placeholder="Full name"
+                            value={c.name}
+                            onChange={(e) => updateCasualty(i, { name: e.target.value })}
+                          />
+                        </div>
                         <div>
-                          <Label>Count</Label>
+                          <Label>Age</Label>
                           <Input
                             type="number"
-                            min={1}
-                            value={c.count}
+                            min={0}
+                            value={c.age}
                             onChange={(e) =>
-                              updateCasualty(i, { count: Number(e.target.value) || 1 })
+                              updateCasualty(i, { age: Number(e.target.value) || 0 })
                             }
                           />
                         </div>
-                        <div className="sm:col-span-3">
-                          <Label>Names (optional)</Label>
-                          <Input
-                            placeholder="e.g. Juan Dela Cruz, Maria Santos"
-                            value={c.names}
-                            onChange={(e) => updateCasualty(i, { names: e.target.value })}
+                        <div className="sm:col-span-2">
+                          <Label>Sex</Label>
+                          <Select
+                            options={[
+                              { value: 'male', label: 'Male' },
+                              { value: 'female', label: 'Female' },
+                              { value: 'unknown', label: 'Unknown' },
+                            ]}
+                            value={c.sex}
+                            onChange={(e) =>
+                              updateCasualty(i, { sex: e.target.value as CasualtyRow['sex'] })
+                            }
                           />
                         </div>
                       </div>
                     </div>
                   ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addCasualty}
+                    startIcon={<Plus size={13} />}
+                  >
+                    Add Casualty
+                  </Button>
                 </div>
               )}
             </div>

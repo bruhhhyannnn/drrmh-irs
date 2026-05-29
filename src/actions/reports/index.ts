@@ -1,14 +1,14 @@
 'use server';
 
+import { CasualtyFormData, MissingPersonFormData, ReportFormData } from '@/lib';
 import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
 const PER_PAGE = 10;
 
-export async function getReports(page: number = 1, query?: string, isVerified: boolean = true) {
+export async function getReports(page: number = 1, query?: string) {
   const where: Prisma.ReportWhereInput = {
-    is_verified: isVerified,
     ...(query && {
       OR: [
         { cluster: { name: { contains: query, mode: 'insensitive' } } },
@@ -18,7 +18,7 @@ export async function getReports(page: number = 1, query?: string, isVerified: b
     }),
   };
 
-  const [data, total, unverifiedCount] = await Promise.all([
+  const [data, total] = await Promise.all([
     prisma.report.findMany({
       where,
       include: {
@@ -33,16 +33,16 @@ export async function getReports(page: number = 1, query?: string, isVerified: b
         cluster: { select: { name: true } },
         unit: { select: { name: true } },
         location: { select: { name: true } },
+        _count: { select: { casualties: true, missing_persons: true } },
       },
       orderBy: { created_at: 'desc' },
       skip: (page - 1) * PER_PAGE,
       take: PER_PAGE,
     }),
     prisma.report.count({ where }),
-    prisma.report.count({ where: { is_verified: false } }),
   ]);
 
-  return { data, total, unverifiedCount };
+  return { data, total };
 }
 
 export async function getReport(id: string) {
@@ -97,8 +97,21 @@ export async function getReportsByEvent(eventId: string) {
   });
 }
 
-export async function createReport(data: Prisma.ReportCreateInput) {
-  const report = await prisma.report.create({ data });
+export async function createReport(data: ReportFormData) {
+  const { report_missing_persons, report_casualties, ...reportData } = data;
+
+  const report = await prisma.report.create({
+    data: {
+      ...reportData,
+      missing_persons: {
+        create: report_missing_persons ?? [],
+      },
+      casualties: {
+        create: report_casualties ?? [],
+      },
+    },
+  });
+
   revalidatePath('/reports');
   return report;
 }
@@ -116,45 +129,40 @@ export async function deleteReport(id: string) {
 
 export async function getReportClusterSummary() {
   const [rows, clusters] = await Promise.all([
-    prisma.report.groupBy({
-      by: ['cluster_id'],
-      _count: { id: true },
-      _sum: { casualties_count: true, missing_count: true },
+    prisma.report.findMany({
+      select: {
+        cluster_id: true,
+        _count: { select: { casualties: true, missing_persons: true } },
+      },
     }),
     prisma.cluster.findMany({ select: { id: true, name: true } }),
   ]);
 
   const nameMap = Object.fromEntries(clusters.map((c) => [c.id, c.name]));
 
-  return rows.map((r) => ({
-    cluster: nameMap[r.cluster_id] ?? 'Unknown',
-    reports: r._count.id,
-    casualties: r._sum.casualties_count ?? 0,
-    missing: r._sum.missing_count ?? 0,
+  const grouped: Record<string, { reports: number; casualties: number; missing: number }> = {};
+  for (const r of rows) {
+    const entry = grouped[r.cluster_id] ?? { reports: 0, casualties: 0, missing: 0 };
+    entry.reports += 1;
+    entry.casualties += r._count.casualties;
+    entry.missing += r._count.missing_persons;
+    grouped[r.cluster_id] = entry;
+  }
+
+  return Object.entries(grouped).map(([id, counts]) => ({
+    cluster: nameMap[id] ?? 'Unknown',
+    ...counts,
   }));
 }
 
 export async function getReportTotals() {
-  const result = await prisma.report.aggregate({
-    _count: { id: true },
-    _sum: { casualties_count: true, missing_count: true },
-  });
+  const [reports, casualties, missing] = await Promise.all([
+    prisma.report.count(),
+    prisma.reportCasualty.count(),
+    prisma.reportMissingPerson.count(),
+  ]);
 
-  return {
-    reports: result._count.id,
-    casualties: result._sum.casualties_count ?? 0,
-    missing: result._sum.missing_count ?? 0,
-  };
-}
-
-export async function verifyReport(reportId: string, approved: boolean, adminId: string) {
-  return prisma.report.update({
-    where: { id: reportId },
-    data: {
-      is_verified: approved,
-      verified_by: adminId, // supabase auth uuid matches auth.users.id
-    },
-  });
+  return { reports, casualties, missing };
 }
 
 // Report Casualties
@@ -166,22 +174,8 @@ export async function getReportCasualties(reportId: string) {
   });
 }
 
-export async function upsertReportCasualty(data: {
-  report_id: string;
-  condition_id: string;
-  count: number;
-  names?: string | null;
-}) {
-  const result = await prisma.reportCasualty.upsert({
-    where: {
-      report_id_condition_id: {
-        report_id: data.report_id,
-        condition_id: data.condition_id,
-      },
-    },
-    create: data,
-    update: { count: data.count, names: data.names },
-  });
+export async function createReportCasualty(data: CasualtyFormData & { report_id: string }) {
+  const result = await prisma.reportCasualty.create({ data });
   revalidatePath('/reports');
   return result;
 }
@@ -199,7 +193,9 @@ export async function getReportMissingPersons(reportId: string) {
   });
 }
 
-export async function createReportMissingPerson(data: { report_id: string; name: string }) {
+export async function createReportMissingPerson(
+  data: MissingPersonFormData & { report_id: string }
+) {
   const result = await prisma.reportMissingPerson.create({ data });
   revalidatePath('/reports');
   return result;

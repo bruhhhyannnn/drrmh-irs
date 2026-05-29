@@ -53,8 +53,8 @@ function EventDetailsContent() {
   // Clusters that have zero reports (pending)
   const pendingClusters = CLUSTERS.filter((c) => reportsByCluster[c].length === 0);
 
-  const totalCasualties = reports.reduce((s, r) => s + (r.casualties_count ?? 0), 0);
-  const totalMissing = reports.reduce((s, r) => s + (r.missing_count ?? 0), 0);
+  const totalCasualties = reports.reduce((s, r) => s + r.casualties.length, 0);
+  const totalMissing = reports.reduce((s, r) => s + r.missing_persons.length, 0);
   const totalReports = reports.length;
   const totalAffected = reports.reduce(
     (s, r) => s + HEADCOUNT_FIELDS.reduce((sum, { key }) => sum + ((r as any)[key] ?? 0), 0),
@@ -247,16 +247,16 @@ function ClusterCard({ cluster, reports }: { cluster: string; reports: EventRepo
       HEADCOUNT_FIELDS.forEach(({ key }) => {
         acc[key] = (acc[key] ?? 0) + ((r as any)[key] ?? 0);
       });
-      acc.missing_count = (acc.missing_count ?? 0) + (r.missing_count ?? 0);
-      acc.casualties_count = (acc.casualties_count ?? 0) + (r.casualties_count ?? 0);
       return acc;
     },
     {} as Record<string, number>
   );
 
+  const totalCasualties = reports.reduce((s, r) => s + r.casualties.length, 0);
+  const totalMissing = reports.reduce((s, r) => s + r.missing_persons.length, 0);
   const totalAffected = HEADCOUNT_FIELDS.reduce((sum, { key }) => sum + (totals[key] ?? 0), 0);
-  const hasCasualties = totals.casualties_count > 0;
-  const hasMissing = totals.missing_count > 0;
+  const hasCasualties = totalCasualties > 0;
+  const hasMissing = totalMissing > 0;
 
   return (
     <div className="shadow-theme-md overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/5 dark:bg-white/3">
@@ -276,12 +276,12 @@ function ClusterCard({ cluster, reports }: { cluster: string; reports: EventRepo
         <div className="flex items-center gap-3">
           {hasCasualties && (
             <Badge color="error" size="sm">
-              {totals.casualties_count} {totals.casualties_count === 1 ? 'casualty' : 'casualties'}
+              {totalCasualties} {totalCasualties === 1 ? 'casualty' : 'casualties'}
             </Badge>
           )}
           {hasMissing && (
             <Badge color="warning" size="sm">
-              {totals.missing_count} missing
+              {totalMissing} missing
             </Badge>
           )}
           <div className="text-right">
@@ -338,14 +338,14 @@ function ClusterCard({ cluster, reports }: { cluster: string; reports: EventRepo
                 </p>
               </div>
               <div className="flex gap-1.5">
-                {(r.casualties_count ?? 0) > 0 && (
+                {r.casualties.length > 0 && (
                   <Badge color="error" size="sm">
-                    {r.casualties_count} casualties
+                    {r.casualties.length} {r.casualties.length === 1 ? 'casualty' : 'casualties'}
                   </Badge>
                 )}
-                {(r.missing_count ?? 0) > 0 && (
+                {r.missing_persons.length > 0 && (
                   <Badge color="warning" size="sm">
-                    {r.missing_count} missing
+                    {r.missing_persons.length} missing
                   </Badge>
                 )}
               </div>
@@ -389,27 +389,19 @@ function ClusterCard({ cluster, reports }: { cluster: string; reports: EventRepo
                 {r.casualties.length > 0 && (
                   <div className="border-error-200 bg-error-50 dark:border-error-500/20 dark:bg-error-500/10 rounded-lg border p-3">
                     <p className="text-error-700 dark:text-error-400 mb-1.5 text-xs font-semibold tracking-wide uppercase">
-                      Casualties ({r.casualties.reduce((s, c) => s + c.count, 0)} total)
+                      Casualties ({r.casualties.length})
                     </p>
                     <div className="space-y-1">
                       {r.casualties.map((c) => (
                         <div key={c.id} className="flex items-start justify-between gap-2 text-xs">
                           <span className="text-error-700 dark:text-error-300">
-                            {c.condition.name}
+                            {c.name || '—'}
                           </span>
-                          <span className="text-error-800 dark:text-error-200 shrink-0 font-semibold">
-                            ×{c.count}
+                          <span className="text-error-800 dark:text-error-200 shrink-0">
+                            {c.condition.name}
                           </span>
                         </div>
                       ))}
-                      {r.casualties.some((c) => c.names) && (
-                        <div className="text-error-600 dark:text-error-400 mt-1.5 border-t border-red-200 pt-1.5 dark:border-red-500/20">
-                          {r.casualties
-                            .filter((c) => c.names)
-                            .map((c) => c.names)
-                            .join(', ')}
-                        </div>
-                      )}
                     </div>
                   </div>
                 )}
@@ -447,13 +439,13 @@ function GrandTotalCard({ reports }: { reports: EventReport[] }) {
       HEADCOUNT_FIELDS.forEach(({ key }) => {
         acc[key] = (acc[key] ?? 0) + ((r as any)[key] ?? 0);
       });
-      acc.missing_count = (acc.missing_count ?? 0) + (r.missing_count ?? 0);
-      acc.casualties_count = (acc.casualties_count ?? 0) + (r.casualties_count ?? 0);
       return acc;
     },
     {} as Record<string, number>
   );
 
+  const totalCasualties = reports.reduce((s, r) => s + r.casualties.length, 0);
+  const totalMissing = reports.reduce((s, r) => s + r.missing_persons.length, 0);
   const totalAffected = HEADCOUNT_FIELDS.reduce((sum, { key }) => sum + (grandTotals[key] ?? 0), 0);
 
   return (
@@ -480,21 +472,21 @@ function GrandTotalCard({ reports }: { reports: EventReport[] }) {
           </div>
         ))}
       </div>
-      {(grandTotals.casualties_count > 0 || grandTotals.missing_count > 0) && (
+      {(totalCasualties > 0 || totalMissing > 0) && (
         <div className="flex gap-3 border-t border-gray-100 px-5 py-3 dark:border-white/5">
-          {grandTotals.casualties_count > 0 && (
+          {totalCasualties > 0 && (
             <div className="flex items-center gap-1.5 text-sm">
               <AlertTriangle size={14} className="text-error-500" />
               <span className="text-error-600 dark:text-error-400 font-semibold">
-                {grandTotals.casualties_count} total casualties
+                {totalCasualties} total casualties
               </span>
             </div>
           )}
-          {grandTotals.missing_count > 0 && (
+          {totalMissing > 0 && (
             <div className="flex items-center gap-1.5 text-sm">
               <UserX size={14} className="text-warning-500" />
               <span className="text-warning-600 dark:text-warning-400 font-semibold">
-                {grandTotals.missing_count} total missing
+                {totalMissing} total missing
               </span>
             </div>
           )}
