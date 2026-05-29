@@ -3,8 +3,12 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-*: initial;
-  --font-outfit: Outfit, sans-serif;
+  --font-sans:
+    var(--font-inter), ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
 
   --text-xs: 14px;
   --text-sm: 16px;
@@ -102,7 +106,7 @@
     background-color: var(--color-gray-800);
   }
   body {
-    @apply font-outfit relative bg-gray-50 font-normal dark:bg-gray-950;
+    @apply relative bg-gray-50 font-sans font-normal dark:bg-gray-950;
   }
 }
 

@@ -1,10 +1,10 @@
 import { Providers } from '@/components/providers';
 import { Analytics } from '@vercel/analytics/next';
 import type { Metadata } from 'next';
-import { Outfit } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import './globals.css';
 
-const outfit = Outfit({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
   title: 'DRRM-H - IRS',
@@ -17,8 +17,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${outfit.className} `} suppressHydrationWarning>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <Providers>{children}</Providers>
         <Analytics />
       </body>

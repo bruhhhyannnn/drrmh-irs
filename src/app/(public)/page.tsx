@@ -60,10 +60,7 @@ export default function LandingPage() {
 
   return (
     <>
-      {/* Google Fonts */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
-
         :root {
           --maroon: #8B1A1A;
           --maroon-dark: #6B1313;
@@ -98,9 +95,9 @@ export default function LandingPage() {
           scroll-behavior: smooth;
         }
 
-        body { font-family: 'Roboto', sans-serif; }
+        body { font-family: var(--font-sans); }
 
-        .display { font-family: 'Google Sans Flex', sans-serif; }
+        .display { font-family: var(--font-sans); }
 
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(24px); }
@@ -289,7 +286,7 @@ export default function LandingPage() {
 
             {/* headline */}
             <h1
-              className="display hero-anim-1 mb-6 font-normal"
+              className="display hero-anim-1 mb-6 font-normal tracking-tight"
               style={{
                 fontSize: 'var(--text-hero)',
                 lineHeight: 1.1,
