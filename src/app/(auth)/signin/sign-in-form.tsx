@@ -75,17 +75,15 @@ export function SignInForm() {
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@up.edu.ph"
-              error={!!errors.email}
-              hint={errors.email?.message}
-              {...register('email')}
-            />
-          </div>
+          <Input
+            label="Email"
+            id="email"
+            type="email"
+            placeholder="you@up.edu.ph"
+            error={!!errors.email}
+            hint={errors.email?.message}
+            {...register('email')}
+          />
 
           <div className="space-y-1.5">
             <Label htmlFor="password">Password</Label>

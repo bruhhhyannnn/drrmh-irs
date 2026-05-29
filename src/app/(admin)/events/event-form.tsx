@@ -2,7 +2,7 @@
 
 import { useEventStatuses, useLocations } from '@/app/(admin)/settings/use-settings';
 import { PageBreadcrumb } from '@/components/common';
-import { Button, Input, Label, Select, Spinner, Textarea } from '@/components/ui';
+import { Button, Input, Select, Spinner, Textarea } from '@/components/ui';
 import { eventSchema, type EventFormData } from '@/lib';
 import { useAuthStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -125,49 +125,60 @@ export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
           <Spinner center />
         ) : (
           <form onSubmit={onSubmit} className="space-y-5">
-            <div>
-              <Label required>Event Name</Label>
-              <Input error={!!errors.name} hint={errors.name?.message} {...register('name')} />
-            </div>
+            <Input
+              label="Event Name"
+              id="Event Name"
+              required
+              placeholder="e.g. Earthquake Drill Q2 2025"
+              error={!!errors.name}
+              hint={errors.name?.message}
+              {...register('name')}
+            />
 
-            <div>
-              <Label>Description</Label>
-              <Textarea rows={3} {...register('description')} />
-            </div>
+            <Textarea
+              rows={3}
+              label="Description"
+              id="Description"
+              placeholder="e.g. Quarterly fire evacuation drill for all building occupants"
+              {...register('description')}
+            />
 
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <div>
-                <Label>Quarter</Label>
-                <Input placeholder="e.g. Q1 2025" {...register('quarter')} />
-              </div>
-              <div>
-                <Label required>Status</Label>
-                <Select
-                  options={statusOptions}
-                  placeholder="Select status..."
-                  error={!!errors.status_id}
-                  hint={errors.status_id?.message}
-                  {...register('status_id')}
-                />
-              </div>
-              <div>
-                <Label>Started At</Label>
-                <Input type="datetime-local" {...register('started_at')} />
-              </div>
-              <div>
-                <Label>Ended At</Label>
-                <Input type="datetime-local" {...register('ended_at')} />
-              </div>
-            </div>
-
-            <div>
-              <Label>Location</Label>
+              <Input
+                label="Quarter"
+                id="Quarter"
+                placeholder="e.g. Q1 2025"
+                {...register('quarter')}
+              />
               <Select
-                options={locationOptions}
-                placeholder="Select location..."
-                {...register('location_id')}
+                options={statusOptions}
+                label="Status"
+                placeholder="Select status..."
+                error={!!errors.status_id}
+                hint={errors.status_id?.message}
+                required
+                {...register('status_id')}
+              />
+              <Input
+                type="datetime-local"
+                label="Started At"
+                id="Started At"
+                {...register('started_at')}
+              />
+              <Input
+                type="datetime-local"
+                label="Ended At"
+                id="Ended At"
+                {...register('ended_at')}
               />
             </div>
+
+            <Select
+              options={locationOptions}
+              label="Location"
+              placeholder="Select location..."
+              {...register('location_id')}
+            />
 
             <div className="flex items-center gap-3 pt-2">
               <Button type="submit" isLoading={isPending} loadingText="Saving...">

@@ -9,7 +9,7 @@ import {
   useUnits,
 } from '@/app/(admin)/settings/use-settings';
 import { PageBreadcrumb } from '@/components/common';
-import { Button, Input, Label, Select, Spinner } from '@/components/ui';
+import { Button, Input, Select, Spinner } from '@/components/ui';
 import {
   reportSchema,
   type CasualtyFormData,
@@ -292,47 +292,45 @@ export function ReportForm({ editId, eventId, onSuccess, onCancel }: ReportFormP
             {/* ── Context ────────────────────────────────── */}
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <Label required>Event</Label>
                 <Select
                   options={eventOptions}
+                  label="Event"
                   placeholder="Select event..."
                   error={!!errors.event_id}
                   hint={errors.event_id?.message}
                   disabled={!!eventId}
+                  required
                   value={watch('event_id') ?? ''}
                   onChange={(e) => setValue('event_id', e.target.value)}
                 />
               </div>
-              <div>
-                <Label required>Cluster</Label>
-                <Select
-                  options={clusterOptions}
-                  placeholder="Select cluster..."
-                  error={!!errors.cluster_id}
-                  hint={errors.cluster_id?.message}
-                  value={watch('cluster_id') ?? ''}
-                  onChange={(e) => {
-                    const id = e.target.value;
-                    setSelectedClusterId(id);
-                    setValue('cluster_id', id);
-                    setValue('unit_id', '');
-                    setValue('location_id', '');
-                  }}
-                />
-              </div>
-              <div>
-                <Label>Unit</Label>
-                <Select
-                  options={unitOptions}
-                  placeholder="Select unit..."
-                  value={watch('unit_id') ?? ''}
-                  onChange={(e) => setValue('unit_id', e.target.value)}
-                />
-              </div>
+              <Select
+                options={clusterOptions}
+                label="Cluster"
+                placeholder="Select cluster..."
+                error={!!errors.cluster_id}
+                hint={errors.cluster_id?.message}
+                value={watch('cluster_id') ?? ''}
+                required
+                onChange={(e) => {
+                  const id = e.target.value;
+                  setSelectedClusterId(id);
+                  setValue('cluster_id', id);
+                  setValue('unit_id', '');
+                  setValue('location_id', '');
+                }}
+              />
+              <Select
+                options={unitOptions}
+                label="Unit"
+                placeholder="Select unit..."
+                value={watch('unit_id') ?? ''}
+                onChange={(e) => setValue('unit_id', e.target.value)}
+              />
               <div className="sm:col-span-2">
-                <Label>Location</Label>
                 <Select
                   options={locationOptions}
+                  label="Location"
                   placeholder="Select location..."
                   value={watch('location_id') ?? ''}
                   onChange={(e) => setValue('location_id', e.target.value)}
@@ -340,19 +338,27 @@ export function ReportForm({ editId, eventId, onSuccess, onCancel }: ReportFormP
               </div>
             </div>
 
+            <div className="border-t border-gray-100 dark:border-white/5" />
+
             {/* ── Headcount ───────────────────────────────── */}
             <div>
               <p className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">Headcount</p>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {HEADCOUNT_FIELDS.map((field) => (
                   <div key={field.key}>
-                    <Label>{field.label}</Label>
-                    <Input type="number" min={0} {...register(field.key as keyof ReportFormData)} />
+                    <Input
+                      type="number"
+                      label={field.label}
+                      id={field.label}
+                      min={0}
+                      {...register(field.key as keyof ReportFormData)}
+                    />
                   </div>
                 ))}
               </div>
             </div>
 
+            {/* ── Divider ───────────────────────────────── */}
             <div className="border-t border-gray-100 dark:border-white/5" />
 
             {/* ── Missing persons (named) ──────────────────── */}
@@ -401,17 +407,19 @@ export function ReportForm({ editId, eventId, onSuccess, onCancel }: ReportFormP
                       </div>
                       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                         <div className="sm:col-span-3">
-                          <Label>Full Name</Label>
                           <Input
+                            label="Full Name"
+                            id="Person Full Name"
                             placeholder="Full name"
                             value={person.name}
                             onChange={(e) => updateMissingPerson(i, { name: e.target.value })}
                           />
                         </div>
                         <div>
-                          <Label>Age</Label>
                           <Input
                             type="number"
+                            label="Age"
+                            id="Person Age"
                             min={0}
                             value={person.age}
                             onChange={(e) =>
@@ -420,13 +428,13 @@ export function ReportForm({ editId, eventId, onSuccess, onCancel }: ReportFormP
                           />
                         </div>
                         <div className="sm:col-span-2">
-                          <Label>Sex</Label>
                           <Select
                             options={[
                               { value: 'male', label: 'Male' },
                               { value: 'female', label: 'Female' },
                               { value: 'unknown', label: 'Unknown' },
                             ]}
+                            label="Sex"
                             value={person.sex}
                             onChange={(e) =>
                               updateMissingPerson(i, {
@@ -497,26 +505,28 @@ export function ReportForm({ editId, eventId, onSuccess, onCancel }: ReportFormP
                       </div>
                       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                         <div className="sm:col-span-3">
-                          <Label>Condition</Label>
                           <Select
                             options={casualtyConditionOptions}
+                            label="Condition"
                             placeholder="Select condition..."
                             value={c.condition_id}
                             onChange={(e) => updateCasualty(i, { condition_id: e.target.value })}
                           />
                         </div>
                         <div className="sm:col-span-3">
-                          <Label>Full Name</Label>
                           <Input
+                            label="Full Name"
+                            id="Casualty Full Name"
                             placeholder="Full name"
                             value={c.name}
                             onChange={(e) => updateCasualty(i, { name: e.target.value })}
                           />
                         </div>
                         <div>
-                          <Label>Age</Label>
                           <Input
                             type="number"
+                            label="Age"
+                            id="Casualty Age"
                             min={0}
                             value={c.age}
                             onChange={(e) =>
@@ -525,13 +535,13 @@ export function ReportForm({ editId, eventId, onSuccess, onCancel }: ReportFormP
                           />
                         </div>
                         <div className="sm:col-span-2">
-                          <Label>Sex</Label>
                           <Select
                             options={[
                               { value: 'male', label: 'Male' },
                               { value: 'female', label: 'Female' },
                               { value: 'unknown', label: 'Unknown' },
                             ]}
+                            label="Sex"
                             value={c.sex}
                             onChange={(e) =>
                               updateCasualty(i, { sex: e.target.value as CasualtyRow['sex'] })
@@ -556,9 +566,9 @@ export function ReportForm({ editId, eventId, onSuccess, onCancel }: ReportFormP
 
             {/* ── Structural Damage ────────────────────────── */}
             <div>
-              <Label>Structural Damage</Label>
               <Select
                 options={damageConditionOptions}
+                label="Structural Damage"
                 placeholder="Select damage type..."
                 value={watch('damage_condition_id') ?? ''}
                 onChange={(e) => setValue('damage_condition_id', e.target.value)}

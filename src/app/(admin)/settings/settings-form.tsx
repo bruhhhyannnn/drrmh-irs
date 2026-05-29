@@ -98,27 +98,25 @@ export function SettingsForm({ title, table, editId, onSuccess, onCancel }: Sett
       </h4>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        <div>
-          <Label required>Name</Label>
-          <Input
-            placeholder={`Enter ${singularTitle.toLowerCase()} name`}
-            error={!!nameError}
-            hint={nameError?.message}
-            {...register('name')}
-          />
-        </div>
+        <Input
+          label="Name"
+          required
+          placeholder={`Enter ${singularTitle.toLowerCase()} name`}
+          error={!!nameError}
+          hint={nameError?.message}
+          {...register('name')}
+        />
 
         {needsCluster && (
-          <div>
-            <Label required>Cluster</Label>
-            <Select
-              options={clusterOptions}
-              placeholder="Select cluster..."
-              error={!!clusterError}
-              hint={clusterError?.message}
-              {...register('cluster_id')}
-            />
-          </div>
+          <Select
+            label="Cluster"
+            required
+            options={clusterOptions}
+            placeholder="Select cluster..."
+            error={!!clusterError}
+            hint={clusterError?.message}
+            {...register('cluster_id')}
+          />
         )}
 
         <div className="flex items-center gap-3">

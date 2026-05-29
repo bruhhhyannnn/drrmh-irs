@@ -132,55 +132,46 @@ export function UserForm({ editId, onSuccess, onCancel }: UserFormProps) {
           <form onSubmit={onSubmit} className="space-y-5">
             {/* Personal Info */}
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <div>
-                <Label required>First Name</Label>
-                <Input
-                  error={!!errors.first_name}
-                  hint={errors.first_name?.message}
-                  {...register('first_name')}
-                />
-              </div>
-              <div>
-                <Label>Middle Name</Label>
-                <Input {...register('middle_name')} />
-              </div>
-              <div>
-                <Label required>Last Name</Label>
-                <Input
-                  error={!!errors.last_name}
-                  hint={errors.last_name?.message}
-                  {...register('last_name')}
-                />
-              </div>
-              <div>
-                <Label>Suffix</Label>
-                <Input placeholder="Jr., Sr., III" {...register('suffix')} />
-              </div>
+              <Input
+                label="First Name"
+                required
+                error={!!errors.first_name}
+                hint={errors.first_name?.message}
+                {...register('first_name')}
+              />
+              <Input label="Middle Name" {...register('middle_name')} />
+              <Input
+                label="Last Name"
+                required
+                error={!!errors.last_name}
+                hint={errors.last_name?.message}
+                {...register('last_name')}
+              />
+              <Input label="Suffix" placeholder="Jr., Sr., III" {...register('suffix')} />
             </div>
 
             {/* Account Info */}
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <div>
-                <Label required>Username</Label>
-                <Input
-                  error={!!errors.username}
-                  hint={errors.username?.message}
-                  {...register('username')}
-                />
-              </div>
-              <div>
-                <Label required>Email</Label>
-                <Input
-                  type="email"
-                  error={!!errors.email}
-                  hint={errors.email?.message}
-                  {...register('email')}
-                />
-              </div>
+              <Input
+                label="Username"
+                required
+                error={!!errors.username}
+                hint={errors.username?.message}
+                {...register('username')}
+              />
+              <Input
+                label="Email"
+                required
+                type="email"
+                error={!!errors.email}
+                hint={errors.email?.message}
+                {...register('email')}
+              />
               {!isEdit && (
                 <div className="sm:col-span-2">
-                  <Label required>Password</Label>
                   <Input
+                    label="Password"
+                    required
                     type="password"
                     placeholder="Min. 8 characters"
                     error={!!(errors as { password?: { message?: string } }).password}
@@ -193,49 +184,42 @@ export function UserForm({ editId, onSuccess, onCancel }: UserFormProps) {
 
             {/* Role & Assignment */}
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <div>
-                <Label>Cluster</Label>
-                <Select
-                  options={clusterOptions}
-                  placeholder="Select cluster..."
-                  value={selectedClusterId}
-                  onChange={(e) => {
-                    setSelectedClusterId(e.target.value);
-                    setValue('unit_id', '');
-                  }}
-                />
-              </div>
-              <div>
-                <Label>Unit</Label>
-                <Select
-                  options={unitOptions}
-                  placeholder="Select unit..."
-                  value={watch('unit_id') ?? ''}
-                  onChange={(e) => setValue('unit_id', e.target.value)}
-                  error={!!errors.unit_id}
-                />
-              </div>
-              <div>
-                <Label>Position</Label>
-                <Select
-                  options={positionOptions}
-                  placeholder="Select position..."
-                  value={watch('position_id') ?? ''}
-                  onChange={(e) => setValue('position_id', e.target.value)}
-                  error={!!errors.position_id}
-                />
-              </div>
-              <div>
-                <Label required>User Type</Label>
-                <Select
-                  options={userTypeOptions}
-                  placeholder="Select type..."
-                  value={watch('user_type_id') ?? ''}
-                  onChange={(e) => setValue('user_type_id', e.target.value)}
-                  error={!!errors.user_type_id}
-                  hint={errors.user_type_id?.message}
-                />
-              </div>
+              <Select
+                label="Cluster"
+                options={clusterOptions}
+                placeholder="Select cluster..."
+                value={selectedClusterId}
+                onChange={(e) => {
+                  setSelectedClusterId(e.target.value);
+                  setValue('unit_id', '');
+                }}
+              />
+              <Select
+                label="Unit"
+                options={unitOptions}
+                placeholder="Select unit..."
+                value={watch('unit_id') ?? ''}
+                onChange={(e) => setValue('unit_id', e.target.value)}
+                error={!!errors.unit_id}
+              />
+              <Select
+                label="Position"
+                options={positionOptions}
+                placeholder="Select position..."
+                value={watch('position_id') ?? ''}
+                onChange={(e) => setValue('position_id', e.target.value)}
+                error={!!errors.position_id}
+              />
+              <Select
+                label="User Type"
+                required
+                options={userTypeOptions}
+                placeholder="Select type..."
+                value={watch('user_type_id') ?? ''}
+                onChange={(e) => setValue('user_type_id', e.target.value)}
+                error={!!errors.user_type_id}
+                hint={errors.user_type_id?.message}
+              />
             </div>
 
             {/* Status */}

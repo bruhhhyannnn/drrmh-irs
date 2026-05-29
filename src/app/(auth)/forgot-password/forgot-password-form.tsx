@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Input, Label } from '@/components/ui';
+import { Button, Input } from '@/components/ui';
 import { ForgotPasswordFormData, forgotPasswordSchema, supabase } from '@/lib';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { MailCheck } from 'lucide-react';
@@ -78,17 +78,15 @@ export function ForgotPasswordForm() {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="you@up.edu.ph"
-            error={!!errors.email}
-            hint={errors.email?.message}
-            {...register('email')}
-          />
-        </div>
+        <Input
+          label="Email"
+          id="email"
+          type="email"
+          placeholder="you@up.edu.ph"
+          error={!!errors.email}
+          hint={errors.email?.message}
+          {...register('email')}
+        />
 
         <div className="flex justify-center">
           <Link

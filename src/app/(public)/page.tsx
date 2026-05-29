@@ -465,7 +465,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="absolute inset-0 h-dvh overflow-hidden">
+          <div className="absolute inset-0 h-screen overflow-hidden">
             {track.map((src, i) => (
               <div
                 key={i}

@@ -10,7 +10,7 @@ import {
   useDamageConditions,
   useUnits,
 } from '@/app/(admin)/settings/use-settings';
-import { Button, Input, Label, Select } from '@/components/ui';
+import { Button, Input, Select } from '@/components/ui';
 import { BystanderReportFormData, cn } from '@/lib';
 import { CheckCircle, Loader2, MapPin, Plus, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -165,9 +165,11 @@ export function BystanderReportForm() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* ── Incident Type ───────────────────────────────────────────────── */}
-        <SectionCard title="Incident Type *" accent>
+        <SectionCard title="Incident" accent>
           <Select
             options={incidentTypeOptions}
+            label="Incident Type"
+            required
             placeholder="What type of emergency is this?"
             error={!watch('incident_type_id') && isSubmitting}
             {...register('incident_type_id', { required: true })}
@@ -209,45 +211,42 @@ export function BystanderReportForm() {
         {/* ── Cluster & Unit ───────────────────────────────────────────────── */}
         <SectionCard title="Cluster / Unit *">
           <div className="space-y-4">
-            <div>
-              <Label required>Cluster</Label>
-              <Select
-                options={clusterOptions}
-                placeholder="Select cluster"
-                error={!watch('cluster_id') && isSubmitting}
-                {...register('cluster_id', { required: true })}
-                onChange={(e) => {
-                  setSelectedClusterId(e.target.value);
-                  setValue('cluster_id', e.target.value);
-                  setValue('unit_id', '');
-                }}
-              />
-            </div>
-
-            <div>
-              <Label>Unit (optional)</Label>
-              <Select
-                options={unitOptions}
-                placeholder={selectedClusterId ? 'Select unit' : 'Select cluster first'}
-                disabled={!selectedClusterId}
-                {...register('unit_id')}
-              />
-            </div>
+            <Select
+              label="Cluster"
+              required
+              options={clusterOptions}
+              placeholder="Select cluster"
+              error={!watch('cluster_id') && isSubmitting}
+              {...register('cluster_id', { required: true })}
+              onChange={(e) => {
+                setSelectedClusterId(e.target.value);
+                setValue('cluster_id', e.target.value);
+                setValue('unit_id', '');
+              }}
+            />
+            <Select
+              label="Unit (optional)"
+              options={unitOptions}
+              placeholder={selectedClusterId ? 'Select unit' : 'Select cluster first'}
+              disabled={!selectedClusterId}
+              {...register('unit_id')}
+            />
           </div>
         </SectionCard>
 
         {/* ── Additional Details ──────────────────────────────────────────── */}
         <SectionCard title="Additional Details">
           <div className="space-y-4">
+            <Input
+              label="Location Description (optional)"
+              id="Location Description (optional)"
+              placeholder="e.g. Near the main gate, beside the flagpole"
+              {...register('location_description')}
+            />
             <div>
-              <Label>Location Description (optional)</Label>
-              <Input
-                placeholder="e.g. Near the main gate, beside the flagpole"
-                {...register('location_description')}
-              />
-            </div>
-            <div>
-              <Label>Description (optional)</Label>
+              <p className="mb-1.5 block text-sm font-medium text-gray-500 dark:text-gray-400">
+                Description (optional)
+              </p>
               <textarea
                 placeholder="Briefly describe what happened..."
                 rows={4}
@@ -279,33 +278,29 @@ export function BystanderReportForm() {
                   </button>
                 </div>
 
-                <div>
-                  <Label>Full Name</Label>
-                  <Input
-                    placeholder="e.g. Juan dela Cruz"
-                    {...register(`report_missing_persons.${index}.name`)}
-                  />
-                </div>
+                <Input
+                  label="Full Name"
+                  id="Person Full Name"
+                  placeholder="e.g. Juan dela Cruz"
+                  {...register(`report_missing_persons.${index}.name`)}
+                />
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Age</Label>
-                    <Input
-                      type="number"
-                      placeholder="e.g. 32"
-                      min={0}
-                      max={120}
-                      {...register(`report_missing_persons.${index}.age`)}
-                    />
-                  </div>
-                  <div>
-                    <Label>Sex</Label>
-                    <Select
-                      options={SEX_OPTIONS}
-                      placeholder="Select"
-                      {...register(`report_missing_persons.${index}.sex`)}
-                    />
-                  </div>
+                  <Input
+                    label="Age"
+                    id="Person Age"
+                    type="number"
+                    placeholder="e.g. 32"
+                    min={0}
+                    max={120}
+                    {...register(`report_missing_persons.${index}.age`)}
+                  />
+                  <Select
+                    label="Sex"
+                    options={SEX_OPTIONS}
+                    placeholder="Select"
+                    {...register(`report_missing_persons.${index}.sex`)}
+                  />
                 </div>
               </div>
             ))}
@@ -342,42 +337,36 @@ export function BystanderReportForm() {
                   </button>
                 </div>
 
-                <div>
-                  <Label>Condition</Label>
-                  <Select
-                    options={conditionOptions}
-                    placeholder="Select condition"
-                    {...register(`report_casualties.${index}.condition_id`)}
-                  />
-                </div>
+                <Select
+                  label="Condition"
+                  options={conditionOptions}
+                  placeholder="Select condition"
+                  {...register(`report_casualties.${index}.condition_id`)}
+                />
 
-                <div>
-                  <Label>Full Name</Label>
-                  <Input
-                    placeholder="e.g. Maria Santos"
-                    {...register(`report_casualties.${index}.name`)}
-                  />
-                </div>
+                <Input
+                  label="Full Name"
+                  id="Casualty Full Name"
+                  placeholder="e.g. Maria Santos"
+                  {...register(`report_casualties.${index}.name`)}
+                />
 
                 <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <Label>Age</Label>
-                    <Input
-                      type="number"
-                      placeholder="e.g. 45"
-                      min={0}
-                      max={120}
-                      {...register(`report_casualties.${index}.age`)}
-                    />
-                  </div>
-                  <div>
-                    <Label>Sex</Label>
-                    <Select
-                      options={SEX_OPTIONS}
-                      placeholder="Select"
-                      {...register(`report_casualties.${index}.sex`)}
-                    />
-                  </div>
+                  <Input
+                    label="Age"
+                    id="Casualty Age"
+                    type="number"
+                    placeholder="e.g. 45"
+                    min={0}
+                    max={120}
+                    {...register(`report_casualties.${index}.age`)}
+                  />
+                  <Select
+                    label="Sex"
+                    options={SEX_OPTIONS}
+                    placeholder="Select"
+                    {...register(`report_casualties.${index}.sex`)}
+                  />
                 </div>
               </div>
             ))}
