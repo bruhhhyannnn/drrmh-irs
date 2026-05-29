@@ -7,27 +7,26 @@ datasource db {
 }
 
 model User {
-  id                                 String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  auth_id                            String        @unique @db.Uuid
-  unit_id                            String?       @db.Uuid
-  position_id                        String?       @db.Uuid
-  user_type_id                       String        @db.Uuid
-  username                           String        @unique
-  email                              String        @unique
-  first_name                         String        @default("")
-  middle_name                        String?
-  last_name                          String        @default("")
-  suffix                             String?
-  is_active                          Boolean       @default(true)
-  created_at                         DateTime      @default(now()) @db.Timestamptz(6)
-  updated_at                         DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
-  activity_logs                      ActivityLog[]
-  events                             Event[]       @relation("CreatedBy")
-  reports                            Report[]
-  reports_reports_verified_byTousers Report[]      @relation("reports_verified_byTousers")
-  position                           Position?     @relation(fields: [position_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  unit                               Unit?         @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  user_type                          UserType      @relation(fields: [user_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  auth_id       String        @unique @db.Uuid
+  unit_id       String?       @db.Uuid
+  position_id   String?       @db.Uuid
+  user_type_id  String        @db.Uuid
+  username      String        @unique
+  email         String        @unique
+  first_name    String        @default("")
+  middle_name   String?
+  last_name     String        @default("")
+  suffix        String?
+  is_active     Boolean       @default(true)
+  created_at    DateTime      @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
+  activity_logs ActivityLog[]
+  events        Event[]       @relation("CreatedBy")
+  reports       Report[]
+  position      Position?     @relation(fields: [position_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  unit          Unit?         @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user_type     UserType      @relation(fields: [user_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("users")
 }
@@ -84,43 +83,36 @@ model Event {
 }
 
 model Report {
-  id                               String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  event_id                         String                @db.Uuid
-  user_id                          String?               @db.Uuid
-  cluster_id                       String                @db.Uuid
-  unit_id                          String?               @db.Uuid
-  location_id                      String?               @db.Uuid
-  faculty_members                  Int                   @default(0)
-  admin_members                    Int                   @default(0)
-  reps_members                     Int                   @default(0)
-  ra_members                       Int                   @default(0)
-  students                         Int                   @default(0)
-  philcare_staff                   Int                   @default(0)
-  security_personnel               Int                   @default(0)
-  construction_workers             Int                   @default(0)
-  tenants                          Int                   @default(0)
-  health_workers                   Int                   @default(0)
-  non_academic_staff               Int                   @default(0)
-  guests                           Int                   @default(0)
-  missing_count                    Int                   @default(0)
-  casualties_count                 Int                   @default(0)
-  external_item_id                 String?
-  submitted_at                     DateTime              @default(now()) @db.Timestamptz(6)
-  created_at                       DateTime              @default(now()) @db.Timestamptz(6)
-  updated_at                       DateTime              @default(now()) @updatedAt @db.Timestamptz(6)
-  reporter_type                    String                @default("authenticated")
-  is_verified                      Boolean?
-  verified_by                      String?               @db.Uuid
-  damage_condition_id              String?               @db.Uuid
-  casualties                       ReportCasualty[]
-  missing_persons                  ReportMissingPerson[]
-  cluster                          Cluster               @relation(fields: [cluster_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  damage_conditions                DamageCondition?      @relation(fields: [damage_condition_id], references: [id], onUpdate: NoAction)
-  event                            Event                 @relation(fields: [event_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  location                         Location?             @relation(fields: [location_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  unit                             Unit?                 @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  user                             User?                 @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  users_reports_verified_byTousers User?                 @relation("reports_verified_byTousers", fields: [verified_by], references: [auth_id], onDelete: NoAction, onUpdate: NoAction)
+  id                   String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  event_id             String                @db.Uuid
+  user_id              String?               @db.Uuid
+  cluster_id           String                @db.Uuid
+  unit_id              String?               @db.Uuid
+  location_id          String?               @db.Uuid
+  faculty_members      Int                   @default(0)
+  admin_members        Int                   @default(0)
+  reps_members         Int                   @default(0)
+  ra_members           Int                   @default(0)
+  students             Int                   @default(0)
+  philcare_staff       Int                   @default(0)
+  security_personnel   Int                   @default(0)
+  construction_workers Int                   @default(0)
+  tenants              Int                   @default(0)
+  health_workers       Int                   @default(0)
+  non_academic_staff   Int                   @default(0)
+  guests               Int                   @default(0)
+  submitted_at         DateTime              @default(now()) @db.Timestamptz(6)
+  created_at           DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime              @default(now()) @updatedAt @db.Timestamptz(6)
+  damage_condition_id  String?               @db.Uuid
+  casualties           ReportCasualty[]
+  missing_persons      ReportMissingPerson[]
+  cluster              Cluster               @relation(fields: [cluster_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  damage_conditions    DamageCondition?      @relation(fields: [damage_condition_id], references: [id], onUpdate: NoAction)
+  event                Event                 @relation(fields: [event_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  location             Location?             @relation(fields: [location_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  unit                 Unit?                 @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user                 User?                 @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([event_id])
   @@index([user_id])
@@ -176,8 +168,7 @@ model ReportCasualty {
   id                  String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   report_id           String?            @db.Uuid
   condition_id        String             @db.Uuid
-  count               Int                @default(0)
-  names               String?
+  name                String             @default("")
   created_at          DateTime           @default(now()) @db.Timestamptz(6)
   age                 Int?
   sex                 String?
@@ -186,7 +177,6 @@ model ReportCasualty {
   condition           CasualtyCondition  @relation(fields: [condition_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   report              Report?            @relation(fields: [report_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@unique([report_id, condition_id])
   @@index([report_id])
   @@index([bystander_report_id], map: "idx_report_casualties_bystander")
   @@map("report_casualties")

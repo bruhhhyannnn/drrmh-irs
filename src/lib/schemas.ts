@@ -47,6 +47,19 @@ export const eventSchema = z.object({
   status_id: z.string().uuid('Status is required'),
 });
 
+export const missingPersonSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  age: z.coerce.number().min(1, 'Age is required'),
+  sex: z.enum(['male', 'female', 'unknown']),
+});
+
+export const casualtySchema = z.object({
+  condition_id: z.string().uuid('Condition is required'),
+  name: z.string().min(1, 'Name is required'),
+  age: z.coerce.number().min(1, 'Age is required'),
+  sex: z.enum(['male', 'female', 'unknown']),
+});
+
 const headcountField = () => z.coerce.number().int().min(0).default(0);
 export const reportSchema = z.object({
   event_id: z.string().uuid('Event is required'),
@@ -65,23 +78,9 @@ export const reportSchema = z.object({
   health_workers: headcountField(),
   non_academic_staff: headcountField(),
   guests: headcountField(),
-  missing_count: headcountField(),
-  casualties_count: headcountField(),
   damage_condition_id: z.string().uuid().optional().nullable(),
-});
-
-export const missingPersonSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  age: z.coerce.number().min(1, 'Age is required'),
-  sex: z.enum(['male', 'female', 'unknown']),
-});
-
-export const casualtySchema = z.object({
-  condition_id: z.string().uuid('Condition is required'),
-  count: z.coerce.number().min(1, 'Count is required'),
-  names: z.string().min(1, 'Names are required'),
-  age: z.coerce.number().min(1, 'Age is required'),
-  sex: z.enum(['male', 'female', 'unknown']),
+  report_missing_persons: z.array(missingPersonSchema).default([]),
+  report_casualties: z.array(casualtySchema).default([]),
 });
 
 export const bystanderReportSchema = z.object({
@@ -148,4 +147,6 @@ export type UserCreateFormData = z.infer<typeof userCreateSchema>;
 export type UserEditFormData = z.infer<typeof userEditSchema>;
 export type EventFormData = z.infer<typeof eventSchema>;
 export type ReportFormData = z.infer<typeof reportSchema>;
+export type MissingPersonFormData = z.infer<typeof missingPersonSchema>;
+export type CasualtyFormData = z.infer<typeof casualtySchema>;
 export type BystanderReportFormData = z.infer<typeof bystanderReportSchema>;
