@@ -91,3 +91,16 @@ export async function toggleUserStatus(id: string, current: boolean) {
   revalidatePath('/users');
   return user;
 }
+
+export async function deleteUser(id: string) {
+  const user = await prisma.user.findUnique({ where: { id }, select: { auth_id: true } });
+  if (!user) throw new Error('User not found');
+
+  await prisma.user.delete({ where: { id } });
+
+  if (user.auth_id) {
+    await supabaseAdmin.auth.admin.deleteUser(user.auth_id);
+  }
+
+  revalidatePath('/users');
+}

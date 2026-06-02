@@ -2,11 +2,11 @@
 
 import type { getUsers } from '@/actions/users';
 import { PageBreadcrumb } from '@/components/common';
-import { Badge, Button, DataTable, Input, Modal, PageError } from '@/components/ui';
+import { Badge, Button, ConfirmDialog, DataTable, Input, Modal, PageError } from '@/components/ui';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Plus, Search, UserPen } from 'lucide-react';
+import { Plus, Search, Trash2, UserPen } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useToggleUserStatus, useUsers } from './use-users';
+import { useDeleteUser, useToggleUserStatus, useUsers } from './use-users';
 import { UserForm } from './user-form';
 
 // TODO: revalidate
@@ -17,8 +17,11 @@ export default function UsersPage() {
   const [debounceQuery, setDebounceQuery] = useState('');
   const { data: users = [], isPending, isFetching, error } = useUsers(debounceQuery);
   const toggleStatus = useToggleUserStatus();
+  const deleteUserMutation = useDeleteUser();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState('');
+  const [deleteId, setDeleteId] = useState('');
+  const [deleteName, setDeleteName] = useState('');
 
   const handleClose = () => {
     setIsModalOpen(false);
@@ -106,6 +109,16 @@ export default function UsersPage() {
             <UserPen size={17} />
             Edit
           </button>
+          <button
+            className="hover:text-error-500 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100"
+            onClick={() => {
+              setDeleteId(r.id);
+              setDeleteName([r.first_name, r.last_name].filter(Boolean).join(' '));
+            }}
+          >
+            <Trash2 size={17} />
+            Delete
+          </button>
         </div>
       ),
       enableSorting: false,
@@ -153,6 +166,16 @@ export default function UsersPage() {
       <Modal isOpen={isModalOpen} onClose={handleClose}>
         <UserForm editId={editId} onSuccess={handleClose} onCancel={handleClose} />
       </Modal>
+
+      <ConfirmDialog
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId('')}
+        onConfirm={() => deleteUserMutation.mutate(deleteId, { onSuccess: () => setDeleteId('') })}
+        title="Delete user"
+        message={`"${deleteName}" will be permanently deleted and removed from authentication. This cannot be undone.`}
+        confirmLabel="Delete"
+        isLoading={deleteUserMutation.isPending}
+      />
     </>
   );
 }
