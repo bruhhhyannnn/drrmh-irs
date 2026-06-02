@@ -156,7 +156,6 @@ export const POSITIONS = [
   'Administrative Officer V',
   'Supervising Administrative Officer',
   // ERT roles
-  // TODO: cluster commander will report to IC and building martial IC per building ... each unit has
   'Incident Commander',
   'Liaison Officer',
   'Safety Officer',

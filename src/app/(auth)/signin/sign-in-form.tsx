@@ -4,7 +4,7 @@ import { Button, Input, Label } from '@/components/ui';
 import { SignInFormData, signInSchema, supabase } from '@/lib';
 import { useAuthStore, useThemeStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertTriangle, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { AlertTriangle, ArrowRight, ClipboardList, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -133,8 +133,8 @@ export function SignInForm() {
         </div>
       </div>
 
-      {/* Bystander report card */}
-      <div>
+      {/* Quick links */}
+      <div className="space-y-2">
         <Link
           href="/bystander-report"
           className="group border-brand-200 hover:border-brand-400 dark:border-brand-700 dark:hover:border-brand-600 flex items-center gap-4 rounded-xl border bg-white p-4 transition-all duration-200 hover:shadow-md dark:bg-white/5"
@@ -155,6 +155,25 @@ export function SignInForm() {
           <ArrowRight
             size={16}
             className="group-hover:text-brand-500 dark:group-hover:text-brand-500 shrink-0 text-gray-300 transition-transform duration-200 group-hover:translate-x-0.5 dark:text-gray-600"
+          />
+        </Link>
+
+        <Link
+          href="/report"
+          className="group flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 transition-all duration-200 hover:border-gray-300 hover:shadow-md dark:border-gray-700 dark:bg-white/5 dark:hover:border-gray-600"
+        >
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
+            <ClipboardList size={20} className="text-gray-500 dark:text-gray-400" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">NSED Report</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">
+              ERT Members only — sign in with Google
+            </p>
+          </div>
+          <ArrowRight
+            size={16}
+            className="shrink-0 text-gray-300 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-gray-500 dark:text-gray-600 dark:group-hover:text-gray-400"
           />
         </Link>
       </div>

@@ -118,6 +118,7 @@ export default function ReportsPage() {
       header: 'Actions',
       cell: ({ row: { original: r } }) => (
         <div className="flex flex-row items-center gap-3">
+          {/* TODO: have another button here to view the individual report on its all details */}
           <button
             className="hover:text-brand-600 dark:hover:text-brand-400 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100 dark:text-gray-500"
             onClick={() => {

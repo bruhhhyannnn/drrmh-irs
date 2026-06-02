@@ -16,6 +16,7 @@ import {
   type MissingPersonFormData,
   type ReportFormData,
 } from '@/lib';
+import { useAuthStore } from '@/store';
 import { HEADCOUNT_FIELDS } from '@/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
@@ -50,6 +51,7 @@ export function ReportForm({ editId, eventId, onSuccess, onCancel }: ReportFormP
   const router = useRouter();
   const queryClient = useQueryClient();
   const isEdit = !!editId;
+  const { userProfile } = useAuthStore();
 
   // ─── Main report data ───────────────────────────────────────
   const { data: existingReport, isLoading: isReportLoading } = useReport(editId);
@@ -289,6 +291,22 @@ export function ReportForm({ editId, eventId, onSuccess, onCancel }: ReportFormP
           <Spinner center />
         ) : (
           <form onSubmit={onSubmit} className="space-y-7">
+            {userProfile && (
+              <div className="flex items-center gap-2.5 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 dark:border-white/5 dark:bg-white/3">
+                <div className="bg-brand-100 text-brand-700 dark:bg-brand-900/50 dark:text-brand-300 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold uppercase">
+                  {(userProfile.first_name?.[0] ?? '') + (userProfile.last_name?.[0] ?? '')}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-gray-800 dark:text-gray-200">
+                    {userProfile.first_name} {userProfile.last_name}
+                  </p>
+                  {userProfile.unit && (
+                    <p className="truncate text-xs text-gray-400">{userProfile.unit.name}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* ── Context ────────────────────────────────── */}
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <div className="sm:col-span-2">
