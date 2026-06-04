@@ -49,14 +49,14 @@ export const eventSchema = z.object({
 
 export const missingPersonSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  age: z.coerce.number().min(1, 'Age is required'),
+  age: z.coerce.number().min(0),
   sex: z.enum(['male', 'female', 'unknown']),
 });
 
 export const casualtySchema = z.object({
   condition_id: z.string().uuid('Condition is required'),
   name: z.string().min(1, 'Name is required'),
-  age: z.coerce.number().min(1, 'Age is required'),
+  age: z.coerce.number().min(0),
   sex: z.enum(['male', 'female', 'unknown']),
 });
 
@@ -78,7 +78,10 @@ export const reportSchema = z.object({
   health_workers: headcountField(),
   non_academic_staff: headcountField(),
   guests: headcountField(),
-  damage_condition_id: z.string().uuid().optional().nullable(),
+  damage_condition_id: z.preprocess(
+    (v) => (v === '' ? null : v),
+    z.string().uuid().optional().nullable()
+  ),
   report_missing_persons: z.array(missingPersonSchema).default([]),
   report_casualties: z.array(casualtySchema).default([]),
 });
