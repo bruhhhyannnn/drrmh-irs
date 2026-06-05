@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   icons: {
     icon: '/irs-favicon.png',
   },
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
