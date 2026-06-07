@@ -1036,14 +1036,21 @@ export default function LandingPage() {
             {/* attribution */}
             <div>
               <div className="mb-2 flex items-center justify-center">
-                <Image
-                  src="/carlos-gundran-profile-image.png"
-                  alt="UP Manila Logo"
-                  width={128}
-                  height={128}
-                  sizes="128px"
-                  className="rounded-full object-contain"
-                />
+                <div
+                  className="rounded-full p-1.5"
+                  style={{
+                    border: '2.5px solid var(--gold-light)',
+                  }}
+                >
+                  <Image
+                    src="/carlos-gundran-profile-image.png"
+                    alt="Profile Picture"
+                    width={128}
+                    height={128}
+                    sizes="128px"
+                    className="rounded-full object-cover"
+                  />
+                </div>
               </div>
               <p
                 className="font-light"
@@ -1533,7 +1540,7 @@ export default function LandingPage() {
           </div>
           <div
             className="relative mx-auto mt-6 flex max-w-300 flex-wrap items-center justify-between gap-3 overflow-hidden text-xs"
-            style={{ color: 'rgba(255,255,255,0.28)', paddingBottom: 'clamp(80px, 16vw, 160px)' }}
+            style={{ color: 'rgba(255,255,255,0.28)', paddingBottom: 'clamp(80px, 28vw, 200px)' }}
           >
             <span>© 2026 UP Manila DRRM-H — Incident Reporting System. All rights reserved.</span>
             <span>Developed under the NICER Program · Dr. Carlos Primero D. Gundran</span>
@@ -1542,9 +1549,9 @@ export default function LandingPage() {
               <p
                 className="display text-center font-bold"
                 style={{
-                  fontSize: 'clamp(120px, 18vw, 320px)',
+                  fontSize: 'clamp(220px, 20vw, 320px)',
                   color: 'rgba(255,255,255,0.15)',
-                  lineHeight: 0.85,
+                  lineHeight: 0.92,
                   marginBottom: '-0.30em',
                 }}
               >
