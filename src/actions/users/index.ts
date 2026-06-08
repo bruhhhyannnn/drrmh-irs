@@ -51,8 +51,16 @@ export async function getUserByAuthId(authId: string) {
   });
 }
 
+const ADMIN_USER_TYPES = ['Administrator', 'Super Admin'];
+
 export async function createUser(data: CreateUserInput) {
   const { password, ...profileData } = data;
+
+  const userType = await prisma.userType.findUnique({
+    where: { id: profileData.user_type_id },
+    select: { name: true },
+  });
+  const is_profile_complete = ADMIN_USER_TYPES.includes(userType?.name ?? '');
 
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email: profileData.email,
@@ -65,7 +73,9 @@ export async function createUser(data: CreateUserInput) {
   const auth_id = authData.user.id;
 
   try {
-    const user = await prisma.user.create({ data: { ...profileData, auth_id } });
+    const user = await prisma.user.create({
+      data: { ...profileData, auth_id, is_profile_complete },
+    });
     revalidatePath('/users');
     return user;
   } catch (err) {
@@ -89,6 +99,19 @@ export async function toggleUserStatus(id: string, current: boolean) {
     data: { is_active: !current },
   });
   revalidatePath('/users');
+  return user;
+}
+
+export async function completeUserProfile(
+  id: string,
+  data: { position_id: string; first_name?: string; last_name?: string }
+) {
+  const user = await prisma.user.update({
+    where: { id },
+    data: { ...data, is_profile_complete: true },
+    include: { unit: { include: { cluster: true } }, position: true, user_type: true },
+  });
+  revalidatePath('/');
   return user;
 }
 

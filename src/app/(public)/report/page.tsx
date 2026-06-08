@@ -1,7 +1,7 @@
 'use client';
 
 import { ReportForm } from '@/app/(admin)/reports/report-form';
-import { AuthHeader } from '@/components/auth';
+import { AuthHeader, CompleteProfileModal } from '@/components/auth';
 import { Spinner } from '@/components/ui';
 import { cn, getInitials, supabase } from '@/lib';
 import { useAuthStore } from '@/store';
@@ -110,6 +110,7 @@ export default function ErtReportPage() {
   // ── ERT Member — report form ─────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <CompleteProfileModal />
       <ReportHeader userProfile={userProfile} onSignOut={handleSignOut} />
       <div className="p-6 flex justify-center items-center relative">
         <div className="absolute inset-0 overflow-hidden">

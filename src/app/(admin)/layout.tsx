@@ -1,6 +1,6 @@
 'use client';
 
-import { ProtectedRoute } from '@/components/auth';
+import { CompleteProfileModal, ProtectedRoute } from '@/components/auth';
 import { AppHeader, AppSidebar, Backdrop } from '@/components/layout';
 import { useSidebarStore } from '@/store';
 
@@ -23,6 +23,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="mx-auto max-w-screen-2xl p-4 md:p-6">{children}</div>
         </div>
       </div>
+      <CompleteProfileModal />
     </ProtectedRoute>
   );
 }

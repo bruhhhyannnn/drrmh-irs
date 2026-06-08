@@ -3,5 +3,6 @@ export { SignInForm } from '../../app/(auth)/signin/sign-in-form';
 export { UpdatePasswordForm } from '../../app/(auth)/update-password/update-password-form';
 export { AuthHeader } from './auth-header';
 export { AuthProvider } from './auth-provider';
+export { CompleteProfileModal } from './complete-profile-modal';
 export { ProtectedRoute } from './protected-route';
 export { SignOutButton } from './sign-out-button';
