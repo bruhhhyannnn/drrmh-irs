@@ -5,6 +5,8 @@
 [![Prisma](https://img.shields.io/badge/Prisma-7-2D3748?logo=prisma)](https://www.prisma.io/)
 [![Supabase](https://img.shields.io/badge/Supabase-2-3ECF8E?logo=supabase)](https://supabase.com/)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4-38BDF8?logo=tailwindcss)](https://tailwindcss.com/)
+[![MapLibre GL](https://img.shields.io/badge/MapLibre_GL-5-396CB2?logo=mapbox)](https://maplibre.org/)
+[![PWA](https://img.shields.io/badge/PWA-enabled-5A0FC8?logo=pwa)](https://web.dev/progressive-web-apps/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## **Web Dashboard for the UP Manila Disaster Risk Reduction and Management in Health Incident Reporting System**
@@ -22,7 +24,8 @@ The system works alongside a companion Flutter mobile app used by field personne
 - **Dashboard** — Live stats on events, reports, and affected personnel with charts
 - **Events** — Track drills and incidents from creation to resolution
 - **Event Details** — Per-cluster headcount board with casualty and missing person breakdowns
-- **Reports** — View and search submitted field reports with full headcount details
+- **Reports** — View and search submitted field reports with full headcount details and GPS-pinned location
+- **Bystander Reports** — Public incident submissions with location, incident type, and casualty details
 - **Users** — Manage field team accounts, roles, and access levels
 - **Calendar** — Visual monthly timeline of all events
 - **Activity Logs** — Full audit trail of all system actions
@@ -56,9 +59,12 @@ The IRS is part of a broader DRRM-H platform consisting of:
 | **Table**              | TanStack Table v8               |
 | **Forms & Validation** | React Hook Form 7 + Zod 3       |
 | **Charts**             | Recharts 3                      |
+| **Maps**               | MapLibre GL 5 + Nominatim       |
 | **Date Utilities**     | date-fns 4                      |
 | **Notifications**      | React Hot Toast                 |
-| **Icons**              | Lucide React                    |
+| **Icons**              | Lucide React + HugeIcons        |
+| **Email**              | Nodemailer 8                    |
+| **PWA**                | @ducanh2912/next-pwa            |
 
 ---
 
@@ -99,6 +105,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
 # Prisma — direct database connection for server actions
 DATABASE_URL=postgresql://postgres:[password]@db.[ref].supabase.co:5432/postgres
+
+# Site URL — used for OAuth redirect callbacks
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
 4 **Generate the Prisma client**
@@ -143,12 +152,15 @@ src/
 │   │   ├── calendar/       # Monthly event calendar
 │   │   ├── news/           # Announcements
 │   │   └── settings/       # Lookup table management
-│   └── (auth)/             # Sign-in page
+│   ├── (auth)/             # Sign-in page
+│   └── (public)/           # Publicly accessible pages
+│       ├── report/         # ERT Member report submission (QR-accessible)
+│       └── bystander-report/ # Public bystander incident form
 ├── actions/                # Next.js server actions — all DB access via Prisma
 ├── components/
 │   ├── auth/               # AuthProvider, ProtectedRoute
 │   ├── layout/             # Sidebar, header, backdrop
-│   ├── ui/                 # Base UI components (DataTable, Badge, Button, etc.)
+│   ├── ui/                 # Base UI components (DataTable, Badge, Button, Map, etc.)
 │   ├── settings/           # Generic SettingsTablePage + SettingsForm
 │   ├── users/              # UserForm
 │   └── news/               # NewsForm
@@ -163,11 +175,13 @@ src/
 
 ## Roles & Access
 
-| Role            | Access                                                            |
-| --------------- | ----------------------------------------------------------------- |
-| **Super Admin** | Full access — all pages including users and settings              |
-| **Admin**       | Dashboard, events, reports, calendar, news, activity logs         |
-| **Field Users** | Mobile app only — submit and edit reports for their assigned team |
+| Role                 | Access                                                             |
+| -------------------- | ------------------------------------------------------------------ |
+| **Super Admin**      | Full access — all pages including users and settings               |
+| **Administrator**    | Dashboard, events, reports, calendar, news, activity logs          |
+| **ERT Member**       | Public `/report` page — submit incident reports via web or QR code |
+| **Field Users**      | Mobile app only — submit and edit reports for their assigned team  |
+| **Public/Bystander** | `/bystander-report` — anonymous incident reporting via QR code     |
 
 ---
 
@@ -351,7 +365,7 @@ erDiagram
     uuid user_id FK
     uuid cluster_id FK
     uuid unit_id FK
-    uuid location_id FK
+    uuid damage_condition_id FK
     int faculty_members
     int admin_members
     int reps_members
@@ -364,40 +378,60 @@ erDiagram
     int health_workers
     int non_academic_staff
     int guests
-    int casualties_count
-    int missing_count
+    decimal latitude
+    decimal longitude
+    string location_name
     timestamptz submitted_at
-    timestamptz created_at
-  }
-
-  report_assignments {
-    uuid id PK
-    uuid event_id FK
-    uuid cluster_id FK
-    uuid unit_id FK
     timestamptz created_at
   }
 
   report_casualties {
     uuid id PK
     uuid report_id FK
+    uuid bystander_report_id FK
     uuid condition_id FK
-    int count
-    string names
+    string name
+    int age
+    string sex
     timestamptz created_at
   }
 
   report_missing_persons {
     uuid id PK
     uuid report_id FK
+    uuid bystander_report_id FK
     string name
+    int age
+    string sex
     timestamptz created_at
   }
 
-  report_damages {
+  bystander_reports {
     uuid id PK
-    uuid report_id FK
+    uuid cluster_id FK
+    uuid unit_id FK
+    uuid incident_type_id FK
+    uuid status_id FK
     uuid damage_condition_id FK
+    decimal latitude
+    decimal longitude
+    string location_description
+    string description
+    timestamptz submitted_at
+    timestamptz created_at
+  }
+
+  bystander_incident_types {
+    uuid id PK
+    string name UK
+    bool is_active
+    timestamptz created_at
+  }
+
+  bystander_report_statuses {
+    uuid id PK
+    string name UK
+    bool is_active
     timestamptz created_at
   }
 
@@ -487,10 +521,10 @@ erDiagram
   clusters ||--o{ units : "contains"
   clusters ||--o{ locations : "contains"
   clusters ||--o{ reports : "tagged_on"
-  clusters ||--o{ report_assignments : "assigned_to"
+  clusters ||--o{ bystander_reports : "tagged_on"
   units ||--o{ users : "belongs_to"
   units ||--o{ reports : "tagged_on"
-  units ||--o{ report_assignments : "assigned_to"
+  units ||--o{ bystander_reports : "tagged_on"
   positions ||--o{ users : "held_by"
   user_types ||--o{ users : "classifies"
   users ||--o{ reports : "submits"
@@ -498,14 +532,16 @@ erDiagram
   users ||--o{ activity_logs : "initiates"
   event_statuses ||--o{ events : "classifies"
   locations ||--o{ events : "hosts"
-  locations ||--o{ reports : "references"
   events ||--o{ reports : "has"
-  events ||--o{ report_assignments : "has"
   reports ||--o{ report_casualties : "has"
   reports ||--o{ report_missing_persons : "has"
-  reports ||--o{ report_damages : "has"
+  bystander_reports ||--o{ report_casualties : "has"
+  bystander_reports ||--o{ report_missing_persons : "has"
+  bystander_incident_types ||--o{ bystander_reports : "classifies"
+  bystander_report_statuses ||--o{ bystander_reports : "classifies"
   casualty_conditions ||--o{ report_casualties : "classifies"
-  damage_conditions ||--o{ report_damages : "classifies"
+  damage_conditions ||--o{ reports : "classifies"
+  damage_conditions ||--o{ bystander_reports : "classifies"
 ```
 
 ## Flowchart — Report Submission
@@ -545,6 +581,7 @@ npm run build      # Build for production
 npm run start      # Start production server
 npm run lint       # Run ESLint
 npm run lint:fix   # Auto-fix ESLint issues
+npm run seed       # Seed lookup data (clusters, positions, event types, etc.)
 ```
 
 ---
