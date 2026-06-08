@@ -88,7 +88,6 @@ model Report {
   user_id              String?               @db.Uuid
   cluster_id           String                @db.Uuid
   unit_id              String?               @db.Uuid
-  location_id          String?               @db.Uuid
   faculty_members      Int                   @default(0)
   admin_members        Int                   @default(0)
   reps_members         Int                   @default(0)
@@ -105,12 +104,14 @@ model Report {
   created_at           DateTime              @default(now()) @db.Timestamptz(6)
   updated_at           DateTime              @default(now()) @updatedAt @db.Timestamptz(6)
   damage_condition_id  String?               @db.Uuid
+  latitude             Decimal?              @db.Decimal(10, 8)
+  location_name        String?
+  longitude            Decimal?              @db.Decimal(11, 8)
   casualties           ReportCasualty[]
   missing_persons      ReportMissingPerson[]
   cluster              Cluster               @relation(fields: [cluster_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   damage_conditions    DamageCondition?      @relation(fields: [damage_condition_id], references: [id], onUpdate: NoAction)
   event                Event                 @relation(fields: [event_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  location             Location?             @relation(fields: [location_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   unit                 Unit?                 @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   user                 User?                 @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
@@ -147,7 +148,6 @@ model Location {
   updated_at DateTime @default(now()) @updatedAt @db.Timestamptz(6)
   events     Event[]
   cluster    Cluster  @relation(fields: [cluster_id], references: [id], onDelete: Cascade)
-  reports    Report[]
 
   @@unique([name, cluster_id])
   @@map("locations")
@@ -168,11 +168,11 @@ model ReportCasualty {
   id                  String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   report_id           String?            @db.Uuid
   condition_id        String             @db.Uuid
-  name                String             @default("")
   created_at          DateTime           @default(now()) @db.Timestamptz(6)
   age                 Int?
-  sex                 String?
   bystander_report_id String?            @db.Uuid
+  name                String             @default("")
+  sex                 String?
   bystander_reports   bystander_reports? @relation(fields: [bystander_report_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   condition           CasualtyCondition  @relation(fields: [condition_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   report              Report?            @relation(fields: [report_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -188,8 +188,8 @@ model ReportMissingPerson {
   name                String
   created_at          DateTime           @default(now()) @db.Timestamptz(6)
   age                 Int?
-  sex                 String?
   bystander_report_id String?            @db.Uuid
+  sex                 String?
   bystander_reports   bystander_reports? @relation(fields: [bystander_report_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   report              Report?            @relation(fields: [report_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
