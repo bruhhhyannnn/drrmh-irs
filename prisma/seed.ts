@@ -16,32 +16,58 @@ const adapter = new PrismaPg({ connectionString: process.env.SHADOW_DATABASE_URL
 const prisma = new PrismaClient({ adapter });
 
 // ─── Quarter → approximate NSED drill dates ───────────────
-// NSED is held every last Thursday of Jan, Apr, Jul, Oct
 const QUARTER_DATES: Record<string, { started_at: Date; ended_at: Date }> = {
   'Q1 2025': {
-    started_at: new Date('2025-01-23T08:00:00+08:00'),
-    ended_at: new Date('2025-01-23T17:00:00+08:00'),
+    started_at: new Date('2025-03-13T14:00:00+08:00'),
+    ended_at: new Date('2025-03-13T15:00:00+08:00'),
   },
   'Q2 2025': {
-    started_at: new Date('2025-04-24T08:00:00+08:00'),
-    ended_at: new Date('2025-04-24T17:00:00+08:00'),
+    started_at: new Date('2025-06-19T09:00:00+08:00'),
+    ended_at: new Date('2025-06-19T10:00:00+08:00'),
   },
   'Q3 2025': {
-    started_at: new Date('2025-07-24T08:00:00+08:00'),
-    ended_at: new Date('2025-07-24T17:00:00+08:00'),
+    started_at: new Date('2025-09-11T16:00:00+08:00'),
+    ended_at: new Date('2025-09-11T17:00:00+08:00'),
   },
   'Q4 2025': {
-    started_at: new Date('2025-10-23T08:00:00+08:00'),
-    ended_at: new Date('2025-10-23T17:00:00+08:00'),
+    started_at: new Date('2025-11-06T09:00:00+08:00'),
+    ended_at: new Date('2025-11-06T10:00:00+08:00'),
   },
   'Q1 2026': {
-    started_at: new Date('2026-01-22T08:00:00+08:00'),
-    ended_at: new Date('2026-01-22T17:00:00+08:00'),
+    started_at: new Date('2026-03-12T15:30:00+08:00'),
+    ended_at: new Date('2026-03-12T16:30:00+08:00'),
+  },
+  'Q2 2026': {
+    started_at: new Date('2026-06-18T09:00:00+08:00'),
+    ended_at: new Date('2026-06-18T10:00:00+08:00'),
+  },
+  'Q3 2026': {
+    started_at: new Date('2026-09-10T14:00:00+08:00'),
+    ended_at: new Date('2026-09-10T15:00:00+08:00'),
+  },
+  'Q4 2026': {
+    started_at: new Date('2026-11-05T09:00:00+08:00'),
+    ended_at: new Date('2026-11-05T10:00:00+08:00'),
   },
 };
 
+// ─── Bystander incident types ─────────────────────────────
+const BYSTANDER_INCIDENT_TYPES = [
+  'Earthquake',
+  'Fire',
+  'Flooding',
+  'Medical Emergency',
+  'Chemical Hazard',
+  'Structural Collapse',
+  'Power Outage',
+  'Security Threat',
+  'Missing Person',
+  'Other',
+];
+
 // ─── Historical report data from Monday.com export ───────
-const REPORT_DATA = [
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const REPORT_DATA: any[] = [
   {
     quarter: 'Q1 2025',
     cluster: 'Pedro Gil',
@@ -61,7 +87,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-01-23T12:33:00+08:00',
-    external_item_id: '2019699021',
   },
   {
     quarter: 'Q1 2025',
@@ -82,7 +107,6 @@ const REPORT_DATA = [
     missing_count: 2,
     casualties_count: 0,
     timestamp: '2025-01-23T14:05:00+08:00',
-    external_item_id: '1985307586',
   },
   {
     quarter: 'Q1 2025',
@@ -103,7 +127,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-01-23T14:09:00+08:00',
-    external_item_id: '1985309416',
   },
   {
     quarter: 'Q1 2025',
@@ -124,7 +147,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-01-23T14:10:00+08:00',
-    external_item_id: '1985309689',
   },
   {
     quarter: 'Q1 2025',
@@ -145,7 +167,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-01-23T14:14:00+08:00',
-    external_item_id: '1985312647',
   },
   {
     quarter: 'Q1 2025',
@@ -166,7 +187,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-01-23T14:16:00+08:00',
-    external_item_id: '1985313645',
   },
   {
     quarter: 'Q1 2025',
@@ -187,7 +207,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-01-23T14:29:00+08:00',
-    external_item_id: '1985320569',
   },
   {
     quarter: 'Q1 2025',
@@ -208,7 +227,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-01-23T14:08:00+08:00',
-    external_item_id: '1985308627',
   },
   {
     quarter: 'Q1 2025',
@@ -229,7 +247,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-01-23T14:31:00+08:00',
-    external_item_id: '1985321602',
   },
   {
     quarter: 'Q1 2025',
@@ -250,7 +267,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-01-23T13:13:00+08:00',
-    external_item_id: '1985272377',
   },
   {
     quarter: 'Q1 2025',
@@ -271,7 +287,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 1,
     timestamp: '2025-01-23T14:16:00+08:00',
-    external_item_id: '1985313602',
   },
   {
     quarter: 'Q2 2025',
@@ -292,7 +307,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-04-24T10:19:00+08:00',
-    external_item_id: '2033006626',
   },
   {
     quarter: 'Q2 2025',
@@ -313,7 +327,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 2,
     timestamp: '2025-04-24T10:21:00+08:00',
-    external_item_id: '2033008171',
   },
   {
     quarter: 'Q2 2025',
@@ -334,7 +347,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-04-24T08:54:00+08:00',
-    external_item_id: '2034189089',
   },
   {
     quarter: 'Q2 2025',
@@ -355,7 +367,6 @@ const REPORT_DATA = [
     missing_count: 5,
     casualties_count: 0,
     timestamp: '2025-04-24T08:57:00+08:00',
-    external_item_id: '2034190447',
   },
   {
     quarter: 'Q2 2025',
@@ -376,7 +387,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-04-24T08:58:00+08:00',
-    external_item_id: '2034191060',
   },
   {
     quarter: 'Q2 2025',
@@ -397,7 +407,6 @@ const REPORT_DATA = [
     missing_count: 17,
     casualties_count: 550,
     timestamp: '2025-04-24T09:06:00+08:00',
-    external_item_id: '2034194061',
   },
   {
     quarter: 'Q2 2025',
@@ -418,7 +427,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 500,
     timestamp: '2025-04-24T09:09:00+08:00',
-    external_item_id: '2034194877',
   },
   {
     quarter: 'Q2 2025',
@@ -439,7 +447,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 500,
     timestamp: '2025-04-24T09:14:00+08:00',
-    external_item_id: '2034197992',
   },
   {
     quarter: 'Q2 2025',
@@ -460,7 +467,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 43,
     timestamp: '2025-04-24T09:15:00+08:00',
-    external_item_id: '2034199079',
   },
   {
     quarter: 'Q2 2025',
@@ -481,7 +487,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-04-24T09:16:00+08:00',
-    external_item_id: '2034199340',
   },
   {
     quarter: 'Q2 2025',
@@ -502,7 +507,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-04-24T09:18:00+08:00',
-    external_item_id: '2034199939',
   },
   {
     quarter: 'Q2 2025',
@@ -523,7 +527,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 2,
     timestamp: '2025-04-24T09:20:00+08:00',
-    external_item_id: '2034200979',
   },
   {
     quarter: 'Q2 2025',
@@ -544,7 +547,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 2234,
     timestamp: '2025-04-24T09:23:00+08:00',
-    external_item_id: '2034202191',
   },
   {
     quarter: 'Q2 2025',
@@ -565,7 +567,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-04-24T09:24:00+08:00',
-    external_item_id: '2034202639',
   },
   {
     quarter: 'Q2 2025',
@@ -586,7 +587,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 5,
     timestamp: '2025-04-24T09:25:00+08:00',
-    external_item_id: '2034203020',
   },
   {
     quarter: 'Q2 2025',
@@ -607,7 +607,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-04-24T09:06:00+08:00',
-    external_item_id: '2029872598',
   },
   {
     quarter: 'Q2 2025',
@@ -628,7 +627,6 @@ const REPORT_DATA = [
     missing_count: 7,
     casualties_count: 2,
     timestamp: '2025-04-24T09:54:00+08:00',
-    external_item_id: '2029912806',
   },
   {
     quarter: 'Q2 2025',
@@ -649,7 +647,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-04-24T09:12:00+08:00',
-    external_item_id: '2029875222',
   },
   {
     quarter: 'Q2 2025',
@@ -670,7 +667,6 @@ const REPORT_DATA = [
     missing_count: 9,
     casualties_count: 2,
     timestamp: '2025-04-24T09:58:00+08:00',
-    external_item_id: '2029914832',
   },
   {
     quarter: 'Q2 2025',
@@ -691,7 +687,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-04-24T09:17:00+08:00',
-    external_item_id: '2029878904',
   },
   {
     quarter: 'Q2 2025',
@@ -712,7 +707,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-04-24T09:08:00+08:00',
-    external_item_id: '2029873734',
   },
   {
     quarter: 'Q2 2025',
@@ -733,7 +727,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-04-24T09:42:00+08:00',
-    external_item_id: '2029902273',
   },
   {
     quarter: 'Q2 2025',
@@ -754,7 +747,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 8,
     timestamp: '2025-04-24T10:33:00+08:00',
-    external_item_id: '2029939646',
   },
   {
     quarter: 'Q3 2025',
@@ -775,7 +767,6 @@ const REPORT_DATA = [
     missing_count: 7,
     casualties_count: 0,
     timestamp: '2025-07-24T09:34:00+08:00',
-    external_item_id: '2502734610',
   },
   {
     quarter: 'Q3 2025',
@@ -796,7 +787,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-07-24T16:05:00+08:00',
-    external_item_id: '2072699189',
   },
   {
     quarter: 'Q3 2025',
@@ -817,7 +807,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-07-24T16:09:00+08:00',
-    external_item_id: '2072701708',
   },
   {
     quarter: 'Q3 2025',
@@ -838,7 +827,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-07-24T16:14:00+08:00',
-    external_item_id: '2072706944',
   },
   {
     quarter: 'Q3 2025',
@@ -859,7 +847,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-07-24T16:16:00+08:00',
-    external_item_id: '2072707367',
   },
   {
     quarter: 'Q3 2025',
@@ -880,7 +867,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-07-24T16:22:00+08:00',
-    external_item_id: '2072715531',
   },
   {
     quarter: 'Q3 2025',
@@ -901,7 +887,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-07-24T16:23:00+08:00',
-    external_item_id: '2072715961',
   },
   {
     quarter: 'Q3 2025',
@@ -922,7 +907,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 1,
     timestamp: '2025-07-24T16:28:00+08:00',
-    external_item_id: '2072717818',
   },
   {
     quarter: 'Q3 2025',
@@ -943,7 +927,6 @@ const REPORT_DATA = [
     missing_count: 4,
     casualties_count: 1,
     timestamp: '2025-07-24T16:52:00+08:00',
-    external_item_id: '2072727809',
   },
   {
     quarter: 'Q3 2025',
@@ -964,7 +947,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-07-24T16:04:00+08:00',
-    external_item_id: '2072698793',
   },
   {
     quarter: 'Q3 2025',
@@ -985,7 +967,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-07-24T16:18:00+08:00',
-    external_item_id: '2072710161',
   },
   {
     quarter: 'Q4 2025',
@@ -1006,7 +987,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-10-23T09:15:00+08:00',
-    external_item_id: '2502717915',
   },
   {
     quarter: 'Q4 2025',
@@ -1027,7 +1007,6 @@ const REPORT_DATA = [
     missing_count: 11,
     casualties_count: 0,
     timestamp: '2025-10-23T10:06:00+08:00',
-    external_item_id: '2502754637',
   },
   {
     quarter: 'Q4 2025',
@@ -1048,7 +1027,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-10-23T09:04:00+08:00',
-    external_item_id: '2502720020',
   },
   {
     quarter: 'Q4 2025',
@@ -1069,7 +1047,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-10-23T09:09:00+08:00',
-    external_item_id: '2502720729',
   },
   {
     quarter: 'Q4 2025',
@@ -1090,7 +1067,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-10-23T09:10:00+08:00',
-    external_item_id: '2502712151',
   },
   {
     quarter: 'Q4 2025',
@@ -1111,7 +1087,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-10-23T09:17:00+08:00',
-    external_item_id: '2502725026',
   },
   {
     quarter: 'Q4 2025',
@@ -1132,7 +1107,6 @@ const REPORT_DATA = [
     missing_count: 1,
     casualties_count: 0,
     timestamp: '2025-10-23T09:27:00+08:00',
-    external_item_id: '2502730465',
   },
   {
     quarter: 'Q4 2025',
@@ -1153,7 +1127,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-10-23T09:11:00+08:00',
-    external_item_id: '2502714388',
   },
   {
     quarter: 'Q4 2025',
@@ -1174,7 +1147,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-10-23T09:20:00+08:00',
-    external_item_id: '2502729521',
   },
   {
     quarter: 'Q4 2025',
@@ -1195,7 +1167,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-10-23T09:11:00+08:00',
-    external_item_id: '2502721568',
   },
   {
     quarter: 'Q4 2025',
@@ -1216,7 +1187,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2025-10-23T09:09:00+08:00',
-    external_item_id: '2502728868',
   },
   {
     quarter: 'Q1 2026',
@@ -1237,7 +1207,6 @@ const REPORT_DATA = [
     missing_count: 4,
     casualties_count: 0,
     timestamp: '2026-01-22T16:00:00+08:00',
-    external_item_id: '2625575595',
   },
   {
     quarter: 'Q1 2026',
@@ -1258,7 +1227,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2026-01-22T16:02:00+08:00',
-    external_item_id: '2625623791',
   },
   {
     quarter: 'Q1 2026',
@@ -1279,7 +1247,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2026-01-22T15:51:00+08:00',
-    external_item_id: '2625545691',
   },
   {
     quarter: 'Q1 2026',
@@ -1300,7 +1267,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2026-01-22T15:44:00+08:00',
-    external_item_id: '2625543645',
   },
   {
     quarter: 'Q1 2026',
@@ -1321,7 +1287,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2026-01-22T15:42:00+08:00',
-    external_item_id: '2625528631',
   },
   {
     quarter: 'Q1 2026',
@@ -1342,7 +1307,6 @@ const REPORT_DATA = [
     missing_count: 1,
     casualties_count: 0,
     timestamp: '2026-01-22T15:41:00+08:00',
-    external_item_id: '2625569809',
   },
   {
     quarter: 'Q1 2026',
@@ -1363,7 +1327,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2026-01-22T15:40:00+08:00',
-    external_item_id: '2625543274',
   },
   {
     quarter: 'Q1 2026',
@@ -1384,7 +1347,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2026-01-22T15:38:00+08:00',
-    external_item_id: '2625541373',
   },
   {
     quarter: 'Q1 2026',
@@ -1405,7 +1367,6 @@ const REPORT_DATA = [
     missing_count: 1,
     casualties_count: 0,
     timestamp: '2026-01-22T15:35:00+08:00',
-    external_item_id: '2625522777',
   },
   {
     quarter: 'Q1 2026',
@@ -1426,7 +1387,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2026-01-22T11:00:00+08:00',
-    external_item_id: '2625685351',
   },
   {
     quarter: 'Q1 2026',
@@ -1447,7 +1407,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2026-01-22T15:56:00+08:00',
-    external_item_id: '2625562382',
   },
   {
     quarter: 'Q1 2026',
@@ -1468,7 +1427,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 0,
     timestamp: '2026-01-22T15:51:00+08:00',
-    external_item_id: '2625570813',
   },
   {
     quarter: 'Q1 2026',
@@ -1489,7 +1447,6 @@ const REPORT_DATA = [
     missing_count: 0,
     casualties_count: 9,
     timestamp: '2026-01-22T15:39:00+08:00',
-    external_item_id: '2625569598',
   },
 ];
 
@@ -1563,6 +1520,13 @@ async function main() {
   });
   console.log(`  event_statuses: ${EVENT_STATUSES.length}`);
 
+  // Bystander Incident Types
+  await prisma.bystander_incident_types.createMany({
+    data: BYSTANDER_INCIDENT_TYPES.map((name) => ({ name, is_active: true })),
+    skipDuplicates: true,
+  });
+  console.log(`  bystander_incident_types: ${BYSTANDER_INCIDENT_TYPES.length}`);
+
   const statusRecords = await prisma.eventStatus.findMany({ select: { id: true, name: true } });
   const statusMap: Record<string, string> = Object.fromEntries(
     statusRecords.map((s) => [s.name, s.id])
@@ -1591,7 +1555,7 @@ async function main() {
     const dates = QUARTER_DATES[quarter];
     const event = await prisma.event.create({
       data: {
-        name: `NSED Earthquake Drill ${quarter}`,
+        name: `NSED ${quarter}`,
         description: `National Simultaneous Earthquake Drill - ${quarter}`,
         quarter,
         status_id: statusMap['completed'],
@@ -1631,7 +1595,7 @@ async function main() {
         health_workers: r.health_workers,
         non_academic_staff: r.non_academic_staff,
         guests: r.guests,
-        submitted_at: QUARTER_DATES[r.quarter].started_at,
+        submitted_at: new Date(r.timestamp),
       },
     });
     count++;
