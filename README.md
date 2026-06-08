@@ -180,7 +180,6 @@ src/
 | **Super Admin**      | Full access — all pages including users and settings               |
 | **Administrator**    | Dashboard, events, reports, calendar, news, activity logs          |
 | **ERT Member**       | Public `/report` page — submit incident reports via web or QR code |
-| **Field Users**      | Mobile app only — submit and edit reports for their assigned team  |
 | **Public/Bystander** | `/bystander-report` — anonymous incident reporting via QR code     |
 
 ---

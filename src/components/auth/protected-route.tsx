@@ -1,12 +1,14 @@
 'use client';
 
-import { supabase } from '@/lib';
 import { useAuthStore } from '@/store';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Spinner } from '../ui';
 
-const FORBIDDEN_USER_TYPES = ['ERT Member', 'Bystander'];
+const REDIRECT_USER_TYPES: Record<string, string> = {
+  'ERT Member': '/report',
+  Bystander: '/report',
+};
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, userProfile, loading } = useAuthStore();
@@ -21,29 +23,21 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     }
   }, [user, loading, router]);
 
-  // Sign out and redirect forbidden user types
+  // Redirect non-admin user types to their appropriate page (without signing out)
   useEffect(() => {
-    if (
-      !loading &&
-      user &&
-      userProfile?.user_type?.name &&
-      FORBIDDEN_USER_TYPES.includes(userProfile.user_type.name)
-    ) {
-      supabase.auth.signOut().then(() => {
-        router.push(
-          `/signin?error=unauthorized&message=${encodeURIComponent('Your account does not have access to this resource.')}`
-        );
-      });
+    const typeName = userProfile?.user_type?.name;
+    if (!loading && user && typeName && typeName in REDIRECT_USER_TYPES) {
+      router.replace(REDIRECT_USER_TYPES[typeName]);
     }
   }, [loading, userProfile, router, user]);
 
-  const isForbidden =
+  const isRedirecting =
     !loading &&
     user &&
-    userProfile?.user_type?.name &&
-    FORBIDDEN_USER_TYPES.includes(userProfile.user_type.name);
+    !!userProfile?.user_type?.name &&
+    userProfile.user_type.name in REDIRECT_USER_TYPES;
 
-  if (loading || isForbidden) {
+  if (loading || isRedirecting) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Spinner size="lg" />
