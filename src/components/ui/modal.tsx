@@ -76,7 +76,7 @@ export function Modal({ isOpen, onClose, children, className, isFullscreen = fal
       >
         <button
           onClick={onClose}
-          className="absolute top-4 right-6 z-2 flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition hover:bg-gray-200 hover:text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-700 dark:hover:text-white"
+          className="absolute top-4 right-6 z-2 flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 dark:border-gray-500 bg-gray-100 text-gray-400 transition hover:bg-gray-200 hover:text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-700 dark:hover:text-white"
         >
           <X size={18} />
         </button>

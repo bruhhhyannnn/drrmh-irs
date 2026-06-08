@@ -10,7 +10,7 @@ import {
   useDamageConditions,
   useUnits,
 } from '@/app/(admin)/settings/use-settings';
-import { Button, Input, Select } from '@/components/ui';
+import { Button, Input, Select, Textarea } from '@/components/ui';
 import { BystanderReportFormData, cn } from '@/lib';
 import { CheckCircle, Loader2, MapPin, Plus, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -247,10 +247,9 @@ export function BystanderReportForm() {
               <p className="mb-1.5 block text-sm font-medium text-gray-500 dark:text-gray-400">
                 Description (optional)
               </p>
-              <textarea
+              <Textarea
                 placeholder="Briefly describe what happened..."
                 rows={4}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500"
                 {...register('description')}
               />
             </div>

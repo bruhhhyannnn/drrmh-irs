@@ -80,7 +80,7 @@ export async function getUnits(clusterId?: string) {
   return prisma.unit.findMany({
     where: clusterId ? { cluster_id: clusterId } : undefined,
     include: { cluster: { select: { name: true } } },
-    orderBy: { name: 'asc' },
+    orderBy: { created_at: 'asc' },
   });
 }
 

@@ -8,7 +8,7 @@ import { Badge, Spinner } from '@/components/ui';
 import { getInitials } from '@/lib';
 import { CLUSTERS, HEADCOUNT_FIELDS } from '@/types';
 import { format } from 'date-fns';
-import { AlertTriangle, Calendar, Clock, FileText, MapPin, Users, UserX } from 'lucide-react';
+import { AlertTriangle, Calendar, Clock, FileText, Users, UserX } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 
@@ -416,13 +416,6 @@ function ClusterCard({ cluster, reports }: { cluster: string; reports: EventRepo
                     </span>
                   </div>
                 )}
-              </div>
-            )}
-
-            {r.location?.name && (
-              <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-400">
-                <MapPin size={11} />
-                {r.location.name}
               </div>
             )}
           </div>

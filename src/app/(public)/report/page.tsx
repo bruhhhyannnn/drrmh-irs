@@ -3,7 +3,7 @@
 import { ReportForm } from '@/app/(admin)/reports/report-form';
 import { AuthHeader } from '@/components/auth';
 import { Spinner } from '@/components/ui';
-import { supabase } from '@/lib';
+import { getInitials, supabase } from '@/lib';
 import { useAuthStore } from '@/store';
 import type { Prisma } from '@prisma/client';
 import { CheckCircle, LogOut } from 'lucide-react';
@@ -97,7 +97,7 @@ export default function ErtReportPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <ReportHeader userProfile={userProfile} onSignOut={handleSignOut} />
       <div className="p-6 flex justify-center items-center">
-        <ReportForm onSuccess={() => setSubmitted(true)} />
+        <ReportForm standalone onSuccess={() => setSubmitted(true)} />
       </div>
     </div>
   );
@@ -110,8 +110,6 @@ interface ReportHeaderProps {
 }
 
 function ReportHeader({ userProfile, onSignOut }: ReportHeaderProps) {
-  const initials = (userProfile.first_name?.[0] ?? '') + (userProfile.last_name?.[0] ?? '');
-
   return (
     <header className="border-b border-gray-200 bg-white px-6 py-3 dark:border-white/5 dark:bg-gray-900">
       <div className="mx-auto flex max-w-2xl items-center justify-between">
@@ -128,8 +126,8 @@ function ReportHeader({ userProfile, onSignOut }: ReportHeaderProps) {
 
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <div className="bg-brand-100 text-brand-700 dark:bg-brand-900/50 dark:text-brand-300 flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold uppercase">
-              {initials}
+            <div className="bg-brand-100 text-brand-700 dark:bg-brand-900/50 dark:text-brand-300 flex h-7 w-7 p-4 items-center justify-center rounded-full text-xs font-semibold uppercase">
+              {getInitials(userProfile.first_name + ' ' + userProfile.last_name)}
             </div>
             <span className="hidden text-sm text-gray-600 dark:text-gray-400 sm:block">
               {userProfile.first_name} {userProfile.last_name}

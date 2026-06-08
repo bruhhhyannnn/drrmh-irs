@@ -7,6 +7,14 @@ import { revalidatePath } from 'next/cache';
 
 const PER_PAGE = 10;
 
+function serializeReport<T extends { latitude: unknown; longitude: unknown }>(r: T) {
+  return {
+    ...r,
+    latitude: r.latitude != null ? Number(r.latitude) : null,
+    longitude: r.longitude != null ? Number(r.longitude) : null,
+  };
+}
+
 export async function getReports(page: number = 1, query?: string) {
   const where: Prisma.ReportWhereInput = {
     ...(query && {
@@ -32,7 +40,6 @@ export async function getReports(page: number = 1, query?: string) {
         },
         cluster: { select: { name: true } },
         unit: { select: { name: true } },
-        location: { select: { name: true } },
         _count: { select: { casualties: true, missing_persons: true } },
       },
       orderBy: { created_at: 'desc' },
@@ -42,11 +49,11 @@ export async function getReports(page: number = 1, query?: string) {
     prisma.report.count({ where }),
   ]);
 
-  return { data, total };
+  return { data: data.map(serializeReport), total };
 }
 
 export async function getReport(id: string) {
-  return prisma.report.findUnique({
+  const report = await prisma.report.findUnique({
     where: { id },
     include: {
       event: true,
@@ -59,7 +66,6 @@ export async function getReport(id: string) {
       },
       cluster: { select: { name: true } },
       unit: { select: { name: true } },
-      location: { select: { name: true } },
       missing_persons: { select: { name: true } },
       casualties: {
         include: { condition: { select: { name: true } } },
@@ -69,10 +75,12 @@ export async function getReport(id: string) {
       },
     },
   });
+  if (!report) return null;
+  return serializeReport(report);
 }
 
 export async function getReportsByEvent(eventId: string) {
-  return prisma.report.findMany({
+  const reports = await prisma.report.findMany({
     where: { event_id: eventId },
     orderBy: { created_at: 'asc' },
     include: {
@@ -85,7 +93,6 @@ export async function getReportsByEvent(eventId: string) {
       },
       cluster: { select: { name: true } },
       unit: { select: { name: true } },
-      location: { select: { name: true } },
       missing_persons: { select: { name: true } },
       casualties: {
         include: { condition: { select: { name: true } } },
@@ -95,6 +102,7 @@ export async function getReportsByEvent(eventId: string) {
       },
     },
   });
+  return reports.map(serializeReport);
 }
 
 export async function createReport(data: ReportFormData) {
@@ -104,7 +112,9 @@ export async function createReport(data: ReportFormData) {
     data: {
       ...reportData,
       unit_id: reportData.unit_id || null,
-      location_id: reportData.location_id || null,
+      latitude: reportData.latitude ?? null,
+      longitude: reportData.longitude ?? null,
+      location_name: reportData.location_name ?? null,
       damage_condition_id: reportData.damage_condition_id || null,
       missing_persons: {
         create: report_missing_persons ?? [],
@@ -116,13 +126,13 @@ export async function createReport(data: ReportFormData) {
   });
 
   revalidatePath('/reports');
-  return report;
+  return serializeReport(report);
 }
 
 export async function updateReport(id: string, data: Prisma.ReportUpdateInput) {
   const report = await prisma.report.update({ where: { id }, data });
   revalidatePath('/reports');
-  return report;
+  return serializeReport(report);
 }
 
 export async function deleteReport(id: string) {

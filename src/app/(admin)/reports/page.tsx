@@ -67,14 +67,6 @@ export default function ReportsPage() {
       cell: ({ row: { original: r } }) => r.unit?.name ?? '—',
     },
     {
-      id: 'location',
-      header: 'Location',
-      accessorFn: (r) => r.location?.name ?? '',
-      cell: ({ row: { original: r } }) => (
-        <span className="max-w-50 truncate">{r.location?.name ?? '—'}</span>
-      ),
-    },
-    {
       id: 'total_affected',
       header: 'Total Affected',
       accessorFn: (r) => totalAffected(r),
