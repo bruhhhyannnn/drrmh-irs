@@ -100,9 +100,7 @@ export function ReportForm({
 
   // ─── Modal state ─────────────────────────────────────────────
   const [personModalOpen, setPersonModalOpen] = useState(false);
-  const [editingPersonIdx, setEditingPersonIdx] = useState<number | null>(null);
   const [casualtyModalOpen, setCasualtyModalOpen] = useState(false);
-  const [editingCasualtyIdx, setEditingCasualtyIdx] = useState<number | null>(null);
 
   // ─── Dynamic section state ───────────────────────────────────
   const [casualties, setCasualties] = useState<CasualtyRow[]>([]);
@@ -301,9 +299,6 @@ export function ReportForm({
     ...damageConditions.map((d) => ({ value: d.id, label: d.name })),
   ];
 
-  const editingPerson = editingPersonIdx !== null ? missingPersons[editingPersonIdx] : undefined;
-  const editingCasualty = editingCasualtyIdx !== null ? casualties[editingCasualtyIdx] : undefined;
-
   return (
     <div className="space-y-6">
       {!standalone && <PageBreadcrumb pageTitle={isEdit ? 'Edit Report' : 'Submit Report'} />}
@@ -313,19 +308,22 @@ export function ReportForm({
           <Spinner center />
         ) : (
           <form onSubmit={onSubmit} className="space-y-7">
-            {/* ── Submitting as ──────────────────────────── */}
+            {/* ── Reporting as ───────────────────────────── */}
             {userProfile && (
-              <div className="flex items-center gap-2.5 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 dark:border-white/5 dark:bg-white/3">
-                <div className="bg-brand-100 text-brand-700 dark:bg-brand-900/50 dark:text-brand-300 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold uppercase">
-                  {(userProfile.first_name?.[0] ?? '') + (userProfile.last_name?.[0] ?? '')}
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-gray-800 dark:text-gray-200">
-                    {userProfile.first_name} {userProfile.last_name}
-                  </p>
-                  {userProfile.unit && (
-                    <p className="truncate text-xs text-gray-400">{userProfile.unit.name}</p>
-                  )}
+              <div>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Reporting as</p>
+                <div className="flex mt-2 items-center gap-2.5 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 dark:border-white/5 dark:bg-white/3">
+                  <div className="bg-brand-100 text-brand-700 dark:bg-brand-900/50 dark:text-brand-300 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold uppercase">
+                    {(userProfile.first_name?.[0] ?? '') + (userProfile.last_name?.[0] ?? '')}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-gray-800 dark:text-gray-200">
+                      {userProfile.first_name} {userProfile.last_name}
+                    </p>
+                    {userProfile.position && (
+                      <p className="truncate text-xs text-gray-400">{userProfile.position.name}</p>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -414,23 +412,17 @@ export function ReportForm({
               <div className="mb-3 flex items-center justify-between">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Missing Persons
-                  {missingPersons.length > 0 && (
-                    <span className="ml-1.5 rounded-full bg-warning-100 px-2 py-0.5 text-xs font-normal text-warning-700 dark:bg-warning-900/30 dark:text-warning-400">
-                      {missingPersons.length}
-                    </span>
-                  )}
                 </p>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    setEditingPersonIdx(null);
-                    setPersonModalOpen(true);
-                  }}
-                  startIcon={<Plus size={13} />}
+                  onClick={() => setPersonModalOpen(true)}
+                  startIcon={
+                    missingPersons.length === 0 ? <Plus size={13} /> : <Pencil size={13} />
+                  }
                 >
-                  Add Person
+                  {missingPersons.length === 0 ? 'Add' : 'Manage'}
                 </Button>
               </div>
 
@@ -440,42 +432,30 @@ export function ReportForm({
                   <p className="text-sm text-gray-400">No missing persons added</p>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {missingPersons.map((person, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2.5 dark:border-white/5"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-gray-800 dark:text-gray-200">
-                          {person.name || <span className="text-gray-400 italic">Unnamed</span>}
-                        </p>
-                        <p className="text-xs capitalize text-gray-400">
-                          {person.sex} · {person.age} yrs
-                        </p>
-                      </div>
-                      <div className="ml-2 flex shrink-0 gap-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingPersonIdx(i);
-                            setPersonModalOpen(true);
-                          }}
-                          className="flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-white/5 dark:hover:text-gray-300"
-                        >
-                          <Pencil size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setMissingPersons((p) => p.filter((_, idx) => idx !== i))}
-                          className="hover:text-error-500 flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 dark:hover:bg-white/5"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
+                <button
+                  type="button"
+                  onClick={() => setPersonModalOpen(true)}
+                  className="w-full rounded-lg border border-gray-200 px-4 py-3 text-left transition hover:border-gray-300 hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/3"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400">
+                      <UserRound size={16} />
                     </div>
-                  ))}
-                </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                        {missingPersons.length} missing{' '}
+                        {missingPersons.length === 1 ? 'person' : 'persons'}
+                      </p>
+                      <p className="truncate text-xs text-gray-400">
+                        {missingPersons
+                          .slice(0, 2)
+                          .map((p) => p.name || 'Unnamed')
+                          .join(', ')}
+                        {missingPersons.length > 2 && ` +${missingPersons.length - 2} more`}
+                      </p>
+                    </div>
+                  </div>
+                </button>
               )}
             </div>
 
@@ -484,23 +464,15 @@ export function ReportForm({
               <div className="mb-3 flex items-center justify-between">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Casualty Details
-                  {casualties.length > 0 && (
-                    <span className="ml-1.5 rounded-full bg-error-100 px-2 py-0.5 text-xs font-normal text-error-700 dark:bg-error-900/30 dark:text-error-400">
-                      {casualties.length}
-                    </span>
-                  )}
                 </p>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    setEditingCasualtyIdx(null);
-                    setCasualtyModalOpen(true);
-                  }}
-                  startIcon={<Plus size={13} />}
+                  onClick={() => setCasualtyModalOpen(true)}
+                  startIcon={casualties.length === 0 ? <Plus size={13} /> : <Pencil size={13} />}
                 >
-                  Add Casualty
+                  {casualties.length === 0 ? 'Add' : 'Manage'}
                 </Button>
               </div>
 
@@ -510,46 +482,29 @@ export function ReportForm({
                   <p className="text-sm text-gray-400">No casualty details added</p>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {casualties.map((c, i) => {
-                    const condLabel =
-                      casualtyConditionOptions.find((o) => o.value === c.condition_id)?.label ?? '';
-                    return (
-                      <div
-                        key={i}
-                        className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2.5 dark:border-white/5"
-                      >
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-gray-800 dark:text-gray-200">
-                            {c.name || <span className="text-gray-400 italic">Unnamed</span>}
-                          </p>
-                          <p className="text-xs capitalize text-gray-400">
-                            {condLabel} · {c.sex} · {c.age} yrs
-                          </p>
-                        </div>
-                        <div className="ml-2 flex shrink-0 gap-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingCasualtyIdx(i);
-                              setCasualtyModalOpen(true);
-                            }}
-                            className="flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-white/5 dark:hover:text-gray-300"
-                          >
-                            <Pencil size={16} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setCasualties((p) => p.filter((_, idx) => idx !== i))}
-                            className="hover:text-error-500 flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 dark:hover:bg-white/5"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setCasualtyModalOpen(true)}
+                  className="w-full rounded-lg border border-gray-200 px-4 py-3 text-left transition hover:border-gray-300 hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/3"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-error-100 text-error-600 dark:bg-error-900/30 dark:text-error-400">
+                      <Users size={16} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                        {casualties.length} {casualties.length === 1 ? 'casualty' : 'casualties'}
+                      </p>
+                      <p className="truncate text-xs text-gray-400">
+                        {casualties
+                          .slice(0, 2)
+                          .map((c) => c.name || 'Unnamed')
+                          .join(', ')}
+                        {casualties.length > 2 && ` +${casualties.length - 2} more`}
+                      </p>
+                    </div>
+                  </div>
+                </button>
               )}
             </div>
 
@@ -587,33 +542,15 @@ export function ReportForm({
       <PersonModal
         isOpen={personModalOpen}
         onClose={() => setPersonModalOpen(false)}
-        initial={editingPerson}
-        onSave={(data) => {
-          if (editingPersonIdx !== null) {
-            setMissingPersons((p) =>
-              p.map((item, idx) => (idx === editingPersonIdx ? { ...item, ...data } : item))
-            );
-          } else {
-            setMissingPersons((p) => [...p, data]);
-          }
-          setEditingPersonIdx(null);
-        }}
+        persons={missingPersons}
+        onSave={(updated) => setMissingPersons(updated)}
       />
       <CasualtyModal
         isOpen={casualtyModalOpen}
         onClose={() => setCasualtyModalOpen(false)}
-        initial={editingCasualty}
+        casualties={casualties}
         conditionOptions={casualtyConditionOptions}
-        onSave={(data) => {
-          if (editingCasualtyIdx !== null) {
-            setCasualties((p) =>
-              p.map((item, idx) => (idx === editingCasualtyIdx ? { ...item, ...data } : item))
-            );
-          } else {
-            setCasualties((p) => [...p, data]);
-          }
-          setEditingCasualtyIdx(null);
-        }}
+        onSave={(updated) => setCasualties(updated)}
       />
     </div>
   );
@@ -787,7 +724,6 @@ function LocationPicker({ lat, lng, locationName, onPick, onClear }: LocationPic
           {hasPin ? (
             <div className="space-y-0.5">
               <p className="font-mono text-xs text-gray-500">
-                {lat!.toFixed(6)}, {lng!.toFixed(6)}
                 {isGeocoding && <span className="ml-2 text-gray-400">fetching address…</span>}
               </p>
               {locationName && (
@@ -809,38 +745,77 @@ function LocationPicker({ lat, lng, locationName, onPick, onClear }: LocationPic
 interface PersonModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initial?: MissingPersonRow;
-  onSave: (data: MissingPersonRow) => void;
+  persons: MissingPersonRow[];
+  onSave: (persons: MissingPersonRow[]) => void;
 }
 
-function PersonModal({ isOpen, onClose, initial, onSave }: PersonModalProps) {
-  const [form, setForm] = useState<MissingPersonRow>(
-    initial ?? { name: '', age: 0, sex: 'unknown' }
-  );
+function PersonModal({ isOpen, onClose, persons, onSave }: PersonModalProps) {
+  const [list, setList] = useState<MissingPersonRow[]>([]);
+  const [draft, setDraft] = useState<MissingPersonRow>({ name: '', age: 0, sex: 'unknown' });
 
   useEffect(() => {
-    if (isOpen) setForm(initial ?? { name: '', age: 0, sex: 'unknown' });
-  }, [isOpen, initial]);
+    if (isOpen) {
+      setList(persons);
+      setDraft({ name: '', age: 0, sex: 'unknown' });
+    }
+  }, [isOpen, persons]);
+
+  const addPerson = () => {
+    if (!draft.name.trim()) return;
+    setList((l) => [...l, { ...draft }]);
+    setDraft({ name: '', age: 0, sex: 'unknown' });
+  };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} className="sm:max-w-sm">
+    <Modal isOpen={isOpen} onClose={onClose} className="sm:max-w-md">
       <h3 className="mb-4 text-base font-semibold text-gray-800 dark:text-gray-100">
-        {initial ? 'Edit Missing Person' : 'Add Missing Person'}
+        Missing Persons
       </h3>
-      <div className="space-y-3">
+
+      {list.length > 0 && (
+        <div className="mb-4 max-h-52 space-y-2 overflow-y-auto">
+          {list.map((p, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2.5 dark:border-white/5"
+            >
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-gray-800 dark:text-gray-200">
+                  {p.name || <span className="italic text-gray-400">Unnamed</span>}
+                </p>
+                <p className="text-xs capitalize text-gray-400">
+                  {p.sex} · {p.age} yrs
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setList((l) => l.filter((_, idx) => idx !== i))}
+                className="hover:text-error-500 ml-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 dark:hover:bg-white/5"
+              >
+                <Trash2 size={15} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div
+        className={`space-y-3 ${list.length > 0 ? 'border-t border-gray-100 pt-4 dark:border-white/5' : ''}`}
+      >
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Add a person</p>
         <Input
           label="Full Name"
           placeholder="Full name"
-          value={form.name}
-          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+          value={draft.name}
+          onChange={(e) => setDraft((f) => ({ ...f, name: e.target.value }))}
         />
         <div className="grid grid-cols-2 gap-3">
           <Input
             type="number"
             label="Age"
             min={0}
-            value={form.age}
-            onChange={(e) => setForm((f) => ({ ...f, age: Number(e.target.value) || 0 }))}
+            value={draft.age}
+            onChange={(e) => setDraft((f) => ({ ...f, age: Number(e.target.value) || 0 }))}
           />
           <Select
             label="Sex"
@@ -849,28 +824,38 @@ function PersonModal({ isOpen, onClose, initial, onSave }: PersonModalProps) {
               { value: 'female', label: 'Female' },
               { value: 'unknown', label: 'Unknown' },
             ]}
-            value={form.sex}
+            value={draft.sex}
             onChange={(e) =>
-              setForm((f) => ({ ...f, sex: e.target.value as MissingPersonRow['sex'] }))
+              setDraft((f) => ({ ...f, sex: e.target.value as MissingPersonRow['sex'] }))
             }
           />
         </div>
-        <div className="flex justify-end gap-2 pt-2">
-          <Button type="button" variant="outline" size="sm" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => {
-              if (!form.name.trim()) return;
-              onSave(form);
-              onClose();
-            }}
-          >
-            {initial ? 'Update' : 'Add'}
-          </Button>
-        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={addPerson}
+          startIcon={<Plus size={13} />}
+          className="w-full"
+        >
+          Add Person
+        </Button>
+      </div>
+
+      <div className="mt-5 flex justify-end gap-2 border-t border-gray-100 pt-4 dark:border-white/5">
+        <Button type="button" variant="outline" size="sm" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          onClick={() => {
+            onSave(list);
+            onClose();
+          }}
+        >
+          Done{list.length > 0 && ` (${list.length})`}
+        </Button>
       </div>
     </Modal>
   );
@@ -880,46 +865,99 @@ function PersonModal({ isOpen, onClose, initial, onSave }: PersonModalProps) {
 interface CasualtyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initial?: CasualtyRow;
+  casualties: CasualtyRow[];
   conditionOptions: { value: string; label: string }[];
-  onSave: (data: CasualtyRow) => void;
+  onSave: (casualties: CasualtyRow[]) => void;
 }
 
-function CasualtyModal({ isOpen, onClose, initial, conditionOptions, onSave }: CasualtyModalProps) {
-  const [form, setForm] = useState<CasualtyRow>(
-    initial ?? { condition_id: '', name: '', age: 0, sex: 'unknown' }
-  );
+function CasualtyModal({
+  isOpen,
+  onClose,
+  casualties,
+  conditionOptions,
+  onSave,
+}: CasualtyModalProps) {
+  const [list, setList] = useState<CasualtyRow[]>([]);
+  const [draft, setDraft] = useState<CasualtyRow>({
+    condition_id: '',
+    name: '',
+    age: 0,
+    sex: 'unknown',
+  });
 
   useEffect(() => {
-    if (isOpen) setForm(initial ?? { condition_id: '', name: '', age: 0, sex: 'unknown' });
-  }, [isOpen, initial]);
+    if (isOpen) {
+      setList(casualties);
+      setDraft({ condition_id: '', name: '', age: 0, sex: 'unknown' });
+    }
+  }, [isOpen, casualties]);
+
+  const addCasualty = () => {
+    if (!draft.condition_id || !draft.name.trim()) return;
+    setList((l) => [...l, { ...draft }]);
+    setDraft({ condition_id: '', name: '', age: 0, sex: 'unknown' });
+  };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} className="sm:max-w-sm">
+    <Modal isOpen={isOpen} onClose={onClose} className="sm:max-w-md">
       <h3 className="mb-4 text-base font-semibold text-gray-800 dark:text-gray-100">
-        {initial ? 'Edit Casualty' : 'Add Casualty'}
+        Casualty Details
       </h3>
-      <div className="space-y-3">
+
+      {list.length > 0 && (
+        <div className="mb-4 max-h-52 space-y-2 overflow-y-auto">
+          {list.map((c, i) => {
+            const condLabel = conditionOptions.find((o) => o.value === c.condition_id)?.label ?? '';
+            return (
+              <div
+                key={i}
+                className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2.5 dark:border-white/5"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-gray-800 dark:text-gray-200">
+                    {c.name || <span className="italic text-gray-400">Unnamed</span>}
+                  </p>
+                  <p className="text-xs capitalize text-gray-400">
+                    {condLabel} · {c.sex} · {c.age} yrs
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setList((l) => l.filter((_, idx) => idx !== i))}
+                  className="hover:text-error-500 ml-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 dark:hover:bg-white/5"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div
+        className={`space-y-3 ${list.length > 0 ? 'border-t border-gray-100 pt-4 dark:border-white/5' : ''}`}
+      >
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Add a casualty</p>
         <Select
           label="Condition"
           placeholder="Select condition..."
           options={conditionOptions}
-          value={form.condition_id}
-          onChange={(e) => setForm((f) => ({ ...f, condition_id: e.target.value }))}
+          value={draft.condition_id}
+          onChange={(e) => setDraft((f) => ({ ...f, condition_id: e.target.value }))}
         />
         <Input
           label="Full Name"
           placeholder="Full name"
-          value={form.name}
-          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+          value={draft.name}
+          onChange={(e) => setDraft((f) => ({ ...f, name: e.target.value }))}
         />
         <div className="grid grid-cols-2 gap-3">
           <Input
             type="number"
             label="Age"
             min={0}
-            value={form.age}
-            onChange={(e) => setForm((f) => ({ ...f, age: Number(e.target.value) || 0 }))}
+            value={draft.age}
+            onChange={(e) => setDraft((f) => ({ ...f, age: Number(e.target.value) || 0 }))}
           />
           <Select
             label="Sex"
@@ -928,26 +966,36 @@ function CasualtyModal({ isOpen, onClose, initial, conditionOptions, onSave }: C
               { value: 'female', label: 'Female' },
               { value: 'unknown', label: 'Unknown' },
             ]}
-            value={form.sex}
-            onChange={(e) => setForm((f) => ({ ...f, sex: e.target.value as CasualtyRow['sex'] }))}
+            value={draft.sex}
+            onChange={(e) => setDraft((f) => ({ ...f, sex: e.target.value as CasualtyRow['sex'] }))}
           />
         </div>
-        <div className="flex justify-end gap-2 pt-2">
-          <Button type="button" variant="outline" size="sm" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => {
-              if (!form.condition_id || !form.name.trim()) return;
-              onSave(form);
-              onClose();
-            }}
-          >
-            {initial ? 'Update' : 'Add'}
-          </Button>
-        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={addCasualty}
+          startIcon={<Plus size={13} />}
+          className="w-full"
+        >
+          Add Casualty
+        </Button>
+      </div>
+
+      <div className="mt-5 flex justify-end gap-2 border-t border-gray-100 pt-4 dark:border-white/5">
+        <Button type="button" variant="outline" size="sm" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          onClick={() => {
+            onSave(list);
+            onClose();
+          }}
+        >
+          Done{list.length > 0 && ` (${list.length})`}
+        </Button>
       </div>
     </Modal>
   );

@@ -3,7 +3,7 @@
 import { ReportForm } from '@/app/(admin)/reports/report-form';
 import { AuthHeader } from '@/components/auth';
 import { Spinner } from '@/components/ui';
-import { getInitials, supabase } from '@/lib';
+import { cn, getInitials, supabase } from '@/lib';
 import { useAuthStore } from '@/store';
 import type { Prisma } from '@prisma/client';
 import { CheckCircle, LogOut } from 'lucide-react';
@@ -36,6 +36,21 @@ export default function ErtReportPage() {
     reset();
     // Stay on /report — user will see the sign-in screen again
   };
+
+  const BG_IMAGES = [
+    '/upm-drrmh-background-1.jpg',
+    '/upm-drrmh-background-2.jpg',
+    '/upm-drrmh-background-3.jpg',
+    '/upm-drrmh-background-4.jpg',
+  ];
+  const track = [...BG_IMAGES, ...BG_IMAGES]; // doubled for seamless loop
+  const [current, setCurrent] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % track.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [track.length]);
 
   // ── Loading ──────────────────────────────────────────────────
   if (loading) {
@@ -96,8 +111,24 @@ export default function ErtReportPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <ReportHeader userProfile={userProfile} onSignOut={handleSignOut} />
-      <div className="p-6 flex justify-center items-center">
-        <ReportForm standalone onSuccess={() => setSubmitted(true)} />
+      <div className="p-6 flex justify-center items-center relative">
+        <div className="absolute inset-0 overflow-hidden">
+          {track.map((src, i) => (
+            <div
+              key={i}
+              className={cn(
+                'absolute inset-0 transition-opacity duration-1000',
+                i === current ? 'opacity-100' : 'opacity-0'
+              )}
+            >
+              <Image src={src} alt="" fill className="object-cover" priority={i === 0} />
+            </div>
+          ))}
+          <div className="bg-brand-900/60 absolute inset-0" />
+        </div>
+        <div className="z-1">
+          <ReportForm standalone onSuccess={() => setSubmitted(true)} />
+        </div>
       </div>
     </div>
   );
@@ -111,7 +142,7 @@ interface ReportHeaderProps {
 
 function ReportHeader({ userProfile, onSignOut }: ReportHeaderProps) {
   return (
-    <header className="border-b border-gray-200 bg-white px-6 py-3 dark:border-white/5 dark:bg-gray-900">
+    <header className="border-b border-gray-200 bg-gray-25 px-6 py-3 dark:border-white/5 dark:bg-gray-900">
       <div className="mx-auto flex max-w-2xl items-center justify-between">
         <div className="flex items-center gap-2">
           <Image

@@ -67,7 +67,7 @@ export function Modal({ isOpen, onClose, children, className, isFullscreen = fal
       <div
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          'bg-brand-25 relative flex h-screen w-full flex-col shadow-2xl dark:bg-gray-800',
+          'bg-gray-50 relative flex h-screen w-full flex-col shadow-2xl dark:bg-gray-800',
           'transition-transform duration-300 ease-in-out',
           isVisible ? 'translate-x-0' : 'translate-x-full',
           !isFullscreen && 'sm:max-w-2xl sm:rounded-l-2xl',
