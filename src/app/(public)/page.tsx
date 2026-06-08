@@ -1464,7 +1464,7 @@ export default function LandingPage() {
               </h4>
               <ul className="flex list-none flex-col gap-2.5">
                 {[
-                  { label: 'upm-drrmh-list@up.edu.ph', href: 'mailto:upm-drrmh-list@up.edu.ph' },
+                  { label: 'drrmh.upm@up.edu.ph', href: 'mailto:drrmh.upm@up.edu.ph' },
                   {
                     label: 'DRRM-H Facebook',
                     href: 'https://www.facebook.com/UPSimulationCenter',
