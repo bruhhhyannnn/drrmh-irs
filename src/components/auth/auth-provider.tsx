@@ -38,11 +38,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   async function fetchProfile(userId: string) {
-    if (lastUserIdRef.current === userId) return;
-    lastUserIdRef.current = userId;
+    const { userProfile } = useAuthStore.getState();
+    if (userProfile !== null) {
+      setLoading(false); // ← must clear loading even when skipping the fetch
+      return;
+    }
 
     setLoading(true);
-    setUserProfile(null);
     try {
       const user = await getUserByAuthId(userId);
       setUserProfile(user ?? null);

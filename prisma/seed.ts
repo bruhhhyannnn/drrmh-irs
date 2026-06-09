@@ -1548,7 +1548,7 @@ async function main() {
   // ── 3. Events — one per quarter ─────────────────────────
   console.log('\nSeeding events...');
 
-  const quarters = [...new Set(REPORT_DATA.map((r: any) => r.quarter as string))].sort();
+  const quarters = Object.keys(QUARTER_DATES).sort();
   const eventMap: Record<string, string> = {};
 
   for (const quarter of quarters) {

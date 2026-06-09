@@ -10,6 +10,7 @@ import { CheckCircle, LogOut } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { GoogleSignInForm } from './google-sign-in-form';
 
 type UserProfile = Prisma.UserGetPayload<{
@@ -32,8 +33,10 @@ export default function ErtReportPage() {
   }, [loading, user, userProfile, router]);
 
   const handleSignOut = async () => {
+    const toastId = toast.loading('Logging out...');
     await supabase.auth.signOut();
     reset();
+    toast.success('Logged out successfully', { id: toastId });
     // Stay on /report — user will see the sign-in screen again
   };
 
@@ -56,7 +59,7 @@ export default function ErtReportPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Spinner size="lg" />
+        stuck here <Spinner size="lg" />
       </div>
     );
   }
