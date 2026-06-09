@@ -7,21 +7,32 @@ import { useAuthStore } from '@/store';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
+const OTHER_VALUE = '__other__';
+
 export function CompleteProfileModal() {
   const { userProfile, loading, setUserProfile } = useAuthStore();
   const { data: positions = [] } = usePositions();
 
   const [positionId, setPositionId] = useState('');
+  const [customPosition, setCustomPosition] = useState('');
   const [saving, setSaving] = useState(false);
 
   const needsCompletion = !loading && userProfile && !userProfile.is_profile_complete;
-  const positionOptions = positions.map((p) => ({ value: p.id, label: p.name }));
+  const isOther = positionId === OTHER_VALUE;
+  const positionOptions = [
+    ...positions.map((p) => ({ value: p.id, label: p.name })),
+    { value: OTHER_VALUE, label: 'Other (please specify)' },
+  ];
+  const canSave = positionId && (!isOther || customPosition.trim().length > 0);
 
   const handleSave = async () => {
-    if (!positionId || !userProfile) return;
+    if (!canSave || !userProfile) return;
     setSaving(true);
     try {
-      const updated = await completeUserProfile(userProfile.id, { position_id: positionId });
+      const payload = isOther
+        ? { custom_position_name: customPosition.trim() }
+        : { position_id: positionId };
+      const updated = await completeUserProfile(userProfile.id, payload);
       setUserProfile(updated);
       toast.success('Profile completed!');
     } catch {
@@ -50,15 +61,33 @@ export function CompleteProfileModal() {
           options={positionOptions}
           value={positionId}
           required
-          onChange={(e) => setPositionId(e.target.value)}
+          onChange={(e) => {
+            setPositionId(e.target.value);
+            setCustomPosition('');
+          }}
         />
+
+        {isOther && (
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Specify position <span className="text-error-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={customPosition}
+              onChange={(e) => setCustomPosition(e.target.value)}
+              placeholder="e.g. Safety Officer"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
+            />
+          </div>
+        )}
 
         <Button
           className="w-full"
           onClick={handleSave}
           isLoading={saving}
           loadingText="Saving..."
-          disabled={!positionId}
+          disabled={!canSave}
         >
           Save and continue
         </Button>

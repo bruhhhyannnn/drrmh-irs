@@ -104,11 +104,29 @@ export async function toggleUserStatus(id: string, current: boolean) {
 
 export async function completeUserProfile(
   id: string,
-  data: { position_id: string; first_name?: string; last_name?: string }
+  data: {
+    position_id?: string;
+    custom_position_name?: string;
+    first_name?: string;
+    last_name?: string;
+  }
 ) {
+  let positionId = data.position_id;
+
+  if (data.custom_position_name) {
+    const position = await prisma.position.upsert({
+      where: { name: data.custom_position_name },
+      update: {},
+      create: { name: data.custom_position_name },
+    });
+    positionId = position.id;
+  }
+
+  const { position_id: _, custom_position_name: __, ...rest } = data;
+
   const user = await prisma.user.update({
     where: { id },
-    data: { ...data, is_profile_complete: true },
+    data: { ...rest, position_id: positionId, is_profile_complete: true },
     include: { unit: { include: { cluster: true } }, position: true, user_type: true },
   });
   revalidatePath('/');
