@@ -5,6 +5,7 @@ import {
   deleteReport,
   deleteReportCasualty,
   deleteReportMissingPerson,
+  getMyReportForOngoingEvent,
   getReport,
   getReportCasualties,
   getReportClusterSummary,
@@ -36,8 +37,13 @@ export function useReport(id?: string) {
 export function useCreateReport() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: ReportFormData) => createReport(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reports'] }),
+    mutationFn: (data: ReportFormData & { user_id?: string }) => createReport(data),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['reports'] });
+      if (variables.user_id) {
+        queryClient.invalidateQueries({ queryKey: ['my-report', variables.user_id] });
+      }
+    },
   });
 }
 
@@ -66,6 +72,14 @@ export function useEventReports(eventId?: string) {
     queryKey: ['event-reports', eventId],
     queryFn: () => getReportsByEvent(eventId!),
     enabled: !!eventId,
+  });
+}
+
+export function useMyReport(userId?: string) {
+  return useQuery({
+    queryKey: ['my-report', userId],
+    queryFn: () => getMyReportForOngoingEvent(userId!),
+    enabled: !!userId,
   });
 }
 

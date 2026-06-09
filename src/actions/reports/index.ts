@@ -105,12 +105,13 @@ export async function getReportsByEvent(eventId: string) {
   return reports.map(serializeReport);
 }
 
-export async function createReport(data: ReportFormData) {
-  const { report_missing_persons, report_casualties, ...reportData } = data;
+export async function createReport(data: ReportFormData & { user_id?: string }) {
+  const { report_missing_persons, report_casualties, user_id, ...reportData } = data;
 
   const report = await prisma.report.create({
     data: {
       ...reportData,
+      user_id: user_id ?? null,
       unit_id: reportData.unit_id || null,
       latitude: reportData.latitude ?? null,
       longitude: reportData.longitude ?? null,
@@ -176,6 +177,31 @@ export async function getReportTotals() {
   ]);
 
   return { reports, casualties, missing };
+}
+
+export async function getMyReportForOngoingEvent(userId: string) {
+  const statusRow = await prisma.eventStatus.findFirst({
+    where: { name: { equals: 'Ongoing', mode: 'insensitive' } },
+    select: { id: true },
+  });
+  if (!statusRow) return null;
+
+  const report = await prisma.report.findFirst({
+    where: {
+      user_id: userId,
+      event: { status_id: statusRow.id },
+    },
+    include: {
+      event: { select: { id: true, name: true } },
+      cluster: { select: { name: true } },
+      unit: { select: { name: true } },
+      _count: { select: { casualties: true, missing_persons: true } },
+    },
+    orderBy: { created_at: 'desc' },
+  });
+
+  if (!report) return null;
+  return serializeReport(report);
 }
 
 // Report Casualties
