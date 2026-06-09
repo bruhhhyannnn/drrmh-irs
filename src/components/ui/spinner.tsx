@@ -8,9 +8,9 @@ interface SpinnerProps {
 }
 
 const sizeMap = {
-  sm: 'h-12 w-12',
-  md: 'h-14 w-14',
-  lg: 'h-16 w-16',
+  sm: 'h-14 w-14',
+  md: 'h-16 w-16',
+  lg: 'h-18 w-18',
 };
 
 export function Spinner({ size = 'md', center = false, className }: SpinnerProps) {

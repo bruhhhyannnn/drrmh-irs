@@ -76,10 +76,10 @@ export function AppHeader() {
             >
               <DropdownItem>
                 <div className="w-full items-start border-b border-gray-100 pb-1 dark:border-gray-800">
-                  <p className="text-start text-sm font-medium text-gray-900 dark:text-white">
+                  <p className="text-start text-sm font-medium truncate text-gray-900 dark:text-white">
                     {displayName}
                   </p>
-                  <p className="text-start text-xs text-gray-500">{email}</p>
+                  <p className="text-start text-xs truncate text-gray-500">{email}</p>
                 </div>
               </DropdownItem>
               <SignOutButton />
