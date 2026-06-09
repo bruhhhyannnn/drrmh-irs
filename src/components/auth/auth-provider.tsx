@@ -2,6 +2,7 @@
 
 import { getUserByAuthId } from '@/actions/users';
 import { supabase } from '@/lib';
+import { syncSupabaseAuthCookie } from '@/lib/auth-cookie';
 import { useAuthStore } from '@/store';
 import { useEffect, useRef } from 'react';
 
@@ -11,6 +12,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
+      syncSupabaseAuthCookie(session);
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) fetchProfile(session.user.id);
@@ -22,6 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') return;
 
+      syncSupabaseAuthCookie(session);
       setSession(session);
       setUser(session?.user ?? null);
 
@@ -39,17 +42,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function fetchProfile(userId: string) {
     const { userProfile } = useAuthStore.getState();
-    if (userProfile !== null) {
-      setLoading(false); // ← must clear loading even when skipping the fetch
+    if (userProfile?.auth_id === userId && lastUserIdRef.current === userId) {
+      setLoading(false);
       return;
     }
 
+    lastUserIdRef.current = userId;
     setLoading(true);
+    setUserProfile(null);
     try {
       const user = await getUserByAuthId(userId);
       setUserProfile(user ?? null);
     } catch (err) {
       console.error('Error fetching profile:', err);
+      setUserProfile(null);
     } finally {
       setLoading(false);
     }

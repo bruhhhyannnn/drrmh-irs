@@ -12,10 +12,10 @@ import {
   getReports,
   getReportsByEvent,
   getReportTotals,
+  type ReportUpdateInput,
   updateReport,
 } from '@/actions/reports';
 import { CasualtyFormData, MissingPersonFormData, ReportFormData } from '@/lib';
-import type { Prisma } from '@prisma/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export function useReports(page: number, query: string) {
@@ -44,8 +44,7 @@ export function useCreateReport() {
 export function useUpdateReport() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Prisma.ReportUpdateInput }) =>
-      updateReport(id, data),
+    mutationFn: ({ id, data }: { id: string; data: ReportUpdateInput }) => updateReport(id, data),
     onSuccess: (_data, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['reports'] });
       queryClient.invalidateQueries({ queryKey: ['report', id] });

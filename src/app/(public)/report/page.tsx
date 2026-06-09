@@ -4,6 +4,7 @@ import { ReportForm } from '@/app/(admin)/reports/report-form';
 import { AuthHeader, CompleteProfileModal } from '@/components/auth';
 import { Spinner } from '@/components/ui';
 import { cn, getInitials, supabase } from '@/lib';
+import { syncSupabaseAuthCookie } from '@/lib/auth-cookie';
 import { useAuthStore } from '@/store';
 import type { Prisma } from '@prisma/client';
 import { CheckCircle, LogOut } from 'lucide-react';
@@ -21,6 +22,7 @@ export default function ErtReportPage() {
   const { user, userProfile, loading, reset } = useAuthStore();
   const router = useRouter();
   const [submitted, setSubmitted] = useState(false);
+  const [submittedOffline, setSubmittedOffline] = useState(false);
 
   // Redirect Admins / Super Admins to the dashboard
   useEffect(() => {
@@ -35,6 +37,7 @@ export default function ErtReportPage() {
   const handleSignOut = async () => {
     const toastId = toast.loading('Logging out...');
     await supabase.auth.signOut();
+    syncSupabaseAuthCookie(null);
     reset();
     toast.success('Logged out successfully', { id: toastId });
     // Stay on /report — user will see the sign-in screen again
@@ -93,13 +96,18 @@ export default function ErtReportPage() {
               <CheckCircle className="text-success-500 h-12 w-12" />
             </div>
             <h2 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
-              Report Submitted
+              {submittedOffline ? 'Report Saved Offline' : 'Report Submitted'}
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Your incident report has been recorded. Thank you.
+              {submittedOffline
+                ? 'Your incident report is saved on this device and will sync automatically when online.'
+                : 'Your incident report has been recorded. Thank you.'}
             </p>
             <button
-              onClick={() => setSubmitted(false)}
+              onClick={() => {
+                setSubmitted(false);
+                setSubmittedOffline(false);
+              }}
               className="text-brand-500 mt-6 text-sm hover:underline"
             >
               Submit another report
@@ -131,7 +139,17 @@ export default function ErtReportPage() {
           <div className="bg-brand-900/60 absolute inset-0" />
         </div>
         <div className="z-1">
-          <ReportForm standalone onSuccess={() => setSubmitted(true)} />
+          <ReportForm
+            standalone
+            onSuccess={() => {
+              setSubmittedOffline(false);
+              setSubmitted(true);
+            }}
+            onOfflineSaved={() => {
+              setSubmittedOffline(true);
+              setSubmitted(true);
+            }}
+          />
         </div>
       </div>
     </div>

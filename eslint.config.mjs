@@ -2,6 +2,7 @@ import tsPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import prettierConfig from 'eslint-config-prettier';
 import prettierPlugin from 'eslint-plugin-prettier';
+import reactHooks from 'eslint-plugin-react-hooks';
 import unusedImports from 'eslint-plugin-unused-imports';
 
 const eslintConfig = [
@@ -17,6 +18,7 @@ const eslintConfig = [
       'unused-imports': unusedImports,
       '@typescript-eslint': tsPlugin,
       prettier: prettierPlugin,
+      'react-hooks': reactHooks,
     },
     rules: {
       'unused-imports/no-unused-imports': 'error',

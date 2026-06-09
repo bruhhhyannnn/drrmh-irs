@@ -1,11 +1,30 @@
 'use server';
 
-import { CasualtyFormData, MissingPersonFormData, ReportFormData } from '@/lib';
+import {
+  casualtySchema,
+  missingPersonSchema,
+  reportSchema,
+  type CasualtyFormData,
+  type MissingPersonFormData,
+  type ReportFormData,
+} from '@/lib/schemas';
 import { prisma } from '@/lib/prisma';
+import { isAdminProfile, requireAdmin, requireStaff } from '@/lib/server-auth';
 import type { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
 
 const PER_PAGE = 10;
+
+const reportUpdateSchema = reportSchema.omit({
+  report_missing_persons: true,
+  report_casualties: true,
+});
+
+export type ReportUpdateInput = z.infer<typeof reportUpdateSchema>;
+
+const casualtyCreateSchema = casualtySchema.extend({ report_id: z.string().uuid() });
+const missingPersonCreateSchema = missingPersonSchema.extend({ report_id: z.string().uuid() });
 
 function serializeReport<T extends { latitude: unknown; longitude: unknown }>(r: T) {
   return {
@@ -15,13 +34,44 @@ function serializeReport<T extends { latitude: unknown; longitude: unknown }>(r:
   };
 }
 
+async function requireReportOwnerOrAdmin(reportId: string) {
+  const profile = await requireStaff();
+  if (isAdminProfile(profile)) return profile;
+
+  const report = await prisma.report.findUnique({
+    where: { id: reportId },
+    select: { user_id: true },
+  });
+
+  if (!report || report.user_id !== profile.id) {
+    throw new Error('Forbidden');
+  }
+
+  return profile;
+}
+
+function normalizeReportData(data: ReportUpdateInput) {
+  const parsed = reportUpdateSchema.parse(data);
+  return {
+    ...parsed,
+    unit_id: parsed.unit_id || null,
+    latitude: parsed.latitude ?? null,
+    longitude: parsed.longitude ?? null,
+    location_name: parsed.location_name?.trim() || null,
+    damage_condition_id: parsed.damage_condition_id || null,
+  };
+}
+
 export async function getReports(page: number = 1, query?: string) {
+  await requireAdmin();
+  const safePage = Number.isInteger(page) && page > 0 ? page : 1;
+  const safeQuery = query?.trim().slice(0, 100);
   const where: Prisma.ReportWhereInput = {
-    ...(query && {
+    ...(safeQuery && {
       OR: [
-        { cluster: { name: { contains: query, mode: 'insensitive' } } },
-        { unit: { name: { contains: query, mode: 'insensitive' } } },
-        { event: { name: { contains: query, mode: 'insensitive' } } },
+        { cluster: { name: { contains: safeQuery, mode: 'insensitive' } } },
+        { unit: { name: { contains: safeQuery, mode: 'insensitive' } } },
+        { event: { name: { contains: safeQuery, mode: 'insensitive' } } },
       ],
     }),
   };
@@ -43,7 +93,7 @@ export async function getReports(page: number = 1, query?: string) {
         _count: { select: { casualties: true, missing_persons: true } },
       },
       orderBy: { created_at: 'desc' },
-      skip: (page - 1) * PER_PAGE,
+      skip: (safePage - 1) * PER_PAGE,
       take: PER_PAGE,
     }),
     prisma.report.count({ where }),
@@ -53,6 +103,8 @@ export async function getReports(page: number = 1, query?: string) {
 }
 
 export async function getReport(id: string) {
+  await requireReportOwnerOrAdmin(id);
+
   const report = await prisma.report.findUnique({
     where: { id },
     include: {
@@ -80,6 +132,8 @@ export async function getReport(id: string) {
 }
 
 export async function getReportsByEvent(eventId: string) {
+  await requireAdmin();
+
   const reports = await prisma.report.findMany({
     where: { event_id: eventId },
     orderBy: { created_at: 'asc' },
@@ -106,15 +160,22 @@ export async function getReportsByEvent(eventId: string) {
 }
 
 export async function createReport(data: ReportFormData) {
-  const { report_missing_persons, report_casualties, ...reportData } = data;
+  const profile = await requireStaff();
+  if (!profile.is_profile_complete) {
+    throw new Error('Complete your profile before submitting reports.');
+  }
+
+  const parsed = reportSchema.parse(data);
+  const { report_missing_persons, report_casualties, ...reportData } = parsed;
 
   const report = await prisma.report.create({
     data: {
       ...reportData,
+      user_id: profile.id,
       unit_id: reportData.unit_id || null,
       latitude: reportData.latitude ?? null,
       longitude: reportData.longitude ?? null,
-      location_name: reportData.location_name ?? null,
+      location_name: reportData.location_name?.trim() || null,
       damage_condition_id: reportData.damage_condition_id || null,
       missing_persons: {
         create: report_missing_persons ?? [],
@@ -129,18 +190,22 @@ export async function createReport(data: ReportFormData) {
   return serializeReport(report);
 }
 
-export async function updateReport(id: string, data: Prisma.ReportUpdateInput) {
-  const report = await prisma.report.update({ where: { id }, data });
+export async function updateReport(id: string, data: ReportUpdateInput) {
+  await requireAdmin();
+  const report = await prisma.report.update({ where: { id }, data: normalizeReportData(data) });
   revalidatePath('/reports');
   return serializeReport(report);
 }
 
 export async function deleteReport(id: string) {
+  await requireAdmin();
   await prisma.report.delete({ where: { id } });
   revalidatePath('/reports');
 }
 
 export async function getReportClusterSummary() {
+  await requireAdmin();
+
   const [rows, clusters] = await Promise.all([
     prisma.report.findMany({
       select: {
@@ -169,6 +234,8 @@ export async function getReportClusterSummary() {
 }
 
 export async function getReportTotals() {
+  await requireAdmin();
+
   const [reports, casualties, missing] = await Promise.all([
     prisma.report.count(),
     prisma.reportCasualty.count(),
@@ -178,8 +245,9 @@ export async function getReportTotals() {
   return { reports, casualties, missing };
 }
 
-// Report Casualties
 export async function getReportCasualties(reportId: string) {
+  await requireReportOwnerOrAdmin(reportId);
+
   return prisma.reportCasualty.findMany({
     where: { report_id: reportId },
     include: { condition: { select: { name: true } } },
@@ -188,18 +256,29 @@ export async function getReportCasualties(reportId: string) {
 }
 
 export async function createReportCasualty(data: CasualtyFormData & { report_id: string }) {
-  const result = await prisma.reportCasualty.create({ data });
+  const parsed = casualtyCreateSchema.parse(data);
+  await requireReportOwnerOrAdmin(parsed.report_id);
+
+  const result = await prisma.reportCasualty.create({ data: parsed });
   revalidatePath('/reports');
   return result;
 }
 
 export async function deleteReportCasualty(id: string) {
+  const casualty = await prisma.reportCasualty.findUnique({
+    where: { id },
+    select: { report_id: true },
+  });
+  if (!casualty?.report_id) throw new Error('Casualty not found');
+
+  await requireReportOwnerOrAdmin(casualty.report_id);
   await prisma.reportCasualty.delete({ where: { id } });
   revalidatePath('/reports');
 }
 
-// Report Missing Persons
 export async function getReportMissingPersons(reportId: string) {
+  await requireReportOwnerOrAdmin(reportId);
+
   return prisma.reportMissingPerson.findMany({
     where: { report_id: reportId },
     orderBy: { created_at: 'asc' },
@@ -209,12 +288,22 @@ export async function getReportMissingPersons(reportId: string) {
 export async function createReportMissingPerson(
   data: MissingPersonFormData & { report_id: string }
 ) {
-  const result = await prisma.reportMissingPerson.create({ data });
+  const parsed = missingPersonCreateSchema.parse(data);
+  await requireReportOwnerOrAdmin(parsed.report_id);
+
+  const result = await prisma.reportMissingPerson.create({ data: parsed });
   revalidatePath('/reports');
   return result;
 }
 
 export async function deleteReportMissingPerson(id: string) {
+  const missingPerson = await prisma.reportMissingPerson.findUnique({
+    where: { id },
+    select: { report_id: true },
+  });
+  if (!missingPerson?.report_id) throw new Error('Missing person not found');
+
+  await requireReportOwnerOrAdmin(missingPerson.report_id);
   await prisma.reportMissingPerson.delete({ where: { id } });
   revalidatePath('/reports');
 }

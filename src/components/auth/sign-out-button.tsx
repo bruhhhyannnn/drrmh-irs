@@ -1,6 +1,7 @@
 'use client';
 
 import { supabase } from '@/lib';
+import { syncSupabaseAuthCookie } from '@/lib/auth-cookie';
 import { useAuthStore } from '@/store';
 import { LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -13,6 +14,7 @@ export function SignOutButton() {
   const handleSignOut = async () => {
     const toastId = toast.loading('Logging out...');
     await supabase.auth.signOut();
+    syncSupabaseAuthCookie(null);
     reset();
     toast.success('Logged out successfully', { id: toastId });
     router.push('/signin');

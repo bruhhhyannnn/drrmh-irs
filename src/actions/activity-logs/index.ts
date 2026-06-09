@@ -1,16 +1,20 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { requireAdmin } from '@/lib/server-auth';
 
 const PER_PAGE = 10;
 
 export async function getActivityLogs(page: number = 1, query?: string) {
-  const where = query
+  await requireAdmin();
+  const safePage = Number.isInteger(page) && page > 0 ? page : 1;
+  const safeQuery = query?.trim().slice(0, 100);
+  const where = safeQuery
     ? {
         OR: [
-          { module: { contains: query, mode: 'insensitive' as const } },
-          { action: { contains: query, mode: 'insensitive' as const } },
-          { doc_name: { contains: query, mode: 'insensitive' as const } },
+          { module: { contains: safeQuery, mode: 'insensitive' as const } },
+          { action: { contains: safeQuery, mode: 'insensitive' as const } },
+          { doc_name: { contains: safeQuery, mode: 'insensitive' as const } },
         ],
       }
     : undefined;
@@ -19,7 +23,7 @@ export async function getActivityLogs(page: number = 1, query?: string) {
     prisma.activityLog.findMany({
       where,
       orderBy: { created_at: 'desc' },
-      skip: (page - 1) * PER_PAGE,
+      skip: (safePage - 1) * PER_PAGE,
       take: PER_PAGE,
     }),
     prisma.activityLog.count({ where }),

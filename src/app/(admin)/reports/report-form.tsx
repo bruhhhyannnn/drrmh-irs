@@ -20,12 +20,14 @@ import {
   Spinner,
   useMap,
 } from '@/components/ui';
+import { useOfflineReportQueueStatus, useOnlineStatus } from '@/hooks/use-offline-report-queue';
 import {
   reportSchema,
   type CasualtyFormData,
   type MissingPersonFormData,
   type ReportFormData,
 } from '@/lib';
+import { enqueueOfflineReport, isProbablyOfflineError } from '@/lib/offline-report-queue';
 import { useAuthStore } from '@/store';
 import { HEADCOUNT_FIELDS } from '@/types';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -57,6 +59,7 @@ interface ReportFormProps {
   eventId?: string;
   standalone?: boolean;
   onSuccess?: () => void;
+  onOfflineSaved?: () => void;
   onCancel?: () => void;
 }
 
@@ -65,12 +68,15 @@ export function ReportForm({
   eventId,
   standalone = false,
   onSuccess,
+  onOfflineSaved,
   onCancel,
 }: ReportFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const isEdit = !!editId;
   const { userProfile } = useAuthStore();
+  const isOnline = useOnlineStatus();
+  const { staffPendingCount } = useOfflineReportQueueStatus();
 
   // ─── Data fetching ───────────────────────────────────────────
   const { data: existingReport, isLoading: isReportLoading } = useReport(editId);
@@ -196,18 +202,58 @@ export function ReportForm({
 
   // ─── Submit ──────────────────────────────────────────────────
   const onSubmit = handleSubmit(async (data) => {
+    const normalizedCasualties = casualties
+      .filter((c) => c.condition_id && c.name.trim())
+      .map((c) => ({
+        condition_id: c.condition_id,
+        name: c.name.trim(),
+        age: c.age,
+        sex: c.sex,
+      }));
+
+    const normalizedMissingPersons = missingPersons
+      .filter((p) => p.name.trim())
+      .map((p) => ({
+        name: p.name.trim(),
+        age: p.age,
+        sex: p.sex,
+      }));
+
+    const createPayload: ReportFormData = {
+      ...data,
+      latitude: pickedLat,
+      longitude: pickedLng,
+      location_name: pickedName,
+      report_missing_persons: normalizedMissingPersons,
+      report_casualties: normalizedCasualties,
+    };
+
+    if (!isOnline && !isEdit) {
+      enqueueOfflineReport({ kind: 'staff-report', payload: createPayload });
+      toast.success('Saved offline. It will sync when this device is online.');
+      onOfflineSaved
+        ? onOfflineSaved()
+        : onSuccess
+          ? onSuccess()
+          : router.push(standalone ? '/report' : '/reports');
+      return;
+    }
+
+    if (!isOnline && isEdit) {
+      toast.error('Editing reports requires an internet connection.');
+      return;
+    }
+
     try {
       let reportId: string;
       if (isEdit) {
         await updateReportMutation.mutateAsync({
           id: editId!,
           data: {
-            event: { connect: { id: data.event_id } },
-            cluster: { connect: { id: data.cluster_id } },
-            unit: data.unit_id ? { connect: { id: data.unit_id } } : { disconnect: true },
-            damage_conditions: data.damage_condition_id
-              ? { connect: { id: data.damage_condition_id } }
-              : { disconnect: true },
+            event_id: data.event_id,
+            cluster_id: data.cluster_id,
+            unit_id: data.unit_id || null,
+            damage_condition_id: data.damage_condition_id || null,
             latitude: pickedLat,
             longitude: pickedLng,
             location_name: pickedName,
@@ -227,53 +273,48 @@ export function ReportForm({
         });
         reportId = editId!;
       } else {
-        const report = await createReportMutation.mutateAsync({
-          ...data,
-          latitude: pickedLat,
-          longitude: pickedLng,
-          location_name: pickedName,
-          report_missing_persons: [],
-          report_casualties: [],
-        });
+        const report = await createReportMutation.mutateAsync(createPayload);
         reportId = report.id;
       }
 
-      // Casualties — delete all existing, re-create current
-      await Promise.all(
-        existingCasualties.map((c) => deleteCasualtyMutation.mutateAsync({ id: c.id, reportId }))
-      );
-      await Promise.all(
-        casualties
-          .filter((c) => c.condition_id && c.name.trim())
-          .map((c) =>
-            createCasualtyMutation.mutateAsync({
-              report_id: reportId,
-              condition_id: c.condition_id,
-              name: c.name.trim(),
-              age: c.age,
-              sex: c.sex,
-            })
-          )
-      );
+      if (isEdit) {
+        // Casualties — delete all existing, re-create current
+        await Promise.all(
+          existingCasualties.map((c) => deleteCasualtyMutation.mutateAsync({ id: c.id, reportId }))
+        );
+        await Promise.all(
+          casualties
+            .filter((c) => c.condition_id && c.name.trim())
+            .map((c) =>
+              createCasualtyMutation.mutateAsync({
+                report_id: reportId,
+                condition_id: c.condition_id,
+                name: c.name.trim(),
+                age: c.age,
+                sex: c.sex,
+              })
+            )
+        );
 
-      // Missing persons — delete all existing, re-create current
-      await Promise.all(
-        existingMissingPersons.map((p) =>
-          deleteMissingPersonMutation.mutateAsync({ id: p.id, reportId })
-        )
-      );
-      await Promise.all(
-        missingPersons
-          .filter((p) => p.name.trim())
-          .map((p) =>
-            createMissingPersonMutation.mutateAsync({
-              report_id: reportId,
-              name: p.name.trim(),
-              age: p.age,
-              sex: p.sex,
-            })
+        // Missing persons — delete all existing, re-create current
+        await Promise.all(
+          existingMissingPersons.map((p) =>
+            deleteMissingPersonMutation.mutateAsync({ id: p.id, reportId })
           )
-      );
+        );
+        await Promise.all(
+          missingPersons
+            .filter((p) => p.name.trim())
+            .map((p) =>
+              createMissingPersonMutation.mutateAsync({
+                report_id: reportId,
+                name: p.name.trim(),
+                age: p.age,
+                sex: p.sex,
+              })
+            )
+        );
+      }
 
       queryClient.invalidateQueries({ queryKey: ['reports'] });
       if (isEdit) {
@@ -285,6 +326,17 @@ export function ReportForm({
       toast.success(isEdit ? 'Report updated' : 'Report submitted');
       onSuccess ? onSuccess() : router.push('/reports');
     } catch (err) {
+      if (!isEdit && isProbablyOfflineError(err)) {
+        enqueueOfflineReport({ kind: 'staff-report', payload: createPayload });
+        toast.success('Saved offline. It will sync when this device is online.');
+        onOfflineSaved
+          ? onOfflineSaved()
+          : onSuccess
+            ? onSuccess()
+            : router.push(standalone ? '/report' : '/reports');
+        return;
+      }
+
       toast.error(err instanceof Error ? err.message : 'An error occurred');
     }
   });
@@ -308,6 +360,15 @@ export function ReportForm({
           <Spinner center />
         ) : (
           <form onSubmit={onSubmit} className="space-y-7">
+            {(!isOnline || staffPendingCount > 0) && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-800/40 dark:bg-amber-950/40 dark:text-amber-300">
+                {!isOnline
+                  ? 'Offline mode: this report will be saved on this device and synced when online.'
+                  : `${staffPendingCount} offline ${
+                      staffPendingCount === 1 ? 'report is' : 'reports are'
+                    } waiting to sync.`}
+              </div>
+            )}
             {/* ── Reporting as ───────────────────────────── */}
             {userProfile && (
               <div>

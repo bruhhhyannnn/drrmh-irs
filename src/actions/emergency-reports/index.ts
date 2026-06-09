@@ -1,23 +1,32 @@
 'use server';
 
-import { BystanderReportFormData } from '@/lib';
+import { bystanderReportSchema, type BystanderReportFormData } from '@/lib/schemas';
 import { prisma } from '@/lib/prisma';
+import { requireAdmin } from '@/lib/server-auth';
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
+
+const statusUpdateSchema = z.object({
+  id: z.string().uuid(),
+  statusName: z.enum(['reviewed', 'verified', 'dismissed']),
+});
 
 export async function createBystanderReport(data: BystanderReportFormData) {
-  const { report_missing_persons, report_casualties, ...reportData } = data;
+  const parsed = bystanderReportSchema.parse(data);
+  const { report_missing_persons, report_casualties, ...reportData } = parsed;
 
   const pendingStatus = await prisma.bystander_report_statuses.findFirst({
     where: { name: 'pending' },
   });
+  if (!pendingStatus) throw new Error('Pending bystander report status not found.');
 
   const report = await prisma.bystander_reports.create({
     data: {
       ...reportData,
       unit_id: reportData.unit_id || null,
       damage_condition_id: reportData.damage_condition_id || null,
-      status_id: pendingStatus?.id,
-      ...(report_missing_persons?.length && {
+      status_id: pendingStatus.id,
+      ...(report_missing_persons.length && {
         report_missing_persons: {
           create: report_missing_persons.map((p) => ({
             ...p,
@@ -25,7 +34,7 @@ export async function createBystanderReport(data: BystanderReportFormData) {
           })),
         },
       }),
-      ...(report_casualties?.length && {
+      ...(report_casualties.length && {
         report_casualties: {
           create: report_casualties.map((c) => ({
             ...c,
@@ -51,6 +60,8 @@ export async function createBystanderReport(data: BystanderReportFormData) {
 }
 
 export async function getBystanderReports() {
+  await requireAdmin();
+
   const reports = await prisma.bystander_reports.findMany({
     include: {
       clusters: true,
@@ -76,13 +87,17 @@ export async function updateBystanderReportStatus(
   id: string,
   statusName: 'reviewed' | 'verified' | 'dismissed'
 ) {
+  await requireAdmin();
+  const parsed = statusUpdateSchema.parse({ id, statusName });
+
   const status = await prisma.bystander_report_statuses.findFirst({
-    where: { name: statusName },
+    where: { name: parsed.statusName },
   });
+  if (!status) throw new Error('Bystander report status not found.');
 
   const report = await prisma.bystander_reports.update({
-    where: { id },
-    data: { status_id: status?.id },
+    where: { id: parsed.id },
+    data: { status_id: status.id },
   });
 
   revalidatePath('/bystander-reports');

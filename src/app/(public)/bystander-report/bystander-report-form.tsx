@@ -11,11 +11,14 @@ import {
   useUnits,
 } from '@/app/(admin)/settings/use-settings';
 import { Button, Input, Select, Textarea } from '@/components/ui';
+import { useOfflineReportQueueStatus, useOnlineStatus } from '@/hooks/use-offline-report-queue';
 import { BystanderReportFormData, cn } from '@/lib';
+import { enqueueOfflineReport, isProbablyOfflineError } from '@/lib/offline-report-queue';
 import { CheckCircle, Loader2, MapPin, Plus, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
+import toast from 'react-hot-toast';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,6 +33,8 @@ const SEX_OPTIONS = [
 export function BystanderReportForm() {
   const router = useRouter();
   const submitReport = useCreateBystanderReport();
+  const isOnline = useOnlineStatus();
+  const { bystanderPendingCount } = useOfflineReportQueueStatus();
 
   const { data: incidentTypes = [] } = useGetBystanderIncidentTypes();
   const { data: clusters = [] } = useClusters();
@@ -41,6 +46,7 @@ export function BystanderReportForm() {
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [submittedOffline, setSubmittedOffline] = useState(false);
 
   const { data: units = [] } = useUnits(selectedClusterId || undefined);
 
@@ -100,12 +106,37 @@ export function BystanderReportForm() {
       return;
     }
 
-    await submitReport.mutateAsync({
+    const payload: BystanderReportFormData = {
       ...values,
       latitude: coords.latitude,
       longitude: coords.longitude,
-    });
+      report_missing_persons: values.report_missing_persons ?? [],
+      report_casualties: values.report_casualties ?? [],
+    };
 
+    if (!isOnline) {
+      enqueueOfflineReport({ kind: 'bystander-report', payload });
+      toast.success('Saved offline. It will sync when this device is online.');
+      setSubmittedOffline(true);
+      setSubmitted(true);
+      return;
+    }
+
+    try {
+      await submitReport.mutateAsync(payload);
+    } catch (err) {
+      if (isProbablyOfflineError(err)) {
+        enqueueOfflineReport({ kind: 'bystander-report', payload });
+        toast.success('Saved offline. It will sync when this device is online.');
+        setSubmittedOffline(true);
+        setSubmitted(true);
+        return;
+      }
+
+      throw err;
+    }
+
+    setSubmittedOffline(false);
     setSubmitted(true);
   };
 
@@ -126,10 +157,13 @@ export function BystanderReportForm() {
           <CheckCircle size={32} className="text-green-600 dark:text-green-400" />
         </div>
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Report Received</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {submittedOffline ? 'Report Saved Offline' : 'Report Received'}
+          </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Thank you. Your report has been received and will be reviewed by the DRRM-H Emergency
-            Response Team.
+            {submittedOffline
+              ? 'Your report is saved on this device and will sync automatically when online.'
+              : 'Thank you. Your report has been received and will be reviewed by the DRRM-H Emergency Response Team.'}
           </p>
         </div>
         <button
@@ -153,6 +187,16 @@ export function BystanderReportForm() {
           Anonymous bystander submission
         </p>
       </div>
+
+      {(!isOnline || bystanderPendingCount > 0) && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 shadow-sm dark:border-amber-800/40 dark:bg-amber-950/40 dark:text-amber-300">
+          {!isOnline
+            ? 'Offline mode: this report will be saved on this device and synced when online.'
+            : `${bystanderPendingCount} offline ${
+                bystanderPendingCount === 1 ? 'report is' : 'reports are'
+              } waiting to sync.`}
+        </div>
+      )}
 
       {/* Disclaimer */}
       <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-sm dark:border-amber-800/40 dark:bg-amber-950/40">

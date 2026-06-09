@@ -8,22 +8,16 @@
  * Why a page.tsx and not a route.ts (Route Handler)?
  * The project uses @supabase/supabase-js without @supabase/ssr. The PKCE flow
  * stores the code verifier in localStorage (browser-only), so the supabase-js
- * client must be the one to exchange the code — it does this automatically on
+ * client must be the one to exchange the code; it does this automatically on
  * initialization via detectSessionInUrl. A server Route Handler has no access
  * to localStorage and cannot complete the exchange.
- *
- * Supabase Dashboard setup required before this works:
- *   1. Authentication → Providers → Google: enable, add Client ID + Secret
- *   2. Authentication → URL Configuration → Redirect URLs: add
- *      http://localhost:3000/auth/callback (dev) and
- *      https://your-domain.com/auth/callback (prod)
- *   3. Google Cloud Console → OAuth 2.0 Client → Authorized redirect URIs:
- *      add the Supabase callback URL shown in the dashboard
  */
 
 import { provisionGoogleUser } from '@/actions/auth';
 import { Spinner } from '@/components/ui';
 import { supabase } from '@/lib';
+import { syncSupabaseAuthCookie } from '@/lib/auth-cookie';
+import type { Session } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -35,18 +29,18 @@ export default function AuthCallbackPage() {
     let handled = false;
     const timeout = setTimeout(() => setError('Sign-in timed out. Please try again.'), 10_000);
 
-    async function handleSession(
-      userId: string,
-      email: string,
-      userMetadata: Record<string, unknown>
-    ) {
+    async function handleSession(session: Session) {
       if (handled) return;
       handled = true;
       clearTimeout(timeout);
+      syncSupabaseAuthCookie(session);
+
       try {
+        const { id: userId, email, user_metadata: userMetadata } = session.user;
         const fullName: string | null =
           (userMetadata?.full_name as string) ?? (userMetadata?.name as string) ?? null;
-        const { userTypeName } = await provisionGoogleUser(userId, email, fullName);
+        const { userTypeName } = await provisionGoogleUser(userId, email!, fullName);
+
         if (userTypeName === 'Administrator' || userTypeName === 'Super Admin') {
           router.replace('/dashboard');
         } else {
@@ -58,12 +52,10 @@ export default function AuthCallbackPage() {
       }
     }
 
-    // The SIGNED_IN event may have already fired before this listener was registered
-    // (race condition: supabase-js exchanges the PKCE code on init, before React mounts).
-    // getSession() catches the already-established session in that case.
+    // The SIGNED_IN event may have already fired before this listener was registered.
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        handleSession(session.user.id, session.user.email!, session.user.user_metadata);
+        handleSession(session);
       }
     });
 
@@ -71,7 +63,7 @@ export default function AuthCallbackPage() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
-        handleSession(session.user.id, session.user.email!, session.user.user_metadata);
+        handleSession(session);
       }
     });
 

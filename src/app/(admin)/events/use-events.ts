@@ -6,7 +6,7 @@ import {
   getOngoingEvents,
   updateEvent,
 } from '@/actions/events';
-import type { Prisma } from '@prisma/client';
+import type { EventFormData } from '@/lib';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export function useEvents(query?: string) {
@@ -27,7 +27,7 @@ export function useEvent(id?: string) {
 export function useCreateEvent() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: Prisma.EventCreateInput) => createEvent(data),
+    mutationFn: (data: EventFormData) => createEvent(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['events'] }),
   });
 }
@@ -35,8 +35,7 @@ export function useCreateEvent() {
 export function useUpdateEvent() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Prisma.EventUpdateInput }) =>
-      updateEvent(id, data),
+    mutationFn: ({ id, data }: { id: string; data: EventFormData }) => updateEvent(id, data),
     onSuccess: (_data, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['event', id] });

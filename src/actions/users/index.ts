@@ -1,34 +1,50 @@
 'use server';
 
+import { userCreateSchema, userEditSchema } from '@/lib/schemas';
 import { prisma } from '@/lib/prisma';
+import {
+  getCurrentAuthUser,
+  requireAdmin,
+  requireProfileOwnerOrAdmin,
+} from '@/lib/server-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
 
-export type CreateUserInput = {
-  password: string;
-  first_name: string;
-  middle_name?: string | null;
-  last_name: string;
-  suffix?: string | null;
-  username: string;
-  email: string;
-  unit_id?: string | null;
-  position_id?: string | null;
-  user_type_id: string;
-  is_active?: boolean;
-};
+export type CreateUserInput = z.infer<typeof userCreateSchema>;
+export type UpdateUserInput = Partial<z.infer<typeof userEditSchema>>;
 
-export type UpdateUserInput = Omit<Partial<CreateUserInput>, 'password'>;
+const userUpdateSchema = userEditSchema.partial();
+const completeProfileSchema = z.object({
+  position_id: z.string().uuid(),
+  first_name: z.string().trim().min(1).max(100).optional(),
+  last_name: z.string().trim().min(1).max(100).optional(),
+});
+
+const ADMIN_USER_TYPES = ['Administrator', 'Super Admin'];
+
+function normalizeNullableUserFields(data: Record<string, unknown>) {
+  const normalized = { ...data };
+  for (const key of ['middle_name', 'suffix', 'unit_id', 'position_id'] as const) {
+    if (key in normalized && !normalized[key]) {
+      normalized[key] = null;
+    }
+  }
+  return normalized;
+}
 
 export async function getUsers(query?: string) {
+  await requireAdmin();
+  const safeQuery = query?.trim().slice(0, 100);
+
   return prisma.user.findMany({
-    where: query
+    where: safeQuery
       ? {
           OR: [
-            { first_name: { contains: query, mode: 'insensitive' } },
-            { last_name: { contains: query, mode: 'insensitive' } },
-            { email: { contains: query, mode: 'insensitive' } },
-            { username: { contains: query, mode: 'insensitive' } },
+            { first_name: { contains: safeQuery, mode: 'insensitive' } },
+            { last_name: { contains: safeQuery, mode: 'insensitive' } },
+            { email: { contains: safeQuery, mode: 'insensitive' } },
+            { username: { contains: safeQuery, mode: 'insensitive' } },
           ],
         }
       : undefined,
@@ -38,6 +54,7 @@ export async function getUsers(query?: string) {
 }
 
 export async function getUser(id: string) {
+  await requireAdmin();
   return prisma.user.findUnique({
     where: { id },
     include: { unit: { include: { cluster: true } }, position: true, user_type: true },
@@ -45,27 +62,31 @@ export async function getUser(id: string) {
 }
 
 export async function getUserByAuthId(authId: string) {
+  const authUser = await getCurrentAuthUser();
+  if (authUser.id !== authId) throw new Error('Forbidden');
+
   return prisma.user.findUnique({
     where: { auth_id: authId },
     include: { unit: { include: { cluster: true } }, position: true, user_type: true },
   });
 }
 
-const ADMIN_USER_TYPES = ['Administrator', 'Super Admin'];
-
 export async function createUser(data: CreateUserInput) {
-  const { password, ...profileData } = data;
+  await requireAdmin();
+  const parsed = userCreateSchema.parse(data);
+  const normalized = normalizeNullableUserFields(parsed) as CreateUserInput;
+  const { password, ...profileData } = normalized;
 
   const userType = await prisma.userType.findUnique({
-    where: { id: profileData.user_type_id },
+    where: { id: String(profileData.user_type_id) },
     select: { name: true },
   });
   const is_profile_complete = ADMIN_USER_TYPES.includes(userType?.name ?? '');
 
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-    email: profileData.email,
+    email: String(profileData.email),
     password,
-    email_confirm: true, // skip confirmation email, admin is creating the account
+    email_confirm: true,
   });
 
   if (authError) throw new Error(authError.message);
@@ -85,15 +106,25 @@ export async function createUser(data: CreateUserInput) {
 }
 
 export async function updateUser(id: string, data: UpdateUserInput) {
+  const currentUser = await requireAdmin();
+  const parsed = userUpdateSchema.parse(data);
+
+  if (id === currentUser.id && ('is_active' in parsed || 'user_type_id' in parsed)) {
+    throw new Error('You cannot change your own status or role.');
+  }
+
   const user = await prisma.user.update({
     where: { id },
-    data,
+    data: normalizeNullableUserFields(parsed) as UpdateUserInput,
   });
   revalidatePath('/users');
   return user;
 }
 
 export async function toggleUserStatus(id: string, current: boolean) {
+  const currentUser = await requireAdmin();
+  if (id === currentUser.id) throw new Error('You cannot deactivate your own account.');
+
   const user = await prisma.user.update({
     where: { id },
     data: { is_active: !current },
@@ -106,9 +137,12 @@ export async function completeUserProfile(
   id: string,
   data: { position_id: string; first_name?: string; last_name?: string }
 ) {
+  await requireProfileOwnerOrAdmin(id);
+  const parsed = completeProfileSchema.parse(data);
+
   const user = await prisma.user.update({
     where: { id },
-    data: { ...data, is_profile_complete: true },
+    data: { ...parsed, is_profile_complete: true },
     include: { unit: { include: { cluster: true } }, position: true, user_type: true },
   });
   revalidatePath('/');
@@ -116,6 +150,9 @@ export async function completeUserProfile(
 }
 
 export async function deleteUser(id: string) {
+  const currentUser = await requireAdmin();
+  if (id === currentUser.id) throw new Error('You cannot delete your own account.');
+
   const user = await prisma.user.findUnique({ where: { id }, select: { auth_id: true } });
   if (!user) throw new Error('User not found');
 

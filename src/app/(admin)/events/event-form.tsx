@@ -4,7 +4,6 @@ import { useEventStatuses, useLocations } from '@/app/(admin)/settings/use-setti
 import { PageBreadcrumb } from '@/components/common';
 import { Button, Input, Select, Spinner, Textarea } from '@/components/ui';
 import { eventSchema, type EventFormData } from '@/lib';
-import { useAuthStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -28,7 +27,6 @@ const toDatetimeLocal = (val?: string | Date | null) => {
 export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
   const router = useRouter();
   const isEdit = !!editId;
-  const userId = useAuthStore((s) => s.userProfile?.id);
 
   const { data: existingEvent, isLoading: isEventLoading } = useEvent(editId);
   const createEvent = useCreateEvent();
@@ -61,24 +59,11 @@ export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
   }, [existingEvent, reset]);
 
   const onSubmit = handleSubmit((data) => {
-    const startedAt = data.started_at ? new Date(data.started_at) : null;
-    const endedAt = data.ended_at ? new Date(data.ended_at) : null;
-
     if (isEdit) {
       updateEvent.mutate(
         {
           id: editId!,
-          data: {
-            name: data.name,
-            description: data.description || null,
-            quarter: data.quarter || null,
-            started_at: startedAt,
-            ended_at: endedAt,
-            status: { connect: { id: data.status_id } },
-            location: data.location_id
-              ? { connect: { id: data.location_id } }
-              : { disconnect: true },
-          },
+          data,
         },
         {
           onSuccess: () => {
@@ -90,16 +75,7 @@ export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
       );
     } else {
       createEvent.mutate(
-        {
-          name: data.name,
-          description: data.description || undefined,
-          quarter: data.quarter || undefined,
-          ...(startedAt && { started_at: startedAt }),
-          ...(endedAt && { ended_at: endedAt }),
-          status: { connect: { id: data.status_id } },
-          ...(data.location_id && { location: { connect: { id: data.location_id } } }),
-          ...(userId && { user: { connect: { id: userId } } }),
-        },
+        data,
         {
           onSuccess: () => {
             toast.success('Event created');
