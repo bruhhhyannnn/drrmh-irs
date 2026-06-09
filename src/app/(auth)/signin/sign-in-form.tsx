@@ -64,7 +64,7 @@ export function SignInForm() {
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Sign in</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Enter your credentials to access the IRS dashboard
+            Enter your credentials AMOR to access the IRS dashboard
           </p>
         </div>
 
