@@ -59,7 +59,7 @@ export default function ErtReportPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        stuck here <Spinner size="lg" />
+        <Spinner size="lg" />
       </div>
     );
   }

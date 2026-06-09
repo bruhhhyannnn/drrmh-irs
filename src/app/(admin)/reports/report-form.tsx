@@ -98,6 +98,9 @@ export function ReportForm({
   const [pickedLng, setPickedLng] = useState<number | null>(null);
   const [pickedName, setPickedName] = useState<string | null>(null);
 
+  // ─── Location error ──────────────────────────────────────────
+  const [locationError, setLocationError] = useState(false);
+
   // ─── Modal state ─────────────────────────────────────────────
   const [personModalOpen, setPersonModalOpen] = useState(false);
   const [casualtyModalOpen, setCasualtyModalOpen] = useState(false);
@@ -196,6 +199,14 @@ export function ReportForm({
 
   // ─── Submit ──────────────────────────────────────────────────
   const onSubmit = handleSubmit(async (data) => {
+    if (pickedLat === null || pickedLng === null) {
+      setLocationError(true);
+      document
+        .getElementById('location-section')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    setLocationError(false);
     try {
       let reportId: string;
       if (isEdit) {
@@ -303,6 +314,33 @@ export function ReportForm({
     <div className="space-y-6">
       {!standalone && <PageBreadcrumb pageTitle={isEdit ? 'Edit Report' : 'Submit Report'} />}
 
+      {/* ── Form info header ───────────────────────────────── */}
+      <div className="max-w-2xl space-y-3 rounded-xl border border-gray-200 bg-white p-5 shadow-md dark:border-white/5 dark:bg-white/3">
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+          Status Report for UPM-PGH NSED Q2 2026
+        </h2>
+        <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+          This form is intended to collect the status report for the UP Manila – Philippine General
+          Hospital (UPM-PGH) participation in the 1st Quarter 2026 Nationwide Simultaneous
+          Earthquake Drill (NSED). Please provide accurate and complete information on the conduct
+          of the drill, including participation, observations, issues encountered, and
+          recommendations. The data will be consolidated for internal documentation and reporting to
+          relevant authorities.
+        </p>
+        <div className="space-y-1 border-t border-gray-100 pt-3 dark:border-white/5">
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+            Data Privacy Notice:
+          </p>
+          <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-500">
+            All information provided in this form will be collected and processed in accordance with
+            the Data Privacy Act of 2012. The data will be used solely for documentation,
+            evaluation, and reporting purposes related to the NSED. Any personal information
+            collected will be kept confidential and will not be shared outside of authorized
+            personnel without your consent.
+          </p>
+        </div>
+      </div>
+
       <div className="max-w-2xl rounded-xl border border-gray-200 bg-white p-6 shadow-md dark:border-white/5 dark:bg-white/3">
         {isEdit && isReportLoading ? (
           <Spinner center />
@@ -373,10 +411,12 @@ export function ReportForm({
               lat={pickedLat}
               lng={pickedLng}
               locationName={pickedName}
+              error={locationError}
               onPick={(lat, lng, name) => {
                 setPickedLat(lat);
                 setPickedLng(lng);
                 setPickedName(name);
+                setLocationError(false);
               }}
               onClear={() => {
                 setPickedLat(null);
@@ -556,6 +596,16 @@ export function ReportForm({
   );
 }
 
+// ─── Map fly-to ───────────────────────────────────────────────────────────────
+function MapFlyTo({ lat, lng }: { lat: number; lng: number }) {
+  const { map, isLoaded } = useMap();
+  useEffect(() => {
+    if (!map || !isLoaded) return;
+    map.flyTo({ center: [lng, lat], zoom: 16, duration: 1200 });
+  }, [map, isLoaded, lat, lng]);
+  return null;
+}
+
 // ─── Map click handler ────────────────────────────────────────────────────────
 function MapClickHandler({ onPick }: { onPick: (lng: number, lat: number) => void }) {
   const { map, isLoaded } = useMap();
@@ -582,21 +632,57 @@ interface LocationPickerProps {
   lat: number | null;
   lng: number | null;
   locationName: string | null;
+  error?: boolean;
   onPick: (lat: number, lng: number, name: string | null) => void;
   onClear: () => void;
 }
 
-function LocationPicker({ lat, lng, locationName, onPick, onClear }: LocationPickerProps) {
+function LocationPicker({ lat, lng, locationName, error, onPick, onClear }: LocationPickerProps) {
   const hasPin = lat !== null && lng !== null;
-  const [showMap, setShowMap] = useState(hasPin);
+  const [showMap, setShowMap] = useState(true);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [geoError, setGeoError] = useState<string | null>(null);
 
-  // If an existing report loads with coordinates, show the map immediately
+  // Keep a stable ref to onPick so the auto-trigger effect doesn't go stale
+  const onPickRef = useRef(onPick);
+  onPickRef.current = onPick;
+
+  // Auto-request geolocation on mount for new reports (no existing coordinates)
   useEffect(() => {
-    if (hasPin) setShowMap(true);
-  }, [hasPin]);
+    if (lat !== null || lng !== null) return; // edit mode with existing pin — skip
+    if (!navigator.geolocation) return;
+    setIsGettingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        onPickRef.current(latitude, longitude, null);
+        setIsGettingLocation(false);
+        setIsGeocoding(true);
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+            { headers: { 'Accept-Language': 'en' } }
+          );
+          const json = await res.json();
+          onPickRef.current(latitude, longitude, json.display_name ?? null);
+        } catch {
+          // non-fatal
+        } finally {
+          setIsGeocoding(false);
+        }
+      },
+      (err) => {
+        setIsGettingLocation(false);
+        setGeoError(
+          err.code === err.PERMISSION_DENIED
+            ? 'Location access denied. Place the pin manually on the map.'
+            : 'Could not get your location. Place the pin manually.'
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }, []);
 
   const reverseGeocode = async (pickedLat: number, pickedLng: number) => {
     setIsGeocoding(true);
@@ -657,9 +743,11 @@ function LocationPicker({ lat, lng, locationName, onPick, onClear }: LocationPic
   const zoom = hasPin ? 16 : 12;
 
   return (
-    <div className="space-y-2">
+    <div id="location-section" className="space-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Location</p>
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          Location <span className="text-error-500">*</span>
+        </p>
         {showMap && (
           <button
             type="button"
@@ -672,7 +760,9 @@ function LocationPicker({ lat, lng, locationName, onPick, onClear }: LocationPic
       </div>
 
       {!showMap ? (
-        <div className="flex flex-col gap-2 rounded-xl border border-dashed border-gray-200 p-4 dark:border-white/10">
+        <div
+          className={`flex flex-col gap-2 rounded-xl border border-dashed p-4 ${error ? 'border-error-400 bg-error-50 dark:border-error-500/50 dark:bg-error-500/5' : 'border-gray-200 dark:border-white/10'}`}
+        >
           <Button
             type="button"
             variant="outline"
@@ -702,6 +792,7 @@ function LocationPicker({ lat, lng, locationName, onPick, onClear }: LocationPic
             <Map center={center} zoom={zoom}>
               <MapControls showZoom position="top-right" />
               <MapClickHandler onPick={handleMapClick} />
+              {hasPin && <MapFlyTo lat={lat!} lng={lng!} />}
               {hasPin && (
                 <MapMarker
                   longitude={lng!}
@@ -723,19 +814,25 @@ function LocationPicker({ lat, lng, locationName, onPick, onClear }: LocationPic
 
           {hasPin ? (
             <div className="space-y-0.5">
-              <p className="font-mono text-xs text-gray-500">
-                {isGeocoding && <span className="ml-2 text-gray-400">fetching address…</span>}
-              </p>
+              {isGeocoding && <p className="text-xs text-gray-400">Fetching address…</p>}
               {locationName && (
                 <p className="line-clamp-2 text-xs text-gray-600 dark:text-gray-400">
                   {locationName}
                 </p>
               )}
             </div>
+          ) : isGettingLocation ? (
+            <p className="text-xs text-gray-400">Getting your location…</p>
           ) : (
             <p className="text-xs text-gray-400">Click anywhere on the map to place a pin</p>
           )}
         </div>
+      )}
+
+      {error && !hasPin && (
+        <p className="text-xs text-error-500">
+          Location is required. Please allow location access or place a pin on the map.
+        </p>
       )}
     </div>
   );
