@@ -439,7 +439,13 @@ export function ReportForm({
                       label={field.label}
                       id={field.label}
                       min={0}
-                      {...register(field.key as keyof ReportFormData)}
+                      placeholder="0"
+                      onKeyDown={(e) => {
+                        if (e.key === '-') e.preventDefault();
+                      }}
+                      {...register(field.key as keyof ReportFormData, {
+                        setValueAs: (v) => (v === '' ? 0 : parseInt(v, 10)),
+                      })}
                     />
                   </div>
                 ))}
