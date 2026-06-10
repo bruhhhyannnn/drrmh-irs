@@ -912,8 +912,16 @@ function PersonModal({ isOpen, onClose, persons, onSave }: PersonModalProps) {
             type="number"
             label="Age"
             min={0}
-            value={draft.age}
-            onChange={(e) => setDraft((f) => ({ ...f, age: Number(e.target.value) || 0 }))}
+            placeholder="0"
+            value={draft.age === 0 ? '' : draft.age}
+            onKeyDown={(e) => {
+              if (e.key === '-') e.preventDefault();
+            }}
+            onChange={(e) => {
+              const val = e.target.value;
+              const parsed = val === '' ? 0 : parseInt(val, 10);
+              setDraft((f) => ({ ...f, age: Math.max(0, parsed) }));
+            }}
           />
           <Select
             label="Sex"
@@ -1054,8 +1062,16 @@ function CasualtyModal({
             type="number"
             label="Age"
             min={0}
-            value={draft.age}
-            onChange={(e) => setDraft((f) => ({ ...f, age: Number(e.target.value) || 0 }))}
+            placeholder="0"
+            value={draft.age === 0 ? '' : draft.age}
+            onKeyDown={(e) => {
+              if (e.key === '-') e.preventDefault();
+            }}
+            onChange={(e) => {
+              const val = e.target.value;
+              const parsed = val === '' ? 0 : parseInt(val, 10);
+              setDraft((f) => ({ ...f, age: Math.max(0, parsed) }));
+            }}
           />
           <Select
             label="Sex"
