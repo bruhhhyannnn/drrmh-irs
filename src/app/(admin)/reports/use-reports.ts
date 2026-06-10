@@ -103,6 +103,7 @@ export function useReportCasualties(reportId?: string) {
     queryKey: ['report-casualties', reportId],
     queryFn: () => getReportCasualties(reportId!),
     enabled: !!reportId,
+    staleTime: Infinity,
   });
 }
 
@@ -132,6 +133,7 @@ export function useReportMissingPersons(reportId?: string) {
     queryKey: ['report-missing-persons', reportId],
     queryFn: () => getReportMissingPersons(reportId!),
     enabled: !!reportId,
+    staleTime: Infinity,
   });
 }
 
