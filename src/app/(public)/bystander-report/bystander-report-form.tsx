@@ -289,10 +289,23 @@ export function BystanderReportForm() {
                     label="Age"
                     id="Person Age"
                     type="number"
-                    placeholder="e.g. 32"
+                    placeholder="0"
+                    className="placeholder:text-gray-800 dark:placeholder:text-gray-200"
                     min={0}
                     max={120}
-                    {...register(`report_missing_persons.${index}.age`)}
+                    value={
+                      watch(`report_missing_persons.${index}.age`) === 0
+                        ? ''
+                        : watch(`report_missing_persons.${index}.age`)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === '-') e.preventDefault();
+                    }}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const parsed = val === '' ? 0 : parseInt(val, 10);
+                      setValue(`report_missing_persons.${index}.age`, Math.max(0, parsed));
+                    }}
                   />
                   <Select
                     label="Sex"
@@ -355,10 +368,23 @@ export function BystanderReportForm() {
                     label="Age"
                     id="Casualty Age"
                     type="number"
-                    placeholder="e.g. 45"
+                    placeholder="0"
+                    className="placeholder:text-gray-800 dark:placeholder:text-gray-200"
                     min={0}
                     max={120}
-                    {...register(`report_casualties.${index}.age`)}
+                    value={
+                      watch(`report_casualties.${index}.age`) === 0
+                        ? ''
+                        : watch(`report_casualties.${index}.age`)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === '-') e.preventDefault();
+                    }}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const parsed = val === '' ? 0 : parseInt(val, 10);
+                      setValue(`report_casualties.${index}.age`, Math.max(0, parsed));
+                    }}
                   />
                   <Select
                     label="Sex"

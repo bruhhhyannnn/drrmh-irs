@@ -919,6 +919,7 @@ function PersonModal({ isOpen, onClose, persons, onSave }: PersonModalProps) {
             label="Age"
             min={0}
             placeholder="0"
+            className="placeholder:text-gray-800 dark:placeholder:text-gray-200"
             value={draft.age === 0 ? '' : draft.age}
             onKeyDown={(e) => {
               if (e.key === '-') e.preventDefault();
@@ -1069,6 +1070,7 @@ function CasualtyModal({
             label="Age"
             min={0}
             placeholder="0"
+            className="placeholder:text-gray-800 dark:placeholder:text-gray-200"
             value={draft.age === 0 ? '' : draft.age}
             onKeyDown={(e) => {
               if (e.key === '-') e.preventDefault();
