@@ -414,7 +414,7 @@ function ReportDetailsModal({
                 </Button>
               </div>
               {missingPersons.length === 0 ? (
-                <p className="text-sm text-gray-400">None reported</p>
+                <p className="text-sm text-gray-400">No Missing Person reported</p>
               ) : (
                 <div className="space-y-2">
                   {missingPersons.map((p) => (
@@ -451,7 +451,7 @@ function ReportDetailsModal({
                 </Button>
               </div>
               {casualties.length === 0 ? (
-                <p className="text-sm text-gray-400">None reported</p>
+                <p className="text-sm text-gray-400">No Damage reported</p>
               ) : (
                 <div className="space-y-2">
                   {casualties.map((c) => (
