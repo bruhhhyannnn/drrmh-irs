@@ -436,12 +436,20 @@ export function ReportForm({
                       id={field.label}
                       min={0}
                       placeholder="0"
+                      className="placeholder:text-gray-800 dark:placeholder:text-gray-200"
+                      value={
+                        (watch(field.key as keyof ReportFormData) as number) === 0
+                          ? ''
+                          : (watch(field.key as keyof ReportFormData) as number)
+                      }
                       onKeyDown={(e) => {
                         if (e.key === '-') e.preventDefault();
                       }}
-                      {...register(field.key as keyof ReportFormData, {
-                        setValueAs: (v) => (v === '' ? 0 : parseInt(v, 10)),
-                      })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const parsed = val === '' ? 0 : parseInt(val, 10);
+                        setValue(field.key as keyof ReportFormData, Math.max(0, parsed));
+                      }}
                     />
                   </div>
                 ))}
