@@ -51,6 +51,14 @@ export default function ReportsPage() {
   // ── Verified report columns ──────────────────────────────
   const reportColumns: ColumnDef<ReportRow, unknown>[] = [
     {
+      id: 'event',
+      header: 'Event',
+      accessorFn: (r) => r.event.name,
+      cell: ({ row: { original: r } }) => (
+        <span className="text-sm text-gray-800 dark:text-gray-200">{r.event.name}</span>
+      ),
+    },
+    {
       id: 'cluster',
       header: 'Cluster',
       accessorFn: (r) => r.cluster.name,

@@ -1,13 +1,29 @@
 'use client';
 
+import {
+  CasualtyModal,
+  CasualtyRow,
+  MissingPersonRow,
+  PersonModal,
+} from '@/app/(admin)/reports/missing-casualty-modals';
 import { ReportForm } from '@/app/(admin)/reports/report-form';
-import { useMyReport } from '@/app/(admin)/reports/use-reports';
+import {
+  useCreateReportCasualty,
+  useCreateReportMissingPerson,
+  useDeleteReportCasualty,
+  useDeleteReportMissingPerson,
+  useMyReport,
+  useReport,
+  useReportCasualties,
+  useReportMissingPersons,
+} from '@/app/(admin)/reports/use-reports';
+import { useCasualtyConditions } from '@/app/(admin)/settings/use-settings';
 import { CompleteProfileModal } from '@/components/auth';
-import { Spinner } from '@/components/ui';
+import { Button, Modal, Spinner } from '@/components/ui';
 import { cn, getInitials, supabase } from '@/lib';
 import { useAuthStore, useThemeStore } from '@/store';
 import type { Prisma } from '@prisma/client';
-import { CheckCircle, ClipboardList, LogOut, Moon, Pencil, Sun } from 'lucide-react';
+import { CheckCircle, ClipboardList, LogOut, Moon, Pencil, Plus, Sun } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -29,8 +45,8 @@ const track = [...BG_IMAGES, ...BG_IMAGES];
 export default function ErtReportPage() {
   const { user, userProfile, loading, reset } = useAuthStore();
   const router = useRouter();
-  const [editingReportId, setEditingReportId] = useState<string | null>(null);
   const [current, setCurrent] = useState(0);
+  const [viewingReport, setViewingReport] = useState(false);
 
   const { data: myReport, isLoading: isReportLoading } = useMyReport(userProfile?.id ?? undefined);
 
@@ -115,7 +131,7 @@ export default function ErtReportPage() {
   const profile = userProfile!;
 
   // ── Already submitted — status card ─────────────────────────
-  if (myReport && !editingReportId) {
+  if (myReport) {
     return (
       <div className="flex min-h-screen flex-col">
         {Background}
@@ -178,39 +194,21 @@ export default function ErtReportPage() {
                   </div>
                 </div>
               </div>
-
               <button
-                onClick={() => setEditingReportId(myReport.id)}
+                onClick={() => setViewingReport(true)}
                 className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
               >
-                <Pencil size={14} />
-                Edit Submission
+                <ClipboardList size={14} />
+                View Submission
               </button>
             </div>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  // ── Edit existing report ─────────────────────────────────────
-  if (editingReportId) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        {Background}
-        <CompleteProfileModal />
-        <ReportHeader userProfile={profile} onSignOut={handleSignOut} />
-        <div className="flex justify-center p-6 py-8">
-          <ReportForm
-            standalone
-            editId={editingReportId}
-            onSuccess={() => {
-              setEditingReportId(null);
-              toast.success('Report updated');
-            }}
-            onCancel={() => setEditingReportId(null)}
-          />
-        </div>
+        <ReportDetailsModal
+          reportId={myReport.id}
+          isOpen={viewingReport}
+          onClose={() => setViewingReport(false)}
+        />
       </div>
     );
   }
@@ -279,5 +277,247 @@ function ReportHeader({ userProfile, onSignOut }: ReportHeaderProps) {
         </div>
       </div>
     </header>
+  );
+}
+
+// ── Report details modal ───────────────────────────────────────
+function ReportDetailsModal({
+  reportId,
+  isOpen,
+  onClose,
+}: {
+  reportId: string;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const { data: report, isLoading } = useReport(reportId);
+  const { data: casualties = [] } = useReportCasualties(reportId);
+  const { data: missingPersons = [] } = useReportMissingPersons(reportId);
+  const { data: casualtyConditions = [] } = useCasualtyConditions();
+
+  const [personModalOpen, setPersonModalOpen] = useState(false);
+  const [casualtyModalOpen, setCasualtyModalOpen] = useState(false);
+
+  const createCasualtyMutation = useCreateReportCasualty();
+  const deleteCasualtyMutation = useDeleteReportCasualty();
+  const createMissingPersonMutation = useCreateReportMissingPerson();
+  const deleteMissingPersonMutation = useDeleteReportMissingPerson();
+
+  const conditionOptions = casualtyConditions.map((c) => ({ value: c.id, label: c.name }));
+
+  const handleSavePersons = async (updated: MissingPersonRow[]) => {
+    await Promise.all(
+      missingPersons.map((p) => deleteMissingPersonMutation.mutateAsync({ id: p.id, reportId }))
+    );
+    await Promise.all(
+      updated
+        .filter((p) => p.name.trim())
+        .map((p) =>
+          createMissingPersonMutation.mutateAsync({
+            report_id: reportId,
+            name: p.name.trim(),
+            age: p.age,
+            sex: p.sex,
+          })
+        )
+    );
+    toast.success('Missing persons updated');
+  };
+
+  const handleSaveCasualties = async (updated: CasualtyRow[]) => {
+    await Promise.all(
+      casualties.map((c) => deleteCasualtyMutation.mutateAsync({ id: c.id, reportId }))
+    );
+    await Promise.all(
+      updated
+        .filter((c) => c.condition_id && c.name.trim())
+        .map((c) =>
+          createCasualtyMutation.mutateAsync({
+            report_id: reportId,
+            condition_id: c.condition_id,
+            name: c.name.trim(),
+            age: c.age,
+            sex: c.sex,
+          })
+        )
+    );
+    toast.success('Casualties updated');
+  };
+
+  return (
+    <>
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <h2 className="mb-6 text-lg font-semibold text-gray-800 dark:text-gray-100">
+          Report Details
+        </h2>
+
+        {isLoading ? (
+          <Spinner center />
+        ) : !report ? (
+          <p className="text-sm text-gray-400">Could not load report.</p>
+        ) : (
+          <div className="space-y-6">
+            <Section title="Overview">
+              <Field label="Event" value={report.event.name} />
+              <Field label="Cluster" value={report.cluster?.name ?? '—'} />
+              <Field label="Unit" value={report.unit?.name ?? '—'} />
+              <Field
+                label="Submitted"
+                value={new Date(report.submitted_at).toLocaleString('en-PH', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                  hour: 'numeric',
+                  minute: '2-digit',
+                })}
+              />
+              {report.location_name && <Field label="Location" value={report.location_name} />}
+            </Section>
+
+            <Section title="Headcount">
+              <Field label="Faculty Members" value={report.faculty_members} />
+              <Field label="Admin Members" value={report.admin_members} />
+              <Field label="REPS Members" value={report.reps_members} />
+              <Field label="RA Members" value={report.ra_members} />
+              <Field label="Students" value={report.students} />
+              <Field label="Philcare Staff" value={report.philcare_staff} />
+              <Field label="Security Personnel" value={report.security_personnel} />
+              <Field label="Construction Workers" value={report.construction_workers} />
+              <Field label="Tenants" value={report.tenants} />
+              <Field label="Health Workers" value={report.health_workers} />
+              <Field label="Non-Academic Staff" value={report.non_academic_staff} />
+              <Field label="Guests" value={report.guests} />
+            </Section>
+
+            {report.damage_conditions && (
+              <Section title="Structural Damage">
+                <Field label="Condition" value={report.damage_conditions.name} />
+              </Section>
+            )}
+
+            {/* Missing Persons */}
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  Missing Persons ({missingPersons.length})
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPersonModalOpen(true)}
+                  startIcon={
+                    missingPersons.length === 0 ? <Plus size={13} /> : <Pencil size={13} />
+                  }
+                >
+                  {missingPersons.length === 0 ? 'Add' : 'Manage'}
+                </Button>
+              </div>
+              {missingPersons.length === 0 ? (
+                <p className="text-sm text-gray-400">None reported</p>
+              ) : (
+                <div className="space-y-2">
+                  {missingPersons.map((p) => (
+                    <div
+                      key={p.id}
+                      className="rounded-lg border border-gray-200 px-3 py-2 dark:border-white/5"
+                    >
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                        {p.name || 'Unnamed'}
+                      </p>
+                      <p className="text-xs capitalize text-gray-400">
+                        {p.sex} · {p.age} yrs
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Casualties */}
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  Casualties ({casualties.length})
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCasualtyModalOpen(true)}
+                  startIcon={casualties.length === 0 ? <Plus size={13} /> : <Pencil size={13} />}
+                >
+                  {casualties.length === 0 ? 'Add' : 'Manage'}
+                </Button>
+              </div>
+              {casualties.length === 0 ? (
+                <p className="text-sm text-gray-400">None reported</p>
+              ) : (
+                <div className="space-y-2">
+                  {casualties.map((c) => (
+                    <div
+                      key={c.id}
+                      className="rounded-lg border border-gray-200 px-3 py-2 dark:border-white/5"
+                    >
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                        {c.name || 'Unnamed'}
+                      </p>
+                      <p className="text-xs capitalize text-gray-400">
+                        {c.condition?.name} · {c.sex} · {c.age} yrs
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <PersonModal
+        isOpen={personModalOpen}
+        onClose={() => setPersonModalOpen(false)}
+        persons={missingPersons.map((p) => ({
+          id: p.id,
+          name: p.name ?? '',
+          age: p.age ?? 0,
+          sex: (p.sex as 'male' | 'female' | 'unknown') ?? 'unknown',
+        }))}
+        onSave={handleSavePersons}
+      />
+      <CasualtyModal
+        isOpen={casualtyModalOpen}
+        onClose={() => setCasualtyModalOpen(false)}
+        casualties={casualties.map((c) => ({
+          id: c.id,
+          condition_id: c.condition_id,
+          name: c.name ?? '',
+          age: c.age ?? 0,
+          sex: (c.sex as 'male' | 'female' | 'unknown') ?? 'unknown',
+        }))}
+        conditionOptions={conditionOptions}
+        onSave={handleSaveCasualties}
+      />
+    </>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">{title}</p>
+      <div className="space-y-2">{children}</div>
+    </div>
+  );
+}
+
+function Field({ label, value }: { label: string; value: string | number | null | undefined }) {
+  return (
+    <div>
+      <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">{label}</p>
+      <div className="rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 dark:border-white/5 dark:bg-gray-800">
+        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{value ?? '—'}</p>
+      </div>
+    </div>
   );
 }

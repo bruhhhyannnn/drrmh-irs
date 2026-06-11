@@ -78,40 +78,64 @@ export async function deleteSettingsItem(table: SettingsTable, id: string) {
 
 export async function getUnits(clusterId?: string) {
   return prisma.unit.findMany({
-    where: clusterId ? { cluster_id: clusterId } : undefined,
+    where: {
+      is_active: true,
+      ...(clusterId ? { cluster_id: clusterId } : undefined),
+    },
     include: { cluster: { select: { name: true } } },
     orderBy: { created_at: 'asc' },
   });
 }
 
 export async function getUserTypes() {
-  return prisma.userType.findMany({ orderBy: { name: 'asc' } });
+  return prisma.userType.findMany({
+    where: { is_active: true },
+    orderBy: { name: 'asc' },
+  });
 }
 
 export async function getPositions() {
-  return prisma.position.findMany({ orderBy: { name: 'asc' } });
+  return prisma.position.findMany({
+    where: { is_active: true },
+    orderBy: { name: 'asc' },
+  });
 }
 
 export async function getLocations(clusterId?: string) {
   return prisma.location.findMany({
-    where: clusterId ? { cluster_id: clusterId } : undefined,
+    where: {
+      is_active: true,
+      ...(clusterId ? { cluster_id: clusterId } : undefined),
+    },
     include: { cluster: { select: { name: true } } },
     orderBy: { name: 'asc' },
   });
 }
 
 export async function getEventStatuses() {
-  return prisma.eventStatus.findMany({ orderBy: { updated_at: 'asc' } });
+  return prisma.eventStatus.findMany({
+    where: { is_active: true },
+    orderBy: { updated_at: 'asc' },
+  });
 }
 
 export async function getDamageConditions() {
-  return prisma.damageCondition.findMany({ orderBy: { name: 'asc' } });
+  return prisma.damageCondition.findMany({
+    where: { is_active: true },
+    orderBy: { name: 'asc' },
+  });
 }
 
 export async function getClusters() {
-  return prisma.cluster.findMany({ orderBy: { name: 'asc' } });
+  return prisma.cluster.findMany({
+    where: { is_active: true },
+    orderBy: { name: 'asc' },
+  });
 }
 
 export async function getCasualtyConditions() {
-  return prisma.casualtyCondition.findMany({ orderBy: { name: 'asc' } });
+  return prisma.casualtyCondition.findMany({
+    where: { is_active: true },
+    orderBy: { name: 'asc' },
+  });
 }
