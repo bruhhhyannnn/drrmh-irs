@@ -168,6 +168,8 @@ export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
               <Input
                 type="datetime-local"
                 label="Ended At"
+                error={!!errors.ended_at}
+                hint={errors.ended_at?.message}
                 id="Ended At"
                 {...register('ended_at')}
               />

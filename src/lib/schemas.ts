@@ -37,15 +37,26 @@ export const userCreateSchema = z.object({
 export const userEditSchema = userCreateSchema.omit({ password: true });
 
 /* ─── Main Tables ─── */
-export const eventSchema = z.object({
-  name: z.string().min(1, 'Event name is required'),
-  description: z.string().optional(),
-  quarter: z.string().optional(),
-  started_at: z.string().optional().nullable(),
-  ended_at: z.string().optional().nullable(),
-  location_id: z.string().optional().nullable(),
-  status_id: z.string().uuid('Status is required'),
-});
+export const eventSchema = z
+  .object({
+    name: z.string().min(1, 'Event name is required'),
+    description: z.string().optional(),
+    quarter: z.string().optional(),
+    started_at: z.string().optional().nullable(),
+    ended_at: z.string().optional().nullable(),
+    location_id: z.string().optional().nullable(),
+    status_id: z.string().uuid('Status is required'),
+  })
+  .refine(
+    (data) => {
+      if (!data.started_at || !data.ended_at) return true;
+      return new Date(data.ended_at) > new Date(data.started_at);
+    },
+    {
+      message: 'End date must be after start date',
+      path: ['ended_at'],
+    }
+  );
 
 export const missingPersonSchema = z.object({
   name: z.string().min(1, 'Name is required'),
