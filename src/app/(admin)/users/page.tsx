@@ -6,6 +6,7 @@ import { Badge, Button, ConfirmDialog, DataTable, Input, Modal, PageError } from
 import type { ColumnDef } from '@tanstack/react-table';
 import { Plus, Search, Trash2, UserPen } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useDeleteUser, useToggleUserStatus, useUsers } from './use-users';
 import { UserForm } from './user-form';
 
@@ -170,7 +171,18 @@ export default function UsersPage() {
       <ConfirmDialog
         isOpen={!!deleteId}
         onClose={() => setDeleteId('')}
-        onConfirm={() => deleteUserMutation.mutate(deleteId, { onSuccess: () => setDeleteId('') })}
+        onConfirm={() => {
+          const toastId = toast.loading('Deleting user...');
+          deleteUserMutation.mutate(deleteId, {
+            onSuccess: () => {
+              setDeleteId('');
+              toast.success(`"${deleteName}" has been deleted.`, { id: toastId });
+            },
+            onError: () => {
+              toast.error('Failed to delete user. Please try again.', { id: toastId });
+            },
+          });
+        }}
         title="Delete user"
         message={`"${deleteName}" will be permanently deleted and removed from authentication. This cannot be undone.`}
         confirmLabel="Delete"
