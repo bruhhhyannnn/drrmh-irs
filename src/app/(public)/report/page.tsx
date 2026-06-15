@@ -110,8 +110,8 @@ export default function ErtReportPage() {
             <Image
               src="/irs-logo.png"
               alt="IRS"
-              width={52}
-              height={52}
+              width={84}
+              height={84}
               className="object-contain drop-shadow-lg"
             />
             <div className="text-center">

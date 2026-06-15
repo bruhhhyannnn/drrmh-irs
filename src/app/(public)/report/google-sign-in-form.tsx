@@ -28,7 +28,7 @@ export function GoogleSignInForm() {
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">ERT Member Report</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Sign in to submit your NSED incident report.
+          Sign in to submit your incident report.
         </p>
       </div>
 
