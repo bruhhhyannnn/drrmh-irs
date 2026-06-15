@@ -2,11 +2,15 @@
 
 import { Button } from '@/components/ui';
 import { supabase } from '@/lib';
+import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
 export function GoogleSignInForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const searchParams = useSearchParams();
+
+  const domainError = searchParams.get('error') === 'domain';
 
   const handleSignIn = async () => {
     setIsLoading(true);
@@ -14,7 +18,10 @@ export function GoogleSignInForm() {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${siteUrl}/auth/callback` },
+      options: {
+        redirectTo: `${siteUrl}/auth/callback`,
+        queryParams: { hd: 'up.edu.ph' },
+      },
     });
     if (error) {
       setError(error.message);
@@ -32,9 +39,11 @@ export function GoogleSignInForm() {
         </p>
       </div>
 
-      {error && (
+      {(error || domainError) && (
         <div className="bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-400 rounded-lg px-4 py-3 text-sm">
-          {error}
+          {domainError
+            ? 'Only UP (up.edu.ph) accounts are allowed. Please sign in with your UP Google account.'
+            : error}
         </div>
       )}
 

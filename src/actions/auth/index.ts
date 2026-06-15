@@ -7,6 +7,11 @@ export async function provisionGoogleUser(
   email: string,
   fullName: string | null
 ): Promise<{ userTypeName: string }> {
+  // Enforce UP email domain
+  if (!email.toLowerCase().endsWith('@up.edu.ph')) {
+    throw new Error('DOMAIN_NOT_ALLOWED');
+  }
+
   // Return early if user already exists (idempotent — handles returning users)
   const existing = await prisma.user.findUnique({
     where: { auth_id: authId },

@@ -53,6 +53,11 @@ export default function AuthCallbackPage() {
           router.replace('/report');
         }
       } catch (err) {
+        if (err instanceof Error && err.message === 'DOMAIN_NOT_ALLOWED') {
+          await supabase.auth.signOut();
+          router.replace('/report?error=domain');
+          return;
+        }
         console.error('Provisioning error:', err);
         setError('Failed to set up your account. Please contact support.');
       }
