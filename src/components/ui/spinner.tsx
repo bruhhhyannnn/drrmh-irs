@@ -24,7 +24,7 @@ export function Spinner({ size = 'md', center = false, className }: SpinnerProps
       )}
     >
       <Image
-        src="/irs-favicon.png"
+        src="/irs-logo.png"
         alt="DRRM-H Logo"
         sizes="(max-width: 768px) 48px, 64px"
         className="object-contain"

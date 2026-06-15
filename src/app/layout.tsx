@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description:
     'UP Manila Disaster Risk Reduction Management in Health Program - Incident Reporting System',
   icons: {
-    icon: '/irs-favicon.png',
+    icon: '/irs-logo.png',
   },
   manifest: '/manifest.json',
 };

@@ -141,7 +141,7 @@ export default function LandingPage() {
         >
           <Link href="/" className="flex items-center gap-2.5 no-underline">
             <Image
-              src="/irs-favicon.png"
+              src="/irs-logo.png"
               alt="IRS Logo"
               width={38}
               height={38}
@@ -253,7 +253,7 @@ export default function LandingPage() {
                   className="object-contain"
                 />
                 <Image
-                  src="/irs-favicon.png"
+                  src="/irs-logo.png"
                   alt="IRS Logo"
                   width={72}
                   height={72}
@@ -1435,7 +1435,7 @@ export default function LandingPage() {
                   className="object-contain"
                 />
                 <Image
-                  src="/irs-favicon.png"
+                  src="/irs-logo.png"
                   alt="IRS Logo"
                   width={42}
                   height={42}

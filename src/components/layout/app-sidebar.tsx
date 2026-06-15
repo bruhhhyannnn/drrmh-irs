@@ -104,7 +104,7 @@ export function AppSidebar() {
       >
         <Link href="/dashboard" className="flex items-center gap-3">
           <Image
-            src="/irs-favicon.png"
+            src="/irs-logo.png"
             alt="IRS Logo"
             width={48}
             height={48}

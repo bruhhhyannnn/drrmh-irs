@@ -108,7 +108,7 @@ export default function ErtReportPage() {
         <div className="w-full max-w-md">
           <div className="mb-8 flex flex-col items-center gap-3">
             <Image
-              src="/irs-favicon.png"
+              src="/irs-logo.png"
               alt="IRS"
               width={52}
               height={52}
@@ -239,13 +239,7 @@ function ReportHeader({ userProfile, onSignOut }: ReportHeaderProps) {
     <header className="border-b border-white/10 bg-black/30 px-6 py-3 backdrop-blur-md">
       <div className="mx-auto flex max-w-2xl items-center justify-between">
         <div className="flex items-center gap-2">
-          <Image
-            src="/irs-favicon.png"
-            alt="IRS"
-            width={26}
-            height={26}
-            className="object-contain"
-          />
+          <Image src="/irs-logo.png" alt="IRS" width={26} height={26} className="object-contain" />
           <span className="text-sm font-semibold text-white">DRRM-H IRS</span>
         </div>
 

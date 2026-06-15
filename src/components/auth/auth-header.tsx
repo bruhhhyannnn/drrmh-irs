@@ -68,7 +68,7 @@ export function AuthHeader({ children, maxWidth = 'md', className, ...props }: A
           />
           <div className="hidden h-10 w-px bg-gray-200 sm:block dark:bg-gray-700" />
           <Image
-            src="/irs-favicon.png"
+            src="/irs-logo.png"
             alt="IRS Logo"
             width={64}
             height={64}
