@@ -138,6 +138,9 @@ export async function deleteUser(id: string) {
   const user = await prisma.user.findUnique({ where: { id }, select: { auth_id: true } });
   if (!user) throw new Error('User not found');
 
+  // Nullify user_id on any reports before deleting to avoid FK constraint violation
+  await prisma.report.updateMany({ where: { user_id: id }, data: { user_id: null } });
+
   await prisma.user.delete({ where: { id } });
 
   if (user.auth_id) {
