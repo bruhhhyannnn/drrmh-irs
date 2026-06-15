@@ -1,7 +1,7 @@
 'use client';
 
 import { completeUserProfile } from '@/actions/users';
-import { usePositions } from '@/app/(admin)/settings/use-settings';
+import { useClusters, usePositions, useUnits } from '@/app/(admin)/settings/use-settings';
 import { Button, Modal, Select } from '@/components/ui';
 import { useAuthStore } from '@/store';
 import { useState } from 'react';
@@ -12,26 +12,44 @@ const OTHER_VALUE = '__other__';
 export function CompleteProfileModal() {
   const { userProfile, loading, setUserProfile } = useAuthStore();
   const { data: positions = [] } = usePositions();
+  const { data: clusters = [] } = useClusters();
 
   const [positionId, setPositionId] = useState('');
   const [customPosition, setCustomPosition] = useState('');
+  const [clusterId, setClusterId] = useState('');
+  const [unitId, setUnitId] = useState('');
   const [saving, setSaving] = useState(false);
+
+  const { data: units = [] } = useUnits(clusterId || undefined);
 
   const needsCompletion = !loading && userProfile && !userProfile.is_profile_complete;
   const isOther = positionId === OTHER_VALUE;
+
+  const selectedPosition = positions.find((p) => p.id === positionId);
+  const isBuildingMarshall = selectedPosition?.name === 'Building Marshall';
+
   const positionOptions = [
     ...positions.map((p) => ({ value: p.id, label: p.name })),
     { value: OTHER_VALUE, label: 'Other (please specify)' },
   ];
-  const canSave = positionId && (!isOther || customPosition.trim().length > 0);
+  const clusterOptions = clusters.map((c) => ({ value: c.id, label: c.name }));
+  const unitOptions = units.map((u) => ({ value: u.id, label: u.name }));
+
+  const canSave =
+    positionId &&
+    (!isOther || customPosition.trim().length > 0) &&
+    (!isBuildingMarshall || (clusterId && unitId));
 
   const handleSave = async () => {
     if (!canSave || !userProfile) return;
     setSaving(true);
     try {
-      const payload = isOther
-        ? { custom_position_name: customPosition.trim() }
-        : { position_id: positionId };
+      const payload = {
+        ...(isOther
+          ? { custom_position_name: customPosition.trim() }
+          : { position_id: positionId }),
+        ...(isBuildingMarshall && unitId ? { unit_id: unitId } : {}),
+      };
       const updated = await completeUserProfile(userProfile.id, payload);
       setUserProfile(updated);
       toast.success('Profile completed!');
@@ -64,6 +82,8 @@ export function CompleteProfileModal() {
           onChange={(e) => {
             setPositionId(e.target.value);
             setCustomPosition('');
+            setClusterId('');
+            setUnitId('');
           }}
         />
 
@@ -80,6 +100,31 @@ export function CompleteProfileModal() {
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
             />
           </div>
+        )}
+
+        {isBuildingMarshall && (
+          <>
+            <Select
+              label="Cluster"
+              placeholder="Select cluster..."
+              options={clusterOptions}
+              value={clusterId}
+              required
+              onChange={(e) => {
+                setClusterId(e.target.value);
+                setUnitId('');
+              }}
+            />
+            <Select
+              label="Building / Unit"
+              placeholder={clusterId ? 'Select unit...' : 'Select cluster first'}
+              options={unitOptions}
+              value={unitId}
+              required
+              disabled={!clusterId}
+              onChange={(e) => setUnitId(e.target.value)}
+            />
+          </>
         )}
 
         <Button
