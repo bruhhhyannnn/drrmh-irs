@@ -109,6 +109,7 @@ export async function completeUserProfile(
     custom_position_name?: string;
     first_name?: string;
     last_name?: string;
+    unit_id?: string;
   }
 ) {
   let positionId = data.position_id;
