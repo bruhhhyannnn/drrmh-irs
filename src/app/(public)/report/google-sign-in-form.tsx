@@ -20,7 +20,7 @@ export function GoogleSignInForm() {
       provider: 'google',
       options: {
         redirectTo: `${siteUrl}/auth/callback`,
-        queryParams: { hd: 'up.edu.ph' },
+        queryParams: { hd: 'up.edu.ph', prompt: 'select_account' },
       },
     });
     if (error) {

@@ -6,11 +6,25 @@ import { useEventReports } from '@/app/(admin)/reports/use-reports';
 import { PageBreadcrumb } from '@/components/common';
 import { Badge, Spinner } from '@/components/ui';
 import { getInitials } from '@/lib';
+import { useThemeStore } from '@/store';
 import { CLUSTERS, HEADCOUNT_FIELDS } from '@/types';
 import { format } from 'date-fns';
 import { AlertTriangle, Calendar, Clock, FileText, Users, UserX } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
 // TODO: revalidate
 type EventReport = Awaited<ReturnType<typeof getReportsByEvent>>[number];
@@ -22,6 +36,7 @@ function EventDetailsContent() {
 
   const { data: event, isPending: loadingEvent } = useEvent(eventId);
   const { data: reports = [], isPending: loadingReports } = useEventReports(eventId);
+  const { theme } = useThemeStore();
 
   if (loadingEvent)
     return (
@@ -176,6 +191,19 @@ function EventDetailsContent() {
               University Total
             </h2>
             <GrandTotalCard reports={reports} />
+          </div>
+
+          {/* Analytics charts */}
+          <div>
+            <h2 className="mb-3 text-sm font-semibold text-gray-500 dark:text-gray-300">
+              Analytics
+            </h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              <HeadcountBreakdownChart reports={reports} theme={theme} />
+              <ClusterSummaryChart reports={reports} theme={theme} />
+              {totalCasualties > 0 && <CasualtyConditionsChart reports={reports} theme={theme} />}
+              <DamageConditionsChart reports={reports} theme={theme} />
+            </div>
           </div>
         </div>
       )}
@@ -487,6 +515,261 @@ function GrandTotalCard({ reports }: { reports: EventReport[] }) {
         </div>
       )}
     </div>
+  );
+}
+
+// ─── Chart helpers ────────────────────────────────────────
+function chartTooltipStyle(theme: string) {
+  return {
+    contentStyle: {
+      background: theme === 'dark' ? 'rgba(17,24,39,0.95)' : 'rgba(255,255,255,0.95)',
+      border: theme === 'dark' ? '1px solid #374151' : '1px solid #e5e7eb',
+      borderRadius: '8px',
+      color: theme === 'dark' ? '#f9fafb' : '#111827',
+      fontSize: '13px',
+    },
+    itemStyle: { color: theme === 'dark' ? '#f9fafb' : '#111827' },
+  };
+}
+
+function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="shadow-theme-sm rounded-xl border border-gray-200 bg-white p-4 dark:border-white/5 dark:bg-white/3">
+      <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function EmptyChartState() {
+  return (
+    <div className="flex h-40 items-center justify-center">
+      <p className="text-xs text-gray-400">No data available</p>
+    </div>
+  );
+}
+
+type ChartProps = { reports: EventReport[]; theme: string };
+
+// ─── Chart 1: Headcount by category ──────────────────────
+function HeadcountBreakdownChart({ reports, theme }: ChartProps) {
+  const totals = reports.reduce(
+    (acc, r) => {
+      HEADCOUNT_FIELDS.forEach(({ key }) => {
+        acc[key] = (acc[key] ?? 0) + ((r as any)[key] ?? 0);
+      });
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+
+  const data = HEADCOUNT_FIELDS.map(({ key, label }) => ({ name: label, value: totals[key] ?? 0 }))
+    .filter((d) => d.value > 0)
+    .sort((a, b) => b.value - a.value);
+
+  const ts = chartTooltipStyle(theme);
+
+  return (
+    <ChartCard title="Affected by Category">
+      {data.length === 0 ? (
+        <EmptyChartState />
+      ) : (
+        <ResponsiveContainer width="100%" height={Math.max(180, data.length * 34)}>
+          <BarChart
+            data={data}
+            layout="vertical"
+            margin={{ top: 0, right: 12, left: 0, bottom: 0 }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              horizontal={false}
+              stroke="rgba(156,163,175,0.15)"
+            />
+            <XAxis
+              type="number"
+              allowDecimals={false}
+              tick={{ fontSize: 11, fill: '#6b7280' }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              type="category"
+              dataKey="name"
+              width={148}
+              tick={{ fontSize: 11, fill: '#6b7280' }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip contentStyle={ts.contentStyle} itemStyle={ts.itemStyle} />
+            <Bar
+              dataKey="value"
+              name="People"
+              fill="#a11d1d"
+              radius={[0, 3, 3, 0]}
+              maxBarSize={18}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      )}
+    </ChartCard>
+  );
+}
+
+// ─── Chart 2: Reports + affected + casualties by cluster ──
+function ClusterSummaryChart({ reports, theme }: ChartProps) {
+  const data = CLUSTERS.map((cluster) => {
+    const cr = reports.filter((r) => r.cluster.name === cluster);
+    if (!cr.length) return null;
+    const affected = cr.reduce(
+      (s, r) => s + HEADCOUNT_FIELDS.reduce((sum, { key }) => sum + ((r as any)[key] ?? 0), 0),
+      0
+    );
+    return {
+      name: cluster,
+      reports: cr.length,
+      affected,
+      casualties: cr.reduce((s, r) => s + r.casualties.length, 0),
+    };
+  }).filter(Boolean) as { name: string; reports: number; affected: number; casualties: number }[];
+
+  const ts = chartTooltipStyle(theme);
+
+  return (
+    <ChartCard title="Summary by Cluster">
+      {data.length === 0 ? (
+        <EmptyChartState />
+      ) : (
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={data} margin={{ top: 8, right: 0, left: -24, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(156,163,175,0.15)" />
+            <XAxis
+              dataKey="name"
+              tick={{ fontSize: 11, fill: '#6b7280' }}
+              axisLine={false}
+              tickLine={false}
+              dy={6}
+            />
+            <YAxis
+              allowDecimals={false}
+              tick={{ fontSize: 11, fill: '#6b7280' }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip contentStyle={ts.contentStyle} itemStyle={ts.itemStyle} />
+            <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
+            <Bar
+              dataKey="reports"
+              name="Reports"
+              fill="#3b82f6"
+              radius={[3, 3, 0, 0]}
+              maxBarSize={24}
+            />
+            <Bar
+              dataKey="affected"
+              name="Affected"
+              fill="#a11d1d"
+              radius={[3, 3, 0, 0]}
+              maxBarSize={24}
+            />
+            <Bar
+              dataKey="casualties"
+              name="Casualties"
+              fill="#ef4444"
+              radius={[3, 3, 0, 0]}
+              maxBarSize={24}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      )}
+    </ChartCard>
+  );
+}
+
+// ─── Chart 3: Casualty conditions breakdown ───────────────
+const COND_COLORS = ['#ef4444', '#f97316', '#f59e0b', '#a11d1d', '#dc2626', '#b45309'];
+
+function CasualtyConditionsChart({ reports, theme }: ChartProps) {
+  const counts: Record<string, number> = {};
+  reports.forEach((r) => {
+    r.casualties.forEach((c) => {
+      const name = c.condition.name;
+      counts[name] = (counts[name] ?? 0) + 1;
+    });
+  });
+  const data = Object.entries(counts).map(([name, value]) => ({ name, value }));
+  const ts = chartTooltipStyle(theme);
+
+  if (!data.length) return null;
+
+  return (
+    <ChartCard title="Casualties by Condition">
+      <ResponsiveContainer width="100%" height={220}>
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={55}
+            outerRadius={80}
+            paddingAngle={5}
+            dataKey="value"
+            stroke="none"
+            cornerRadius={4}
+          >
+            {data.map((_, i) => (
+              <Cell key={i} fill={COND_COLORS[i % COND_COLORS.length]} />
+            ))}
+          </Pie>
+          <Tooltip contentStyle={ts.contentStyle} itemStyle={ts.itemStyle} />
+          <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
+        </PieChart>
+      </ResponsiveContainer>
+    </ChartCard>
+  );
+}
+
+// ─── Chart 4: Structural damage conditions ────────────────
+const DMG_COLORS = ['#22c55e', '#84cc16', '#f59e0b', '#f97316', '#ef4444', '#dc2626'];
+
+function DamageConditionsChart({ reports, theme }: ChartProps) {
+  const counts: Record<string, number> = {};
+  reports.forEach((r) => {
+    if (r.damage_conditions?.name) {
+      const name = r.damage_conditions.name;
+      counts[name] = (counts[name] ?? 0) + 1;
+    }
+  });
+  const data = Object.entries(counts).map(([name, value]) => ({ name, value }));
+  const ts = chartTooltipStyle(theme);
+
+  return (
+    <ChartCard title="Structural Damage Conditions">
+      {data.length === 0 ? (
+        <EmptyChartState />
+      ) : (
+        <ResponsiveContainer width="100%" height={220}>
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              innerRadius={55}
+              outerRadius={80}
+              paddingAngle={5}
+              dataKey="value"
+              stroke="none"
+              cornerRadius={4}
+            >
+              {data.map((_, i) => (
+                <Cell key={i} fill={DMG_COLORS[i % DMG_COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip contentStyle={ts.contentStyle} itemStyle={ts.itemStyle} />
+            <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
+          </PieChart>
+        </ResponsiveContainer>
+      )}
+    </ChartCard>
   );
 }
 
