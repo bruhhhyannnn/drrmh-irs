@@ -363,6 +363,7 @@ function ClusterCard({ cluster, reports }: { cluster: string; reports: EventRepo
                 </p>
                 <p className="text-xs text-gray-400">
                   {r.unit?.name || '—'} · {r.user?.position?.name || '—'}
+                  {r.created_at && ` · ${format(new Date(r.created_at), 'MMM d, yyyy h:mm a')}`}
                 </p>
               </div>
               <div className="flex gap-1.5">

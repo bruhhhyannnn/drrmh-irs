@@ -193,6 +193,17 @@ export function ReportForm({
     }
   }, [existingMissingPersons]);
 
+  // ─── Automatically fill cluster/unit for Building Marshalls on new reports (ERT Members) ──────
+  useEffect(() => {
+    if (isEdit) return;
+    if (!userProfile?.unit) return;
+
+    const unit = userProfile.unit;
+    setValue('cluster_id', unit.cluster_id);
+    setSelectedClusterId(unit.cluster_id);
+    setValue('unit_id', unit.id);
+  }, [userProfile, isEdit, setValue]);
+
   // ─── Submit ──────────────────────────────────────────────────
   const onSubmit = handleSubmit(async (data) => {
     if (pickedLat === null || pickedLng === null) {
