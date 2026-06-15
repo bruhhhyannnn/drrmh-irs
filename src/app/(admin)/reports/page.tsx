@@ -108,10 +108,21 @@ export default function ReportsPage() {
     },
     {
       id: 'date',
-      header: 'Date',
+      header: 'Submitted',
       accessorFn: (r) => r.created_at ?? '',
       cell: ({ row: { original: r } }) =>
-        r.created_at ? format(new Date(r.created_at), 'MMM d, yyyy') : '—',
+        r.created_at ? (
+          <div className="text-sm">
+            <div className="text-gray-800 dark:text-gray-200">
+              {format(new Date(r.created_at), 'MMM d, yyyy')}
+            </div>
+            <div className="text-xs text-gray-400 dark:text-gray-500">
+              {format(new Date(r.created_at), 'h:mm a')}
+            </div>
+          </div>
+        ) : (
+          '—'
+        ),
     },
     {
       id: 'actions',
