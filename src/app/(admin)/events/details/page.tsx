@@ -300,7 +300,7 @@ function ClusterCard({ cluster, reports }: { cluster: string; reports: EventRepo
   return (
     <div className="shadow-theme-md overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/5 dark:bg-white/3">
       {/* Cluster header */}
-      <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-5 py-4 dark:border-white/5 dark:bg-white/2">
+      <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-5 py-4 dark:border-white/5 dark:bg-white/2 overflow-x-scroll">
         <div className="flex items-center gap-3">
           <div className="bg-brand-500 flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold text-white">
             {getInitials(cluster)}
@@ -433,11 +433,14 @@ function ClusterCard({ cluster, reports }: { cluster: string; reports: EventRepo
                     </p>
                     <div className="space-y-1">
                       {r.casualties.map((c) => (
-                        <div key={c.id} className="flex items-start justify-between gap-2 text-xs">
-                          <span className="text-error-700 dark:text-error-300">
+                        <div
+                          key={c.id}
+                          className="flex items-start flex-wrap justify-between gap-2 text-xs"
+                        >
+                          <span className="text-error-700  dark:text-error-300">
                             {c.name || '—'}
                           </span>
-                          <span className="text-error-800 dark:text-error-200 shrink-0">
+                          <span className="text-error-700 dark:text-error-300">
                             {c.condition.name}
                           </span>
                         </div>
@@ -484,7 +487,7 @@ function GrandTotalCard({ reports }: { reports: EventReport[] }) {
   return (
     <div className="shadow-theme-md rounded-xl border border-gray-200 bg-white dark:border-white/5 dark:bg-white/3">
       <div className="border-b border-gray-100 bg-gray-50 px-5 py-4 dark:border-white/5 dark:bg-white/2">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <p className="text-sm font-semibold text-gray-900 dark:text-white">University Total</p>
           <p className="text-2xl font-bold text-gray-900 tabular-nums dark:text-white">
             {totalAffected.toLocaleString()}
@@ -492,7 +495,7 @@ function GrandTotalCard({ reports }: { reports: EventReport[] }) {
           </p>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-x-8 px-5 py-4 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-x-8 px-5 py-4 sm:grid-cols-3 lg:grid-cols-4 f">
         {HEADCOUNT_FIELDS.map(({ key, label }) => (
           <div
             key={key}
@@ -743,7 +746,7 @@ function CasualtyConditionsChart({ reports, theme }: ChartProps) {
 
   return (
     <ChartCard title="Casualties by Condition">
-      <ResponsiveContainer width="100%" height={220}>
+      <ResponsiveContainer width="100%" height={300}>
         <PieChart>
           <Pie
             data={data}
@@ -787,7 +790,7 @@ function DamageConditionsChart({ reports, theme }: ChartProps) {
       {data.length === 0 ? (
         <EmptyChartState />
       ) : (
-        <ResponsiveContainer width="100%" height={220}>
+        <ResponsiveContainer width="100%" height={300}>
           <PieChart>
             <Pie
               data={data}
