@@ -271,7 +271,7 @@ export default function DashboardPage() {
                       />
                       <YAxis
                         allowDecimals={false}
-                        tick={{ fontSize: 11, fill: '#6b7280' }}
+                        tick={{ fontSize: 12, fill: '#6b7280' }}
                         axisLine={false}
                         tickLine={false}
                       />
