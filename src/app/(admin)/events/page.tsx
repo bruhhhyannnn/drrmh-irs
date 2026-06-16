@@ -17,10 +17,12 @@ import {
   TableRow,
 } from '@/components/ui';
 import { format } from 'date-fns';
-import { Eye, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { Eye, FileSpreadsheet, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { EventForm } from './event-form';
+import { exportEventToExcel } from './export-event';
 import { useDeleteEvent, useEvents } from './use-events';
 
 export default function EventsPage() {
@@ -31,6 +33,20 @@ export default function EventsPage() {
   const [editId, setEditId] = useState('');
   const [deleteId, setDeleteId] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [exportingId, setExportingId] = useState('');
+
+  const handleExport = async (id: string) => {
+    setExportingId(id);
+    const toastId = toast.loading('Generating Excel file...');
+    try {
+      await exportEventToExcel(id);
+      toast.success('Export ready.', { id: toastId });
+    } catch {
+      toast.error('Failed to export event. Please try again.', { id: toastId });
+    } finally {
+      setExportingId('');
+    }
+  };
 
   const handleClose = () => {
     setIsModalOpen(false);
@@ -121,6 +137,14 @@ export default function EventsPage() {
                       className="hover:text-brand-600 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100"
                     >
                       <Pencil size={17} />
+                    </button>
+                    <button
+                      onClick={() => handleExport(event.id)}
+                      disabled={exportingId === event.id}
+                      className="hover:text-brand-600 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100 disabled:opacity-50"
+                      title="Export to Excel"
+                    >
+                      <FileSpreadsheet size={17} />
                     </button>
                     <button
                       className="hover:text-error-500 text-gray-400 transition-all duration-100 dark:text-gray-500"
