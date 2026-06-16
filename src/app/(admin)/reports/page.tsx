@@ -51,6 +51,42 @@ export default function ReportsPage() {
   // ── Verified report columns ──────────────────────────────
   const reportColumns: ColumnDef<ReportRow, unknown>[] = [
     {
+      id: 'date',
+      header: 'Submitted',
+      accessorFn: (r) => r.created_at ?? '',
+      cell: ({ row: { original: r } }) =>
+        r.created_at ? (
+          <div className="text-sm">
+            <div className="text-gray-800 dark:text-gray-200">
+              {format(new Date(r.created_at), 'MMM d, yyyy')}
+            </div>
+            <div className="text-xs text-gray-400 dark:text-gray-500">
+              {format(new Date(r.created_at), 'h:mm a')}
+            </div>
+          </div>
+        ) : (
+          '—'
+        ),
+    },
+    {
+      id: 'submitted_by',
+      header: 'Submitted By',
+      accessorFn: (r) => (r.user ? `${r.user.first_name ?? ''} ${r.user.last_name ?? ''}` : ''),
+      cell: ({ row: { original: r } }) =>
+        r.user ? (
+          <div className="text-sm">
+            <div className="text-gray-800 dark:text-gray-200">
+              {[r.user.first_name, r.user.last_name].filter(Boolean).join(' ')}
+            </div>
+            {r.user.position?.name && (
+              <div className="text-xs text-gray-400 dark:text-gray-500">{r.user.position.name}</div>
+            )}
+          </div>
+        ) : (
+          '—'
+        ),
+    },
+    {
       id: 'event',
       header: 'Event',
       accessorFn: (r) => r.event.name,
@@ -104,24 +140,6 @@ export default function ReportsPage() {
           </Badge>
         ) : (
           <span className="text-gray-500 dark:text-gray-600">0</span>
-        ),
-    },
-    {
-      id: 'date',
-      header: 'Submitted',
-      accessorFn: (r) => r.created_at ?? '',
-      cell: ({ row: { original: r } }) =>
-        r.created_at ? (
-          <div className="text-sm">
-            <div className="text-gray-800 dark:text-gray-200">
-              {format(new Date(r.created_at), 'MMM d, yyyy')}
-            </div>
-            <div className="text-xs text-gray-400 dark:text-gray-500">
-              {format(new Date(r.created_at), 'h:mm a')}
-            </div>
-          </div>
-        ) : (
-          '—'
         ),
     },
     {
