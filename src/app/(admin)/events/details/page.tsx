@@ -548,7 +548,7 @@ function chartTooltipStyle(theme: string) {
       border: theme === 'dark' ? '1px solid #374151' : '1px solid #e5e7eb',
       borderRadius: '8px',
       color: theme === 'dark' ? '#f9fafb' : '#111827',
-      fontSize: '13px',
+      fontSize: '14px',
     },
     itemStyle: { color: theme === 'dark' ? '#f9fafb' : '#111827' },
   };
@@ -616,7 +616,7 @@ function UnitBreakdownChart({
             <XAxis
               type="number"
               allowDecimals={false}
-              tick={{ fontSize: 11, fill: '#6b7280' }}
+              tick={{ fontSize: 12, fill: '#6b7280' }}
               axisLine={false}
               tickLine={false}
             />
@@ -624,7 +624,7 @@ function UnitBreakdownChart({
               type="category"
               dataKey="name"
               width={148}
-              tick={{ fontSize: 11, fill: '#6b7280' }}
+              tick={{ fontSize: 12, fill: '#6b7280' }}
               axisLine={false}
               tickLine={false}
             />
@@ -672,19 +672,19 @@ function ClusterSummaryChart({ reports, theme }: ChartProps) {
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(156,163,175,0.15)" />
             <XAxis
               dataKey="name"
-              tick={{ fontSize: 11, fill: '#6b7280' }}
+              tick={{ fontSize: 12, fill: '#6b7280' }}
               axisLine={false}
               tickLine={false}
               dy={6}
             />
             <YAxis
               allowDecimals={false}
-              tick={{ fontSize: 11, fill: '#6b7280' }}
+              tick={{ fontSize: 12, fill: '#6b7280' }}
               axisLine={false}
               tickLine={false}
             />
             <Tooltip contentStyle={ts.contentStyle} itemStyle={ts.itemStyle} />
-            <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
+            <Legend iconType="circle" wrapperStyle={{ fontSize: '14px', paddingTop: '8px' }} />
             <Bar
               dataKey="reports"
               name="Reports"
@@ -749,7 +749,7 @@ function CasualtyConditionsChart({ reports, theme }: ChartProps) {
             ))}
           </Pie>
           <Tooltip contentStyle={ts.contentStyle} itemStyle={ts.itemStyle} />
-          <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
+          <Legend iconType="circle" wrapperStyle={{ fontSize: '14px', paddingTop: '8px' }} />
         </PieChart>
       </ResponsiveContainer>
     </ChartCard>
@@ -793,7 +793,7 @@ function DamageConditionsChart({ reports, theme }: ChartProps) {
               ))}
             </Pie>
             <Tooltip contentStyle={ts.contentStyle} itemStyle={ts.itemStyle} />
-            <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
+            <Legend iconType="circle" wrapperStyle={{ fontSize: '14px', paddingTop: '8px' }} />
           </PieChart>
         </ResponsiveContainer>
       )}
