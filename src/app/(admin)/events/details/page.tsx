@@ -205,23 +205,12 @@ function EventDetailsContent() {
           <div className="space-y-6">
             <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-300">Analytics</h2>
 
-            <div>
-              <h3 className="mb-3 text-xs font-semibold tracking-wide text-gray-400 uppercase dark:text-gray-500">
-                Affected by Unit
-              </h3>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {activeClusters.map((cluster) => (
-                  <UnitBreakdownChart
-                    key={cluster}
-                    cluster={cluster}
-                    reports={reportsByCluster[cluster]}
-                    theme={theme}
-                  />
-                ))}
-              </div>
-            </div>
-
             <div className="grid gap-4 md:grid-cols-2">
+              <UnitBreakdownTabbed
+                activeClusters={activeClusters}
+                reportsByCluster={reportsByCluster}
+                theme={theme}
+              />
               <ClusterSummaryChart reports={reports} theme={theme} />
               {totalCasualties > 0 && <CasualtyConditionsChart reports={reports} theme={theme} />}
               <DamageConditionsChart reports={reports} theme={theme} />
@@ -574,15 +563,19 @@ function EmptyChartState() {
 type ChartProps = { reports: EventReport[]; theme: string };
 
 // ─── Chart 1: Affected by unit, grouped per cluster ───────
-function UnitBreakdownChart({
-  cluster,
-  reports,
+
+function UnitBreakdownTabbed({
+  activeClusters,
+  reportsByCluster,
   theme,
 }: {
-  cluster: string;
-  reports: EventReport[];
+  activeClusters: string[];
+  reportsByCluster: Record<string, EventReport[]>;
   theme: string;
 }) {
+  const [selectedCluster, setSelectedCluster] = useState<string>(activeClusters[0] ?? null);
+  const reports = selectedCluster ? (reportsByCluster[selectedCluster] ?? []) : [];
+
   const totals: Record<string, number> = {};
   reports.forEach((r) => {
     const unitName = r.unit?.name ?? 'Unspecified';
@@ -598,15 +591,34 @@ function UnitBreakdownChart({
   const ts = chartTooltipStyle(theme);
 
   return (
-    <ChartCard title={cluster}>
+    <div className="shadow-theme-sm rounded-xl border border-gray-200 bg-white dark:border-white/5 dark:bg-white/3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 px-4 pb-3 pt-4 dark:border-white/5">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Affected by Unit</h3>
+        <div className="flex flex-wrap gap-2">
+          {activeClusters.map((cluster) => (
+            <button
+              key={cluster}
+              onClick={() => setSelectedCluster(cluster)}
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition-all duration-150 ${
+                selectedCluster === cluster
+                  ? 'border-brand-500 bg-brand-500 text-white'
+                  : 'border-gray-200 bg-white text-gray-500 hover:border-gray-400 hover:text-gray-800 dark:border-white/10 dark:bg-white/3 dark:text-gray-400 dark:hover:border-white/30 dark:hover:text-gray-100'
+              }`}
+            >
+              {cluster}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {data.length === 0 ? (
         <EmptyChartState />
       ) : (
-        <ResponsiveContainer width="100%" height={Math.max(180, data.length * 34)}>
+        <ResponsiveContainer width="100%" height={400}>
           <BarChart
             data={data}
             layout="vertical"
-            margin={{ top: 0, right: 12, left: 0, bottom: 0 }}
+            margin={{ top: 0, right: 40, left: 0, bottom: 0 }}
           >
             <CartesianGrid
               strokeDasharray="3 3"
@@ -639,7 +651,7 @@ function UnitBreakdownChart({
           </BarChart>
         </ResponsiveContainer>
       )}
-    </ChartCard>
+    </div>
   );
 }
 
