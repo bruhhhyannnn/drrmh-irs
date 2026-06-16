@@ -29,6 +29,14 @@ import {
 // TODO: revalidate
 type EventReport = Awaited<ReturnType<typeof getReportsByEvent>>[number];
 
+export default function EventDetailsPage() {
+  return (
+    <Suspense fallback={<Spinner />}>
+      <EventDetailsContent />
+    </Suspense>
+  );
+}
+
 // ─── Main content ─────────────────────────────────────────
 function EventDetailsContent() {
   const searchParams = useSearchParams();
@@ -194,12 +202,26 @@ function EventDetailsContent() {
           </div>
 
           {/* Analytics charts */}
-          <div>
-            <h2 className="mb-3 text-sm font-semibold text-gray-500 dark:text-gray-300">
-              Analytics
-            </h2>
+          <div className="space-y-6">
+            <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-300">Analytics</h2>
+
+            <div>
+              <h3 className="mb-3 text-xs font-semibold tracking-wide text-gray-400 uppercase dark:text-gray-500">
+                Affected by Unit
+              </h3>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {activeClusters.map((cluster) => (
+                  <UnitBreakdownChart
+                    key={cluster}
+                    cluster={cluster}
+                    reports={reportsByCluster[cluster]}
+                    theme={theme}
+                  />
+                ))}
+              </div>
+            </div>
+
             <div className="grid gap-4 md:grid-cols-2">
-              <HeadcountBreakdownChart reports={reports} theme={theme} />
               <ClusterSummaryChart reports={reports} theme={theme} />
               {totalCasualties > 0 && <CasualtyConditionsChart reports={reports} theme={theme} />}
               <DamageConditionsChart reports={reports} theme={theme} />
@@ -551,26 +573,32 @@ function EmptyChartState() {
 
 type ChartProps = { reports: EventReport[]; theme: string };
 
-// ─── Chart 1: Headcount by category ──────────────────────
-function HeadcountBreakdownChart({ reports, theme }: ChartProps) {
-  const totals = reports.reduce(
-    (acc, r) => {
-      HEADCOUNT_FIELDS.forEach(({ key }) => {
-        acc[key] = (acc[key] ?? 0) + ((r as any)[key] ?? 0);
-      });
-      return acc;
-    },
-    {} as Record<string, number>
-  );
+// ─── Chart 1: Affected by unit, grouped per cluster ───────
+function UnitBreakdownChart({
+  cluster,
+  reports,
+  theme,
+}: {
+  cluster: string;
+  reports: EventReport[];
+  theme: string;
+}) {
+  const totals: Record<string, number> = {};
+  reports.forEach((r) => {
+    const unitName = r.unit?.name ?? 'Unspecified';
+    const affected = HEADCOUNT_FIELDS.reduce((sum, { key }) => sum + ((r as any)[key] ?? 0), 0);
+    totals[unitName] = (totals[unitName] ?? 0) + affected;
+  });
 
-  const data = HEADCOUNT_FIELDS.map(({ key, label }) => ({ name: label, value: totals[key] ?? 0 }))
+  const data = Object.entries(totals)
+    .map(([name, value]) => ({ name, value }))
     .filter((d) => d.value > 0)
     .sort((a, b) => b.value - a.value);
 
   const ts = chartTooltipStyle(theme);
 
   return (
-    <ChartCard title="Affected by Category">
+    <ChartCard title={cluster}>
       {data.length === 0 ? (
         <EmptyChartState />
       ) : (
@@ -603,7 +631,7 @@ function HeadcountBreakdownChart({ reports, theme }: ChartProps) {
             <Tooltip contentStyle={ts.contentStyle} itemStyle={ts.itemStyle} />
             <Bar
               dataKey="value"
-              name="People"
+              name="Affected"
               fill="#a11d1d"
               radius={[0, 3, 3, 0]}
               maxBarSize={18}
@@ -770,13 +798,5 @@ function DamageConditionsChart({ reports, theme }: ChartProps) {
         </ResponsiveContainer>
       )}
     </ChartCard>
-  );
-}
-
-export default function EventDetailsPage() {
-  return (
-    <Suspense fallback={<Spinner />}>
-      <EventDetailsContent />
-    </Suspense>
   );
 }
