@@ -6,6 +6,7 @@ import { persist } from 'zustand/middleware';
 //DEV NOTE: This is needed for the userProfile type to work
 type UserProfileType = Prisma.UserGetPayload<{
   include: {
+    cluster: true;
     unit: { include: { cluster: true } };
     position: true;
     user_type: true;

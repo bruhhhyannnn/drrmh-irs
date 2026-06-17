@@ -31,7 +31,7 @@ import toast from 'react-hot-toast';
 import { GoogleSignInForm } from './google-sign-in-form';
 
 type UserProfile = Prisma.UserGetPayload<{
-  include: { unit: { include: { cluster: true } }; position: true; user_type: true };
+  include: { cluster: true; unit: { include: { cluster: true } }; position: true; user_type: true };
 }>;
 
 const BG_IMAGES = [

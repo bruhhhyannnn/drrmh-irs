@@ -193,16 +193,19 @@ export function ReportForm({
     }
   }, [existingMissingPersons]);
 
-  // ─── Automatically fill cluster/unit for Building Marshalls on new reports (ERT Members) ──────
-  useEffect(() => {
-    if (isEdit) return;
-    if (!userProfile?.unit) return;
+  // When the user has a cluster assigned on their profile, it's the source of truth for new reports.
+  const profileClusterId = !isEdit
+    ? (userProfile?.cluster_id ?? userProfile?.unit?.cluster_id ?? null)
+    : null;
+  const profileUnitId = !isEdit ? (userProfile?.unit?.id ?? null) : null;
 
-    const unit = userProfile.unit;
-    setValue('cluster_id', unit.cluster_id);
-    setSelectedClusterId(unit.cluster_id);
-    setValue('unit_id', unit.id);
-  }, [userProfile, isEdit, setValue]);
+  // ─── Auto-fill cluster/unit from user profile on new reports ──────
+  useEffect(() => {
+    if (!profileClusterId) return;
+    setValue('cluster_id', profileClusterId);
+    setSelectedClusterId(profileClusterId);
+    if (profileUnitId) setValue('unit_id', profileUnitId);
+  }, [profileClusterId, profileUnitId, setValue]);
 
   // ─── Submit ──────────────────────────────────────────────────
   const onSubmit = handleSubmit(async (data) => {
@@ -247,6 +250,8 @@ export function ReportForm({
       } else {
         const report = await createReportMutation.mutateAsync({
           ...data,
+          cluster_id: profileClusterId ?? data.cluster_id,
+          unit_id: profileUnitId ?? data.unit_id,
           user_id: userProfile?.id,
           latitude: pickedLat,
           longitude: pickedLng,
@@ -329,7 +334,7 @@ export function ReportForm({
         </h2>
         <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
           This form is intended to collect the status report for the UP Manila – Philippine General
-          Hospital (UPM-PGH) participation in the 1st Quarter 2026 Nationwide Simultaneous
+          Hospital (UPM-PGH) participation in the 2nd Quarter 2026 Nationwide Simultaneous
           Earthquake Drill (NSED). Please provide accurate and complete information on the conduct
           of the drill, including participation, observations, issues encountered, and
           recommendations. The data will be consolidated for internal documentation and reporting to
@@ -389,28 +394,49 @@ export function ReportForm({
                   onChange={(e) => setValue('event_id', e.target.value)}
                 />
               </div>
-              <Select
-                options={clusterOptions}
-                label="Cluster"
-                placeholder="Select cluster..."
-                error={!!errors.cluster_id}
-                hint={errors.cluster_id?.message}
-                value={watch('cluster_id') ?? ''}
-                required
-                onChange={(e) => {
-                  const id = e.target.value;
-                  setSelectedClusterId(id);
-                  setValue('cluster_id', id);
-                  setValue('unit_id', '');
-                }}
-              />
-              <Select
-                options={unitOptions}
-                label="Unit"
-                placeholder="Select unit..."
-                value={watch('unit_id') ?? ''}
-                onChange={(e) => setValue('unit_id', e.target.value)}
-              />
+              {profileClusterId ? (
+                <div className="sm:col-span-2">
+                  <p className="mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Cluster / Unit
+                  </p>
+                  <div className="flex items-center gap-2.5 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 dark:border-white/5 dark:bg-gray-900">
+                    <p className="text-sm text-gray-800 dark:text-gray-200">
+                      {userProfile?.cluster?.name ?? userProfile?.unit?.cluster?.name ?? '—'}
+                      {userProfile?.unit && (
+                        <span className="font-normal text-gray-400">
+                          {' '}
+                          / {userProfile.unit.name}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <Select
+                    options={clusterOptions}
+                    label="Cluster"
+                    placeholder="Select cluster..."
+                    error={!!errors.cluster_id}
+                    hint={errors.cluster_id?.message}
+                    value={watch('cluster_id') ?? ''}
+                    required
+                    onChange={(e) => {
+                      const id = e.target.value;
+                      setSelectedClusterId(id);
+                      setValue('cluster_id', id);
+                      setValue('unit_id', '');
+                    }}
+                  />
+                  <Select
+                    options={unitOptions}
+                    label="Unit"
+                    placeholder="Select unit..."
+                    value={watch('unit_id') ?? ''}
+                    onChange={(e) => setValue('unit_id', e.target.value)}
+                  />
+                </>
+              )}
             </div>
 
             {/* ── Location map picker ─────────────────────── */}
