@@ -1,6 +1,6 @@
 'use client';
 
-import { useOngoingEvents } from '@/app/(admin)/events/use-events';
+import { useOngoingEvent } from '@/app/(admin)/events/use-events';
 import {
   useCasualtyConditions,
   useClusters,
@@ -73,7 +73,7 @@ export function ReportForm({
   const createReportMutation = useCreateReport();
   const updateReportMutation = useUpdateReport();
 
-  const { data: events = [] } = useOngoingEvents();
+  const { data: ongoingEvent } = useOngoingEvent();
   const { data: clusters = [] } = useClusters();
   const { data: casualtyConditions = [] } = useCasualtyConditions();
   const { data: damageConditions = [] } = useDamageConditions();
@@ -107,7 +107,6 @@ export function ReportForm({
 
   // ─── Main form ───────────────────────────────────────────────
   const {
-    register,
     handleSubmit,
     reset,
     setValue,
@@ -192,6 +191,12 @@ export function ReportForm({
       );
     }
   }, [existingMissingPersons]);
+
+  // Auto-set event_id from the single ongoing event on new reports
+  useEffect(() => {
+    if (isEdit || !ongoingEvent) return;
+    setValue('event_id', ongoingEvent.id);
+  }, [ongoingEvent, isEdit, setValue]);
 
   // When the user has a cluster assigned on their profile, it's the source of truth for new reports.
   const profileClusterId = !isEdit
@@ -314,7 +319,6 @@ export function ReportForm({
   });
 
   // ─── Select options ──────────────────────────────────────────
-  const eventOptions = events.map((e) => ({ value: e.id, label: e.name }));
   const clusterOptions = clusters.map((c) => ({ value: c.id, label: c.name }));
   const unitOptions = units.map((u) => ({ value: u.id, label: u.name }));
   const casualtyConditionOptions = casualtyConditions.map((c) => ({ value: c.id, label: c.name }));
@@ -379,65 +383,60 @@ export function ReportForm({
               </div>
             )}
 
-            {/* ── Context ────────────────────────────────── */}
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <div className="sm:col-span-2">
+            {/* ── Event card ─────────────────────────────── */}
+            {ongoingEvent ? (
+              <div>
+                <p className="mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">Event</p>
+                <div className="rounded-lg border border-brand-200 bg-brand-50 px-4 py-3 dark:border-brand-800/40 dark:bg-brand-900/20">
+                  <p className="text-sm font-semibold text-brand-800 dark:text-brand-200">
+                    {ongoingEvent.name}
+                  </p>
+                  {ongoingEvent.started_at && (
+                    <p className="mt-0.5 text-xs text-brand-600 dark:text-brand-400">
+                      {new Date(ongoingEvent.started_at).toLocaleString('en-PH', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-dashed border-gray-200 px-4 py-3 dark:border-white/10">
+                <p className="text-sm text-gray-400">No active event at this time.</p>
+              </div>
+            )}
+
+            {/* ── Cluster/unit selects — admin only (no profile cluster) ── */}
+            {!profileClusterId && (
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <Select
-                  options={eventOptions}
-                  label="Event"
-                  placeholder="Select event..."
-                  error={!!errors.event_id}
-                  hint={errors.event_id?.message}
-                  disabled={!!eventId}
+                  options={clusterOptions}
+                  label="Cluster"
+                  placeholder="Select cluster..."
+                  error={!!errors.cluster_id}
+                  hint={errors.cluster_id?.message}
+                  value={watch('cluster_id') ?? ''}
                   required
-                  value={watch('event_id') ?? ''}
-                  onChange={(e) => setValue('event_id', e.target.value)}
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    setSelectedClusterId(id);
+                    setValue('cluster_id', id);
+                    setValue('unit_id', '');
+                  }}
+                />
+                <Select
+                  options={unitOptions}
+                  label="Unit"
+                  placeholder="Select unit..."
+                  value={watch('unit_id') ?? ''}
+                  onChange={(e) => setValue('unit_id', e.target.value)}
                 />
               </div>
-              {profileClusterId ? (
-                <div className="sm:col-span-2">
-                  <p className="mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Cluster / Unit
-                  </p>
-                  <div className="flex items-center gap-2.5 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 dark:border-white/5 dark:bg-gray-900">
-                    <p className="text-sm text-gray-800 dark:text-gray-200">
-                      {userProfile?.cluster?.name ?? userProfile?.unit?.cluster?.name ?? '—'}
-                      {userProfile?.unit && (
-                        <span className="font-normal text-gray-400">
-                          {' '}
-                          / {userProfile.unit.name}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <Select
-                    options={clusterOptions}
-                    label="Cluster"
-                    placeholder="Select cluster..."
-                    error={!!errors.cluster_id}
-                    hint={errors.cluster_id?.message}
-                    value={watch('cluster_id') ?? ''}
-                    required
-                    onChange={(e) => {
-                      const id = e.target.value;
-                      setSelectedClusterId(id);
-                      setValue('cluster_id', id);
-                      setValue('unit_id', '');
-                    }}
-                  />
-                  <Select
-                    options={unitOptions}
-                    label="Unit"
-                    placeholder="Select unit..."
-                    value={watch('unit_id') ?? ''}
-                    onChange={(e) => setValue('unit_id', e.target.value)}
-                  />
-                </>
-              )}
-            </div>
+            )}
 
             {/* ── Location map picker ─────────────────────── */}
             <div className="border-t border-gray-100 dark:border-white/5" />
@@ -618,7 +617,12 @@ export function ReportForm({
                   Cancel
                 </Button>
               )}
-              <Button type="submit" isLoading={isSubmitting} loadingText="Saving...">
+              <Button
+                type="submit"
+                isLoading={isSubmitting}
+                loadingText="Saving..."
+                disabled={!isEdit && !ongoingEvent}
+              >
                 {isEdit ? 'Update Report' : 'Submit Report'}
               </Button>
             </div>
