@@ -47,15 +47,15 @@ export async function deleteEvent(id: string) {
   revalidatePath('/events');
 }
 
-export async function getOngoingEvents() {
+export async function getOngoingEvent() {
   const statusRow = await prisma.eventStatus.findFirst({
     where: { name: { equals: 'Ongoing', mode: 'insensitive' } },
     select: { id: true },
   });
 
-  if (!statusRow) return [];
+  if (!statusRow) return null;
 
-  return prisma.event.findMany({
+  return prisma.event.findFirst({
     where: { status_id: statusRow.id },
     select: {
       id: true,

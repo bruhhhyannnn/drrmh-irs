@@ -3,7 +3,7 @@ import {
   deleteEvent,
   getEvent,
   getEvents,
-  getOngoingEvents,
+  getOngoingEvent,
   updateEvent,
 } from '@/actions/events';
 import type { Prisma } from '@prisma/client';
@@ -52,10 +52,10 @@ export function useDeleteEvent() {
   });
 }
 
-export function useOngoingEvents() {
+export function useOngoingEvent() {
   return useQuery({
     queryKey: ['events', 'ongoing'],
-    queryFn: getOngoingEvents,
+    queryFn: getOngoingEvent,
     staleTime: 1000 * 60 * 2,
   });
 }
