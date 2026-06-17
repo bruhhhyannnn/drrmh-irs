@@ -9,6 +9,7 @@ datasource db {
 model User {
   id                  String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   auth_id             String        @unique @db.Uuid
+  cluster_id          String?       @db.Uuid
   unit_id             String?       @db.Uuid
   position_id         String?       @db.Uuid
   user_type_id        String        @db.Uuid
@@ -25,6 +26,7 @@ model User {
   activity_logs       ActivityLog[]
   events              Event[]       @relation("CreatedBy")
   reports             Report[]
+  cluster             Cluster?      @relation(fields: [cluster_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   position            Position?     @relation(fields: [position_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   unit                Unit?         @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   user_type           UserType      @relation(fields: [user_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -42,6 +44,7 @@ model Cluster {
   locations         Location[]
   reports           Report[]
   units             Unit[]
+  users             User[]
 
   @@map("clusters")
 }

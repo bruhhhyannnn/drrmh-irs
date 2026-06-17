@@ -12,6 +12,7 @@ export type CreateUserInput = {
   suffix?: string | null;
   username: string;
   email: string;
+  cluster_id?: string | null;
   unit_id?: string | null;
   position_id?: string | null;
   user_type_id: string;
@@ -32,7 +33,12 @@ export async function getUsers(query?: string) {
           ],
         }
       : undefined,
-    include: { unit: { include: { cluster: true } }, position: true, user_type: true },
+    include: {
+      cluster: true,
+      unit: { include: { cluster: true } },
+      position: true,
+      user_type: true,
+    },
     orderBy: { created_at: 'desc' },
   });
 }
@@ -40,14 +46,24 @@ export async function getUsers(query?: string) {
 export async function getUser(id: string) {
   return prisma.user.findUnique({
     where: { id },
-    include: { unit: { include: { cluster: true } }, position: true, user_type: true },
+    include: {
+      cluster: true,
+      unit: { include: { cluster: true } },
+      position: true,
+      user_type: true,
+    },
   });
 }
 
 export async function getUserByAuthId(authId: string) {
   return prisma.user.findUnique({
     where: { auth_id: authId },
-    include: { unit: { include: { cluster: true } }, position: true, user_type: true },
+    include: {
+      cluster: true,
+      unit: { include: { cluster: true } },
+      position: true,
+      user_type: true,
+    },
   });
 }
 
@@ -109,6 +125,7 @@ export async function completeUserProfile(
     custom_position_name?: string;
     first_name?: string;
     last_name?: string;
+    cluster_id?: string;
     unit_id?: string;
   }
 ) {
@@ -128,7 +145,12 @@ export async function completeUserProfile(
   const user = await prisma.user.update({
     where: { id },
     data: { ...rest, position_id: positionId, is_profile_complete: true },
-    include: { unit: { include: { cluster: true } }, position: true, user_type: true },
+    include: {
+      cluster: true,
+      unit: { include: { cluster: true } },
+      position: true,
+      user_type: true,
+    },
   });
   revalidatePath('/');
   return user;

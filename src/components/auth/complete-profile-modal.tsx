@@ -25,9 +25,6 @@ export function CompleteProfileModal() {
   const needsCompletion = !loading && userProfile && !userProfile.is_profile_complete;
   const isOther = positionId === OTHER_VALUE;
 
-  const selectedPosition = positions.find((p) => p.id === positionId);
-  const isBuildingMarshall = selectedPosition?.name === 'Building Marshall';
-
   const positionOptions = [
     ...positions.map((p) => ({ value: p.id, label: p.name })),
     { value: OTHER_VALUE, label: 'Other (please specify)' },
@@ -35,10 +32,7 @@ export function CompleteProfileModal() {
   const clusterOptions = clusters.map((c) => ({ value: c.id, label: c.name }));
   const unitOptions = units.map((u) => ({ value: u.id, label: u.name }));
 
-  const canSave =
-    positionId &&
-    (!isOther || customPosition.trim().length > 0) &&
-    (!isBuildingMarshall || (clusterId && unitId));
+  const canSave = positionId && (!isOther || customPosition.trim().length > 0) && clusterId;
 
   const handleSave = async () => {
     if (!canSave || !userProfile) return;
@@ -48,7 +42,8 @@ export function CompleteProfileModal() {
         ...(isOther
           ? { custom_position_name: customPosition.trim() }
           : { position_id: positionId }),
-        ...(isBuildingMarshall && unitId ? { unit_id: unitId } : {}),
+        cluster_id: clusterId,
+        ...(unitId ? { unit_id: unitId } : {}),
       };
       const updated = await completeUserProfile(userProfile.id, payload);
       setUserProfile(updated);
@@ -102,30 +97,25 @@ export function CompleteProfileModal() {
           </div>
         )}
 
-        {isBuildingMarshall && (
-          <>
-            <Select
-              label="Cluster"
-              placeholder="Select cluster..."
-              options={clusterOptions}
-              value={clusterId}
-              required
-              onChange={(e) => {
-                setClusterId(e.target.value);
-                setUnitId('');
-              }}
-            />
-            <Select
-              label="Building / Unit"
-              placeholder={clusterId ? 'Select unit...' : 'Select cluster first'}
-              options={unitOptions}
-              value={unitId}
-              required
-              disabled={!clusterId}
-              onChange={(e) => setUnitId(e.target.value)}
-            />
-          </>
-        )}
+        <Select
+          label="Cluster"
+          placeholder="Select cluster..."
+          options={clusterOptions}
+          value={clusterId}
+          required
+          onChange={(e) => {
+            setClusterId(e.target.value);
+            setUnitId('');
+          }}
+        />
+        <Select
+          label="Building / Unit"
+          placeholder={clusterId ? 'Select unit...' : 'Select cluster first'}
+          options={unitOptions}
+          value={unitId}
+          disabled={!clusterId}
+          onChange={(e) => setUnitId(e.target.value)}
+        />
 
         <Button
           className="w-full"
