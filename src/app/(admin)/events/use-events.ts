@@ -4,6 +4,7 @@ import {
   getEvent,
   getEvents,
   getOngoingEvent,
+  getOngoingEvents,
   updateEvent,
 } from '@/actions/events';
 import type { Prisma } from '@prisma/client';
@@ -56,6 +57,14 @@ export function useOngoingEvent() {
   return useQuery({
     queryKey: ['events', 'ongoing'],
     queryFn: getOngoingEvent,
+    staleTime: 1000 * 60 * 2,
+  });
+}
+
+export function useOngoingEvents() {
+  return useQuery({
+    queryKey: ['events', 'ongoing-all'],
+    queryFn: getOngoingEvents,
     staleTime: 1000 * 60 * 2,
   });
 }

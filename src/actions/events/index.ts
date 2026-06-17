@@ -70,3 +70,22 @@ export async function getOngoingEvent() {
     orderBy: { started_at: 'desc' },
   });
 }
+
+export async function getOngoingEvents() {
+  const statusRow = await prisma.eventStatus.findFirst({
+    where: { name: { equals: 'Ongoing', mode: 'insensitive' } },
+    select: { id: true },
+  });
+
+  if (!statusRow) return [];
+
+  return prisma.event.findMany({
+    where: { status_id: statusRow.id },
+    select: {
+      id: true,
+      name: true,
+      started_at: true,
+    },
+    orderBy: { started_at: 'desc' },
+  });
+}

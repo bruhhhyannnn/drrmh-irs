@@ -1,7 +1,7 @@
 'use client';
 
 import { upsertDamageCondition } from '@/actions/settings';
-import { useOngoingEvent } from '@/app/(admin)/events/use-events';
+import { useOngoingEvents } from '@/app/(admin)/events/use-events';
 import {
   useCasualtyConditions,
   useClusters,
@@ -25,7 +25,7 @@ import { useAuthStore } from '@/store';
 import { HEADCOUNT_FIELDS } from '@/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
-import { CalendarDays, MapPin, Pencil, Plus, UserRound, Users } from 'lucide-react';
+import { MapPin, Pencil, Plus, UserRound, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -74,7 +74,7 @@ export function ReportForm({
   const createReportMutation = useCreateReport();
   const updateReportMutation = useUpdateReport();
 
-  const { data: ongoingEvent } = useOngoingEvent();
+  const { data: ongoingEvents = [] } = useOngoingEvents();
   const { data: clusters = [] } = useClusters();
   const { data: casualtyConditions = [] } = useCasualtyConditions();
   const { data: damageConditions = [] } = useDamageConditions();
@@ -199,12 +199,6 @@ export function ReportForm({
       );
     }
   }, [existingMissingPersons]);
-
-  // Auto-set event_id from the single ongoing event on new reports
-  useEffect(() => {
-    if (isEdit || !ongoingEvent) return;
-    setValue('event_id', ongoingEvent.id);
-  }, [ongoingEvent, isEdit, setValue]);
 
   // When the user has a cluster assigned on their profile, it's the source of truth for new reports.
   const profileClusterId = !isEdit
@@ -334,6 +328,7 @@ export function ReportForm({
   });
 
   // ─── Select options ──────────────────────────────────────────
+  const eventOptions = ongoingEvents.map((e) => ({ value: e.id, label: e.name }));
   const clusterOptions = clusters.map((c) => ({ value: c.id, label: c.name }));
   const unitOptions = units.map((u) => ({ value: u.id, label: u.name }));
   const casualtyConditionOptions = casualtyConditions.map((c) => ({ value: c.id, label: c.name }));
@@ -380,54 +375,17 @@ export function ReportForm({
         ) : (
           <form onSubmit={onSubmit} className="space-y-7">
             {/* ── Event card ─────────────────────────────── */}
-            {ongoingEvent ? (
-              <div>
-                <p className="mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Reporting for
-                </p>
-                <div className="flex items-start gap-3 rounded-xl border border-brand-200 bg-brand-50 p-4 dark:border-brand-800/40 dark:bg-brand-900/20">
-                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/50">
-                    <CalendarDays size={16} className="text-brand-600 dark:text-brand-400" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-semibold text-brand-900 dark:text-brand-100">
-                        {ongoingEvent.name}
-                      </p>
-                      <span className="shrink-0 rounded-full bg-success-100 px-2 py-0.5 text-xs font-medium text-success-700 dark:bg-success-900/30 dark:text-success-400">
-                        Ongoing
-                      </span>
-                    </div>
-                    {ongoingEvent.started_at && (
-                      <p className="mt-0.5 text-xs text-brand-600 dark:text-brand-400">
-                        Started{' '}
-                        {new Date(ongoingEvent.started_at).toLocaleString('en-PH', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                          hour: 'numeric',
-                          minute: '2-digit',
-                        })}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3 rounded-xl border border-dashed border-gray-200 p-4 dark:border-white/10">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-white/5">
-                  <CalendarDays size={16} className="text-gray-400 dark:text-gray-500" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    No active event
-                  </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">
-                    Submissions are unavailable at this time.
-                  </p>
-                </div>
-              </div>
-            )}
+            <Select
+              options={eventOptions}
+              label="Reporting for"
+              placeholder="Select event..."
+              error={!!errors.event_id}
+              hint={errors.event_id?.message}
+              required
+              disabled={!!eventId}
+              value={watch('event_id') ?? ''}
+              onChange={(e) => setValue('event_id', e.target.value)}
+            />
 
             {/* ── Reporting as ───────────────────────────── */}
             {userProfile && (
@@ -675,12 +633,7 @@ export function ReportForm({
                   Cancel
                 </Button>
               )}
-              <Button
-                type="submit"
-                isLoading={isSubmitting}
-                loadingText="Saving..."
-                disabled={!isEdit && !ongoingEvent}
-              >
+              <Button type="submit" isLoading={isSubmitting} loadingText="Saving...">
                 {isEdit ? 'Update Report' : 'Submit Report'}
               </Button>
             </div>
