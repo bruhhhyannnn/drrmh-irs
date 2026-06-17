@@ -1,5 +1,6 @@
 'use client';
 
+import { upsertDamageCondition } from '@/actions/settings';
 import { useOngoingEvent } from '@/app/(admin)/events/use-events';
 import {
   useCasualtyConditions,
@@ -105,6 +106,12 @@ export function ReportForm({
   const [casualties, setCasualties] = useState<CasualtyRow[]>([]);
   const [missingPersons, setMissingPersons] = useState<MissingPersonRow[]>([]);
 
+  // ─── Structural damage — "Other" handling ────────────────────
+  const OTHER_DAMAGE = '__other__';
+  const [selectedDamageId, setSelectedDamageId] = useState('');
+  const [customDamage, setCustomDamage] = useState('');
+  const isOtherDamage = selectedDamageId === OTHER_DAMAGE;
+
   // ─── Main form ───────────────────────────────────────────────
   const {
     handleSubmit,
@@ -154,6 +161,7 @@ export function ReportForm({
       damage_condition_id: existingReport.damage_condition_id ?? '',
     });
     if (existingReport.cluster_id) setSelectedClusterId(existingReport.cluster_id);
+    if (existingReport.damage_condition_id) setSelectedDamageId(existingReport.damage_condition_id);
     // Restore coordinates if they exist on the existing report
     const r = existingReport as typeof existingReport & {
       latitude?: number | null;
@@ -223,6 +231,13 @@ export function ReportForm({
     }
     setLocationError(false);
     try {
+      // Resolve custom damage condition before saving
+      if (isOtherDamage && customDamage.trim()) {
+        const condition = await upsertDamageCondition(customDamage.trim());
+        setValue('damage_condition_id', condition.id);
+        data.damage_condition_id = condition.id;
+      }
+
       let reportId: string;
       if (isEdit) {
         await updateReportMutation.mutateAsync({
@@ -325,6 +340,7 @@ export function ReportForm({
   const damageConditionOptions = [
     { value: '', label: 'None' },
     ...damageConditions.map((d) => ({ value: d.id, label: d.name })),
+    { value: OTHER_DAMAGE, label: 'Other (please specify)' },
   ];
 
   return (
@@ -596,14 +612,33 @@ export function ReportForm({
             </div>
 
             {/* ── Structural Damage ────────────────────────── */}
-            <div>
+            <div className="space-y-3">
               <Select
                 options={damageConditionOptions}
                 label="Structural Damage"
                 placeholder="Select damage type..."
-                value={watch('damage_condition_id') ?? ''}
-                onChange={(e) => setValue('damage_condition_id', e.target.value)}
+                value={selectedDamageId}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSelectedDamageId(val);
+                  setCustomDamage('');
+                  setValue('damage_condition_id', val === OTHER_DAMAGE ? '' : val);
+                }}
               />
+              {isOtherDamage && (
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Specify damage condition <span className="text-error-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={customDamage}
+                    onChange={(e) => setCustomDamage(e.target.value)}
+                    placeholder="e.g. Partial collapse"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
+                  />
+                </div>
+              )}
             </div>
 
             {/* ── Actions ──────────────────────────────────── */}

@@ -126,6 +126,14 @@ export async function getDamageConditions() {
   });
 }
 
+export async function upsertDamageCondition(name: string) {
+  return prisma.damageCondition.upsert({
+    where: { name },
+    update: {},
+    create: { name },
+  });
+}
+
 export async function getClusters() {
   return prisma.cluster.findMany({
     where: { is_active: true },
