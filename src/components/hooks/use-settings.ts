@@ -99,7 +99,7 @@ export function useEventStatuses() {
 
 export function useDamageConditions() {
   return useQuery({
-    queryKey: ['damage_reports'],
+    queryKey: ['damage_conditions'],
     queryFn: getDamageConditions,
   });
 }

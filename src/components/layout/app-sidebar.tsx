@@ -45,7 +45,7 @@ const navItems: NavItem[] = [
       { name: 'User Types', path: '/settings/user-types' },
       { name: 'Event Statuses', path: '/settings/event-statuses' },
       { name: 'Casualty Conditions', path: '/settings/casualty-conditions' },
-      { name: 'Damage Reports', path: '/settings/damage-reports' },
+      { name: 'Damage Conditions', path: '/settings/damage-conditions' },
     ],
   },
 ];
