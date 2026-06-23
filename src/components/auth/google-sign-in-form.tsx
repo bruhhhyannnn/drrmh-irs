@@ -27,18 +27,10 @@ export function GoogleSignInForm() {
       setError(error.message);
       setIsLoading(false);
     }
-    // On success the browser navigates away
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">ERT Member Report</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Sign in to submit your incident report.
-        </p>
-      </div>
-
+    <div className="space-y-3">
       {(error || domainError) && (
         <div className="bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-400 rounded-lg px-4 py-3 text-sm">
           {domainError
@@ -58,8 +50,6 @@ export function GoogleSignInForm() {
       >
         Continue with Google
       </Button>
-
-      <p className="text-center text-xs text-gray-400">Only ERT Members may use this form.</p>
     </div>
   );
 }
