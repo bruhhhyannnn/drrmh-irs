@@ -1,8 +1,8 @@
 'use client';
 
 import type { getBystanderReports } from '@/actions/emergency-reports';
-import { useDeleteReport } from '@/app/(admin)/reports/use-reports';
 import { PageBreadcrumb } from '@/components/common';
+import { useDeleteReport } from '@/components/hooks/use-reports';
 import { Badge, ConfirmDialog, DataTable, Input, Modal, PageError } from '@/components/ui';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';

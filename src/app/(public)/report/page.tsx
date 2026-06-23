@@ -7,6 +7,7 @@ import {
   PersonModal,
 } from '@/app/(admin)/reports/missing-casualty-modals';
 import { ReportForm } from '@/app/(admin)/reports/report-form';
+import { CompleteProfileModal } from '@/components/auth';
 import {
   useCreateReportCasualty,
   useCreateReportMissingPerson,
@@ -16,9 +17,8 @@ import {
   useReport,
   useReportCasualties,
   useReportMissingPersons,
-} from '@/app/(admin)/reports/use-reports';
-import { useCasualtyConditions } from '@/app/(admin)/settings/use-settings';
-import { CompleteProfileModal } from '@/components/auth';
+} from '@/components/hooks/use-reports';
+import { useCasualtyConditions } from '@/components/hooks/use-settings';
 import { Button, Modal, Spinner } from '@/components/ui';
 import { cn, getInitials, supabase } from '@/lib';
 import { useAuthStore, useThemeStore } from '@/store';

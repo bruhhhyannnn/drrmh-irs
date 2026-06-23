@@ -1,11 +1,11 @@
 'use client';
 
 import { completeUserProfile } from '@/actions/users';
-import { useClusters, usePositions, useUnits } from '@/app/(admin)/settings/use-settings';
 import { Button, Modal, Select } from '@/components/ui';
 import { useAuthStore } from '@/store';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import { useClusters, usePositions, useUnits } from '../hooks/use-settings';
 
 const OTHER_VALUE = '__other__';
 

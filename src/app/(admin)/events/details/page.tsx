@@ -1,9 +1,9 @@
 'use client';
 
 import type { getReportsByEvent } from '@/actions/reports';
-import { useEvent } from '@/app/(admin)/events/use-events';
-import { useEventReports } from '@/app/(admin)/reports/use-reports';
 import { PageBreadcrumb } from '@/components/common';
+import { useEvent } from '@/components/hooks/use-events';
+import { useEventReports } from '@/components/hooks/use-reports';
 import { Badge, Spinner } from '@/components/ui';
 import { getInitials } from '@/lib';
 import { useThemeStore } from '@/store';

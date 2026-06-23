@@ -1,12 +1,8 @@
 'use client';
 
-import {
-  useClusters,
-  usePositions,
-  useUnits,
-  useUserTypes,
-} from '@/app/(admin)/settings/use-settings';
 import { PageBreadcrumb } from '@/components/common';
+import { useClusters, usePositions, useUnits, useUserTypes } from '@/components/hooks/use-settings';
+import { useCreateUser, useUpdateUser, useUser } from '@/components/hooks/use-users';
 import { Button, Input, Label, Select, Spinner } from '@/components/ui';
 import {
   userCreateSchema,
@@ -19,7 +15,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { useCreateUser, useUpdateUser, useUser } from './use-users';
 
 interface UserFormProps {
   editId?: string;

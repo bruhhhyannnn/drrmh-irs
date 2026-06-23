@@ -1,13 +1,13 @@
 'use client';
 
-import { useEvents } from '@/app/(admin)/events/use-events';
+import { PageBreadcrumb } from '@/components/common';
+import { useEvents } from '@/components/hooks/use-events';
 import {
   useReportClusterSummary,
   useReports,
   useReportTotals,
-} from '@/app/(admin)/reports/use-reports';
-import { useUsers } from '@/app/(admin)/users/use-users';
-import { PageBreadcrumb } from '@/components/common';
+} from '@/components/hooks/use-reports';
+import { useUsers } from '@/components/hooks/use-users';
 import { Badge } from '@/components/ui';
 import { useThemeStore } from '@/store';
 import { format } from 'date-fns';

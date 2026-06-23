@@ -9,7 +9,7 @@ import {
   useClusters,
   useDamageConditions,
   useUnits,
-} from '@/app/(admin)/settings/use-settings';
+} from '@/components/hooks/use-settings';
 import { Button, Input, Select, Textarea } from '@/components/ui';
 import { BystanderReportFormData, cn } from '@/lib';
 import { CheckCircle, Loader2, MapPin, Plus, Trash2 } from 'lucide-react';

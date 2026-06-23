@@ -2,12 +2,12 @@
 
 import type { getUsers } from '@/actions/users';
 import { PageBreadcrumb } from '@/components/common';
+import { useDeleteUser, useToggleUserStatus, useUsers } from '@/components/hooks/use-users';
 import { Badge, Button, ConfirmDialog, DataTable, Input, Modal, PageError } from '@/components/ui';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Plus, Search, Trash2, UserPen } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { useDeleteUser, useToggleUserStatus, useUsers } from './use-users';
 import { UserForm } from './user-form';
 
 // TODO: revalidate

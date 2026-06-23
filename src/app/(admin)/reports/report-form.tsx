@@ -1,14 +1,25 @@
 'use client';
 
 import { upsertDamageCondition } from '@/actions/settings';
-import { useOngoingEvents } from '@/app/(admin)/events/use-events';
+import { PageBreadcrumb } from '@/components/common';
+import { useOngoingEvents } from '@/components/hooks/use-events';
+import {
+  useCreateReport,
+  useCreateReportCasualty,
+  useCreateReportMissingPerson,
+  useDeleteReportCasualty,
+  useDeleteReportMissingPerson,
+  useReport,
+  useReportCasualties,
+  useReportMissingPersons,
+  useUpdateReport,
+} from '@/components/hooks/use-reports';
 import {
   useCasualtyConditions,
   useClusters,
   useDamageConditions,
   useUnits,
-} from '@/app/(admin)/settings/use-settings';
-import { PageBreadcrumb } from '@/components/common';
+} from '@/components/hooks/use-settings';
 import {
   Button,
   Input,
@@ -36,17 +47,6 @@ import {
   MissingPersonRow,
   PersonModal,
 } from './missing-casualty-modals';
-import {
-  useCreateReport,
-  useCreateReportCasualty,
-  useCreateReportMissingPerson,
-  useDeleteReportCasualty,
-  useDeleteReportMissingPerson,
-  useReport,
-  useReportCasualties,
-  useReportMissingPersons,
-  useUpdateReport,
-} from './use-reports';
 
 // ─── Main form ────────────────────────────────────────────────────────────────
 interface ReportFormProps {

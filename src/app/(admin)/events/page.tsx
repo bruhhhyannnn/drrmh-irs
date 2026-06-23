@@ -21,9 +21,9 @@ import { Eye, FileSpreadsheet, Pencil, Plus, Search, Trash2 } from 'lucide-react
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useDeleteEvent, useEvents } from '../../../components/hooks/use-events';
 import { EventForm } from './event-form';
 import { exportEventToExcel } from './export-event';
-import { useDeleteEvent, useEvents } from './use-events';
 
 export default function EventsPage() {
   const [query, setQuery] = useState('');

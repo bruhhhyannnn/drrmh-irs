@@ -2,6 +2,7 @@
 
 import type { getReports } from '@/actions/reports';
 import { PageBreadcrumb } from '@/components/common';
+import { useDeleteReport, useReports } from '@/components/hooks/use-reports';
 import {
   Badge,
   Button,
@@ -17,7 +18,6 @@ import { format } from 'date-fns';
 import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ReportForm } from './report-form';
-import { useDeleteReport, useReports } from './use-reports';
 
 type ReportRow = Awaited<ReturnType<typeof getReports>>['data'][number];
 
