@@ -31,9 +31,8 @@ import {
   Spinner,
   useMap,
 } from '@/components/ui';
-import { reportSchema, type ReportFormData } from '@/lib';
+import { HEADCOUNT_FIELDS, reportSchema, type ReportFormData } from '@/lib';
 import { useAuthStore } from '@/store';
-import { HEADCOUNT_FIELDS } from '@/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { MapPin, Pencil, Plus, UserRound, Users } from 'lucide-react';

@@ -3,7 +3,7 @@
 import { getEvent } from '@/actions/events';
 import type { getReportsByEvent } from '@/actions/reports';
 import { getReportsByEvent as fetchReportsByEvent } from '@/actions/reports';
-import { CLUSTERS, HEADCOUNT_FIELDS } from '@/types';
+import { CLUSTERS, HEADCOUNT_FIELDS } from '@/lib';
 import { format } from 'date-fns';
 import ExcelJS from 'exceljs';
 

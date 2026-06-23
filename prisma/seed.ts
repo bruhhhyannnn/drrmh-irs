@@ -7,7 +7,7 @@ import {
   POSITIONS,
   UNITS,
   USER_TYPES,
-} from '@/types';
+} from '@/lib';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
 import 'dotenv/config';
