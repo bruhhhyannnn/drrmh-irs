@@ -28,7 +28,6 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { GoogleSignInForm } from './google-sign-in-form';
 
 type UserProfile = Prisma.UserGetPayload<{
   include: { cluster: true; unit: { include: { cluster: true } }; position: true; user_type: true };
@@ -54,6 +53,13 @@ export default function ErtReportPage() {
     const timer = setInterval(() => setCurrent((p) => (p + 1) % track.length), 4000);
     return () => clearInterval(timer);
   }, []);
+
+  // Redirect unauthenticated users to sign in
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/signin');
+    }
+  }, [loading, user, router]);
 
   // Redirect Admins / Super Admins to the dashboard
   useEffect(() => {
@@ -90,8 +96,8 @@ export default function ErtReportPage() {
     </div>
   );
 
-  // ── Loading ──────────────────────────────────────────────────
-  if (loading || (user && !userProfile) || (userProfile && isReportLoading)) {
+  // ── Loading / redirect in progress ──────────────────────────
+  if (loading || !user || (user && !userProfile) || (userProfile && isReportLoading)) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         {Background}
@@ -100,34 +106,6 @@ export default function ErtReportPage() {
     );
   }
 
-  // ── Unauthenticated ──────────────────────────────────────────
-  if (!user) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-6">
-        {Background}
-        <div className="w-full max-w-md">
-          <div className="mb-8 flex flex-col items-center gap-3">
-            <Image
-              src="/irs-logo.png"
-              alt="IRS"
-              width={84}
-              height={84}
-              className="object-contain drop-shadow-lg"
-            />
-            <div className="text-center">
-              <p className="text-lg font-bold text-white drop-shadow">DRRM-H IRS</p>
-              <p className="text-sm text-white/70">Incident Reporting System</p>
-            </div>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-white p-8 shadow-2xl backdrop-blur-sm dark:bg-gray-900">
-            <GoogleSignInForm />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // userProfile is guaranteed non-null past this point
   const profile = userProfile!;
 
   // ── Already submitted — status card ─────────────────────────

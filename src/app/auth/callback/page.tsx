@@ -55,7 +55,7 @@ export default function AuthCallbackPage() {
       } catch (err) {
         if (err instanceof Error && err.message === 'DOMAIN_NOT_ALLOWED') {
           await supabase.auth.signOut();
-          router.replace('/report?error=domain');
+          router.replace('/signin?error=domain');
           return;
         }
         console.error('Provisioning error:', err);
@@ -90,7 +90,7 @@ export default function AuthCallbackPage() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4">
         <p className="text-error-500 text-sm">{error}</p>
-        <a href="/report" className="text-brand-500 text-sm underline">
+        <a href="/signin" className="text-brand-500 text-sm underline">
           Try again
         </a>
       </div>

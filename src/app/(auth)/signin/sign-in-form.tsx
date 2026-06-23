@@ -1,10 +1,11 @@
 'use client';
 
+import { GoogleSignInForm } from '@/components/auth/google-sign-in-form';
 import { Button, Input, Label } from '@/components/ui';
 import { SignInFormData, signInSchema, supabase } from '@/lib';
 import { useAuthStore, useThemeStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertTriangle, ArrowRight, ClipboardList, Eye, EyeOff } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -58,16 +59,27 @@ export function SignInForm() {
   };
 
   return (
-    <div className="w-full max-w-md space-y-4">
-      {/* Sign in form */}
-      <div className="space-y-6">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Sign in</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Enter your credentials to access the IRS dashboard
-          </p>
-        </div>
+    <div className="w-full max-w-md space-y-5">
+      {/* Title */}
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Welcome</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          ERT Members sign in with Google · Admins use email and password
+        </p>
+      </div>
 
+      {/* Google sign-in */}
+      <GoogleSignInForm />
+
+      {/* Divider */}
+      <div className="relative flex items-center gap-3">
+        <div className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
+        <span className="text-xs text-gray-400">or sign in with email</span>
+        <div className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
+      </div>
+
+      {/* Email / password form */}
+      <div className="space-y-4">
         {authError && (
           <div className="bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-400 rounded-lg px-4 py-3 text-sm">
             {authError}
@@ -125,58 +137,29 @@ export function SignInForm() {
             Sign in
           </Button>
         </form>
+      </div>
 
-        <div className="relative flex items-center gap-3">
-          <div className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
-          <span className="text-xs text-gray-400">or</span>
-          <div className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
+      {/* Bystander quick link */}
+      <Link
+        href="/bystander-report"
+        className="group border-brand-200 hover:border-brand-400 dark:border-brand-700 dark:hover:border-brand-600 flex items-center gap-4 rounded-xl border bg-white p-4 transition-all duration-200 hover:shadow-md dark:bg-white/5"
+      >
+        <div className="bg-brand-50 dark:bg-brand-950 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg">
+          <div className="animate-pulse">
+            <AlertTriangle size={20} color={theme === 'dark' ? '#d65a5a' : '#a11d1d'} />
+          </div>
         </div>
-      </div>
-
-      {/* Quick links */}
-      <div className="space-y-2">
-        <Link
-          href="/bystander-report"
-          className="group border-brand-200 hover:border-brand-400 dark:border-brand-700 dark:hover:border-brand-600 flex items-center gap-4 rounded-xl border bg-white p-4 transition-all duration-200 hover:shadow-md dark:bg-white/5"
-        >
-          <div className="bg-brand-50 dark:bg-brand-950 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg">
-            <div className="animate-pulse">
-              <AlertTriangle size={20} color={theme === 'dark' ? '#d65a5a' : '#a11d1d'} />
-            </div>
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">
-              Report an Incident
-            </p>
-            <p className="text-xs text-gray-400 dark:text-gray-500">
-              Anonymous submission — no account needed
-            </p>
-          </div>
-          <ArrowRight
-            size={16}
-            className="group-hover:text-brand-500 dark:group-hover:text-brand-500 shrink-0 text-gray-300 transition-transform duration-200 group-hover:translate-x-0.5 dark:text-gray-600"
-          />
-        </Link>
-
-        <Link
-          href="/report"
-          className="group flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 transition-all duration-200 hover:border-gray-300 hover:shadow-md dark:border-gray-700 dark:bg-white/5 dark:hover:border-gray-600"
-        >
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
-            <ClipboardList size={20} className="text-gray-500 dark:text-gray-400" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">NSED Report</p>
-            <p className="text-xs text-gray-400 dark:text-gray-500">
-              ERT Members only — sign in with Google
-            </p>
-          </div>
-          <ArrowRight
-            size={16}
-            className="shrink-0 text-gray-300 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-gray-500 dark:text-gray-600 dark:group-hover:text-gray-400"
-          />
-        </Link>
-      </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">Report an Incident</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            Anonymous submission — no account needed
+          </p>
+        </div>
+        <ArrowRight
+          size={16}
+          className="group-hover:text-brand-500 dark:group-hover:text-brand-500 shrink-0 text-gray-300 transition-transform duration-200 group-hover:translate-x-0.5 dark:text-gray-600"
+        />
+      </Link>
     </div>
   );
 }
