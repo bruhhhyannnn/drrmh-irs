@@ -140,6 +140,11 @@ export const userTypeSchema = z.object({
   is_active: z.boolean().default(true),
 });
 
+export const campusSchema = z.object({
+  name: z.string().min(1, 'Campus name is required'),
+  is_active: z.boolean().default(true),
+});
+
 export const eventStatusSchema = z.object({
   name: z.string().min(1, 'Status name is required'),
   is_active: z.boolean().default(true),
@@ -161,6 +166,7 @@ export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 export type UpdatePasswordFormData = z.infer<typeof updatePasswordSchema>;
 export type UserCreateFormData = z.infer<typeof userCreateSchema>;
 export type UserEditFormData = z.infer<typeof userEditSchema>;
+export type CampusFormData = z.infer<typeof campusSchema>;
 export type EventFormData = z.infer<typeof eventSchema>;
 export type ReportFormData = z.infer<typeof reportSchema>;
 export type MissingPersonFormData = z.infer<typeof missingPersonSchema>;

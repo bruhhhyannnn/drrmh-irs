@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   ScrollText,
   Settings,
+  University,
   Users,
 } from 'lucide-react';
 import Image from 'next/image';
@@ -28,6 +29,7 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { icon: <LayoutDashboard size={20} />, name: 'Home', path: '/dashboard' },
+  { icon: <University size={20} />, name: 'Campus', path: '/campus' },
   { icon: <CalendarDays size={20} />, name: 'Events', path: '/events' },
   { icon: <BarChart2 size={20} />, name: 'Reports', path: '/reports' },
   { icon: <AlertTriangle size={20} />, name: 'Bystander Reports', path: '/emergency-reports' },
