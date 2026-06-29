@@ -5,7 +5,7 @@ import type { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
 export async function getCampuses(query?: string) {
-  return prisma.cluster.findMany({
+  return prisma.campus.findMany({
     where: { is_active: true },
     orderBy: { name: 'asc' },
   });

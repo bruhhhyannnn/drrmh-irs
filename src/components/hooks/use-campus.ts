@@ -42,7 +42,7 @@ export function useUpdateCampus() {
   });
 }
 
-export function useDeleteEvent() {
+export function useDeleteCampus() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteCampus(id),
