@@ -8,6 +8,7 @@ import {
 } from '@/components/hooks/use-settings';
 import { Button, Input, Label, Select } from '@/components/ui';
 import {
+  campusSchema,
   casualtyConditionSchema,
   clusterSchema,
   damageConditionSchema,
@@ -24,6 +25,7 @@ import { z } from 'zod';
 
 const SCHEMA_MAP = {
   clusters: clusterSchema,
+  campus: campusSchema,
   units: unitSchema,
   locations: locationSchema,
   positions: positionSchema,
@@ -32,6 +34,9 @@ const SCHEMA_MAP = {
   casualty_conditions: casualtyConditionSchema,
   damage_conditions: damageConditionSchema,
 } as const;
+
+// Tables that require a campus_id foreign key
+const NEEDS_CAMPUS: SettingsTable[] = ['clusters'];
 
 // Tables that require a cluster_id foreign key
 const NEEDS_CLUSTER: SettingsTable[] = ['units', 'locations'];
@@ -49,9 +54,11 @@ interface SettingsFormProps {
 export function SettingsForm({ title, table, editId, onSuccess, onCancel }: SettingsFormProps) {
   const isEdit = !!editId;
   const needsCluster = NEEDS_CLUSTER.includes(table);
+  const needsCampus = NEEDS_CAMPUS.includes(table);
 
   const { data: items } = useSettingsTable(table);
   const { data: clusters = [] } = useSettingsTable('clusters');
+  const { data: campus = [] } = useSettingsTable('campus');
   const createMutation = useCreateSetting(table);
   const updateMutation = useUpdateSetting(table);
 
@@ -72,10 +79,11 @@ export function SettingsForm({ title, table, editId, onSuccess, onCancel }: Sett
           name: String(item.name ?? ''),
           is_active: Boolean(item.is_active),
           ...(needsCluster && { cluster_id: String(item.cluster_id ?? '') }),
+          ...(needsCampus && { campus_id: String(item.campus_id ?? '') }),
         } as AnyFormData);
       }
     }
-  }, [isEdit, items, editId, reset, needsCluster]);
+  }, [isEdit, items, editId, reset, needsCluster, needsCampus]);
 
   const onSubmit = async (data: AnyFormData) => {
     if (isEdit) {
@@ -92,8 +100,14 @@ export function SettingsForm({ title, table, editId, onSuccess, onCancel }: Sett
     label: c.name,
   }));
 
+  const campusOptions = (campus as { id: string; name: string }[]).map((c) => ({
+    value: c.id,
+    label: c.name,
+  }));
+
   const nameError = (errors as Record<string, { message?: string }>).name;
   const clusterError = (errors as Record<string, { message?: string }>).cluster_id;
+  const campusError = (errors as Record<string, { message?: string }>).campus_id;
 
   return (
     <div className="space-y-6">
@@ -120,6 +134,18 @@ export function SettingsForm({ title, table, editId, onSuccess, onCancel }: Sett
             error={!!clusterError}
             hint={clusterError?.message}
             {...register('cluster_id')}
+          />
+        )}
+
+        {needsCampus && (
+          <Select
+            label="Campus"
+            required
+            options={campusOptions}
+            placeholder="Select campus..."
+            error={!!campusError}
+            hint={campusError?.message}
+            {...register('campus_id')}
           />
         )}
 

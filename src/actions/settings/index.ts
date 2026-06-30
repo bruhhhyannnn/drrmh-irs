@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 
 export type SettingsTable =
   | 'clusters'
+  | 'campus'
   | 'units'
   | 'locations'
   | 'positions'
@@ -16,6 +17,7 @@ export type SettingsTable =
 
 const MODEL_MAP = {
   clusters: 'cluster',
+  campus: 'campus',
   units: 'unit',
   locations: 'location',
   positions: 'position',
@@ -27,6 +29,7 @@ const MODEL_MAP = {
 
 const TITLE_MAP: Record<SettingsTable, string> = {
   clusters: 'Clusters',
+  campus: 'Campus',
   units: 'Units',
   locations: 'Locations',
   positions: 'Positions',
@@ -134,8 +137,19 @@ export async function upsertDamageCondition(name: string) {
   });
 }
 
-export async function getClusters() {
+export async function getClusters(campusId?: string) {
   return prisma.cluster.findMany({
+    where: {
+      is_active: true,
+      ...(campusId ? { campus_id: campusId } : undefined),
+    },
+    include: { campus: { select: { name: true } } },
+    orderBy: { created_at: 'asc' },
+  });
+}
+
+export async function getCampus() {
+  return prisma.campus.findMany({
     where: { is_active: true },
     orderBy: { name: 'asc' },
   });

@@ -1,6 +1,7 @@
 import {
   createSettingsItem,
   deleteSettingsItem,
+  getCampus,
   getCasualtyConditions,
   getClusters,
   getDamageConditions,
@@ -48,6 +49,13 @@ export function useDeleteSetting(table: SettingsTable) {
 }
 
 // Individual Settings Item
+export function useCampus() {
+  return useQuery({
+    queryKey: ['campus'],
+    queryFn: getCampus,
+  });
+}
+
 export function useUnits(clusterId?: string) {
   return useQuery({
     queryKey: ['units', clusterId],
@@ -62,10 +70,10 @@ export function useCasualtyConditions() {
   });
 }
 
-export function useClusters() {
+export function useClusters(campusId?: string) {
   return useQuery({
-    queryKey: ['clusters'],
-    queryFn: getClusters,
+    queryKey: ['clusters', campusId],
+    queryFn: () => getClusters(campusId),
   });
 }
 
