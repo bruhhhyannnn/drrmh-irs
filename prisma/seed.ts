@@ -1459,7 +1459,11 @@ async function main() {
 
   // Clusters
   await prisma.cluster.createMany({
-    data: CLUSTERS.map((name) => ({ name, is_active: true })),
+    data: CLUSTERS.map((name) => ({
+      name,
+      campus_id: '6280d602-20a9-4ae0-99fd-a62880428d75',
+      is_active: true,
+    })),
     skipDuplicates: true,
   });
   console.log(`  clusters: ${CLUSTERS.length}`);
