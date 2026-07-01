@@ -39,6 +39,11 @@ function CampusDetailsContent() {
   const [eventsDropdownOpen, setEventsDropdownOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
+  const [clustersDropdownOpen, setClustersDropdownOpen] = useState(false);
+  const [selectedCluster, setSelectedCluster] = useState(null);
+  const [unitsDropdownOpen, setUnitsDropdownOpen] = useState(false);
+  const [selectedUnit, setSelectedUnit] = useState(null);
+
   const { data: event } = useCampusHeadcountPerEvent(selectedEvent?.id ?? '', campusId ?? '');
   const headcountPerEventData = [
     {
@@ -106,6 +111,13 @@ function CampusDetailsContent() {
     );
   }
 
+  if (loadingCampusEvents)
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <Spinner />
+      </div>
+    );
+
   return (
     <div className="space-y-6">
       <PageBreadcrumb pageTitle="Campus Details" />
@@ -140,13 +152,14 @@ function CampusDetailsContent() {
           ))}
         </Dropdown>
 
+        {/* Charts */}
         {selectedEvent && (
           <div className="mt-5">
             <div className="flex flex-col rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-900">
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                {selectedEvent.name}
+                {campus.name} {selectedEvent.name} Demographics
               </h1>
-              <div className="mt-2">
+              <div className="mt-2 flex justify-between">
                 {selectedEvent.status.name && (
                   <Badge
                     color={
@@ -157,54 +170,120 @@ function CampusDetailsContent() {
                           : 'warning'
                     }
                     size="sm"
+                    className="h-6"
                   >
                     {selectedEvent.status.name}
                   </Badge>
                 )}
               </div>
-              <div className="flex flex-wrap flex-1 items-center justify-center">
+
+              {/* Headcount Pie Charts */}
+              <div className="flex flex-wrap flex-1 items-center justify-center mt-4">
                 {['completed', 'ongoing'].includes(
                   selectedEvent?.status?.name?.toLowerCase() ?? ''
                 ) ? (
                   <>
                     {headcountPerEventData.length > 0 && totalCount > 0 ? (
                       <div>
-                        <ResponsiveContainer width="100%" height={200}>
-                          <PieChart>
-                            <Pie
-                              data={headcountPerEventData}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={55}
-                              outerRadius={80}
-                              paddingAngle={5}
-                              dataKey="value"
-                              stroke="none"
-                              cornerRadius={4}
-                            >
-                              {headcountPerEventData.map((_, index) => (
-                                <Cell
-                                  key={index}
-                                  fill={colors(index, headcountPerEventData.length)}
+                        <div className="flex flex-wrap">
+                          <div>
+                            {/* Clusters Dropdown */}
+                            <div>
+                              <button
+                                onClick={() => setClustersDropdownOpen((p) => !p)}
+                                className="dropdown-toggle gap-2 flex items-center text-gray-700 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 shadow-theme-xs h-6 rounded-lg border bg-gray-50 px-4 focus:ring-3 focus:outline-none"
+                              >
+                                <span className="text-sm font-medium lg:block">Select Cluster</span>
+                                <ChevronDown
+                                  size={16}
+                                  className={`transition-transform duration-200 ${clustersDropdownOpen ? 'rotate-180' : ''}`}
                                 />
-                              ))}
-                            </Pie>
-                            <Tooltip
-                              contentStyle={{
-                                background:
-                                  theme === 'dark'
-                                    ? 'rgba(17,24,39,0.95)'
-                                    : 'rgba(255,255,255,0.95)',
-                                border:
-                                  theme === 'dark' ? '1px solid #374151' : '1px solid #e5e7eb',
-                                borderRadius: '8px',
-                                color: theme === 'dark' ? '#f9fafb' : '#111827',
-                                fontSize: '14px',
-                              }}
-                              itemStyle={{ color: theme === 'dark' ? '#f9fafb' : '#111827' }}
-                            />
-                          </PieChart>
-                        </ResponsiveContainer>
+                              </button>
+
+                              <Dropdown
+                                isOpen={clustersDropdownOpen}
+                                onClose={() => setClustersDropdownOpen(false)}
+                                className="w-60 p-2 left-4"
+                              >
+                                {campusEvents.map((e) => (
+                                  <DropdownItem key={e.id} onClick={() => handleSelect(e)}>
+                                    <div className="items-start border-b border-gray-100 pb-1 dark:border-gray-800">
+                                      <p className="text-start text-sm font-medium truncate text-gray-900 dark:text-white">
+                                        {e.name}
+                                      </p>
+                                    </div>
+                                  </DropdownItem>
+                                ))}
+                              </Dropdown>
+                            </div>
+
+                            {/* Units Dropdown */}
+                            <div className="mt-4">
+                              <button
+                                onClick={() => setUnitsDropdownOpen((p) => !p)}
+                                className="dropdown-toggle gap-2 flex items-center text-gray-700 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 shadow-theme-xs h-6 rounded-lg border bg-gray-50 px-4 focus:ring-3 focus:outline-none"
+                              >
+                                <span className="text-sm font-medium lg:block">Select Unit</span>
+                                <ChevronDown
+                                  size={16}
+                                  className={`transition-transform duration-200 ${unitsDropdownOpen ? 'rotate-180' : ''}`}
+                                />
+                              </button>
+
+                              <Dropdown
+                                isOpen={unitsDropdownOpen}
+                                onClose={() => setUnitsDropdownOpen(false)}
+                                className="w-60 p-2 left-4"
+                              >
+                                {campusEvents.map((e) => (
+                                  <DropdownItem key={e.id} onClick={() => handleSelect(e)}>
+                                    <div className="items-start border-b border-gray-100 pb-1 dark:border-gray-800">
+                                      <p className="text-start text-sm font-medium truncate text-gray-900 dark:text-white">
+                                        {e.name}
+                                      </p>
+                                    </div>
+                                  </DropdownItem>
+                                ))}
+                              </Dropdown>
+                            </div>
+                          </div>
+                          <ResponsiveContainer width="50%" height={200}>
+                            <PieChart>
+                              <Pie
+                                data={headcountPerEventData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={55}
+                                outerRadius={80}
+                                paddingAngle={5}
+                                dataKey="value"
+                                stroke="none"
+                                cornerRadius={4}
+                              >
+                                {headcountPerEventData.map((_, index) => (
+                                  <Cell
+                                    key={index}
+                                    fill={colors(index, headcountPerEventData.length)}
+                                  />
+                                ))}
+                              </Pie>
+                              <Tooltip
+                                contentStyle={{
+                                  background:
+                                    theme === 'dark'
+                                      ? 'rgba(17,24,39,0.95)'
+                                      : 'rgba(255,255,255,0.95)',
+                                  border:
+                                    theme === 'dark' ? '1px solid #374151' : '1px solid #e5e7eb',
+                                  borderRadius: '8px',
+                                  color: theme === 'dark' ? '#f9fafb' : '#111827',
+                                  fontSize: '14px',
+                                }}
+                                itemStyle={{ color: theme === 'dark' ? '#f9fafb' : '#111827' }}
+                              />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
                         <div className="flex flex-wrap justify-center gap-2 w-full mt-2">
                           {headcountPerEventData.map((entry, index) => (
                             <div key={index} className="flex items-center gap-1">
@@ -214,7 +293,9 @@ function CampusDetailsContent() {
                                   backgroundColor: colors(index, headcountPerEventData.length),
                                 }}
                               />
-                              <span className="text-sm">{entry.name}</span>
+                              <span className="text-sm text-gray-500 dark:text-gray-400">
+                                {entry.name}
+                              </span>
                             </div>
                           ))}
                         </div>
@@ -231,6 +312,9 @@ function CampusDetailsContent() {
                   </div>
                 )}
               </div>
+
+              {/* Damage Condtion Pie Charts */}
+              <div className="flex flex-wrap flex-1 items-center justify-center"></div>
             </div>
           </div>
         )}
