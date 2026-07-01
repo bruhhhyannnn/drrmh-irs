@@ -42,7 +42,7 @@ export interface Event {
   };
 }
 
-export async function getEvents(): Promise<Event[]> {
+export async function getCampusEvents(query?: string) {
   const completedStatus = await prisma.eventStatus.findFirst({
     where: { name: { equals: 'completed', mode: 'insensitive' } },
     select: { id: true },
@@ -62,10 +62,10 @@ export async function getEvents(): Promise<Event[]> {
   return [...completed, ...others];
 }
 
-export async function getCampusHeadcountPerEvent(eventId: string) {
+export async function getCampusHeadcountPerEvent(eventId: string, campusId: string) {
   const counts = await prisma.report.groupBy({
     by: ['event_id', 'cluster_id'],
-    where: { event_id: eventId },
+    where: { event_id: eventId, cluster: { campus_id: campusId } },
     _sum: {
       faculty_members: true,
       admin_members: true,
