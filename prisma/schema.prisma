@@ -41,7 +41,7 @@ model Cluster {
   is_active         Boolean             @default(true)
   created_at        DateTime            @default(now()) @db.Timestamptz(6)
   updated_at        DateTime            @default(now()) @updatedAt @db.Timestamptz(6)
-  campus_id         String              @default(dbgenerated("'6280d602-20a9-4ae0-99fd-a62880428d75'::uuid")) @db.Uuid
+  campus_id         String              @db.Uuid
   bystander_reports bystander_reports[]
   campus            campus              @relation(fields: [campus_id], references: [id], onDelete: Cascade)
   locations         Location[]
