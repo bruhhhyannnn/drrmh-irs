@@ -42,33 +42,6 @@ const STATUS_COLORS: Record<string, string> = {
   unknown: '#9ca3af',
 };
 
-const HEADCOUNT_COLORS: Record<string, string> = {
-  faculty_members: '#156082',
-  students: '#0f9ed5',
-  philcare_staff: '#d97706',
-  admin_members: '#e97132',
-  reps_members: '#bd6bb3',
-  security_personnel: '#5e9766',
-  construction_workers: '#f09c70',
-  tenants: '#83c16d',
-  health_workers: '#15608a',
-  non_academic_staff: '#4e972e',
-  guests: '#902b993',
-};
-
-/**   { key: 'faculty_members', label: 'Faculty Members' },
-  { key: 'admin_members', label: 'Administrative Members' },
-  { key: 'reps_members', label: 'REPS Members' },
-  { key: 'ra_members', label: 'RA Members' },
-  { key: 'students', label: 'Students' },
-  { key: 'philcare_staff', label: 'Philcare Staff' },
-  { key: 'security_personnel', label: 'Security Personnel' },
-  { key: 'construction_workers', label: 'Construction Workers' },
-  { key: 'tenants', label: 'Tenants' },
-  { key: 'health_workers', label: 'Health Workers' },
-  { key: 'non_academic_staff', label: 'Non-Academic Staff' },
-  { key: 'guests', label: 'Visitors / Guests / Patients' }, */
-
 export default function DashboardPage() {
   const { data: events } = useEvents();
   const { data: reportsData } = useReports(1, '');
