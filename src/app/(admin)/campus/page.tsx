@@ -31,7 +31,7 @@ export default function CampusPage() {
     'UP Manila': '/up-manila-logo.png',
     'UP Diliman': '/up-diliman-logo.png',
     'UP Baguio': '/up-baguio-logo.png',
-    'UP Los Banos': '/up-losbanos-logo.png',
+    'UP Los Baños': '/up-losbanos-logo.png',
     'UP Visayas': '/up-visayas-logo.png',
     'UP Mindanao': '/up-mindanao-logo.png',
     'UP Tacloban': '/up-tacloban-logo.png',
