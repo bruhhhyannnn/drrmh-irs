@@ -88,7 +88,7 @@ export default function CampusPage() {
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <Link
-                      href={`/campus/details`}
+                      href={`/campus/details?id=${campus.id}`}
                       className="hover:text-brand-600 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100"
                     >
                       <Eye size={17} />

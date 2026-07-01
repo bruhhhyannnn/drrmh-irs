@@ -3,8 +3,8 @@ import {
   deleteCampus,
   getCampus,
   getCampuses,
+  getCampusEvents,
   getCampusHeadcountPerEvent,
-  getEvents,
   updateCampus,
 } from '@/actions/campus-table';
 import type { Prisma } from '@prisma/client';
@@ -60,17 +60,17 @@ export function useDeleteCampus() {
   });
 }
 
-export function useEvents() {
-  return useQuery<Event[]>({
-    queryKey: ['events'],
-    queryFn: getEvents,
+export function useCampusEvents(query?: string) {
+  return useQuery({
+    queryKey: ['campuses', query],
+    queryFn: () => getCampusEvents(query),
   });
 }
 
-export function useCampusHeadcountPerEvent(eventId: string) {
+export function useCampusHeadcountPerEvent(eventId: string, campusId: string) {
   return useQuery({
-    queryKey: ['campusHeadcount', eventId],
-    queryFn: () => getCampusHeadcountPerEvent(eventId),
-    enabled: !!eventId,
+    queryKey: ['campusHeadcount', eventId, campusId],
+    queryFn: () => getCampusHeadcountPerEvent(eventId, campusId),
+    enabled: !!eventId && !!campusId,
   });
 }
