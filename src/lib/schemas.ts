@@ -116,7 +116,7 @@ export const bystanderReportSchema = z.object({
 export const clusterSchema = z.object({
   name: z.string().min(1, 'Cluster name is required'),
   is_active: z.boolean().default(true),
-  campus_id: z.string().uuid('Cluster is required'),
+  campus_id: z.string().uuid('Campus is required'),
 });
 
 export const unitSchema = z.object({
