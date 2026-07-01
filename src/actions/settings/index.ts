@@ -12,6 +12,7 @@ export type SettingsTable =
   | 'user_types'
   | 'event_statuses'
   | 'casualty_conditions'
+  | 'campus'
   | 'damage_conditions';
 
 const MODEL_MAP = {
@@ -23,6 +24,7 @@ const MODEL_MAP = {
   event_statuses: 'eventStatus',
   casualty_conditions: 'casualtyCondition',
   damage_conditions: 'damageCondition',
+  campus: 'campus',
 } as const;
 
 const TITLE_MAP: Record<SettingsTable, string> = {
@@ -33,6 +35,7 @@ const TITLE_MAP: Record<SettingsTable, string> = {
   user_types: 'User Types',
   event_statuses: 'Event Statuses',
   casualty_conditions: 'Casualty Conditions',
+  campus: 'Campus',
   damage_conditions: 'Damage Conditions',
 };
 
@@ -136,6 +139,13 @@ export async function upsertDamageCondition(name: string) {
 
 export async function getClusters() {
   return prisma.cluster.findMany({
+    where: { is_active: true },
+    orderBy: { name: 'asc' },
+  });
+}
+
+export async function getCampus() {
+  return prisma.campus.findMany({
     where: { is_active: true },
     orderBy: { name: 'asc' },
   });

@@ -1,6 +1,7 @@
 import {
   createSettingsItem,
   deleteSettingsItem,
+  getCampus,
   getCasualtyConditions,
   getClusters,
   getDamageConditions,
@@ -52,6 +53,13 @@ export function useUnits(clusterId?: string) {
   return useQuery({
     queryKey: ['units', clusterId],
     queryFn: () => getUnits(clusterId),
+  });
+}
+
+export function useCampus(campusId?: string) {
+  return useQuery({
+    queryKey: ['campus', campusId],
+    queryFn: getCampus,
   });
 }
 
