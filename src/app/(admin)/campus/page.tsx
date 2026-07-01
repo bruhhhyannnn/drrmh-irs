@@ -1,22 +1,8 @@
 'use client';
 
 import { PageBreadcrumb } from '@/components/common';
-import {
-  Badge,
-  Button,
-  ConfirmDialog,
-  Input,
-  Modal,
-  PageError,
-  Spinner,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui';
-import { Eye, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { Badge, Button, ConfirmDialog, Input, Modal, PageError } from '@/components/ui';
+import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useCampuses, useDeleteCampus } from '../../../components/hooks/use-campus';
@@ -25,7 +11,7 @@ import { CampusForm } from './campus-form';
 export default function CampusPage() {
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  const { data: campus, isPending, isFetching, error } = useCampuses(debouncedQuery);
+  const { data: campuses, error } = useCampuses(debouncedQuery);
   const deleteCampusMutation = useDeleteCampus();
   const [editId, setEditId] = useState('');
   const [deleteId, setDeleteId] = useState('');
@@ -34,6 +20,23 @@ export default function CampusPage() {
   const handleClose = () => {
     setIsModalOpen(false);
     setEditId('');
+  };
+
+  const handleEdit = (id: string) => {
+    setEditId(id);
+    setIsModalOpen(true);
+  };
+
+  const campuslogos: Record<string, string> = {
+    'UP Manila': '/up-manila-logo.png',
+    'UP Diliman': '/up-diliman-logo.png',
+    'UP Baguio': '/up-baguio-logo.png',
+    'UP Los Baños': '/up-losbanos-logo.png',
+    'UP Visayas': '/up-visayas-logo.png',
+    'UP Mindanao': '/up-mindanao-logo.png',
+    'UP Tacloban': '/up-tacloban-logo.png',
+    'UP Open University': '/up-openuniversity-logo.png',
+    'UP Cebu': '/up-cebu-logo.png',
   };
 
   useEffect(() => {
@@ -66,21 +69,26 @@ export default function CampusPage() {
           </Button>
         </div>
 
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Campus Name</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {campus?.map((campus) => (
-              <TableRow key={campus.id}>
-                <TableCell className="font-medium text-gray-900 dark:text-white">
-                  {campus.name}
-                </TableCell>
-                <TableCell>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {campuses?.length ? (
+            campuses.map((campus) => (
+              <div
+                key={campus.id}
+                className="group flex flex-col rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-900 min-h-40 hover:bg-gray-100"
+              >
+                <div>
+                  <Link key={campus.id} href={`/campus/details?id=${campus.id}`}>
+                    <div className="flex-1 flex items-center justify-center">
+                      <p className="truncate text-sm font-medium text-gray-900 group-hover:text-[#a11d1d]">
+                        {campus.name}
+                      </p>
+                    </div>
+                    <div className="flex-1 flex flex-col items-center justify-center gap-2">
+                      <img src={campuslogos[campus.name] ?? '/up-logo.png'} width="300px"></img>
+                    </div>
+                  </Link>
+                </div>
+                <div className="flex items-center justify-center gap-4 mt-4">
                   <Badge color={campus.is_active ? 'success' : 'error'} size="sm">
                     {campus.is_active ? 'Active' : 'Inactive'}
                   </Badge>
