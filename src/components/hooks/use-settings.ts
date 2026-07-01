@@ -49,17 +49,17 @@ export function useDeleteSetting(table: SettingsTable) {
 }
 
 // Individual Settings Item
-export function useCampus() {
-  return useQuery({
-    queryKey: ['campus'],
-    queryFn: getCampus,
-  });
-}
-
 export function useUnits(clusterId?: string) {
   return useQuery({
     queryKey: ['units', clusterId],
     queryFn: () => getUnits(clusterId),
+  });
+}
+
+export function useCampus(campusId?: string) {
+  return useQuery({
+    queryKey: ['campus', campusId],
+    queryFn: getCampus,
   });
 }
 
@@ -70,10 +70,10 @@ export function useCasualtyConditions() {
   });
 }
 
-export function useClusters(campusId?: string) {
+export function useClusters() {
   return useQuery({
-    queryKey: ['clusters', campusId],
-    queryFn: () => getClusters(campusId),
+    queryKey: ['clusters'],
+    queryFn: getClusters,
   });
 }
 
