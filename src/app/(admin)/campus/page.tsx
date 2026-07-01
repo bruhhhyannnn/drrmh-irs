@@ -1,8 +1,22 @@
 'use client';
 
 import { PageBreadcrumb } from '@/components/common';
-import { Badge, Button, ConfirmDialog, Input, Modal, PageError } from '@/components/ui';
-import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import {
+  Badge,
+  Button,
+  ConfirmDialog,
+  Input,
+  Modal,
+  PageError,
+  Spinner,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui';
+import { Eye, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useCampuses, useDeleteCampus } from '../../../components/hooks/use-campus';
@@ -11,7 +25,7 @@ import { CampusForm } from './campus-form';
 export default function CampusPage() {
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  const { data: campuses, error } = useCampuses(debouncedQuery);
+  const { data: campus, isPending, isFetching, error } = useCampuses(debouncedQuery);
   const deleteCampusMutation = useDeleteCampus();
   const [editId, setEditId] = useState('');
   const [deleteId, setDeleteId] = useState('');
@@ -20,23 +34,6 @@ export default function CampusPage() {
   const handleClose = () => {
     setIsModalOpen(false);
     setEditId('');
-  };
-
-  const handleEdit = (id: string) => {
-    setEditId(id);
-    setIsModalOpen(true);
-  };
-
-  const campuslogos: Record<string, string> = {
-    'UP Manila': '/up-manila-logo.png',
-    'UP Diliman': '/up-diliman-logo.png',
-    'UP Baguio': '/up-baguio-logo.png',
-    'UP Los Banos': '/up-losbanos-logo.png',
-    'UP Visayas': '/up-visayas-logo.png',
-    'UP Mindanao': '/up-mindanao-logo.png',
-    'UP Tacloban': '/up-tacloban-logo.png',
-    'UP Open University': '/up-openuniversity-logo.png',
-    'UP Cebu': '/up-cebu-logo.png',
   };
 
   useEffect(() => {
@@ -69,48 +66,68 @@ export default function CampusPage() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {campuses?.length ? (
-            campuses.map((campus) => (
-              <div
-                key={campus.id}
-                className="group flex flex-col rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-900 min-h-40 hover:bg-gray-100"
-              >
-                <div>
-                  <Link key={campus.id} href={`/campus/details?id=${campus.id}`}>
-                    <div className="flex-1 flex items-center justify-center">
-                      <p className="truncate text-sm font-medium text-gray-900 group-hover:text-[#a11d1d]">
-                        {campus.name}
-                      </p>
-                    </div>
-                    <div className="flex-1 flex flex-col items-center justify-center gap-2">
-                      <img src={campuslogos[campus.name] ?? '/up-logo.png'} width="300px"></img>
-                    </div>
-                  </Link>
-                </div>
-                <div className="flex items-center justify-center gap-4 mt-4">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Campus Name</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {campus?.map((campus) => (
+              <TableRow key={campus.id}>
+                <TableCell className="font-medium text-gray-900 dark:text-white">
+                  {campus.name}
+                </TableCell>
+                <TableCell>
                   <Badge color={campus.is_active ? 'success' : 'error'} size="sm">
                     {campus.is_active ? 'Active' : 'Inactive'}
                   </Badge>
-                  <button
-                    onClick={() => handleEdit(campus.id)}
-                    className="hover:text-brand-600 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100 hover:bg-transparent hover:border-transparent"
-                  >
-                    <Pencil size={20} />
-                  </button>
-                  <button
-                    onClick={() => setDeleteId(campus.id)}
-                    className="hover:text-error-500 text-gray-400 transition-all duration-100 dark:text-gray-500 focus:outline-none hover:bg-transparent hover:border-transparent"
-                  >
-                    <Trash2 size={20} />
-                  </button>
-                </div>
-              </div>
-            ))
-          ) : (
-            <p className="text-sm text-gray-400 dark:text-gray-500">No campuses found.</p>
-          )}
-        </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <Link
+                      href={`/campus/details`}
+                      className="hover:text-brand-600 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100"
+                    >
+                      <Eye size={17} />
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setEditId(campus.id);
+                        setIsModalOpen(true);
+                      }}
+                      className="hover:text-brand-600 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100"
+                    >
+                      <Pencil size={17} />
+                    </button>
+                    <button
+                      className="hover:text-error-500 text-gray-400 transition-all duration-100 dark:text-gray-500"
+                      onClick={() => setDeleteId(campus.id)}
+                    >
+                      <Trash2 size={17} />
+                    </button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+            {(isPending || isFetching) && (
+              <TableRow>
+                <TableCell className="py-10" colSpan={5}>
+                  <Spinner center />
+                </TableCell>
+              </TableRow>
+            )}
+            {!campus?.length && !isPending && !isFetching && (
+              <TableRow>
+                <TableCell className="py-10 text-center text-gray-400" colSpan={5}>
+                  No campus found
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </div>
 
       <Modal isOpen={isModalOpen} onClose={handleClose}>

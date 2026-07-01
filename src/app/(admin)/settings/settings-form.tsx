@@ -2,8 +2,6 @@
 
 import type { SettingsTable } from '@/actions/settings';
 import {
-  useCampus,
-  useClusters,
   useCreateSetting,
   useSettingsTable,
   useUpdateSetting,
@@ -27,6 +25,7 @@ import { z } from 'zod';
 
 const SCHEMA_MAP = {
   clusters: clusterSchema,
+  campus: campusSchema,
   units: unitSchema,
   locations: locationSchema,
   positions: positionSchema,
@@ -34,13 +33,13 @@ const SCHEMA_MAP = {
   event_statuses: eventStatusSchema,
   casualty_conditions: casualtyConditionSchema,
   damage_conditions: damageConditionSchema,
-  campus: campusSchema,
 } as const;
+
+// Tables that require a campus_id foreign key
+const NEEDS_CAMPUS: SettingsTable[] = ['clusters'];
 
 // Tables that require a cluster_id foreign key
 const NEEDS_CLUSTER: SettingsTable[] = ['units', 'locations'];
-
-const NEEDS_CAMPUS: SettingsTable[] = ['clusters'];
 
 type AnyFormData = z.infer<(typeof SCHEMA_MAP)[SettingsTable]>;
 
@@ -58,8 +57,8 @@ export function SettingsForm({ title, table, editId, onSuccess, onCancel }: Sett
   const needsCampus = NEEDS_CAMPUS.includes(table);
 
   const { data: items } = useSettingsTable(table);
-  const { data: clusters = [] } = useClusters();
-  const { data: campus = [] } = useCampus();
+  const { data: clusters = [] } = useSettingsTable('clusters');
+  const { data: campus = [] } = useSettingsTable('campus');
   const createMutation = useCreateSetting(table);
   const updateMutation = useUpdateSetting(table);
 
@@ -84,7 +83,7 @@ export function SettingsForm({ title, table, editId, onSuccess, onCancel }: Sett
         } as AnyFormData);
       }
     }
-  }, [isEdit, items, editId, reset, needsCluster]);
+  }, [isEdit, items, editId, reset, needsCluster, needsCampus]);
 
   const onSubmit = async (data: AnyFormData) => {
     if (isEdit) {
@@ -143,7 +142,7 @@ export function SettingsForm({ title, table, editId, onSuccess, onCancel }: Sett
             label="Campus"
             required
             options={campusOptions}
-            placeholder="Select cluster..."
+            placeholder="Select campus..."
             error={!!campusError}
             hint={campusError?.message}
             {...register('campus_id')}

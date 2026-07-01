@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 
 export async function getCampuses(query?: string) {
   return prisma.campus.findMany({
+    where: { is_active: true },
     orderBy: { name: 'asc' },
   });
 }

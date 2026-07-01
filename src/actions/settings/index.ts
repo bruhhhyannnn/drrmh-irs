@@ -6,17 +6,18 @@ import { revalidatePath } from 'next/cache';
 
 export type SettingsTable =
   | 'clusters'
+  | 'campus'
   | 'units'
   | 'locations'
   | 'positions'
   | 'user_types'
   | 'event_statuses'
   | 'casualty_conditions'
-  | 'campus'
   | 'damage_conditions';
 
 const MODEL_MAP = {
   clusters: 'cluster',
+  campus: 'campus',
   units: 'unit',
   locations: 'location',
   positions: 'position',
@@ -24,18 +25,17 @@ const MODEL_MAP = {
   event_statuses: 'eventStatus',
   casualty_conditions: 'casualtyCondition',
   damage_conditions: 'damageCondition',
-  campus: 'campus',
 } as const;
 
 const TITLE_MAP: Record<SettingsTable, string> = {
   clusters: 'Clusters',
+  campus: 'Campus',
   units: 'Units',
   locations: 'Locations',
   positions: 'Positions',
   user_types: 'User Types',
   event_statuses: 'Event Statuses',
   casualty_conditions: 'Casualty Conditions',
-  campus: 'Campus',
   damage_conditions: 'Damage Conditions',
 };
 
@@ -137,10 +137,14 @@ export async function upsertDamageCondition(name: string) {
   });
 }
 
-export async function getClusters() {
+export async function getClusters(campusId?: string) {
   return prisma.cluster.findMany({
-    where: { is_active: true },
-    orderBy: { name: 'asc' },
+    where: {
+      is_active: true,
+      ...(campusId ? { campus_id: campusId } : undefined),
+    },
+    include: { campus: { select: { name: true } } },
+    orderBy: { created_at: 'asc' },
   });
 }
 
