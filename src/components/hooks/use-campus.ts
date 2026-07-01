@@ -3,10 +3,20 @@ import {
   deleteCampus,
   getCampus,
   getCampuses,
+  getCampusHeadcountPerEvent,
+  getEvents,
   updateCampus,
 } from '@/actions/campus-table';
 import type { Prisma } from '@prisma/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+export interface Event {
+  id: string;
+  name: string;
+  status: {
+    name: string;
+  };
+}
 
 export function useCampuses(query?: string) {
   return useQuery({
@@ -47,5 +57,20 @@ export function useDeleteCampus() {
   return useMutation({
     mutationFn: (id: string) => deleteCampus(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['campus'] }),
+  });
+}
+
+export function useEvents() {
+  return useQuery<Event[]>({
+    queryKey: ['events'],
+    queryFn: getEvents,
+  });
+}
+
+export function useCampusHeadcountPerEvent(eventId: string) {
+  return useQuery({
+    queryKey: ['campusHeadcount', eventId],
+    queryFn: () => getCampusHeadcountPerEvent(eventId),
+    enabled: !!eventId,
   });
 }
