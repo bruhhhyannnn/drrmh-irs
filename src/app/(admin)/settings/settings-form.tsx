@@ -143,7 +143,7 @@ export function SettingsForm({ title, table, editId, onSuccess, onCancel }: Sett
             label="Campus"
             required
             options={campusOptions}
-            placeholder="Select cluster..."
+            placeholder="Select campus..."
             error={!!campusError}
             hint={campusError?.message}
             {...register('campus_id')}
