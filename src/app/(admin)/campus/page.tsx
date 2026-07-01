@@ -79,7 +79,7 @@ export default function CampusPage() {
                 <div>
                   <Link key={campus.id} href={`/campus/details?id=${campus.id}`}>
                     <div className="flex-1 flex items-center justify-center">
-                      <p className="truncate text-sm font-medium text-gray-900 group-hover:text-[#a11d1d]">
+                      <p className="truncate text-sm font-medium text-gray-900 group-hover:text-brand-500">
                         {campus.name}
                       </p>
                     </div>
@@ -92,50 +92,25 @@ export default function CampusPage() {
                   <Badge color={campus.is_active ? 'success' : 'error'} size="sm">
                     {campus.is_active ? 'Active' : 'Inactive'}
                   </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Link
-                      href={`/campus/details?id=${campus.id}`}
-                      className="hover:text-brand-600 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100"
-                    >
-                      <Eye size={17} />
-                    </Link>
-                    <button
-                      onClick={() => {
-                        setEditId(campus.id);
-                        setIsModalOpen(true);
-                      }}
-                      className="hover:text-brand-600 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100"
-                    >
-                      <Pencil size={17} />
-                    </button>
-                    <button
-                      className="hover:text-error-500 text-gray-400 transition-all duration-100 dark:text-gray-500"
-                      onClick={() => setDeleteId(campus.id)}
-                    >
-                      <Trash2 size={17} />
-                    </button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-            {(isPending || isFetching) && (
-              <TableRow>
-                <TableCell className="py-10" colSpan={5}>
-                  <Spinner center />
-                </TableCell>
-              </TableRow>
-            )}
-            {!campus?.length && !isPending && !isFetching && (
-              <TableRow>
-                <TableCell className="py-10 text-center text-gray-400" colSpan={5}>
-                  No campus found
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+                  <button
+                    onClick={() => handleEdit(campus.id)}
+                    className="hover:text-brand-600 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100 hover:bg-transparent hover:border-transparent"
+                  >
+                    <Pencil size={20} />
+                  </button>
+                  <button
+                    onClick={() => setDeleteId(campus.id)}
+                    className="hover:text-error-500 text-gray-400 transition-all duration-100 dark:text-gray-500 focus:outline-none hover:bg-transparent hover:border-transparent"
+                  >
+                    <Trash2 size={20} />
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-gray-400 dark:text-gray-500">No campuses found.</p>
+          )}
+        </div>
       </div>
 
       <Modal isOpen={isModalOpen} onClose={handleClose}>
