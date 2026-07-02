@@ -6,8 +6,8 @@ import {
   useCampusClusters,
   useCampusEvents,
   useCampusHeadcountPerEvent,
-  useCampusUnits,
 } from '@/components/hooks/use-campus';
+import { useUnits } from '@/components/hooks/use-settings';
 import { Badge, Dropdown, DropdownItem, Spinner } from '@/components/ui';
 import { useThemeStore } from '@/store';
 import { ChevronDown, Inbox } from 'lucide-react';
@@ -51,15 +51,11 @@ function CampusDetailsContent() {
   const [eventsDropdownOpen, setEventsDropdownOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
-  const { data: campusClusters = [], isPending: loadingCampusClusters } = useCampusClusters(
-    campusId ?? ''
-  );
+  const { data: campusClusters = [] } = useCampusClusters(campusId ?? '');
   const [clustersDropdownOpen, setClustersDropdownOpen] = useState(false);
   const [selectedCluster, setSelectedCluster] = useState<Cluster | null>(null);
 
-  const { data: campusUnits = [], isPending: loadingCampusUnits } = useCampusUnits(
-    selectedCluster?.id ?? ''
-  );
+  const { data: campusUnits = [] } = useUnits(selectedCluster?.id ?? '');
   const [unitsDropdownOpen, setUnitsDropdownOpen] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
 

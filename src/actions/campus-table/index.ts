@@ -319,10 +319,3 @@ export async function getCampusClusters(campusId: string) {
     select: { id: true, name: true },
   });
 }
-
-export async function getCampusUnits(clusterId: string) {
-  return await prisma.unit.findMany({
-    where: { cluster_id: clusterId },
-    select: { id: true, name: true },
-  });
-}

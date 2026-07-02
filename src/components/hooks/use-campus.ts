@@ -6,7 +6,6 @@ import {
   getCampuses,
   getCampusEvents,
   getCampusHeadcountPerEvent,
-  getCampusUnits,
   updateCampus,
 } from '@/actions/campus-table';
 import type { Prisma } from '@prisma/client';
@@ -66,14 +65,6 @@ export function useCampusClusters(campusId: string) {
     queryKey: ['cluster', campusId],
     queryFn: () => getCampusClusters(campusId),
     enabled: !!campusId,
-  });
-}
-
-export function useCampusUnits(clusterId: string) {
-  return useQuery({
-    queryKey: ['unit', clusterId],
-    queryFn: () => getCampusUnits(clusterId),
-    enabled: !!clusterId,
   });
 }
 
