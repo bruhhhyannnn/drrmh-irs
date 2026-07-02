@@ -328,12 +328,16 @@ export function ReportForm({
 
   // ─── Select options ──────────────────────────────────────────
   const eventOptions = ongoingEvents.map((e) => ({ value: e.id, label: e.name }));
-  const clusterOptions = clusters.map((c) => ({ value: c.id, label: c.name }));
-  const unitOptions = units.map((u) => ({ value: u.id, label: u.name }));
-  const casualtyConditionOptions = casualtyConditions.map((c) => ({ value: c.id, label: c.name }));
+  const clusterOptions = clusters
+    .filter((c) => c.is_active)
+    .map((c) => ({ value: c.id, label: c.name }));
+  const unitOptions = units.filter((c) => c.is_active).map((u) => ({ value: u.id, label: u.name }));
+  const casualtyConditionOptions = casualtyConditions
+    .filter((c) => c.is_active)
+    .map((c) => ({ value: c.id, label: c.name }));
   const damageConditionOptions = [
     { value: '', label: 'None' },
-    ...damageConditions.map((d) => ({ value: d.id, label: d.name })),
+    ...damageConditions.filter((d) => d.is_active).map((d) => ({ value: d.id, label: d.name })),
     { value: OTHER_DAMAGE, label: 'Other (please specify)' },
   ];
 

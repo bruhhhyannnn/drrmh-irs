@@ -111,8 +111,12 @@ export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
     }
   });
 
-  const statusOptions = eventStatuses.map((s) => ({ value: s.id, label: s.name }));
-  const locationOptions = locations.map((l) => ({ value: l.id, label: l.name }));
+  const statusOptions = eventStatuses
+    .filter((c) => c.is_active)
+    .map((s) => ({ value: s.id, label: s.name }));
+  const locationOptions = locations
+    .filter((c) => c.is_active)
+    .map((l) => ({ value: l.id, label: l.name }));
 
   const isPending = isSubmitting || createEvent.isPending || updateEvent.isPending;
 
