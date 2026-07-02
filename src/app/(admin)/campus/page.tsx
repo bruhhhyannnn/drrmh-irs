@@ -1,7 +1,7 @@
 'use client';
 
 import { PageBreadcrumb } from '@/components/common';
-import { Badge, Button, Input, PageError } from '@/components/ui';
+import { Button, Input, PageError } from '@/components/ui';
 import { Plus, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -74,11 +74,7 @@ export default function CampusPage() {
                     </div>
                   </Link>
                 </div>
-                <div className="flex items-center justify-center gap-4 mt-4">
-                  <Badge color={campus.is_active ? 'success' : 'error'} size="sm">
-                    {campus.is_active ? 'Active' : 'Inactive'}
-                  </Badge>
-                </div>
+                <div className="flex items-center justify-center gap-4 mt-4"></div>
               </div>
             ))
           ) : (
