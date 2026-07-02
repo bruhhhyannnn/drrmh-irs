@@ -1,12 +1,11 @@
 'use client';
 
 import { PageBreadcrumb } from '@/components/common';
-import { Badge, Button, ConfirmDialog, Input, Modal, PageError } from '@/components/ui';
-import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { Badge, Button, Input, PageError } from '@/components/ui';
+import { Plus, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useCampuses, useDeleteCampus } from '../../../components/hooks/use-campus';
-import { CampusForm } from './campus-form';
 
 export default function CampusPage() {
   const [query, setQuery] = useState('');
@@ -79,7 +78,7 @@ export default function CampusPage() {
                 <div>
                   <Link key={campus.id} href={`/campus/details?id=${campus.id}`}>
                     <div className="flex-1 flex items-center justify-center">
-                      <p className="truncate text-sm font-bold text-gray-900 dark:text-white group-hover:text-brand-500">
+                      <p className="truncate text-sm font-bold text-gray-900 dark:text-white group-hover:text-brand-500 dark:group-hover:text-brand-500">
                         {campus.name}
                       </p>
                     </div>
@@ -92,18 +91,6 @@ export default function CampusPage() {
                   <Badge color={campus.is_active ? 'success' : 'error'} size="sm">
                     {campus.is_active ? 'Active' : 'Inactive'}
                   </Badge>
-                  <button
-                    onClick={() => handleEdit(campus.id)}
-                    className="hover:text-brand-600 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100 hover:bg-transparent hover:border-transparent"
-                  >
-                    <Pencil size={20} />
-                  </button>
-                  <button
-                    onClick={() => setDeleteId(campus.id)}
-                    className="hover:text-error-500 text-gray-400 transition-all duration-100 focus:outline-none hover:bg-transparent hover:border-transparent"
-                  >
-                    <Trash2 size={20} />
-                  </button>
                 </div>
               </div>
             ))
@@ -112,22 +99,6 @@ export default function CampusPage() {
           )}
         </div>
       </div>
-
-      <Modal isOpen={isModalOpen} onClose={handleClose}>
-        <CampusForm editId={editId} onSuccess={handleClose} onCancel={handleClose} />
-      </Modal>
-
-      <ConfirmDialog
-        isOpen={!!deleteId}
-        onClose={() => setDeleteId('')}
-        onConfirm={() =>
-          deleteCampusMutation.mutate(deleteId, { onSuccess: () => setDeleteId('') })
-        }
-        title="Delete campus"
-        message="This campus will be permanently deleted. This cannot be undone."
-        confirmLabel="Delete"
-        isLoading={deleteCampusMutation.isPending}
-      />
     </>
   );
 }
