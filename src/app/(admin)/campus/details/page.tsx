@@ -6,14 +6,15 @@ import {
   useCampusClusters,
   useCampusEvents,
   useCampusHeadcountPerEvent,
+  useDeleteCampus,
 } from '@/components/hooks/use-campus';
-import { useUnits } from '@/components/hooks/use-settings';
-import { Badge, Dropdown, DropdownItem, Spinner } from '@/components/ui';
+import { Badge, ConfirmDialog, Dropdown, DropdownItem, Modal, Spinner } from '@/components/ui';
 import { useThemeStore } from '@/store';
-import { ChevronDown, Inbox } from 'lucide-react';
+import { ChevronDown, Inbox, Pencil, Trash2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+import { CampusForm } from '../campus-form';
 
 export interface Event {
   id: string;
@@ -50,6 +51,7 @@ function CampusDetailsContent() {
   const { data: campusEvents = [], isPending: loadingCampusEvents } = useCampusEvents(campusId);
   const [eventsDropdownOpen, setEventsDropdownOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const deleteCampusMutation = useDeleteCampus();
 
   const { data: campusClusters = [] } = useCampusClusters(campusId ?? '');
   const [clustersDropdownOpen, setClustersDropdownOpen] = useState(false);
@@ -57,7 +59,20 @@ function CampusDetailsContent() {
 
   const { data: campusUnits = [] } = useUnits(selectedCluster?.id ?? '');
   const [unitsDropdownOpen, setUnitsDropdownOpen] = useState(false);
-  const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
+  const [selectedUnit, setSelectedUnit] = useState(null);
+  const [editId, setEditId] = useState('');
+  const [deleteId, setDeleteId] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleClose = () => {
+    setIsModalOpen(false);
+    setEditId('');
+  };
+
+  const handleEdit = (id: string) => {
+    setEditId(id);
+    setIsModalOpen(true);
+  };
 
   const { data: event } = useCampusHeadcountPerEvent(selectedEvent?.id ?? '', campusId ?? '');
 
@@ -265,6 +280,38 @@ function CampusDetailsContent() {
             </DropdownItem>
           ))}
         </Dropdown>
+
+        <div className="absolute right-2 top-0 flex items-center gap-2">
+          <button
+            onClick={() => handleEdit(campus.id)}
+            className="hover:text-brand-600 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100 hover:bg-transparent hover:border-transparent"
+          >
+            <Pencil size={24} />
+          </button>
+
+          <button
+            onClick={() => setDeleteId(campus.id)}
+            className="hover:text-error-500 text-gray-400 transition-all duration-100 focus:outline-none hover:bg-transparent hover:border-transparent"
+          >
+            <Trash2 size={24} />
+          </button>
+        </div>
+
+        <Modal isOpen={isModalOpen} onClose={handleClose}>
+          <CampusForm editId={editId} onSuccess={handleClose} onCancel={handleClose} />
+        </Modal>
+
+        <ConfirmDialog
+          isOpen={!!deleteId}
+          onClose={() => setDeleteId('')}
+          onConfirm={() =>
+            deleteCampusMutation.mutate(deleteId, { onSuccess: () => setDeleteId('') })
+          }
+          title="Delete campus"
+          message="This campus will be permanently deleted. This cannot be undone."
+          confirmLabel="Delete"
+          isLoading={deleteCampusMutation.isPending}
+        />
 
         {/* Charts */}
         {selectedEvent && (
