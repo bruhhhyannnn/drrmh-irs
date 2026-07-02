@@ -79,11 +79,11 @@ export default function CampusPage() {
                 <div>
                   <Link key={campus.id} href={`/campus/details?id=${campus.id}`}>
                     <div className="flex-1 flex items-center justify-center">
-                      <p className="truncate text-sm font-medium text-gray-900 group-hover:text-brand-500">
+                      <p className="truncate text-sm font-bold text-gray-900 dark:text-white group-hover:text-brand-500">
                         {campus.name}
                       </p>
                     </div>
-                    <div className="flex-1 flex flex-col items-center justify-center gap-2">
+                    <div className="flex-1 flex flex-col items-center justify-center gap-2 mt-3">
                       <img src={campuslogos[campus.name] ?? '/up-logo.png'} width="300px"></img>
                     </div>
                   </Link>
@@ -100,7 +100,7 @@ export default function CampusPage() {
                   </button>
                   <button
                     onClick={() => setDeleteId(campus.id)}
-                    className="hover:text-error-500 text-gray-400 transition-all duration-100 dark:text-gray-500 focus:outline-none hover:bg-transparent hover:border-transparent"
+                    className="hover:text-error-500 text-gray-400 transition-all duration-100 focus:outline-none hover:bg-transparent hover:border-transparent"
                   >
                     <Trash2 size={20} />
                   </button>
