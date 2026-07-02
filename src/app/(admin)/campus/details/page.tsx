@@ -431,9 +431,9 @@ function CampusDetailsContent() {
                         </div>
                         <div className="flex flex-wrap justify-center gap-2 w-full mt-2">
                           {headcountPerEventData.map((entry, index) => (
-                            <div>
+                            <div key={index}>
                               {entry.value > 0 && (
-                                <div key={index} className="flex items-center gap-1">
+                                <div className="flex items-center gap-1">
                                   <div
                                     className="w-3 h-3 rounded-full shrink-0"
                                     style={{

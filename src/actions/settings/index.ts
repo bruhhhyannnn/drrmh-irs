@@ -82,7 +82,6 @@ export async function deleteSettingsItem(table: SettingsTable, id: string) {
 export async function getUnits(clusterId?: string) {
   return prisma.unit.findMany({
     where: {
-      is_active: true,
       ...(clusterId ? { cluster_id: clusterId } : undefined),
     },
     include: { cluster: { select: { name: true } } },
@@ -92,14 +91,12 @@ export async function getUnits(clusterId?: string) {
 
 export async function getUserTypes() {
   return prisma.userType.findMany({
-    where: { is_active: true },
     orderBy: { name: 'asc' },
   });
 }
 
 export async function getPositions() {
   return prisma.position.findMany({
-    where: { is_active: true },
     orderBy: { name: 'asc' },
   });
 }
@@ -107,7 +104,6 @@ export async function getPositions() {
 export async function getLocations(clusterId?: string) {
   return prisma.location.findMany({
     where: {
-      is_active: true,
       ...(clusterId ? { cluster_id: clusterId } : undefined),
     },
     include: { cluster: { select: { name: true } } },
@@ -117,14 +113,12 @@ export async function getLocations(clusterId?: string) {
 
 export async function getEventStatuses() {
   return prisma.eventStatus.findMany({
-    where: { is_active: true },
     orderBy: { updated_at: 'asc' },
   });
 }
 
 export async function getDamageConditions() {
   return prisma.damageCondition.findMany({
-    where: { is_active: true },
     orderBy: { name: 'asc' },
   });
 }
@@ -139,21 +133,18 @@ export async function upsertDamageCondition(name: string) {
 
 export async function getClusters() {
   return prisma.cluster.findMany({
-    where: { is_active: true },
     orderBy: { name: 'asc' },
   });
 }
 
 export async function getCampus() {
   return prisma.campus.findMany({
-    where: { is_active: true },
     orderBy: { name: 'asc' },
   });
 }
 
 export async function getCasualtyConditions() {
   return prisma.casualtyCondition.findMany({
-    where: { is_active: true },
     orderBy: { name: 'asc' },
   });
 }

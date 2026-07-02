@@ -109,10 +109,16 @@ export function UserForm({ editId, onSuccess, onCancel }: UserFormProps) {
     }
   });
 
-  const clusterOptions = clusters.map((c) => ({ value: c.id, label: c.name }));
-  const unitOptions = units.map((u) => ({ value: u.id, label: u.name }));
-  const positionOptions = positions.map((p) => ({ value: p.id, label: p.name }));
-  const userTypeOptions = userTypes.map((t) => ({ value: t.id, label: t.name }));
+  const clusterOptions = clusters
+    .filter((c) => c.is_active)
+    .map((c) => ({ value: c.id, label: c.name }));
+  const unitOptions = units.filter((u) => u.is_active).map((u) => ({ value: u.id, label: u.name }));
+  const positionOptions = positions
+    .filter((p) => p.is_active)
+    .map((p) => ({ value: p.id, label: p.name }));
+  const userTypeOptions = userTypes
+    .filter((t) => t.is_active)
+    .map((t) => ({ value: t.id, label: t.name }));
 
   const isPending = isSubmitting || createUser.isPending || updateUser.isPending;
 
