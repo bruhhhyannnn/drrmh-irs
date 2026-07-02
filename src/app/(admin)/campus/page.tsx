@@ -5,26 +5,13 @@ import { Badge, Button, Input, PageError } from '@/components/ui';
 import { Plus, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { useCampuses, useDeleteCampus } from '../../../components/hooks/use-campus';
+import { useCampuses } from '../../../components/hooks/use-campus';
 
 export default function CampusPage() {
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const { data: campuses, error } = useCampuses(debouncedQuery);
-  const deleteCampusMutation = useDeleteCampus();
-  const [editId, setEditId] = useState('');
-  const [deleteId, setDeleteId] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const handleClose = () => {
-    setIsModalOpen(false);
-    setEditId('');
-  };
-
-  const handleEdit = (id: string) => {
-    setEditId(id);
-    setIsModalOpen(true);
-  };
 
   const campuslogos: Record<string, string> = {
     'UP Manila': '/up-manila-logo.png',
