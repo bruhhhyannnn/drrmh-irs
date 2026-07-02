@@ -79,7 +79,7 @@ export default function CampusPage() {
                 <div>
                   <Link key={campus.id} href={`/campus/details?id=${campus.id}`}>
                     <div className="flex-1 flex items-center justify-center">
-                      <p className="truncate text-sm font-bold text-gray-900 dark:text-white group-hover:text-[#a11d1d]">
+                      <p className="truncate text-sm font-bold text-gray-900 dark:text-white group-hover:text-brand-500">
                         {campus.name}
                       </p>
                     </div>
