@@ -8,6 +8,7 @@ import {
   useCampusHeadcountPerEvent,
   useDeleteCampus,
 } from '@/components/hooks/use-campus';
+import { useUnits } from '@/components/hooks/use-settings';
 import { Badge, ConfirmDialog, Dropdown, DropdownItem, Modal, Spinner } from '@/components/ui';
 import { useThemeStore } from '@/store';
 import { ChevronDown, Inbox, Pencil, Trash2 } from 'lucide-react';
@@ -59,7 +60,7 @@ function CampusDetailsContent() {
 
   const { data: campusUnits = [] } = useUnits(selectedCluster?.id ?? '');
   const [unitsDropdownOpen, setUnitsDropdownOpen] = useState(false);
-  const [selectedUnit, setSelectedUnit] = useState(null);
+  const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
   const [editId, setEditId] = useState('');
   const [deleteId, setDeleteId] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
