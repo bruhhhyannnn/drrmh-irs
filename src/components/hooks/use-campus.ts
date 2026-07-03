@@ -2,6 +2,7 @@ import {
   createCampus,
   deleteCampus,
   getCampus,
+  getCampusClusters,
   getCampuses,
   getCampusEvents,
   getCampusHeadcountPerEvent,
@@ -9,14 +10,6 @@ import {
 } from '@/actions/campus-table';
 import type { Prisma } from '@prisma/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-
-export interface Event {
-  id: string;
-  name: string;
-  status: {
-    name: string;
-  };
-}
 
 export function useCampuses(query?: string) {
   return useQuery({
@@ -64,6 +57,14 @@ export function useCampusEvents(query?: string) {
   return useQuery({
     queryKey: ['campuses', query],
     queryFn: () => getCampusEvents(query),
+  });
+}
+
+export function useCampusClusters(campusId: string) {
+  return useQuery({
+    queryKey: ['cluster', campusId],
+    queryFn: () => getCampusClusters(campusId),
+    enabled: !!campusId,
   });
 }
 

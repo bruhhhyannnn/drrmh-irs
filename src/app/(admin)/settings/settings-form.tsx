@@ -96,15 +96,19 @@ export function SettingsForm({ title, table, editId, onSuccess, onCancel }: Sett
   };
 
   const singularTitle = title.replace(/s$/, '');
-  const clusterOptions = (clusters as { id: string; name: string }[]).map((c) => ({
-    value: c.id,
-    label: c.name,
-  }));
+  const clusterOptions = (clusters as { id: string; name: string; is_active: boolean }[])
+    .filter((c) => c.is_active)
+    .map((c) => ({
+      value: c.id,
+      label: c.name,
+    }));
 
-  const campusOptions = (campus as { id: string; name: string }[]).map((c) => ({
-    value: c.id,
-    label: c.name,
-  }));
+  const campusOptions = (campus as { id: string; name: string; is_active: boolean }[])
+    .filter((c) => c.is_active)
+    .map((c) => ({
+      value: c.id,
+      label: c.name,
+    }));
 
   const nameError = (errors as Record<string, { message?: string }>).name;
   const clusterError = (errors as Record<string, { message?: string }>).cluster_id;

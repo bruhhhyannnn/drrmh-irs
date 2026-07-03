@@ -3,7 +3,6 @@
 import { PageBreadcrumb } from '@/components/common';
 import { Button, Input, Label, Spinner } from '@/components/ui';
 import { campusSchema, type CampusFormData } from '@/lib';
-import { useAuthStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -20,7 +19,6 @@ interface CampusFormProps {
 export function CampusForm({ editId, onSuccess, onCancel }: CampusFormProps) {
   const router = useRouter();
   const isEdit = !!editId;
-  const userId = useAuthStore((s) => s.userProfile?.id);
 
   const { data: existingCampus, isLoading: isCampusLoading } = useCampus(editId);
   const createCampus = useCreateCampus();
