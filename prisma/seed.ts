@@ -3,7 +3,6 @@ import {
   CLUSTERS,
   DAMAGE_CONDITION,
   EVENT_STATUSES,
-  LOCATIONS,
   POSITIONS,
   UNITS,
   USER_TYPES,
@@ -1480,13 +1479,6 @@ async function main() {
   );
   await prisma.unit.createMany({ data: unitData, skipDuplicates: true });
   console.log(`  units: ${unitData.length}`);
-
-  // Locations
-  const locationData = Object.entries(LOCATIONS).flatMap(([clusterName, locations]) =>
-    locations.map((name) => ({ name, cluster_id: clusterMap[clusterName], is_active: true }))
-  );
-  await prisma.location.createMany({ data: locationData, skipDuplicates: true });
-  console.log(`  locations: ${locationData.length}`);
 
   // Casualty Conditions
   await prisma.casualtyCondition.createMany({

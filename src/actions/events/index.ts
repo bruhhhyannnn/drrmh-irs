@@ -8,7 +8,6 @@ export async function getEvents(query?: string) {
   return prisma.event.findMany({
     where: query ? { name: { contains: query, mode: 'insensitive' } } : undefined,
     include: {
-      location: { select: { name: true } },
       status: { select: { name: true } },
       _count: { select: { reports: true } },
     },
@@ -20,7 +19,6 @@ export async function getEvent(id: string) {
   return prisma.event.findUnique({
     where: { id: id },
     include: {
-      location: { select: { name: true } },
       status: { select: { name: true } },
     },
   });
@@ -65,7 +63,6 @@ export async function getOngoingEvent() {
       started_at: true,
       ended_at: true,
       status: { select: { id: true, name: true } },
-      location: { select: { id: true, name: true } },
     },
     orderBy: { started_at: 'desc' },
   });

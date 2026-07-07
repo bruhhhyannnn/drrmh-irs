@@ -42,7 +42,6 @@ const navItems: NavItem[] = [
     subItems: [
       { name: 'Clusters', path: '/settings/clusters' },
       { name: 'Units', path: '/settings/units' },
-      { name: 'Locations', path: '/settings/locations' },
       { name: 'Positions', path: '/settings/positions' },
       { name: 'User Types', path: '/settings/user-types' },
       { name: 'Event Statuses', path: '/settings/event-statuses' },

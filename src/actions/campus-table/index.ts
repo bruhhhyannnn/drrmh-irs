@@ -319,3 +319,20 @@ export async function getCampusClusters(campusId: string) {
     select: { id: true, name: true },
   });
 }
+
+export async function getEventDamages(eventId: string, campusId: string) {
+  return await prisma.report.findMany({
+    where: {
+      event_id: eventId,
+      cluster: { campus_id: campusId },
+      damage_condition_id: { not: null },
+    },
+    select: {
+      id: true,
+      damage_condition_id: true,
+      cluster: { select: { id: true, name: true } },
+      unit: { select: { id: true, name: true } },
+      damage_conditions: { select: { id: true, name: true } },
+    },
+  });
+}

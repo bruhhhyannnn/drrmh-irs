@@ -1,7 +1,7 @@
 'use client';
 
 import { PageBreadcrumb } from '@/components/common';
-import { useEventStatuses, useLocations } from '@/components/hooks/use-settings';
+import { useEventStatuses } from '@/components/hooks/use-settings';
 import { Button, Input, Select, Spinner, Textarea } from '@/components/ui';
 import { eventSchema, type EventFormData } from '@/lib';
 import { useAuthStore } from '@/store';
@@ -35,7 +35,6 @@ export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
   const updateEvent = useUpdateEvent();
 
   const { data: eventStatuses = [] } = useEventStatuses();
-  const { data: locations = [] } = useLocations();
 
   const {
     register,
@@ -54,7 +53,6 @@ export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
         quarter: existingEvent.quarter ?? '',
         started_at: toDatetimeLocal(existingEvent.started_at),
         ended_at: toDatetimeLocal(existingEvent.ended_at),
-        location_id: existingEvent.location_id ?? '',
         status_id: existingEvent.status_id,
       });
     }
@@ -75,9 +73,6 @@ export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
             started_at: startedAt,
             ended_at: endedAt,
             status: { connect: { id: data.status_id } },
-            location: data.location_id
-              ? { connect: { id: data.location_id } }
-              : { disconnect: true },
           },
         },
         {
@@ -97,7 +92,6 @@ export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
           ...(startedAt && { started_at: startedAt }),
           ...(endedAt && { ended_at: endedAt }),
           status: { connect: { id: data.status_id } },
-          ...(data.location_id && { location: { connect: { id: data.location_id } } }),
           ...(userId && { user: { connect: { id: userId } } }),
         },
         {
@@ -114,9 +108,6 @@ export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
   const statusOptions = eventStatuses
     .filter((c) => c.is_active)
     .map((s) => ({ value: s.id, label: s.name }));
-  const locationOptions = locations
-    .filter((c) => c.is_active)
-    .map((l) => ({ value: l.id, label: l.name }));
 
   const isPending = isSubmitting || createEvent.isPending || updateEvent.isPending;
 
@@ -178,13 +169,6 @@ export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
                 {...register('ended_at')}
               />
             </div>
-
-            <Select
-              options={locationOptions}
-              label="Location"
-              placeholder="Select location..."
-              {...register('location_id')}
-            />
 
             <div className="flex items-center gap-3 pt-2">
               <Button type="submit" isLoading={isPending} loadingText="Saving...">

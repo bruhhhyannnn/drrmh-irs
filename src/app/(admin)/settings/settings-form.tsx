@@ -15,7 +15,6 @@ import {
   clusterSchema,
   damageConditionSchema,
   eventStatusSchema,
-  locationSchema,
   positionSchema,
   unitSchema,
   userTypeSchema,
@@ -28,7 +27,6 @@ import { z } from 'zod';
 const SCHEMA_MAP = {
   clusters: clusterSchema,
   units: unitSchema,
-  locations: locationSchema,
   positions: positionSchema,
   user_types: userTypeSchema,
   event_statuses: eventStatusSchema,
@@ -38,7 +36,7 @@ const SCHEMA_MAP = {
 } as const;
 
 // Tables that require a cluster_id foreign key
-const NEEDS_CLUSTER: SettingsTable[] = ['units', 'locations'];
+const NEEDS_CLUSTER: SettingsTable[] = ['units'];
 
 const NEEDS_CAMPUS: SettingsTable[] = ['clusters'];
 

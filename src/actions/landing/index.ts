@@ -10,7 +10,6 @@ export async function getLandingData() {
         name: true,
         started_at: true,
         status: { select: { name: true } },
-        location: { select: { name: true } },
       },
       orderBy: { created_at: 'desc' },
       take: 8,
