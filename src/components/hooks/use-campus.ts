@@ -6,6 +6,7 @@ import {
   getCampuses,
   getCampusEvents,
   getCampusHeadcountPerEvent,
+  getEventDamages,
   updateCampus,
 } from '@/actions/campus-table';
 import type { Prisma } from '@prisma/client';
@@ -72,6 +73,14 @@ export function useCampusHeadcountPerEvent(eventId: string, campusId: string) {
   return useQuery({
     queryKey: ['campusHeadcount', eventId, campusId],
     queryFn: () => getCampusHeadcountPerEvent(eventId, campusId),
+    enabled: !!eventId && !!campusId,
+  });
+}
+
+export function useEventDamages(eventId: string, campusId: string) {
+  return useQuery({
+    queryKey: ['eventDamages', eventId, campusId],
+    queryFn: () => getEventDamages(eventId, campusId),
     enabled: !!eventId && !!campusId,
   });
 }

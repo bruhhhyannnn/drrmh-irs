@@ -7,7 +7,6 @@ import { revalidatePath } from 'next/cache';
 export type SettingsTable =
   | 'clusters'
   | 'units'
-  | 'locations'
   | 'positions'
   | 'user_types'
   | 'event_statuses'
@@ -18,7 +17,6 @@ export type SettingsTable =
 const MODEL_MAP = {
   clusters: 'cluster',
   units: 'unit',
-  locations: 'location',
   positions: 'position',
   user_types: 'userType',
   event_statuses: 'eventStatus',
@@ -30,7 +28,6 @@ const MODEL_MAP = {
 const TITLE_MAP: Record<SettingsTable, string> = {
   clusters: 'Clusters',
   units: 'Units',
-  locations: 'Locations',
   positions: 'Positions',
   user_types: 'User Types',
   event_statuses: 'Event Statuses',
@@ -97,16 +94,6 @@ export async function getUserTypes() {
 
 export async function getPositions() {
   return prisma.position.findMany({
-    orderBy: { name: 'asc' },
-  });
-}
-
-export async function getLocations(clusterId?: string) {
-  return prisma.location.findMany({
-    where: {
-      ...(clusterId ? { cluster_id: clusterId } : undefined),
-    },
-    include: { cluster: { select: { name: true } } },
     orderBy: { name: 'asc' },
   });
 }

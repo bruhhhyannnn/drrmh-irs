@@ -7,9 +7,23 @@ import {
   useCampusEvents,
   useCampusHeadcountPerEvent,
   useDeleteCampus,
+  useEventDamages,
 } from '@/components/hooks/use-campus';
 import { useUnits } from '@/components/hooks/use-settings';
-import { Badge, ConfirmDialog, Dropdown, DropdownItem, Modal, Spinner } from '@/components/ui';
+import {
+  Badge,
+  ConfirmDialog,
+  Dropdown,
+  DropdownItem,
+  Modal,
+  Spinner,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui';
 import { useThemeStore } from '@/store';
 import { ChevronDown, Inbox, Pencil, Trash2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
@@ -64,6 +78,8 @@ function CampusDetailsContent() {
   const [editId, setEditId] = useState('');
   const [deleteId, setDeleteId] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const { data: damages = [] } = useEventDamages(selectedEvent?.id ?? '', campusId ?? '');
 
   const handleClose = () => {
     setIsModalOpen(false);
@@ -314,206 +330,248 @@ function CampusDetailsContent() {
           isLoading={deleteCampusMutation.isPending}
         />
 
-        {/* Charts */}
+        {/* Charts and Tables */}
         {selectedEvent && (
-          <div className="mt-5">
-            <div className="flex flex-col rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-900">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                {campus.name} {selectedEvent.name} Demographics
-              </h1>
-              <div className="mt-2 flex justify-between">
-                {selectedEvent.status.name && (
-                  <Badge
-                    color={
-                      selectedEvent.status.name === 'ongoing'
-                        ? 'success'
-                        : selectedEvent.status.name === 'completed'
-                          ? 'primary'
-                          : 'warning'
-                    }
-                    size="sm"
-                    className="h-6"
-                  >
-                    {selectedEvent.status.name}
-                  </Badge>
-                )}
-
-                <div className="flex flex-col items-end w-full">
-                  {/* Clusters Dropdown */}
-                  <div>
-                    <button
-                      onClick={() => {
-                        setClustersDropdownOpen((p) => !p);
-                        setUnitsDropdownOpen(false);
-                      }}
-                      className="dropdown-toggle gap-2 flex items-center transition shadow-theme-xs h-7 rounded-lg border text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 dark:bg-gray-900 dark:border-gray-800 px-4 focus:ring-3 focus:outline-none"
+          <>
+            <div className="mt-5">
+              <div className="flex flex-col rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-900">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {campus.name} {selectedEvent.name} Demographics
+                </h1>
+                <div className="mt-2 flex justify-between">
+                  {selectedEvent.status.name && (
+                    <Badge
+                      color={
+                        selectedEvent.status.name === 'ongoing'
+                          ? 'success'
+                          : selectedEvent.status.name === 'completed'
+                            ? 'primary'
+                            : 'warning'
+                      }
+                      size="sm"
+                      className="h-6"
                     >
-                      <span className="text-sm font-medium lg:block">
-                        {selectedCluster ? selectedCluster.name : 'All Clusters'}
-                      </span>
-                      <ChevronDown
-                        size={16}
-                        className={`transition-transform duration-200 ${clustersDropdownOpen ? 'rotate-180' : ''}`}
-                      />
-                    </button>
+                      {selectedEvent.status.name}
+                    </Badge>
+                  )}
 
-                    <Dropdown
-                      isOpen={clustersDropdownOpen}
-                      onClose={() => setClustersDropdownOpen(false)}
-                      className="w-60 p-2 right-4"
-                    >
-                      <DropdownItem onClick={() => handleSelectedCluster(null)} className="py-1">
-                        <div className="w-full border-b border-gray-100 pb-1 dark:border-gray-800">
-                          <p className="text-start text-sm font-medium truncate text-gray-900 dark:text-white">
-                            All Clusters
-                          </p>
-                        </div>
-                      </DropdownItem>
-                      {campusClusters.map((c) => (
-                        <DropdownItem
-                          key={c.id}
-                          onClick={() => handleSelectedCluster(c)}
-                          className="py-1"
-                        >
-                          <div className="w-full border-b border-gray-100 pb-1 dark:border-gray-800">
-                            <p className="text-start text-sm font-medium truncate text-gray-900 dark:text-white">
-                              {c.name}
-                            </p>
-                          </div>
-                        </DropdownItem>
-                      ))}
-                    </Dropdown>
-                  </div>
-
-                  {/* Units Dropdown */}
-                  {selectedCluster && (
-                    <div className="mt-4">
+                  <div className="flex flex-col items-end w-full">
+                    {/* Clusters Dropdown */}
+                    <div>
                       <button
                         onClick={() => {
-                          setUnitsDropdownOpen((p) => !p);
-                          setClustersDropdownOpen(false);
+                          setClustersDropdownOpen((p) => !p);
+                          setUnitsDropdownOpen(false);
                         }}
                         className="dropdown-toggle gap-2 flex items-center transition shadow-theme-xs h-7 rounded-lg border text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 dark:bg-gray-900 dark:border-gray-800 px-4 focus:ring-3 focus:outline-none"
                       >
                         <span className="text-sm font-medium lg:block">
-                          {selectedUnit ? selectedUnit.name : 'All units'}
+                          {selectedCluster ? selectedCluster.name : 'All Clusters'}
                         </span>
                         <ChevronDown
                           size={16}
-                          className={`transition-transform duration-200 ${unitsDropdownOpen ? 'rotate-180' : ''}`}
+                          className={`transition-transform duration-200 ${clustersDropdownOpen ? 'rotate-180' : ''}`}
                         />
                       </button>
 
                       <Dropdown
-                        isOpen={unitsDropdownOpen}
-                        onClose={() => setUnitsDropdownOpen(false)}
+                        isOpen={clustersDropdownOpen}
+                        onClose={() => setClustersDropdownOpen(false)}
                         className="w-60 p-2 right-4"
                       >
-                        <DropdownItem onClick={() => handleSelectedUnit(null)} className="py-1">
-                          <div className="w-full items-center border-b border-gray-100 pb-1 dark:border-gray-800">
+                        <DropdownItem onClick={() => handleSelectedCluster(null)} className="py-1">
+                          <div className="w-full border-b border-gray-100 pb-1 dark:border-gray-800">
                             <p className="text-start text-sm font-medium truncate text-gray-900 dark:text-white">
-                              All Units
+                              All Clusters
                             </p>
                           </div>
                         </DropdownItem>
-                        {campusUnits.map((u) => (
-                          <DropdownItem key={u.id} onClick={() => handleSelectedUnit(u)}>
-                            <div className="w-full items-center border-b border-gray-100 pb-1 dark:border-gray-800">
+                        {campusClusters.map((c) => (
+                          <DropdownItem
+                            key={c.id}
+                            onClick={() => handleSelectedCluster(c)}
+                            className="py-1"
+                          >
+                            <div className="w-full border-b border-gray-100 pb-1 dark:border-gray-800">
                               <p className="text-start text-sm font-medium truncate text-gray-900 dark:text-white">
-                                {u.name}
+                                {c.name}
                               </p>
                             </div>
                           </DropdownItem>
                         ))}
                       </Dropdown>
                     </div>
-                  )}
-                </div>
-              </div>
 
-              {/* Headcount Pie Charts */}
-              <div className="flex flex-wrap flex-1 items-center justify-center mt-4">
-                {['completed', 'ongoing'].includes(
-                  selectedEvent?.status?.name?.toLowerCase() ?? ''
-                ) ? (
-                  <div className="flex flex-col items-center justify-center w-full">
-                    {headcountPerEventData.length > 0 && totalCount > 0 ? (
-                      <div>
-                        <div className="flex flex-wrap">
-                          <ResponsiveContainer width="100%" height={200}>
-                            <PieChart>
-                              <Pie
-                                data={headcountPerEventData}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={55}
-                                outerRadius={80}
-                                paddingAngle={5}
-                                dataKey="value"
-                                stroke="none"
-                                cornerRadius={4}
-                              >
-                                {headcountPerEventData.map((_, index) => (
-                                  <Cell
-                                    key={index}
-                                    fill={colors(index, headcountPerEventData.length)}
-                                  />
-                                ))}
-                              </Pie>
-                              <Tooltip
-                                contentStyle={{
-                                  background:
-                                    theme === 'dark'
-                                      ? 'rgba(17,24,39,0.95)'
-                                      : 'rgba(255,255,255,0.95)',
-                                  border:
-                                    theme === 'dark' ? '1px solid #374151' : '1px solid #e5e7eb',
-                                  borderRadius: '8px',
-                                  color: theme === 'dark' ? '#f9fafb' : '#111827',
-                                  fontSize: '14px',
-                                }}
-                                itemStyle={{ color: theme === 'dark' ? '#f9fafb' : '#111827' }}
-                              />
-                            </PieChart>
-                          </ResponsiveContainer>
-                        </div>
-                        <div className="flex flex-wrap justify-center gap-2 w-full mt-2">
-                          {headcountPerEventData.map((entry, index) => (
-                            <div key={index}>
-                              {entry.value > 0 && (
-                                <div className="flex items-center gap-1">
-                                  <div
-                                    className="w-3 h-3 rounded-full shrink-0"
-                                    style={{
-                                      backgroundColor: colors(index, headcountPerEventData.length),
-                                    }}
-                                  />
-                                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                                    {entry.name}
-                                  </span>
-                                </div>
-                              )}
+                    {/* Units Dropdown */}
+                    {selectedCluster && (
+                      <div className="mt-4">
+                        <button
+                          onClick={() => {
+                            setUnitsDropdownOpen((p) => !p);
+                            setClustersDropdownOpen(false);
+                          }}
+                          className="dropdown-toggle gap-2 flex items-center transition shadow-theme-xs h-7 rounded-lg border text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 dark:bg-gray-900 dark:border-gray-800 px-4 focus:ring-3 focus:outline-none"
+                        >
+                          <span className="text-sm font-medium lg:block">
+                            {selectedUnit ? selectedUnit.name : 'All units'}
+                          </span>
+                          <ChevronDown
+                            size={16}
+                            className={`transition-transform duration-200 ${unitsDropdownOpen ? 'rotate-180' : ''}`}
+                          />
+                        </button>
+
+                        <Dropdown
+                          isOpen={unitsDropdownOpen}
+                          onClose={() => setUnitsDropdownOpen(false)}
+                          className="w-60 p-2 right-4"
+                        >
+                          <DropdownItem onClick={() => handleSelectedUnit(null)} className="py-1">
+                            <div className="w-full items-center border-b border-gray-100 pb-1 dark:border-gray-800">
+                              <p className="text-start text-sm font-medium truncate text-gray-900 dark:text-white">
+                                All Units
+                              </p>
                             </div>
+                          </DropdownItem>
+                          {campusUnits.map((u) => (
+                            <DropdownItem key={u.id} onClick={() => handleSelectedUnit(u)}>
+                              <div className="w-full items-center border-b border-gray-100 pb-1 dark:border-gray-800">
+                                <p className="text-start text-sm font-medium truncate text-gray-900 dark:text-white">
+                                  {u.name}
+                                </p>
+                              </div>
+                            </DropdownItem>
                           ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="mt-5 w-full">
-                        <EmptyState message="No headcount data." />
+                        </Dropdown>
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* Headcount Pie Charts */}
+                <div className="flex flex-wrap flex-1 items-center justify-center mt-4">
+                  {['completed', 'ongoing'].includes(
+                    selectedEvent?.status?.name?.toLowerCase() ?? ''
+                  ) ? (
+                    <div className="flex flex-col items-center justify-center w-full">
+                      {headcountPerEventData.length > 0 && totalCount > 0 ? (
+                        <div>
+                          <div className="flex flex-wrap">
+                            <ResponsiveContainer width="100%" height={200}>
+                              <PieChart>
+                                <Pie
+                                  data={headcountPerEventData}
+                                  cx="50%"
+                                  cy="50%"
+                                  innerRadius={55}
+                                  outerRadius={80}
+                                  paddingAngle={5}
+                                  dataKey="value"
+                                  stroke="none"
+                                  cornerRadius={4}
+                                >
+                                  {headcountPerEventData.map((_, index) => (
+                                    <Cell
+                                      key={index}
+                                      fill={colors(index, headcountPerEventData.length)}
+                                    />
+                                  ))}
+                                </Pie>
+                                <Tooltip
+                                  contentStyle={{
+                                    background:
+                                      theme === 'dark'
+                                        ? 'rgba(17,24,39,0.95)'
+                                        : 'rgba(255,255,255,0.95)',
+                                    border:
+                                      theme === 'dark' ? '1px solid #374151' : '1px solid #e5e7eb',
+                                    borderRadius: '8px',
+                                    color: theme === 'dark' ? '#f9fafb' : '#111827',
+                                    fontSize: '14px',
+                                  }}
+                                  itemStyle={{ color: theme === 'dark' ? '#f9fafb' : '#111827' }}
+                                />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
+                          <div className="flex flex-wrap justify-center gap-2 w-full mt-2">
+                            {headcountPerEventData.map((entry, index) => (
+                              <div key={index}>
+                                {entry.value > 0 && (
+                                  <div className="flex items-center gap-1">
+                                    <div
+                                      className="w-3 h-3 rounded-full shrink-0"
+                                      style={{
+                                        backgroundColor: colors(
+                                          index,
+                                          headcountPerEventData.length
+                                        ),
+                                      }}
+                                    />
+                                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                                      {entry.name}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-5 w-full">
+                          <EmptyState message="No headcount data." />
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="mt-5 w-full">
+                      <EmptyState message={`${selectedEvent?.status?.name} event`} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Damage Condtion Table */}
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <div className="flex flex-col rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-900">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                  {campus.name} {selectedEvent.name} Structure Conditions
+                </h1>
+                {damages.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Cluster</TableHead>
+                        <TableHead>Unit</TableHead>
+                        <TableHead>Damage Condition</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {damages?.map((damage) => (
+                        <TableRow key={damage.id}>
+                          <TableCell className="font-medium text-gray-900 dark:text-white">
+                            {damage.cluster.name}
+                          </TableCell>
+                          <TableCell className="font-medium text-gray-900 dark:text-white">
+                            {damage?.unit?.name}
+                          </TableCell>
+                          <TableCell className="font-medium text-gray-900 dark:text-white">
+                            {damage?.damage_conditions?.name}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 ) : (
                   <div className="mt-5 w-full">
-                    <EmptyState message={`${selectedEvent?.status?.name} event`} />
+                    <EmptyState message="No structure condition reports." />
                   </div>
                 )}
               </div>
-
-              {/* Damage Condtion Pie Charts */}
-              <div className="flex flex-wrap flex-1 items-center justify-center"></div>
             </div>
-          </div>
+          </>
         )}
       </div>
     </div>

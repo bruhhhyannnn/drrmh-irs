@@ -6,7 +6,6 @@ import {
   getClusters,
   getDamageConditions,
   getEventStatuses,
-  getLocations,
   getPositions,
   getSettingsItems,
   getUnits,
@@ -81,13 +80,6 @@ export function usePositions() {
   return useQuery({
     queryKey: ['positions'],
     queryFn: getPositions,
-  });
-}
-
-export function useLocations(clusterId?: string) {
-  return useQuery({
-    queryKey: ['locations', clusterId],
-    queryFn: () => getLocations(clusterId),
   });
 }
 
