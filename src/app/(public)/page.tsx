@@ -437,9 +437,7 @@ export default function LandingPage() {
                               >
                                 {ev.name}
                               </td>
-                              <td className="px-5 py-3" style={{ color: 'var(--text-muted)' }}>
-                                {ev.location?.name ?? '—'}
-                              </td>
+                              <td className="px-5 py-3" style={{ color: 'var(--text-muted)' }}></td>
                               <td className="px-5 py-3 text-right">
                                 <StatusBadge status={ev.status?.name ?? ''} />
                               </td>
@@ -669,9 +667,7 @@ export default function LandingPage() {
                         >
                           {ev.name.length > 22 ? ev.name.slice(0, 22) + '…' : ev.name}
                         </td>
-                        <td className="px-2.5 py-2.5" style={{ color: 'var(--text-muted)' }}>
-                          {ev.location?.name ?? '—'}
-                        </td>
+                        <td className="px-2.5 py-2.5" style={{ color: 'var(--text-muted)' }}></td>
                         <td className="px-2.5 py-2.5">
                           <StatusBadge status={ev.status?.name ?? ''} />
                         </td>
