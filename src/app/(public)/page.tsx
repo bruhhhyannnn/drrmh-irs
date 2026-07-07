@@ -1,10 +1,24 @@
 'use client';
 
 import { cn } from '@/lib';
-import { ChevronRight } from 'lucide-react';
+import { useThemeStore } from '@/store';
+import { ChevronRight, Inbox } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { useLandingData } from './use-landing-stats';
 
 /* ─────────────────────────────────────────────────────────────
@@ -12,6 +26,7 @@ import { useLandingData } from './use-landing-stats';
 ───────────────────────────────────────────────────────────── */
 export default function LandingPage() {
   const { data } = useLandingData();
+  const { theme } = useThemeStore();
 
   const [navScrolled, setNavScrolled] = useState(false);
 
@@ -49,6 +64,26 @@ export default function LandingPage() {
     '/upm-drrmh-background-3.jpg',
     '/upm-drrmh-background-4.jpg',
   ];
+
+  const eventsbystatus = [
+    { status: 'ongoing', events: 1 },
+    { status: 'upcoming', events: 2 },
+    { status: 'completed', events: 3 },
+  ];
+
+  const reportsbycluster = [
+    { cluster: 'Pedro Gil', reports: 4, casualties: 1, missing: 0 },
+    { cluster: 'Padre Faura', reports: 4, casualties: 0, missing: 1 },
+    { cluster: 'Taft', reports: 3, casualties: 2, missing: 0 },
+    { cluster: 'PGH', reports: 3, casualties: 0, missing: 0 },
+  ];
+
+  const eventsbystatusCOLORS: Record<string, string> = {
+    ongoing: '#8B1A1A',
+    upcoming: '#E8C97A',
+    completed: '#8B6914',
+  };
+
   const track = [...BG_IMAGES, ...BG_IMAGES]; // doubled for seamless loop
   const [current, setCurrent] = useState(0);
   useEffect(() => {
@@ -57,6 +92,15 @@ export default function LandingPage() {
     }, 4000);
     return () => clearInterval(timer);
   }, [track.length]);
+
+  function EmptyState({ message }: { message: string }) {
+    return (
+      <div className="flex h-full min-h-40 w-full flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50/50 dark:border-white/10 dark:bg-white/5">
+        <Inbox className="mb-2 text-gray-300 dark:text-gray-600" size={24} />
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{message}</p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -404,6 +448,160 @@ export default function LandingPage() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 gap-4 md:col-span-3 md:grid-cols-2">
+                  {/* events by status pie chart */}
+                  <div
+                    className="rounded-[14px] p-5 flex flex-col"
+                    style={{
+                      height: '340px',
+                      background: 'var(--cream)',
+                      border: '1px solid var(--border)',
+                    }}
+                  >
+                    <p
+                      className="font-medium"
+                      style={{ color: 'var(--text-mid)', fontSize: 'var(--text-sm)' }}
+                    >
+                      Events by Status
+                    </p>
+                    <div className="flex-1 min-h-0">
+                      <ResponsiveContainer>
+                        <PieChart>
+                          <Pie
+                            data={eventsbystatus}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={55}
+                            outerRadius={80}
+                            paddingAngle={5}
+                            dataKey="events"
+                            nameKey="status"
+                            stroke="none"
+                            cornerRadius={4}
+                          >
+                            {eventsbystatus.map((entry) => (
+                              <Cell
+                                key={entry.status}
+                                fill={
+                                  eventsbystatusCOLORS[entry.status] ?? eventsbystatusCOLORS.unknown
+                                }
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{
+                              background:
+                                theme === 'dark' ? 'rgba(17,24,39,0.95)' : 'rgba(255,255,255,0.95)',
+                              border: theme === 'dark' ? '1px solid #374151' : '1px solid #e5e7eb',
+                              borderRadius: '8px',
+                              color: theme === 'dark' ? '#f9fafb' : '#111827',
+                              fontSize: '14px',
+                            }}
+                            itemStyle={{ color: theme === 'dark' ? '#f9fafb' : '#111827' }}
+                          />
+                          <Legend
+                            verticalAlign="bottom"
+                            height={24}
+                            iconType="circle"
+                            wrapperStyle={{ fontSize: '14px', paddingTop: '2px', color: 'inherit' }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* reports by cluster */}
+                  <div
+                    className="rounded-[14px] p-5 flex flex-col"
+                    style={{
+                      height: '340px',
+                      background: 'var(--cream)',
+                      border: '1px solid var(--border)',
+                    }}
+                  >
+                    <p
+                      className="font-medium"
+                      style={{ color: 'var(--text-mid)', fontSize: 'var(--text-sm)' }}
+                    >
+                      Reports by Cluster
+                    </p>
+                    <div className="flex-1 min-h-0">
+                      {reportsbycluster.length ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart
+                            data={reportsbycluster}
+                            margin={{ top: 10, right: 0, left: -24, bottom: 0 }}
+                          >
+                            <CartesianGrid
+                              strokeDasharray="3 3"
+                              vertical={false}
+                              stroke="rgba(156,163,175,0.15)"
+                            />
+                            <XAxis
+                              dataKey="cluster"
+                              tick={{ fontSize: 12, fill: '#6b7280' }}
+                              axisLine={false}
+                              tickLine={false}
+                              dy={8}
+                            />
+                            <YAxis
+                              allowDecimals={false}
+                              tick={{ fontSize: 12, fill: '#6b7280' }}
+                              axisLine={false}
+                              tickLine={false}
+                            />
+                            <Tooltip
+                              cursor={{
+                                fill:
+                                  theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                              }}
+                              contentStyle={{
+                                background:
+                                  theme === 'dark'
+                                    ? 'rgba(17,24,39,0.95)'
+                                    : 'rgba(255,255,255,0.95)',
+                                border:
+                                  theme === 'dark' ? '1px solid #374151' : '1px solid #e5e7eb',
+                                borderRadius: '8px',
+                                color: theme === 'dark' ? '#f9fafb' : '#111827',
+                                fontSize: '14px',
+                              }}
+                              itemStyle={{ color: theme === 'dark' ? '#f9fafb' : '#111827' }}
+                            />
+                            <Legend
+                              iconType="circle"
+                              wrapperStyle={{ fontSize: '14px', paddingTop: '4px' }}
+                            />
+                            <Bar
+                              dataKey="reports"
+                              name="Reports"
+                              fill="#8B1A1A"
+                              radius={[3, 3, 0, 0]}
+                              maxBarSize={32}
+                            />
+                            <Bar
+                              dataKey="casualties"
+                              name="Casualties"
+                              fill="#E8C97A"
+                              radius={[3, 3, 0, 0]}
+                              maxBarSize={32}
+                            />
+                            <Bar
+                              dataKey="missing"
+                              name="Missing"
+                              fill="#8B6914"
+                              radius={[3, 3, 0, 0]}
+                              maxBarSize={32}
+                            />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <EmptyState message="No cluster reports" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 {/* recent events mini table */}
                 <div
                   className="overflow-hidden rounded-[14px] md:col-span-3"
@@ -598,6 +796,11 @@ export default function LandingPage() {
                   desc="Assign Incident Commanders, Safety Officers, and Liaison Officers directly within each event."
                 />
                 <FeatureListItem
+                  icon={<IconSchool />}
+                  title="Campus-wide headcount overview"
+                  desc="View headcounts and casualty reports across all campuses."
+                />
+                <FeatureListItem
                   icon={<IconActivity />}
                   title="Protocol checklists"
                   desc="Built-in checklists ensure teams follow established DRRM-H protocols at every stage of the drill."
@@ -692,6 +895,22 @@ export default function LandingPage() {
               </table>
             </div>
           </Reveal>
+
+          <div
+            className="rounded-[20px] p-8"
+            style={{
+              background: 'white',
+              border: '1px solid var(--border)',
+              boxShadow: '0 8px 40px rgba(26,18,8,0.07)',
+            }}
+          >
+            <p
+              className="mb-3.5 text-xs font-medium tracking-[1.2px] uppercase"
+              style={{ color: 'var(--maroon)' }}
+            >
+              Hello
+            </p>
+          </div>
         </section>
 
         {/* DIVIDER */}
@@ -1889,5 +2108,19 @@ const IconOffline = () => (
     <path d="M1 6l4 4a9 9 0 0 1 14 0l4-4A15 15 0 0 0 1 6z" />
     <path d="M5 12.5l4 4a5 5 0 0 1 6 0l4-4a11 11 0 0 0-14 0z" />
     <line x1="2" y1="2" x2="22" y2="22" />
+  </svg>
+);
+
+const IconSchool = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8B1A1A" strokeWidth="1.8">
+    <rect x="4" y="2" width="16" height="20" rx="2" />
+    <line x1="9" y1="6" x2="9" y2="6.01" />
+    <line x1="15" y1="6" x2="15" y2="6.01" />
+    <line x1="9" y1="10" x2="9" y2="10.01" />
+    <line x1="15" y1="10" x2="15" y2="10.01" />
+    <line x1="9" y1="14" x2="9" y2="14.01" />
+    <line x1="15" y1="14" x2="15" y2="14.01" />
+    <line x1="10" y1="22" x2="10" y2="18" />
+    <line x1="14" y1="22" x2="14" y2="18" />
   </svg>
 );

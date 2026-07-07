@@ -9,7 +9,6 @@ import {
   CalendarDays,
   ChevronDown,
   LayoutDashboard,
-  ScrollText,
   Settings,
   University,
   Users,
@@ -35,7 +34,6 @@ const navItems: NavItem[] = [
   { icon: <AlertTriangle size={20} />, name: 'Bystander Reports', path: '/emergency-reports' },
   { icon: <Calendar size={20} />, name: 'Calendar', path: '/calendar' },
   { icon: <Users size={20} />, name: 'Users', path: '/users' },
-  { icon: <ScrollText size={20} />, name: 'Activity Logs', path: '/activity-logs' },
   {
     icon: <Settings size={20} />,
     name: 'Settings',
@@ -44,7 +42,6 @@ const navItems: NavItem[] = [
       { name: 'Units', path: '/settings/units' },
       { name: 'Locations', path: '/settings/locations' },
       { name: 'Positions', path: '/settings/positions' },
-      { name: 'User Types', path: '/settings/user-types' },
       { name: 'Event Statuses', path: '/settings/event-statuses' },
       { name: 'Casualty Conditions', path: '/settings/casualty-conditions' },
       { name: 'Damage Conditions', path: '/settings/damage-conditions' },
