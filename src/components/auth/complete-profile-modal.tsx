@@ -5,7 +5,7 @@ import { Button, Modal, Select } from '@/components/ui';
 import { useAuthStore } from '@/store';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { useClusters, usePositions, useUnits } from '../hooks/use-settings';
+import { useCampus, useClusters, usePositions, useUnits } from '../hooks/use-settings';
 
 const OTHER_VALUE = '__other__';
 
@@ -13,8 +13,10 @@ export function CompleteProfileModal() {
   const { userProfile, loading, setUserProfile } = useAuthStore();
   const { data: positions = [] } = usePositions();
   const { data: clusters = [] } = useClusters();
+  const { data: campus = [] } = useCampus();
 
   const [positionId, setPositionId] = useState('');
+  const [campusId, setCampusId] = useState('');
   const [customPosition, setCustomPosition] = useState('');
   const [clusterId, setClusterId] = useState('');
   const [unitId, setUnitId] = useState('');
@@ -29,6 +31,12 @@ export function CompleteProfileModal() {
     ...positions.map((p) => ({ value: p.id, label: p.name })),
     { value: OTHER_VALUE, label: 'Other (please specify)' },
   ];
+  const campusOptions = (campus as { id: string; name: string; is_active: boolean }[])
+    .filter((c) => c.is_active)
+    .map((c) => ({
+      value: c.id,
+      label: c.name,
+    }));
   const clusterOptions = clusters.map((c) => ({ value: c.id, label: c.name }));
   const unitOptions = units.map((u) => ({ value: u.id, label: u.name }));
 
@@ -77,6 +85,19 @@ export function CompleteProfileModal() {
           onChange={(e) => {
             setPositionId(e.target.value);
             setCustomPosition('');
+            setClusterId('');
+            setUnitId('');
+          }}
+        />
+
+        <Select
+          label="Campus"
+          placeholder="Select your campus..."
+          options={campusOptions}
+          value={campusId}
+          required
+          onChange={(e) => {
+            setCampusId(e.target.value);
             setClusterId('');
             setUnitId('');
           }}

@@ -23,8 +23,10 @@ model User {
   updated_at          DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
   is_profile_complete Boolean   @default(false)
   cluster_id          String?   @db.Uuid
+  campus_id           String?   @db.Uuid
   events              Event[]   @relation("CreatedBy")
   reports             Report[]
+  campus              campus?   @relation(fields: [campus_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   cluster             Cluster?  @relation(fields: [cluster_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   position            Position? @relation(fields: [position_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   unit                Unit?     @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -262,4 +264,5 @@ model campus {
   name      String
   is_active Boolean   @default(true)
   clusters  Cluster[]
+  users     User[]
 }
