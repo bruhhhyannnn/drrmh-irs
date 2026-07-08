@@ -6,7 +6,12 @@ import unusedImports from 'eslint-plugin-unused-imports';
 
 const eslintConfig = [
   {
-    ignores: ['.next/**', 'node_modules/**', 'public/**'],
+    ignores: [
+      '.next/**',
+      'node_modules/**',
+      'public/**',
+      'src/components/ui/map.tsx', // vendored from mapcn — not linted
+    ],
   },
   {
     files: ['**/*.ts', '**/*.tsx'],
