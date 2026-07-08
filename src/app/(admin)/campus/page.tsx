@@ -2,10 +2,11 @@
 
 import { PageBreadcrumb } from '@/components/common';
 import { useCampuses } from '@/components/hooks/use-campus';
-import { Button, Input, PageError } from '@/components/ui';
+import { Button, Input, Modal, PageError } from '@/components/ui';
 import { Plus, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { CampusForm } from './campus-form';
 
 export default function CampusPage() {
   const [query, setQuery] = useState('');
@@ -23,6 +24,10 @@ export default function CampusPage() {
     'UP Tacloban': '/up-tacloban-logo.png',
     'UP Open University': '/up-openuniversity-logo.png',
     'UP Cebu': '/up-cebu-logo.png',
+  };
+
+  const handleClose = () => {
+    setIsModalOpen(false);
   };
 
   useEffect(() => {
@@ -54,6 +59,10 @@ export default function CampusPage() {
             Add Campus
           </Button>
         </div>
+
+        <Modal isOpen={isModalOpen} onClose={handleClose}>
+          <CampusForm onSuccess={handleClose} onCancel={handleClose} />
+        </Modal>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {campuses?.length ? (
