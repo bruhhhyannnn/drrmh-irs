@@ -5,18 +5,20 @@ import { Button, Modal, Select } from '@/components/ui';
 import { useAuthStore } from '@/store';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import { useCampusClusters } from '../hooks/use-campus';
 import { useCampus, useClusters, usePositions, useUnits } from '../hooks/use-settings';
 
 const OTHER_VALUE = '__other__';
 
 export function CompleteProfileModal() {
   const { userProfile, loading, setUserProfile } = useAuthStore();
+  const [campusId, setCampusId] = useState('');
   const { data: positions = [] } = usePositions();
   const { data: clusters = [] } = useClusters();
   const { data: campus = [] } = useCampus();
+  const { data: campusClusters = [] } = useCampusClusters(campusId ?? '');
 
   const [positionId, setPositionId] = useState('');
-  const [campusId, setCampusId] = useState('');
   const [customPosition, setCustomPosition] = useState('');
   const [clusterId, setClusterId] = useState('');
   const [unitId, setUnitId] = useState('');
@@ -37,8 +39,10 @@ export function CompleteProfileModal() {
       value: c.id,
       label: c.name,
     }));
-  const clusterOptions = clusters.map((c) => ({ value: c.id, label: c.name }));
-  const unitOptions = units.map((u) => ({ value: u.id, label: u.name }));
+  const clusterOptions = campusClusters
+    .filter((c) => c.is_active)
+    .map((c) => ({ value: c.id, label: c.name }));
+  const unitOptions = units.filter((u) => u.is_active).map((u) => ({ value: u.id, label: u.name }));
 
   const canSave = positionId && (!isOther || customPosition.trim().length > 0) && clusterId;
 
@@ -90,19 +94,6 @@ export function CompleteProfileModal() {
           }}
         />
 
-        <Select
-          label="Campus"
-          placeholder="Select your campus..."
-          options={campusOptions}
-          value={campusId}
-          required
-          onChange={(e) => {
-            setCampusId(e.target.value);
-            setClusterId('');
-            setUnitId('');
-          }}
-        />
-
         {isOther && (
           <div className="space-y-1">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -119,10 +110,25 @@ export function CompleteProfileModal() {
         )}
 
         <Select
+          label="Campus"
+          placeholder="Select your campus..."
+          options={campusOptions}
+          value={campusId}
+          required
+          onChange={(e) => {
+            setCampusId(e.target.value);
+            setClusterId('');
+            setUnitId('');
+          }}
+        />
+
+        <Select
           label="Cluster"
-          placeholder="Select cluster..."
+          placeholder={campusId ? 'Select cluster...' : 'Select campus first'}
+          className={!campusId ? 'opacity-70' : ''}
           options={clusterOptions}
           value={clusterId}
+          disabled={!campusId}
           required
           onChange={(e) => {
             setClusterId(e.target.value);
@@ -132,9 +138,11 @@ export function CompleteProfileModal() {
         <Select
           label="Building / Unit"
           placeholder={clusterId ? 'Select unit...' : 'Select cluster first'}
+          className={!clusterId ? 'opacity-70' : ''}
           options={unitOptions}
           value={unitId}
           disabled={!clusterId}
+          required
           onChange={(e) => setUnitId(e.target.value)}
         />
 
