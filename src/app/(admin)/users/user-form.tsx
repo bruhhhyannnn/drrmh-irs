@@ -1,7 +1,13 @@
 'use client';
 
 import { PageBreadcrumb } from '@/components/common';
-import { useClusters, usePositions, useUnits, useUserTypes } from '@/components/hooks/use-settings';
+import {
+  useCampus,
+  useClusters,
+  usePositions,
+  useUnits,
+  useUserTypes,
+} from '@/components/hooks/use-settings';
 import { useCreateUser, useUpdateUser, useUser } from '@/components/hooks/use-users';
 import { Button, Input, Label, Select, Spinner } from '@/components/ui';
 import {
@@ -33,6 +39,7 @@ export function UserForm({ editId, onSuccess, onCancel }: UserFormProps) {
   const { data: clusters = [] } = useClusters();
   const { data: positions = [] } = usePositions();
   const { data: userTypes = [] } = useUserTypes();
+  const { data: campus = [] } = useCampus();
 
   // Cluster is local state — used only to filter the units dropdown
   const [selectedClusterId, setSelectedClusterId] = useState('');
@@ -51,6 +58,15 @@ export function UserForm({ editId, onSuccess, onCancel }: UserFormProps) {
   } = useForm<UserCreateFormData | UserEditFormData>({
     resolver: zodResolver(schema),
   });
+
+  const campusOptions = (campus as { id: string; name: string; is_active: boolean }[])
+    .filter((c) => c.is_active)
+    .map((c) => ({
+      value: c.id,
+      label: c.name,
+    }));
+
+  const campusError = (errors as Record<string, { message?: string }>).campus_id;
 
   // Populate form when editing
   useEffect(() => {
@@ -160,14 +176,25 @@ export function UserForm({ editId, onSuccess, onCancel }: UserFormProps) {
                 hint={errors.username?.message}
                 {...register('username')}
               />
-              <Input
-                label="Email"
+              <Select
+                label="Campus"
                 required
-                type="email"
-                error={!!errors.email}
-                hint={errors.email?.message}
-                {...register('email')}
+                options={campusOptions}
+                placeholder="Select campus..."
+                error={!!campusError}
+                hint={campusError?.message}
+                {...register('campus_id')}
               />
+              <div className="sm:col-span-2">
+                <Input
+                  label="Email"
+                  required
+                  type="email"
+                  error={!!errors.email}
+                  hint={errors.email?.message}
+                  {...register('email')}
+                />
+              </div>
               {!isEdit && (
                 <div className="sm:col-span-2">
                   <Input

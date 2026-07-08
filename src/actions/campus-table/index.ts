@@ -316,7 +316,7 @@ export async function getCampusHeadcountPerEvent(eventId: string, campusId: stri
 export async function getCampusClusters(campusId: string) {
   return await prisma.cluster.findMany({
     where: { campus_id: campusId },
-    select: { id: true, name: true },
+    select: { id: true, name: true, is_active: true },
   });
 }
 

@@ -33,6 +33,7 @@ export const userCreateSchema = z.object({
   position_id: z.string().uuid().optional().nullable(),
   user_type_id: z.string().uuid('User type is required'),
   is_active: z.boolean().default(true),
+  campus_id: z.string().uuid('Campus is required'),
 });
 export const userEditSchema = userCreateSchema.omit({ password: true });
 
