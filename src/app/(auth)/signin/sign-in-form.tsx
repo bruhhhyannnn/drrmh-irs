@@ -5,13 +5,14 @@ import { Button, Input, Label } from '@/components/ui';
 import { SignInFormData, signInSchema, supabase } from '@/lib';
 import { useAuthStore, useThemeStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertTriangle, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 export function SignInForm() {
+  const [step, setStep] = useState<'email' | 'password'>('email');
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState('');
   const { theme } = useThemeStore();
@@ -23,6 +24,8 @@ export function SignInForm() {
   const {
     register,
     handleSubmit,
+    trigger,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -44,6 +47,17 @@ export function SignInForm() {
       return () => clearTimeout(timer);
     }
   }, []);
+
+  const handleContinue = async () => {
+    setAuthError('');
+    const isEmailValid = await trigger('email');
+    if (isEmailValid) setStep('password');
+  };
+
+  const handleBack = () => {
+    setAuthError('');
+    setStep('email');
+  };
 
   const onSubmit = async (data: SignInFormData) => {
     setAuthError('');
@@ -68,15 +82,19 @@ export function SignInForm() {
         </p>
       </div>
 
-      {/* Google sign-in */}
-      <GoogleSignInForm />
+      {step === 'email' && (
+        <>
+          {/* Google sign-in */}
+          <GoogleSignInForm />
 
-      {/* Divider */}
-      <div className="relative flex items-center gap-3">
-        <div className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
-        <span className="text-xs text-gray-400">or sign in with email</span>
-        <div className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
-      </div>
+          {/* Divider */}
+          <div className="relative flex items-center gap-3">
+            <div className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
+            <span className="text-xs text-gray-400">or sign in with email</span>
+            <div className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
+          </div>
+        </>
+      )}
 
       {/* Email / password form */}
       <div className="space-y-4">
@@ -87,55 +105,81 @@ export function SignInForm() {
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <Input
-            label="Email"
-            id="email"
-            type="email"
-            placeholder="you@up.edu.ph"
-            error={!!errors.email}
-            hint={errors.email?.message}
-            {...register('email')}
-          />
-
-          <div className="space-y-1.5">
-            <Label htmlFor="password">Password</Label>
-            <div className="relative">
+          {step === 'email' && (
+            <>
               <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
-                error={!!errors.password}
-                hint={errors.password?.message}
-                className="pr-10"
-                {...register('password')}
+                label="Email"
+                id="email"
+                type="email"
+                autoFocus
+                placeholder="you@up.edu.ph"
+                error={!!errors.email}
+                hint={errors.email?.message}
+                {...register('email')}
               />
+              <Button type="button" className="w-full" onClick={handleContinue}>
+                Continue
+              </Button>
+            </>
+          )}
+
+          {step === 'password' && (
+            <>
               <button
                 type="button"
-                onClick={() => setShowPassword((p) => !p)}
-                className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 transition-all duration-200 hover:text-gray-600"
+                onClick={handleBack}
+                className="flex items-center gap-1 text-sm text-gray-500 transition-all duration-200 hover:text-gray-800 dark:hover:text-gray-200"
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                <ArrowLeft size={14} />
+                Back
               </button>
-            </div>
-          </div>
 
-          <div className="flex justify-center">
-            <Link
-              href="/forgot-password"
-              className="text-sm text-gray-500 transition-all duration-200 hover:text-gray-800 dark:hover:text-gray-200"
-            >
-              Forgot password?
-            </Link>
-          </div>
+              <div>
+                <Input type="Email" label="Email" readOnly {...register('email')} />
+              </div>
 
-          <Button
-            type="submit"
-            className="w-full"
-            isLoading={isSubmitting}
-            loadingText="Signing in..."
-          >
-            Sign in
-          </Button>
+              <div className="space-y-1.5">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    autoFocus
+                    error={!!errors.password}
+                    hint={errors.password?.message}
+                    className="pr-10"
+                    {...register('password')}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((p) => !p)}
+                    className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 transition-all duration-200 hover:text-gray-600"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-center">
+                <Link
+                  href="/forgot-password"
+                  className="text-sm text-gray-500 transition-all duration-200 hover:text-gray-800 dark:hover:text-gray-200"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full"
+                isLoading={isSubmitting}
+                loadingText="Signing in..."
+              >
+                Sign in
+              </Button>
+            </>
+          )}
         </form>
       </div>
 
