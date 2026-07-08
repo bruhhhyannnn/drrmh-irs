@@ -1,11 +1,11 @@
 'use client';
 
 import { PageBreadcrumb } from '@/components/common';
+import { useCampuses } from '@/components/hooks/use-campus';
 import { Button, Input, PageError } from '@/components/ui';
 import { Plus, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { useCampuses } from '../../../components/hooks/use-campus';
 
 export default function CampusPage() {
   const [query, setQuery] = useState('');

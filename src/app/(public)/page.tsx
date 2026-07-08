@@ -507,7 +507,7 @@ export default function LandingPage() {
             className="mb-7 text-xs font-medium tracking-[1.2px] uppercase"
             style={{ color: 'var(--text-muted)' }}
           >
-            Developed under the NICER Program for
+            Developed under the DRRM-H Program for
           </p>
           <div className="flex flex-wrap items-center justify-center gap-8 md:gap-14">
             {[
@@ -1539,7 +1539,7 @@ export default function LandingPage() {
             style={{ color: 'rgba(255,255,255,0.28)', paddingBottom: 'clamp(80px, 28vw, 200px)' }}
           >
             <span>© 2026 UP Manila DRRM-H — Incident Reporting System. All rights reserved.</span>
-            <span>Developed under the NICER Program · Dr. Carlos Primero D. Gundran</span>
+            <span>Developed under the DRRM-H Program · Dr. Carlos Primero D. Gundran</span>
             {/* oversized IRS watermark */}
             <div className="pointer-events-none absolute right-0 bottom-0 left-0 overflow-hidden leading-none select-none">
               <p
