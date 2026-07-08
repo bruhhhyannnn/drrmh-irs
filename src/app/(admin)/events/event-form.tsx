@@ -1,6 +1,7 @@
 'use client';
 
 import { PageBreadcrumb } from '@/components/common';
+import { useCreateEvent, useEvent, useUpdateEvent } from '@/components/hooks/use-events';
 import { useEventStatuses } from '@/components/hooks/use-settings';
 import { Button, Input, Select, Spinner, Textarea } from '@/components/ui';
 import { eventSchema, type EventFormData } from '@/lib';
@@ -10,7 +11,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { useCreateEvent, useEvent, useUpdateEvent } from '../../../components/hooks/use-events';
 
 interface EventFormProps {
   editId?: string;

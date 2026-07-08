@@ -1,6 +1,7 @@
 'use client';
 
 import { PageBreadcrumb } from '@/components/common';
+import { useCampus, useCreateCampus, useUpdateCampus } from '@/components/hooks/use-campus';
 import { Button, Input, Label, Spinner } from '@/components/ui';
 import { campusSchema, type CampusFormData } from '@/lib';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,7 +9,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { useCampus, useCreateCampus, useUpdateCampus } from '../../../components/hooks/use-campus';
 
 interface CampusFormProps {
   editId?: string;
