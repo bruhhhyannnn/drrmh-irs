@@ -272,9 +272,12 @@ function CampusDetailsContent() {
         <button
           onClick={() => setEventsDropdownOpen((p) => !p)}
           className="dropdown-toggle gap-2 flex items-center shadow-theme-xs h-11 rounded-lg border transition text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-900 dark:border-gray-800 px-4 focus:ring-3 focus:outline-none"
+          disabled={campusEvents.length === 0}
         >
           <span className="text-sm font-medium lg:block">
-            {selectedEvent ? selectedEvent.name : 'Select event...'}
+            {campusEvents.length > 0
+              ? (selectedEvent?.name ?? campusEvents[0].name)
+              : 'No events available'}
           </span>
           <ChevronDown
             size={16}
@@ -298,64 +301,81 @@ function CampusDetailsContent() {
           ))}
         </Dropdown>
 
-        <div className="absolute right-2 top-0 flex items-center gap-2">
-          <button
-            onClick={() => handleEdit(campus.id)}
-            className="hover:text-brand-600 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100 hover:bg-transparent hover:border-transparent"
-          >
-            <Pencil size={24} />
-          </button>
+        <div className="shadow-theme-sm mt-4 rounded-xl border border-gray-200 bg-white p-6 dark:border-white/5 dark:bg-white/3">
+          <div className="mt-2 flex gap-2 justify-between">
+            <div className="flex flex-wrap gap-2">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                {campus.name} | {selectedEvent?.name ?? campusEvents[0].name}
+              </h1>
 
-          <button
-            onClick={() => setDeleteId(campus.id)}
-            className="hover:text-error-500 text-gray-400 transition-all duration-100 focus:outline-none hover:bg-transparent hover:border-transparent"
-          >
-            <Trash2 size={24} />
-          </button>
+              <div>
+                {(selectedEvent?.name ?? campusEvents[0].name) && (
+                  <Badge
+                    color={
+                      selectedEvent
+                        ? selectedEvent.status.name === 'ongoing'
+                          ? 'success'
+                          : selectedEvent.status.name === 'completed'
+                            ? 'primary'
+                            : 'warning'
+                        : campusEvents[0].status.name === 'ongoing'
+                          ? 'success'
+                          : campusEvents[0].status.name === 'completed'
+                            ? 'primary'
+                            : 'warning'
+                    }
+                    size="sm"
+                  >
+                    {selectedEvent ? selectedEvent.status.name : campusEvents[0].status.name}
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleEdit(campus.id)}
+                className="hover:text-brand-600 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100 hover:bg-transparent hover:border-transparent"
+              >
+                <Pencil size={24} />
+              </button>
+
+              <button
+                onClick={() => setDeleteId(campus.id)}
+                className="hover:text-error-500 text-gray-400 transition-all duration-100 focus:outline-none hover:bg-transparent hover:border-transparent"
+              >
+                <Trash2 size={24} />
+              </button>
+            </div>
+
+            <Modal isOpen={isModalOpen} onClose={handleClose}>
+              <CampusForm editId={editId} onSuccess={handleClose} onCancel={handleClose} />
+            </Modal>
+
+            <ConfirmDialog
+              isOpen={!!deleteId}
+              onClose={() => setDeleteId('')}
+              onConfirm={() =>
+                deleteCampusMutation.mutate(deleteId, { onSuccess: () => setDeleteId('') })
+              }
+              title="Delete campus"
+              message="This campus will be permanently deleted. This cannot be undone."
+              confirmLabel="Delete"
+              isLoading={deleteCampusMutation.isPending}
+            />
+          </div>
         </div>
-
-        <Modal isOpen={isModalOpen} onClose={handleClose}>
-          <CampusForm editId={editId} onSuccess={handleClose} onCancel={handleClose} />
-        </Modal>
-
-        <ConfirmDialog
-          isOpen={!!deleteId}
-          onClose={() => setDeleteId('')}
-          onConfirm={() =>
-            deleteCampusMutation.mutate(deleteId, { onSuccess: () => setDeleteId('') })
-          }
-          title="Delete campus"
-          message="This campus will be permanently deleted. This cannot be undone."
-          confirmLabel="Delete"
-          isLoading={deleteCampusMutation.isPending}
-        />
 
         {/* Charts and Tables */}
         {selectedEvent && (
           <>
             <div className="mt-5">
               <div className="flex flex-col rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-900">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {campus.name} {selectedEvent.name} Demographics
-                </h1>
                 <div className="mt-2 flex justify-between">
-                  {selectedEvent.status.name && (
-                    <Badge
-                      color={
-                        selectedEvent.status.name === 'ongoing'
-                          ? 'success'
-                          : selectedEvent.status.name === 'completed'
-                            ? 'primary'
-                            : 'warning'
-                      }
-                      size="sm"
-                      className="h-6"
-                    >
-                      {selectedEvent.status.name}
-                    </Badge>
-                  )}
-
-                  <div className="flex flex-col items-end w-full">
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    Headcount Report
+                  </h1>
+                  <div className="flex flex-col items-end">
                     {/* Clusters Dropdown */}
                     <div>
                       <button
@@ -363,9 +383,9 @@ function CampusDetailsContent() {
                           setClustersDropdownOpen((p) => !p);
                           setUnitsDropdownOpen(false);
                         }}
-                        className="dropdown-toggle gap-2 flex items-center transition shadow-theme-xs h-7 rounded-lg border text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 dark:bg-gray-900 dark:border-gray-800 px-4 focus:ring-3 focus:outline-none"
+                        className="dropdown-toggle text-wrap gap-2 flex items-center transition shadow-theme-xs h-7 rounded-lg border text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 dark:bg-gray-900 dark:border-gray-800 px-4 focus:ring-3 focus:outline-none"
                       >
-                        <span className="text-sm font-medium lg:block">
+                        <span className="text-sm font-medium lg:block truncate">
                           {selectedCluster ? selectedCluster.name : 'All Clusters'}
                         </span>
                         <ChevronDown
@@ -537,7 +557,7 @@ function CampusDetailsContent() {
             <div className="mt-5">
               <div className="flex flex-col rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-900">
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  {campus.name} {selectedEvent.name} Structure Conditions
+                  Structure Conditions
                 </h1>
                 {damages.length > 0 ? (
                   <Table>
