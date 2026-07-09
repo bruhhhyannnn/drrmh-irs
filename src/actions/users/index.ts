@@ -17,6 +17,7 @@ export type CreateUserInput = {
   position_id?: string | null;
   user_type_id: string;
   is_active?: boolean;
+  campus_id: string;
 };
 
 export type UpdateUserInput = Omit<Partial<CreateUserInput>, 'password'>;
@@ -38,6 +39,7 @@ export async function getUsers(query?: string) {
       unit: { include: { cluster: true } },
       position: true,
       user_type: true,
+      campus: true,
     },
     orderBy: { created_at: 'desc' },
   });
@@ -51,6 +53,7 @@ export async function getUser(id: string) {
       unit: { include: { cluster: true } },
       position: true,
       user_type: true,
+      campus: true,
     },
   });
 }
@@ -63,6 +66,7 @@ export async function getUserByAuthId(authId: string) {
       unit: { include: { cluster: true } },
       position: true,
       user_type: true,
+      campus: true,
     },
   });
 }
@@ -127,8 +131,13 @@ export async function completeUserProfile(
     last_name?: string;
     cluster_id?: string;
     unit_id?: string;
+    campus_id?: string;
   }
 ) {
+  if (!data.campus_id) {
+    throw new Error('campus_id is required to complete profile');
+  }
+
   let positionId = data.position_id;
 
   if (data.custom_position_name) {
@@ -150,6 +159,7 @@ export async function completeUserProfile(
       unit: { include: { cluster: true } },
       position: true,
       user_type: true,
+      campus: true,
     },
   });
   revalidatePath('/');
