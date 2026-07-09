@@ -304,30 +304,39 @@ function CampusDetailsContent() {
         <div className="shadow-theme-sm mt-4 rounded-xl border border-gray-200 bg-white p-6 dark:border-white/5 dark:bg-white/3">
           <div className="mt-2 flex gap-2 justify-between">
             <div className="flex flex-wrap gap-2">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                {campus.name} | {selectedEvent?.name ?? campusEvents[0].name}
-              </h1>
+              {campusEvents.length > 0 ? (
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {campus.name} | {selectedEvent?.name ?? campusEvents[0].name}
+                </h1>
+              ) : (
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{campus.name}</h1>
+              )}
 
               <div>
-                {(selectedEvent?.name ?? campusEvents[0].name) && (
-                  <Badge
-                    color={
-                      selectedEvent
-                        ? selectedEvent.status.name === 'ongoing'
-                          ? 'success'
-                          : selectedEvent.status.name === 'completed'
-                            ? 'primary'
-                            : 'warning'
-                        : campusEvents[0].status.name === 'ongoing'
-                          ? 'success'
-                          : campusEvents[0].status.name === 'completed'
-                            ? 'primary'
-                            : 'warning'
-                    }
-                    size="sm"
-                  >
-                    {selectedEvent ? selectedEvent.status.name : campusEvents[0].status.name}
-                  </Badge>
+                {campusEvents.length > 0 && (
+                  <div>
+                    {(selectedEvent?.name ?? campusEvents[0].name) && (
+                      <Badge
+                        color={
+                          selectedEvent
+                            ? selectedEvent.status.name === 'ongoing'
+                              ? 'success'
+                              : selectedEvent.status.name === 'completed'
+                                ? 'primary'
+                                : 'warning'
+                            : campusEvents[0].status.name === 'ongoing'
+                              ? 'success'
+                              : campusEvents[0].status.name === 'completed'
+                                ? 'primary'
+                                : 'warning'
+                        }
+                        size="sm"
+                        className="mt-1.5"
+                      >
+                        {selectedEvent ? selectedEvent.status.name : campusEvents[0].status.name}
+                      </Badge>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
