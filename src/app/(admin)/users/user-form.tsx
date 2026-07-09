@@ -219,7 +219,7 @@ export function UserForm({ editId, onSuccess, onCancel }: UserFormProps) {
                 value={selectedClusterId}
                 onChange={(e) => {
                   setSelectedClusterId(e.target.value);
-                  setValue('unit_id', '');
+                  setValue('cluster_id', e.target.value);
                 }}
               />
               <Select
