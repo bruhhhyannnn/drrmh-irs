@@ -10,6 +10,7 @@ export async function getLandingData() {
         name: true,
         started_at: true,
         status: { select: { name: true } },
+        campus: { select: { name: true } },
       },
       orderBy: { created_at: 'desc' },
       take: 8,

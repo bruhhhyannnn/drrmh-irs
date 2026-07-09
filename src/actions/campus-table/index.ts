@@ -41,14 +41,14 @@ export async function getCampusEvents(query?: string) {
   });
 
   const completed = await prisma.event.findMany({
-    where: { status_id: completedStatus?.id },
-    select: { id: true, name: true, status: { select: { name: true } } },
+    where: { status_id: completedStatus?.id, campus_id: query },
+    select: { id: true, name: true, status: { select: { name: true } }, campus_id: true },
     orderBy: { started_at: 'desc' },
   });
 
   const others = await prisma.event.findMany({
-    where: { status_id: { not: completedStatus?.id } },
-    select: { id: true, name: true, status: { select: { name: true } } },
+    where: { status_id: { not: completedStatus?.id }, campus_id: query },
+    select: { id: true, name: true, status: { select: { name: true } }, campus_id: true },
   });
 
   return [...completed, ...others];
