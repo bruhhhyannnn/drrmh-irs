@@ -16,7 +16,6 @@ import {
   damageConditionSchema,
   positionSchema,
   unitSchema,
-  userTypeSchema,
 } from '@/lib';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
@@ -27,7 +26,6 @@ const SCHEMA_MAP = {
   clusters: clusterSchema,
   units: unitSchema,
   positions: positionSchema,
-  user_types: userTypeSchema,
   casualty_conditions: casualtyConditionSchema,
   damage_conditions: damageConditionSchema,
   campus: campusSchema,
