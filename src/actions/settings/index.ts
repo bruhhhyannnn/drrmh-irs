@@ -9,7 +9,6 @@ export type SettingsTable =
   | 'units'
   | 'positions'
   | 'user_types'
-  | 'event_statuses'
   | 'casualty_conditions'
   | 'campus'
   | 'damage_conditions';
@@ -19,7 +18,6 @@ const MODEL_MAP = {
   units: 'unit',
   positions: 'position',
   user_types: 'userType',
-  event_statuses: 'eventStatus',
   casualty_conditions: 'casualtyCondition',
   damage_conditions: 'damageCondition',
   campus: 'campus',
@@ -30,7 +28,6 @@ const TITLE_MAP: Record<SettingsTable, string> = {
   units: 'Units',
   positions: 'Positions',
   user_types: 'User Types',
-  event_statuses: 'Event Statuses',
   casualty_conditions: 'Casualty Conditions',
   campus: 'Campus',
   damage_conditions: 'Damage Conditions',

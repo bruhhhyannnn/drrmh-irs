@@ -41,7 +41,6 @@ const navItems: NavItem[] = [
       { name: 'Clusters', path: '/settings/clusters' },
       { name: 'Units', path: '/settings/units' },
       { name: 'Positions', path: '/settings/positions' },
-      { name: 'Event Statuses', path: '/settings/event-statuses' },
       { name: 'Casualty Conditions', path: '/settings/casualty-conditions' },
       { name: 'Damage Conditions', path: '/settings/damage-conditions' },
     ],

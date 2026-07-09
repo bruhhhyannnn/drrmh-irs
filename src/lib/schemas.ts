@@ -148,11 +148,6 @@ export const campusSchema = z.object({
   is_active: z.boolean().default(true),
 });
 
-export const eventStatusSchema = z.object({
-  name: z.string().min(1, 'Status name is required'),
-  is_active: z.boolean().default(true),
-});
-
 export const casualtyConditionSchema = z.object({
   name: z.string().min(1, 'Condition name is required'),
   is_active: z.boolean().default(true),
