@@ -9,6 +9,7 @@ export async function getEvents(query?: string) {
     where: query ? { name: { contains: query, mode: 'insensitive' } } : undefined,
     include: {
       status: { select: { name: true } },
+      campus: { select: { name: true } },
       _count: { select: { reports: true } },
     },
     orderBy: { created_at: 'desc' },
@@ -20,6 +21,7 @@ export async function getEvent(id: string) {
     where: { id: id },
     include: {
       status: { select: { name: true } },
+      campus: { select: { name: true } },
     },
   });
 }

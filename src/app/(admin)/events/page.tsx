@@ -87,6 +87,7 @@ export default function EventsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Event Name</TableHead>
+              <TableHead>Campus</TableHead>
               <TableHead>Date & Time</TableHead>
               <TableHead>Reports Submitted</TableHead>
               <TableHead>Status</TableHead>
@@ -98,6 +99,9 @@ export default function EventsPage() {
               <TableRow key={event.id}>
                 <TableCell className="font-medium text-gray-900 dark:text-white">
                   {event.name}
+                </TableCell>
+                <TableCell className="font-medium text-gray-900 dark:text-white">
+                  {event.campus.name}
                 </TableCell>
                 <TableCell>
                   {event.started_at

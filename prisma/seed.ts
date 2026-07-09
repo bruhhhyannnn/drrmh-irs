@@ -1460,7 +1460,7 @@ async function main() {
   await prisma.cluster.createMany({
     data: CLUSTERS.map((name) => ({
       name,
-      campus_id: '6670d19e-b89b-42b5-a73b-fc1112be7546',
+      campus_id: 'f5b2b08d-d24a-4fbc-af3a-defe18b8f03d',
       is_active: true,
     })),
     skipDuplicates: true,
@@ -1554,6 +1554,7 @@ async function main() {
         name: `NSED ${quarter}`,
         description: `National Simultaneous Earthquake Drill - ${quarter}`,
         quarter,
+        campus_id: 'f5b2b08d-d24a-4fbc-af3a-defe18b8f03d',
         status_id: statusMap['completed'],
         started_at: dates.started_at,
         ended_at: dates.ended_at,

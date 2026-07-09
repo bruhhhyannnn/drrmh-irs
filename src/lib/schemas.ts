@@ -43,6 +43,7 @@ export const eventSchema = z
     name: z.string().min(1, 'Event name is required'),
     description: z.string().optional(),
     quarter: z.string().optional(),
+    campus_id: z.string().uuid('Campus is required'),
     started_at: z.string().optional().nullable(),
     ended_at: z.string().optional().nullable(),
     location_id: z.string().optional().nullable(),
