@@ -73,7 +73,7 @@ export function ReportForm({
   const createReportMutation = useCreateReport();
   const updateReportMutation = useUpdateReport();
 
-  const { data: ongoingEvents = [] } = useOngoingEvents();
+  const { data: ongoingEvents = [] } = useOngoingEvents(userProfile?.campus_id ?? '');
   const { data: clusters = [] } = useClusters();
   const { data: casualtyConditions = [] } = useCasualtyConditions();
   const { data: damageConditions = [] } = useDamageConditions();

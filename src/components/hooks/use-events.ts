@@ -53,18 +53,18 @@ export function useDeleteEvent() {
   });
 }
 
-export function useOngoingEvent() {
+export function useOngoingEvent(campusId: string) {
   return useQuery({
-    queryKey: ['events', 'ongoing'],
-    queryFn: getOngoingEvent,
+    queryKey: ['events', 'ongoing', campusId],
+    queryFn: () => getOngoingEvent(campusId),
     staleTime: 1000 * 60 * 2,
   });
 }
 
-export function useOngoingEvents() {
+export function useOngoingEvents(campusId: string) {
   return useQuery({
-    queryKey: ['events', 'ongoing-all'],
-    queryFn: getOngoingEvents,
+    queryKey: ['events', 'ongoing-all', campusId],
+    queryFn: () => getOngoingEvents(campusId),
     staleTime: 1000 * 60 * 2,
   });
 }
