@@ -2,7 +2,7 @@
 
 import { PageBreadcrumb } from '@/components/common';
 import { useCreateEvent, useEvent, useUpdateEvent } from '@/components/hooks/use-events';
-import { useEventStatuses } from '@/components/hooks/use-settings';
+import { useCampus, useEventStatuses } from '@/components/hooks/use-settings';
 import { Button, Input, Select, Spinner, Textarea } from '@/components/ui';
 import { eventSchema, type EventFormData } from '@/lib';
 import { useAuthStore } from '@/store';
@@ -35,6 +35,7 @@ export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
   const updateEvent = useUpdateEvent();
 
   const { data: eventStatuses = [] } = useEventStatuses();
+  const { data: campus = [] } = useCampus();
 
   const {
     register,
@@ -51,6 +52,7 @@ export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
         name: existingEvent.name,
         description: existingEvent.description ?? '',
         quarter: existingEvent.quarter ?? '',
+        campus_id: existingEvent.campus_id,
         started_at: toDatetimeLocal(existingEvent.started_at),
         ended_at: toDatetimeLocal(existingEvent.ended_at),
         status_id: existingEvent.status_id,
@@ -70,6 +72,7 @@ export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
             name: data.name,
             description: data.description || null,
             quarter: data.quarter || null,
+            campus: { connect: { id: data.campus_id } },
             started_at: startedAt,
             ended_at: endedAt,
             status: { connect: { id: data.status_id } },
@@ -89,6 +92,7 @@ export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
           name: data.name,
           description: data.description || undefined,
           quarter: data.quarter || undefined,
+          campus: { connect: { id: data.campus_id } },
           ...(startedAt && { started_at: startedAt }),
           ...(endedAt && { ended_at: endedAt }),
           status: { connect: { id: data.status_id } },
@@ -106,6 +110,10 @@ export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
   });
 
   const statusOptions = eventStatuses
+    .filter((c) => c.is_active)
+    .map((s) => ({ value: s.id, label: s.name }));
+
+  const campusOptions = campus
     .filter((c) => c.is_active)
     .map((s) => ({ value: s.id, label: s.name }));
 
@@ -128,6 +136,16 @@ export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
               error={!!errors.name}
               hint={errors.name?.message}
               {...register('name')}
+            />
+
+            <Select
+              options={campusOptions}
+              label="Campus"
+              placeholder="Select campus..."
+              error={!!errors.campus_id}
+              hint={errors.campus_id?.message}
+              required
+              {...register('campus_id')}
             />
 
             <Textarea
