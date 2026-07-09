@@ -64,7 +64,12 @@ export function SettingsForm({ title, table, editId, onSuccess, onCancel }: Sett
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<AnyFormData>({ resolver: zodResolver(schema) });
+  } = useForm<AnyFormData>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      campus_id: '',
+    },
+  });
 
   useEffect(() => {
     if (isEdit && items) {

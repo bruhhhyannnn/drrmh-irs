@@ -2,7 +2,7 @@
 
 import { PageBreadcrumb } from '@/components/common';
 import { useCampuses } from '@/components/hooks/use-campus';
-import { Button, Input, Modal, PageError } from '@/components/ui';
+import { Button, Input, Modal, PageError, Spinner } from '@/components/ui';
 import { Plus, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -11,7 +11,7 @@ import { CampusForm } from './campus-form';
 export default function CampusPage() {
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  const { data: campuses, error } = useCampuses(debouncedQuery);
+  const { data: campuses, isPending, isFetching, error } = useCampuses(debouncedQuery);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const campuslogos: Record<string, string> = {
@@ -64,32 +64,40 @@ export default function CampusPage() {
           <CampusForm onSuccess={handleClose} onCancel={handleClose} />
         </Modal>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {campuses?.length ? (
-            campuses.map((campus) => (
-              <div
-                key={campus.id}
-                className="group flex flex-col rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-900 min-h-40 hover:bg-gray-100"
-              >
-                <div>
-                  <Link key={campus.id} href={`/campus/details?id=${campus.id}`}>
-                    <div className="flex-1 flex items-center justify-center">
-                      <p className="truncate text-sm font-bold text-gray-900 dark:text-white group-hover:text-brand-500 dark:group-hover:text-brand-500">
-                        {campus.name}
-                      </p>
+        {isPending || isFetching ? (
+          <div className="flex h-[50vh] items-center justify-center">
+            <Spinner />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {campuses?.length ? (
+              campuses
+                .filter((campus) => campus.name.toLowerCase().includes(query.toLowerCase()))
+                .map((campus) => (
+                  <div
+                    key={campus.id}
+                    className="group flex flex-col rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-900 min-h-40 hover:bg-gray-100"
+                  >
+                    <div>
+                      <Link key={campus.id} href={`/campus/details?id=${campus.id}`}>
+                        <div className="flex-1 flex items-center justify-center">
+                          <p className="truncate text-sm font-bold text-gray-900 dark:text-white group-hover:text-brand-500 dark:group-hover:text-brand-500">
+                            {campus.name}
+                          </p>
+                        </div>
+                        <div className="flex-1 flex flex-col items-center justify-center gap-2 mt-3">
+                          <img src={campuslogos[campus.name] ?? '/up-logo.png'} width="300px"></img>
+                        </div>
+                      </Link>
                     </div>
-                    <div className="flex-1 flex flex-col items-center justify-center gap-2 mt-3">
-                      <img src={campuslogos[campus.name] ?? '/up-logo.png'} width="300px"></img>
-                    </div>
-                  </Link>
-                </div>
-                <div className="flex items-center justify-center gap-4 mt-4"></div>
-              </div>
-            ))
-          ) : (
-            <p className="text-sm text-gray-400 dark:text-gray-500">No campuses found.</p>
-          )}
-        </div>
+                    <div className="flex items-center justify-center gap-4 mt-4"></div>
+                  </div>
+                ))
+            ) : (
+              <p className="text-sm text-gray-400 dark:text-gray-500">No campuses found.</p>
+            )}
+          </div>
+        )}
       </div>
     </>
   );
