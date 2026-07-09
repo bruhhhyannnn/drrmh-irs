@@ -29,6 +29,7 @@ export const userCreateSchema = z.object({
   last_name: z.string().min(1, 'Last name is required'),
   suffix: z.string().optional(),
   username: z.string().min(3, 'Username must be at least 3 characters'),
+  cluster_id: z.string().uuid().optional().nullable(),
   unit_id: z.string().uuid().optional().nullable(),
   position_id: z.string().uuid().optional().nullable(),
   user_type_id: z.string().uuid('User type is required'),

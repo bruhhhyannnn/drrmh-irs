@@ -54,6 +54,7 @@ export function CompleteProfileModal() {
         ...(isOther
           ? { custom_position_name: customPosition.trim() }
           : { position_id: positionId }),
+        campus_id: campusId,
         cluster_id: clusterId,
         ...(unitId ? { unit_id: unitId } : {}),
       };
