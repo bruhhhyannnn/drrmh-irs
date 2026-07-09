@@ -47,7 +47,7 @@ export async function deleteEvent(id: string) {
   revalidatePath('/events');
 }
 
-export async function getOngoingEvent() {
+export async function getOngoingEvent(campusId: string) {
   const statusRow = await prisma.eventStatus.findFirst({
     where: { name: { equals: 'Ongoing', mode: 'insensitive' } },
     select: { id: true },
@@ -56,12 +56,13 @@ export async function getOngoingEvent() {
   if (!statusRow) return null;
 
   return prisma.event.findFirst({
-    where: { status_id: statusRow.id },
+    where: { status_id: statusRow.id, campus_id: campusId },
     select: {
       id: true,
       name: true,
       description: true,
       quarter: true,
+      campus: true,
       started_at: true,
       ended_at: true,
       status: { select: { id: true, name: true } },
@@ -70,7 +71,7 @@ export async function getOngoingEvent() {
   });
 }
 
-export async function getOngoingEvents() {
+export async function getOngoingEvents(campusId: string) {
   const statusRow = await prisma.eventStatus.findFirst({
     where: { name: { equals: 'Ongoing', mode: 'insensitive' } },
     select: { id: true },
@@ -79,7 +80,7 @@ export async function getOngoingEvents() {
   if (!statusRow) return [];
 
   return prisma.event.findMany({
-    where: { status_id: statusRow.id },
+    where: { status_id: statusRow.id, campus_id: campusId },
     select: {
       id: true,
       name: true,
