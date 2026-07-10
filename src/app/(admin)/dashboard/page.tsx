@@ -86,7 +86,7 @@ export default function DashboardPage() {
 
             <div className="custom-scrollbar flex-1 space-y-2 overflow-y-auto pr-1">
               {events?.length ? (
-                events.map((event) => {
+                events.slice(0, 5).map((event) => {
                   const statusLower = event.status.name.toLocaleLowerCase();
                   const badgeColor =
                     statusLower === 'ongoing'
