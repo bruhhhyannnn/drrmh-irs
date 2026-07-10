@@ -49,12 +49,9 @@ export default function CalendarPage() {
           <div className="space-y-2">
             {events.map((event) => (
               <Link key={event.id} href={`/events/details?id=${event.id}`}>
-                <div
-                  key={event.id}
-                  className="flex items-center justify-between mt-2 rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-white/5 dark:bg-white/3 transition-all hover:border-gray-200 hover:bg-gray-50 hover:shadow-sm"
-                >
+                <div className="group flex items-center justify-between mt-2 rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-white/5 dark:bg-white/3 transition-all hover:border-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 hover:shadow-sm">
                   <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    <p className="group-hover:text-brand-600 dark:group-hover:text-brand-400 truncate text-sm font-medium text-gray-900 dark:text-white">
                       {event.name}
                     </p>
                     <p className="text-xs text-gray-500">
