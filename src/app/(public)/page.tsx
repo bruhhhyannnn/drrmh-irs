@@ -1,10 +1,24 @@
 'use client';
 
 import { cn } from '@/lib';
-import { ChevronRight } from 'lucide-react';
+import { useThemeStore } from '@/store';
+import { ChevronRight, Inbox, School } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { useLandingData } from './use-landing-stats';
 
 /* ─────────────────────────────────────────────────────────────
@@ -14,6 +28,8 @@ export default function LandingPage() {
   const { data } = useLandingData();
 
   const [navScrolled, setNavScrolled] = useState(false);
+
+  const { theme } = useThemeStore();
 
   useEffect(() => {
     const handleScroll = () => setNavScrolled(window.scrollY > 650);
@@ -57,6 +73,34 @@ export default function LandingPage() {
     }, 4000);
     return () => clearInterval(timer);
   }, [track.length]);
+
+  const eventsperstatus = [
+    { status: 'ongoing', events: 1 },
+    { status: 'completed', events: 2 },
+    { status: 'upcoming', events: 3 },
+  ];
+
+  const colorperStatus: Record<string, string> = {
+    ongoing: '#8B1A1A',
+    upcoming: '#8A7868',
+    completed: '#E8C97A',
+    unknown: '#9ca3af',
+  };
+
+  const reportspercluster = [
+    { cluster: 'ongoing', casualties: 0, missing: 2, reports: 4 },
+    { cluster: 'ongoing', casualties: 1, missing: 1, reports: 3 },
+    { cluster: 'ongoing', casualties: 1, missing: 1, reports: 4 },
+  ];
+
+  function EmptyState({ message }: { message: string }) {
+    return (
+      <div className="flex h-full min-h-40 w-full flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50/50 dark:border-white/10 dark:bg-white/5">
+        <Inbox className="mb-2 text-gray-300 dark:text-gray-600" size={24} />
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{message}</p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -401,6 +445,151 @@ export default function LandingPage() {
                         />
                       );
                     })}
+                  </div>
+                </div>
+
+                {/* events per status */}
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2 col-span-3">
+                  <div
+                    className="rounded-[14px] p-4"
+                    style={{ background: 'var(--cream)', border: '1px solid var(--border)' }}
+                  >
+                    <p
+                      className="mb-4 font-medium"
+                      style={{ color: 'var(--text-mid)', fontSize: 'var(--text-sm)' }}
+                    >
+                      Events per Status
+                    </p>
+                    {eventsperstatus.length ? (
+                      <ResponsiveContainer width="100%" height={200}>
+                        <PieChart>
+                          <Pie
+                            data={eventsperstatus}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={55}
+                            outerRadius={80}
+                            paddingAngle={5}
+                            nameKey="status"
+                            dataKey="events"
+                            stroke="none"
+                            cornerRadius={4}
+                          >
+                            {eventsperstatus.map((entry) => (
+                              <Cell
+                                key={entry.status}
+                                fill={colorperStatus[entry.status] ?? colorperStatus.unknown}
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{
+                              background:
+                                theme === 'dark' ? 'rgba(17,24,39,0.95)' : 'rgba(255,255,255,0.95)',
+                              border: theme === 'dark' ? '1px solid #374151' : '1px solid #e5e7eb',
+                              borderRadius: '8px',
+                              color: theme === 'dark' ? '#f9fafb' : '#111827',
+                              fontSize: '14px',
+                            }}
+                            itemStyle={{ color: theme === 'dark' ? '#f9fafb' : '#111827' }}
+                          />
+                          <Legend
+                            verticalAlign="bottom"
+                            height={24}
+                            iconType="circle"
+                            wrapperStyle={{
+                              fontSize: '14px',
+                              paddingTop: '10px',
+                              color: 'inherit',
+                            }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <EmptyState message="No event data" />
+                    )}
+                  </div>
+
+                  {/* reports by cluster */}
+                  <div
+                    className="rounded-[14px] p-4"
+                    style={{ background: 'var(--cream)', border: '1px solid var(--border)' }}
+                  >
+                    <p
+                      className="mb-4 font-medium"
+                      style={{ color: 'var(--text-mid)', fontSize: 'var(--text-sm)' }}
+                    >
+                      Reports by Cluster
+                    </p>
+                    {reportspercluster.length ? (
+                      <ResponsiveContainer width="100%" height={200}>
+                        <BarChart
+                          data={reportspercluster}
+                          margin={{ top: 10, right: 0, left: -24, bottom: 0 }}
+                        >
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            vertical={false}
+                            stroke="rgba(156,163,175,0.15)"
+                          />
+                          <XAxis
+                            dataKey="cluster"
+                            tick={{ fontSize: 12, fill: '#6b7280' }}
+                            axisLine={false}
+                            tickLine={false}
+                            dy={8}
+                          />
+                          <YAxis
+                            allowDecimals={false}
+                            tick={{ fontSize: 12, fill: '#6b7280' }}
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <Tooltip
+                            cursor={{
+                              fill:
+                                theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                            }}
+                            contentStyle={{
+                              background:
+                                theme === 'dark' ? 'rgba(17,24,39,0.95)' : 'rgba(255,255,255,0.95)',
+                              border: theme === 'dark' ? '1px solid #374151' : '1px solid #e5e7eb',
+                              borderRadius: '8px',
+                              color: theme === 'dark' ? '#f9fafb' : '#111827',
+                              fontSize: '14px',
+                            }}
+                            itemStyle={{ color: theme === 'dark' ? '#f9fafb' : '#111827' }}
+                          />
+                          <Legend
+                            iconType="circle"
+                            wrapperStyle={{ fontSize: '14px', paddingTop: '10px' }}
+                          />
+                          <Bar
+                            dataKey="reports"
+                            name="Reports"
+                            fill="#8B1A1A"
+                            radius={[3, 3, 0, 0]}
+                            maxBarSize={32}
+                          />
+                          <Bar
+                            dataKey="casualties"
+                            name="Casualties"
+                            fill="#8A7868"
+                            radius={[3, 3, 0, 0]}
+                            maxBarSize={32}
+                          />
+                          <Bar
+                            dataKey="missing"
+                            name="Missing"
+                            fill="#E8C97A"
+                            radius={[3, 3, 0, 0]}
+                            maxBarSize={32}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <EmptyState message="No cluster reports" />
+                    )}
                   </div>
                 </div>
 
@@ -872,7 +1061,7 @@ export default function LandingPage() {
 
             <Reveal
               delay={100}
-              className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 lg:justify-items-center"
+              className="grid grid-cols-1 gap-5 md:grid-cols-4 lg:grid-cols-4 lg:justify-items-center"
             >
               <FCard
                 icon={<IconLayers />}
@@ -908,7 +1097,11 @@ export default function LandingPage() {
                 icon={<IconOffline />}
                 title="Offline Functionality"
                 desc="Reports can be submitted even without internet connection. Data is queued locally and automatically synced once connectivity is restored."
-                className="lg:col-start-2 lg:max-w-90"
+              />
+              <FCard
+                icon={<School color={'white'} size={20} />}
+                title="Campus-Wide Overview"
+                desc="Accumulated data on headcount and structure conditions are presented in charts for easy inspection."
               />
             </Reveal>
           </div>
