@@ -57,6 +57,13 @@ export function UserForm({ editId, onSuccess, onCancel }: UserFormProps) {
     formState: { errors, isSubmitting },
   } = useForm<UserCreateFormData | UserEditFormData>({
     resolver: zodResolver(schema),
+    defaultValues: {
+      campus_id: '',
+      cluster_id: '',
+      unit_id: '',
+      position_id: '',
+      user_type_id: '',
+    },
   });
 
   const campusOptions = (campus as { id: string; name: string; is_active: boolean }[])

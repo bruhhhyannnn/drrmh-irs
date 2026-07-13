@@ -44,6 +44,10 @@ export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
     formState: { errors, isSubmitting },
   } = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
+    defaultValues: {
+      campus_id: '',
+      status_id: '',
+    },
   });
 
   useEffect(() => {

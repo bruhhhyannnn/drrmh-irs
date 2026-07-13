@@ -18,7 +18,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="min-h-screen xl:flex">
         <AppSidebar />
         <Backdrop />
-        <div className={`flex-1 transition-all duration-300 ease-in-out ${marginLeft}`}>
+        <div
+          className={`min-w-0 flex-1 overflow-hidden transition-all duration-300 ease-in-out ${marginLeft}`}
+        >
           <AppHeader />
           <div className="mx-auto max-w-screen-2xl p-4 md:p-6">{children}</div>
         </div>
