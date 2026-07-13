@@ -6,13 +6,20 @@ export const signInSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
+const passwordSchema = z
+  .string()
+  .min(8, 'Password must be at least 8 characters')
+  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+  .regex(/[0-9]/, 'Password must contain at least one number')
+  .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character');
+
 export const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address'),
 });
 
 export const updatePasswordSchema = z
   .object({
-    password: z.string().min(8, 'Password must be at least 8 characters'),
+    password: passwordSchema,
     confirmPassword: z.string(),
   })
   .refine((d) => d.password === d.confirmPassword, {
@@ -21,9 +28,10 @@ export const updatePasswordSchema = z
   });
 
 /* ─── User ─── */
-export const userCreateSchema = z.object({
+export const userBaseSchema = z.object({
   email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: passwordSchema,
+  confirmPassword: z.string().min(1, 'Please confirm your password'),
   first_name: z.string().min(1, 'First name is required'),
   middle_name: z.string().optional(),
   last_name: z.string().min(1, 'Last name is required'),
@@ -36,7 +44,16 @@ export const userCreateSchema = z.object({
   is_active: z.boolean().default(true),
   campus_id: z.string().uuid('Campus is required'),
 });
-export const userEditSchema = userCreateSchema.omit({ password: true });
+
+export const userCreateSchema = userBaseSchema.refine(
+  (data) => data.password === data.confirmPassword,
+  {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  }
+);
+
+export const userEditSchema = userBaseSchema.omit({ password: true, confirmPassword: true });
 
 /* ─── Main Tables ─── */
 export const eventSchema = z
