@@ -310,6 +310,7 @@ function ReportDetailsModal({
             name: c.name.trim(),
             age: c.age,
             sex: c.sex,
+            diagnosis: c.diagnosis,
           })
         )
     );
@@ -435,7 +436,7 @@ function ReportDetailsModal({
                         {c.name || 'Unnamed'}
                       </p>
                       <p className="text-xs capitalize text-gray-400">
-                        {c.condition?.name} · {c.sex} · {c.age} yrs
+                        {c.condition?.name} · {c.sex} · {c.age} yrs · {c.diagnosis}
                       </p>
                     </div>
                   ))}
