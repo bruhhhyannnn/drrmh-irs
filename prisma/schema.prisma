@@ -148,6 +148,7 @@ model ReportCasualty {
   bystander_report_id String?            @db.Uuid
   name                String             @default("")
   sex                 String?
+  diagnosis           String?
   bystander_reports   bystander_reports? @relation(fields: [bystander_report_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   condition           CasualtyCondition  @relation(fields: [condition_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   report              Report?            @relation(fields: [report_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
