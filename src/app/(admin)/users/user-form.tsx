@@ -122,9 +122,10 @@ export function UserForm({ editId, onSuccess, onCancel }: UserFormProps) {
     }
     // Creation of new user
     else {
-      createUser.mutate(clean as UserCreateFormData, {
+      const { confirmPassword: _cp, ...createData } = clean as UserCreateFormData;
+      createUser.mutate(createData, {
         onSuccess: () => {
-          toast.success(`User created ${getValues('email')}}`);
+          toast.success(`User ${getValues('username')} created`);
           onSuccess ? onSuccess() : router.push('/users');
         },
         onError: (err) => toast.error(err.message),
@@ -203,17 +204,43 @@ export function UserForm({ editId, onSuccess, onCancel }: UserFormProps) {
                 />
               </div>
               {!isEdit && (
-                <div className="sm:col-span-2">
-                  <Input
-                    label="Password"
-                    required
-                    type="password"
-                    placeholder="Min. 8 characters"
-                    error={!!(errors as { password?: { message?: string } }).password}
-                    hint={(errors as { password?: { message?: string } }).password?.message}
-                    {...register('password' as keyof (UserCreateFormData | UserEditFormData))}
-                  />
-                </div>
+                <>
+                  <div className="sm:col-span-2">
+                    <Input
+                      label="Password"
+                      required
+                      type="password"
+                      placeholder="Password"
+                      error={!!(errors as { password?: { message?: string } }).password}
+                      hint={(errors as { password?: { message?: string } }).password?.message}
+                      {...register('password' as keyof (UserCreateFormData | UserEditFormData))}
+                    />
+                    <div>
+                      <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                        Password must be at least 8 characters, with 1 uppercase letter, 1 special
+                        character, and at least 1 digit.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Input
+                      label="Confirm Password"
+                      required
+                      type="password"
+                      placeholder="Retype Password"
+                      error={
+                        !!(errors as { confirmPassword?: { message?: string } }).confirmPassword
+                      }
+                      hint={
+                        (errors as { confirmPassword?: { message?: string } }).confirmPassword
+                          ?.message
+                      }
+                      {...register(
+                        'confirmPassword' as keyof (UserCreateFormData | UserEditFormData)
+                      )}
+                    />
+                  </div>
+                </>
               )}
             </div>
 
