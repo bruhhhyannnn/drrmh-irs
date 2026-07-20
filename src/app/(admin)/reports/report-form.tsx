@@ -88,6 +88,7 @@ export function ReportForm({
 
   const { data: existingCasualties = [] } = useReportCasualties(editId);
   const { data: existingMissingPersons = [] } = useReportMissingPersons(editId);
+  const reportingUser = isEdit ? existingReport?.user : userProfile;
 
   // ─── Location state ──────────────────────────────────────────
   const [pickedLat, setPickedLat] = useState<number | null>(null);
@@ -181,6 +182,7 @@ export function ReportForm({
           name: c.name ?? '',
           age: c.age ?? 0,
           sex: (c.sex as 'male' | 'female' | 'unknown') ?? 'unknown',
+          diagnosis: c.diagnosis,
         }))
       );
     }
@@ -289,6 +291,7 @@ export function ReportForm({
               name: c.name.trim(),
               age: c.age,
               sex: c.sex,
+              diagnosis: c.diagnosis,
             })
           )
       );
@@ -327,7 +330,7 @@ export function ReportForm({
   });
 
   // ─── Select options ──────────────────────────────────────────
-  const eventOptions = ongoingEvents.map((e) => ({ value: e.id, label: e.name }));
+  const eventOptions = [...ongoingEvents.map((e) => ({ value: e.id, label: e.name }))];
   const clusterOptions = clusters
     .filter((c) => c.is_active)
     .map((c) => ({ value: c.id, label: c.name }));
@@ -391,19 +394,21 @@ export function ReportForm({
             />
 
             {/* ── Reporting as ───────────────────────────── */}
-            {userProfile && (
+            {reportingUser && (
               <div>
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Reporting as</p>
                 <div className="flex mt-2 items-center gap-2.5 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 dark:border-white/5 dark:bg-gray-900">
                   <div className="bg-brand-100 text-brand-700 dark:bg-brand-900/50 dark:text-brand-300 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold uppercase">
-                    {(userProfile.first_name?.[0] ?? '') + (userProfile.last_name?.[0] ?? '')}
+                    {(reportingUser.first_name?.[0] ?? '') + (reportingUser.last_name?.[0] ?? '')}
                   </div>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-gray-800 dark:text-gray-200">
-                      {userProfile.first_name} {userProfile.last_name}
+                      {reportingUser.first_name} {reportingUser.last_name}
                     </p>
-                    {userProfile.position && (
-                      <p className="truncate text-xs text-gray-400">{userProfile.position.name}</p>
+                    {reportingUser.position && (
+                      <p className="truncate text-xs text-gray-400">
+                        {reportingUser.position.name}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -601,6 +606,7 @@ export function ReportForm({
                 options={damageConditionOptions}
                 label="Structural Damage"
                 placeholder="Select damage type..."
+                required
                 value={selectedDamageId}
                 onChange={(e) => {
                   const val = e.target.value;
