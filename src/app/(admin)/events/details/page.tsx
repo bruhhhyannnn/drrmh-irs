@@ -440,7 +440,7 @@ function ClusterCard({ cluster, reports }: { cluster: string; reports: EventRepo
                             {c.name || '—'}
                           </span>
                           <span className="text-error-700 dark:text-error-300">
-                            {c.condition.name}
+                            {c.condition.name} · {c.diagnosis || '—'}
                           </span>
                         </div>
                       ))}

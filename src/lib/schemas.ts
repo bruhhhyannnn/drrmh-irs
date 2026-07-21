@@ -89,6 +89,7 @@ export const casualtySchema = z.object({
   name: z.string().min(1, 'Name is required'),
   age: z.coerce.number().min(0),
   sex: z.enum(['male', 'female', 'unknown']),
+  diagnosis: z.string().optional().nullable(),
 });
 
 const headcountField = () => z.coerce.number().int().min(0).default(0);

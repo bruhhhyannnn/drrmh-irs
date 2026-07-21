@@ -159,19 +159,20 @@ export function CasualtyModal({
     name: '',
     age: 0,
     sex: 'unknown',
+    diagnosis: '',
   });
 
   useEffect(() => {
     if (isOpen) {
       setList(casualties);
-      setDraft({ condition_id: '', name: '', age: 0, sex: 'unknown' });
+      setDraft({ condition_id: '', name: '', age: 0, sex: 'unknown', diagnosis: '' });
     }
   }, [isOpen]);
 
   const addCasualty = () => {
     if (!draft.condition_id || !draft.name.trim()) return;
     setList((l) => [...l, { ...draft }]);
-    setDraft({ condition_id: '', name: '', age: 0, sex: 'unknown' });
+    setDraft({ condition_id: '', name: '', age: 0, sex: 'unknown', diagnosis: '' });
   };
 
   return (
@@ -194,7 +195,7 @@ export function CasualtyModal({
                     {c.name || <span className="italic text-gray-400">Unnamed</span>}
                   </p>
                   <p className="text-xs capitalize text-gray-400">
-                    {condLabel} · {c.sex} · {c.age} yrs
+                    {condLabel} · {c.sex} · {c.age} yrs · {c.diagnosis}
                   </p>
                 </div>
                 <button
@@ -255,6 +256,12 @@ export function CasualtyModal({
             onChange={(e) => setDraft((f) => ({ ...f, sex: e.target.value as CasualtyRow['sex'] }))}
           />
         </div>
+        <Input
+          label="Diagnosis"
+          placeholder="Diagnosis"
+          value={draft.diagnosis ?? ''}
+          onChange={(e) => setDraft((f) => ({ ...f, diagnosis: e.target.value }))}
+        />
         <Button
           type="button"
           variant="outline"
