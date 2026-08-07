@@ -1,13 +1,8 @@
 'use client';
 
 import { PageBreadcrumb } from '@/components/common';
-import {
-  useCampus,
-  useClusters,
-  usePositions,
-  useUnits,
-  useUserTypes,
-} from '@/components/hooks/use-settings';
+import { useCampusClusters } from '@/components/hooks/use-campus';
+import { useCampus, usePositions, useUnits, useUserTypes } from '@/components/hooks/use-settings';
 import { useCreateUser, useUpdateUser, useUser } from '@/components/hooks/use-users';
 import { Button, Input, Label, Select, Spinner } from '@/components/ui';
 import {
@@ -16,6 +11,7 @@ import {
   type UserCreateFormData,
   type UserEditFormData,
 } from '@/lib';
+import { useAuthStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -36,14 +32,17 @@ export function UserForm({ editId, onSuccess, onCancel }: UserFormProps) {
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
 
-  const { data: clusters = [] } = useClusters();
   const { data: positions = [] } = usePositions();
   const { data: userTypes = [] } = useUserTypes();
   const { data: campus = [] } = useCampus();
-
+  const { userProfile } = useAuthStore();
+  const role = userProfile?.user_type?.name ?? null;
   // Cluster is local state — used only to filter the units dropdown
-  const [selectedClusterId, setSelectedClusterId] = useState('');
-  const { data: units = [] } = useUnits(selectedClusterId || undefined);
+  const [campusId, setCampusId] = useState('');
+  const [clusterId, setClusterId] = useState('');
+  const [unitId, setUnitId] = useState('');
+  const { data: units = [] } = useUnits(clusterId || undefined);
+  const { data: campusClusters = [] } = useCampusClusters(campusId ?? '');
 
   const schema = isEdit ? userEditSchema : userCreateSchema;
 
@@ -85,14 +84,22 @@ export function UserForm({ editId, onSuccess, onCancel }: UserFormProps) {
         suffix: existingUser.suffix ?? '',
         username: existingUser.username,
         email: existingUser.email,
-        unit_id: existingUser.unit_id ?? '',
-        position_id: existingUser.position_id ?? '',
+        campus_id: existingUser.campus_id ?? '',
+        cluster_id: existingUser.cluster_id ?? null,
+        unit_id: existingUser.unit_id ?? null,
+        position_id: existingUser.position_id ?? null,
         user_type_id: existingUser.user_type_id,
         is_active: existingUser.is_active,
       });
       // Pre-select the cluster so the units dropdown is populated
-      if (existingUser.unit?.cluster_id) {
-        setSelectedClusterId(existingUser.unit.cluster_id);
+      if (existingUser.campus_id) {
+        setCampusId(existingUser.campus_id);
+      }
+      if (existingUser.cluster_id) {
+        setClusterId(existingUser.cluster_id);
+      }
+      if (existingUser.unit_id) {
+        setUnitId(existingUser.unit_id);
       }
     }
   }, [existingUser, reset]);
@@ -102,6 +109,8 @@ export function UserForm({ editId, onSuccess, onCancel }: UserFormProps) {
       ...data,
       middle_name: data.middle_name || null,
       suffix: data.suffix || null,
+      campus_id: data.campus_id || null,
+      cluster_id: data.suffix || null,
       unit_id: data.unit_id || null,
       position_id: data.position_id || null,
     };
@@ -133,10 +142,12 @@ export function UserForm({ editId, onSuccess, onCancel }: UserFormProps) {
     }
   });
 
-  const clusterOptions = clusters
+  const clusterOptions = campusClusters
     .filter((c) => c.is_active)
     .map((c) => ({ value: c.id, label: c.name }));
+
   const unitOptions = units.filter((u) => u.is_active).map((u) => ({ value: u.id, label: u.name }));
+
   const positionOptions = positions
     .filter((p) => p.is_active)
     .map((p) => ({ value: p.id, label: p.name }));
@@ -184,15 +195,26 @@ export function UserForm({ editId, onSuccess, onCancel }: UserFormProps) {
                 hint={errors.username?.message}
                 {...register('username')}
               />
-              <Select
-                label="Campus"
-                required
-                options={campusOptions}
-                placeholder="Select campus..."
-                error={!!campusError}
-                hint={campusError?.message}
-                {...register('campus_id')}
-              />
+              {role === 'Super Admin' && (
+                <Select
+                  label="Campus"
+                  required
+                  options={campusOptions}
+                  placeholder="Select campus..."
+                  error={!!campusError}
+                  hint={campusError?.message}
+                  value={watch('campus_id') ?? ''}
+                  {...register('campus_id')}
+                  onChange={(e) => {
+                    setCampusId(e.target.value);
+                    setValue('campus_id', e.target.value);
+                    setClusterId('');
+                    setValue('cluster_id', null);
+                    setUnitId('');
+                    setValue('unit_id', null);
+                  }}
+                />
+              )}
               <div className="sm:col-span-2">
                 <Input
                   label="Email"
@@ -248,21 +270,31 @@ export function UserForm({ editId, onSuccess, onCancel }: UserFormProps) {
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Select
                 label="Cluster"
+                placeholder={campusId ? 'Select cluster...' : 'Select campus first'}
+                className={!campusId ? 'opacity-70' : ''}
                 options={clusterOptions}
-                placeholder="Select cluster..."
-                value={selectedClusterId}
+                value={watch('cluster_id') ?? ''}
+                disabled={!campusId}
+                required
                 onChange={(e) => {
-                  setSelectedClusterId(e.target.value);
+                  setClusterId(e.target.value);
                   setValue('cluster_id', e.target.value);
+                  setUnitId('');
+                  setValue('unit_id', null);
                 }}
               />
               <Select
                 label="Unit"
+                placeholder={clusterId ? 'Select unit...' : 'Select cluster first'}
+                className={!clusterId ? 'opacity-70' : ''}
                 options={unitOptions}
-                placeholder="Select unit..."
                 value={watch('unit_id') ?? ''}
-                onChange={(e) => setValue('unit_id', e.target.value)}
-                error={!!errors.unit_id}
+                disabled={!clusterId}
+                required
+                onChange={(e) => {
+                  setUnitId(e.target.value);
+                  setValue('unit_id', e.target.value);
+                }}
               />
               <Select
                 label="Position"
