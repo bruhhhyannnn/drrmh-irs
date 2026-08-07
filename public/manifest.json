@@ -1,6 +1,6 @@
 {
-  "name": "Your App Name",
-  "short_name": "App",
+  "name": "Incident Reporting System",
+  "short_name": "IRS",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
