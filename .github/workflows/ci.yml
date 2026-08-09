@@ -28,6 +28,7 @@ jobs:
 
       # --- 2. SECURITY ---
       - name: Dependency Security Scan
+        # DEV NOTE: Ignoring critical vulnerabilities due to Prisma/Supabase version requirements
         run: npm audit --audit-level=critical
 
       # --- 3. STATIC ANALYSIS ---
