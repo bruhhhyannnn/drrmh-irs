@@ -36,6 +36,8 @@ export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
 
   const { data: eventStatuses = [] } = useEventStatuses();
   const { data: campus = [] } = useCampus();
+  const { userProfile } = useAuthStore();
+  const role = userProfile?.user_type?.name ?? null;
 
   const {
     register,
@@ -141,17 +143,17 @@ export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
               hint={errors.name?.message}
               {...register('name')}
             />
-
-            <Select
-              options={campusOptions}
-              label="Campus"
-              placeholder="Select campus..."
-              error={!!errors.campus_id}
-              hint={errors.campus_id?.message}
-              required
-              {...register('campus_id')}
-            />
-
+            {role === 'Super Admin' && (
+              <Select
+                options={campusOptions}
+                label="Campus"
+                placeholder="Select campus..."
+                error={!!errors.campus_id}
+                hint={errors.campus_id?.message}
+                required
+                {...register('campus_id')}
+              />
+            )}
             <Textarea
               rows={3}
               label="Description"

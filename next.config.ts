@@ -9,4 +9,19 @@ export default withPWA({
   dest: 'public',
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: true,
+  disable: process.env.NODE_ENV === 'development',
+  workboxOptions: {
+    disableDevLogs: true,
+    runtimeCaching: [
+      {
+        urlPattern: /^\/api\/.*$/,
+        handler: 'NetworkFirst',
+        options: {
+          cacheName: 'api-cache',
+          networkTimeoutSeconds: 10,
+          expiration: { maxEntries: 50, maxAgeSeconds: 60 * 5 },
+        },
+      },
+    ],
+  },
 })(nextConfig);
