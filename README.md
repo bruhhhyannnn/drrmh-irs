@@ -15,9 +15,9 @@
 
 ## About
 
-This is the **admin web dashboard** for the UPM DRRM-H Incident Reporting System — a platform designed to manage, monitor, and analyze incident reports submitted by field teams across the UP Manila campus during drills, emergencies, and other DRRM-H-related events.
+This is the **admin web dashboard** for the UPM DRRM-H Incident Reporting System — a centralized web platform designed to manage, monitor, and analyze incident reports submitted by field teams across the UP Manila campus during drills, emergencies, and other DRRM-H-related events.
 
-The system works alongside a companion Flutter mobile app used by field personnel to submit real-time reports. Data flows from the mobile app into Supabase, and this dashboard gives administrators a centralized view of all incidents, headcounts, drill statuses, and post-event summaries.
+Field teams and bystanders submit reports directly through the web app (including QR-accessible public forms), with data flowing into Supabase. This dashboard gives administrators a centralized view of all incidents, headcounts, drill statuses, and post-event summaries.
 
 ### What it does
 
@@ -34,13 +34,12 @@ The system works alongside a companion Flutter mobile app used by field personne
 
 ### System Context
 
-The IRS is part of a broader DRRM-H platform consisting of:
+The IRS is a centralized web platform consisting of:
 
-| Component          | Description                         |
-| ------------------ | ----------------------------------- |
-| **This repo**      | Admin web dashboard (Next.js)       |
-| Flutter mobile app | Field team incident submission      |
-| Supabase           | Shared PostgreSQL database and auth |
+| Component     | Description                   |
+| ------------- | ----------------------------- |
+| **This repo** | Admin web dashboard (Next.js) |
+| Supabase      | PostgreSQL database and auth  |
 
 ---
 
@@ -138,41 +137,6 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## Project Structure
-
-```bash
-src/
-├── app/                    # Next.js App Router pages
-│   ├── (admin)/            # Protected admin routes
-│   │   ├── page.tsx        # Dashboard
-│   │   ├── events/         # Events list + detail view
-│   │   ├── reports/        # Incident reports table
-│   │   ├── users/          # User management
-│   │   ├── activity-logs/  # Audit log viewer
-│   │   ├── calendar/       # Monthly event calendar
-│   │   ├── news/           # Announcements
-│   │   └── settings/       # Lookup table management
-│   ├── (auth)/             # Sign-in page
-│   └── (public)/           # Publicly accessible pages
-│       ├── report/         # ERT Member report submission (QR-accessible)
-│       └── bystander-report/ # Public bystander incident form
-├── actions/                # Next.js server actions — all DB access via Prisma
-├── components/
-│   ├── auth/               # AuthProvider, ProtectedRoute
-│   ├── layout/             # Sidebar, header, backdrop
-│   ├── ui/                 # Base UI components (DataTable, Badge, Button, Map, etc.)
-│   ├── settings/           # Generic SettingsTablePage + SettingsForm
-│   ├── users/              # UserForm
-│   └── news/               # NewsForm
-├── generated/              # Prisma-generated client (auto-generated, do not edit)
-├── hooks/                  # TanStack Query hooks (one file per domain)
-├── lib/                    # Prisma client, Supabase client, Zod schemas, utils
-├── store/                  # Zustand stores (auth, sidebar, theme)
-└── types/                  # Shared constants and TypeScript types
-```
-
----
-
 ## Roles & Access
 
 | Role                 | Access                                                             |
@@ -184,7 +148,7 @@ src/
 
 ---
 
-## System Architecture Diagram
+## C4 Diagram — System Context
 
 ```mermaid
 ---
@@ -194,30 +158,84 @@ config:
   theme: default
 ---
 graph LR
-  admin[<b>Admin</b>]
-  fieldUser[<b>Field User</b>]
+  admin[<b>Administrator / Super Admin</b><br/><small>Manages events, reports, users, and settings</small>]
+  ertMember[<b>ERT Member / Bystander</b><br/><small>Submits incident and bystander reports, including via QR code</small>]
 
-  subgraph IRS[<b>IRS Platform</b>]
-    webApp[<b>Web Dashboard</b><br/>Next.js 16 — admin monitoring and management]
-    mobileApp[<b>Flutter Mobile App</b><br/>Field team incident submission]
+  subgraph SYSTEM[<b>System</b>]
+    irs[<b>IRS Web Dashboard</b><br/><small>Next.js web platform for managing and monitoring DRRM-H incidents and drills</small>]
   end
 
   supabase[(<i><small>external_system</small></i><br/>Supabase<br/>PostgreSQL + Auth + Realtime)]
-  email[<i><small>external_system</small></i><br/>Email Service<br/>SMTP]
-  officeServer[<i><small>external_system</small></i><br/>Office Server]
+  vercel[<i><small>external_system</small></i><br/>Vercel]
+
+  admin -->|HTTPS| irs
+  ertMember -->|HTTPS| irs
+
+  irs -->|Reads/writes data, authenticates users| supabase
+  irs -->|Deployment| vercel
+```
+
+## C4 Diagram — Containers
+
+```mermaid
+---
+config:
+  layout: dagre
+  look: handDrawn
+  theme: default
+---
+graph LR
+  admin[<b>Administrator / Super Admin</b>]
+  ertMember[<b>ERT Member / Bystander</b>]
+
+  subgraph IRS[<b>IRS Web Dashboard</b>]
+    webApp[<b>Web Application</b><br/><small>Next.js 16 App Router — renders the admin dashboard and public/ERT report forms</small>]
+    serverActions[<b>Server Actions</b><br/><small>Next.js Server Actions + Prisma — business logic and all DB reads/writes</small>]
+    authClient[<b>Auth Client</b><br/><small>Supabase JS SDK — sign-in/out and session state</small>]
+  end
+
+  db[(<i><small>external_system</small></i><br/>Database<br/>Supabase PostgreSQL)]
+  supaAuth[<i><small>external_system</small></i><br/>Supabase Auth<br/>Google OAuth — @up.edu.ph only]
+  vercel[<i><small>external_system</small></i><br/>Vercel]
+
 
   admin -->|HTTPS| webApp
-  fieldUser -->|Mobile| mobileApp
+  ertMember -->|HTTPS| webApp
 
-  webApp -->|Server Actions via Prisma| supabase
-  webApp -->|Supabase Auth SDK| supabase
-  mobileApp -->|Submit Reports| supabase
+  webApp -->|Invokes| serverActions
+  webApp -->|Uses| authClient
 
-  webApp -->|Notifications| email
-  webApp -->|Deployment| officeServer
+  serverActions -->|Reads/writes via Prisma| db
+  authClient -->|Authenticates| supaAuth
+  webApp -->|Deployment| vercel
 ```
 
-## Use-Case Diagram — Web
+## Flowchart — Report Submission
+
+```mermaid
+---
+config:
+  layout: dagre
+  look: handDrawn
+  theme: default
+---
+flowchart TD
+  A([Field User opens web app]) --> B[Selects active event]
+  B --> C[Fills in incident report form]
+  C --> D{Form valid?}
+  D -- No --> C
+  D -- Yes --> E[Submits report]
+  E --> F[(Supabase — reports table)]
+  F --> G[Real-time subscription triggers]
+  G --> H[Web dashboard updates]
+  H --> I[Admin views reports page]
+  I --> K[Admin opens event details page]
+  I --> L[Admin reviews headcount and casualties]
+  K --> M([End])
+  L --> M
+```
+
+## Use-Case Diagram — Super Admin
 
 ```mermaid
 ---
@@ -226,69 +244,45 @@ config:
   look: handDrawn
   theme: default
 ---
-flowchart LR
- subgraph AUTH["Authentication"]
-        UC1["Sign In"]
-        UC2["Sign Out"]
-  end
- subgraph DASHBOARD["Dashboard"]
-        UC14["View Summary Statistics"]
-        UC15["View Reports by Cluster Chart"]
-        UC16["View Events by Status Chart"]
-        UC17["View Recent Events"]
-  end
- subgraph EVENTS["Event Management"]
-        UC3["View All Events"]
-        UC4["View Event Details"]
-        UC5["Create Event"]
-        UC6["Update Event Status"]
-        UC7["Search & Filter Events"]
-  end
- subgraph REPORTS["Report Management"]
-        UC8["View All Reports"]
-        UC9["Search & Filter Reports"]
-        UC10["View Reports by Event"]
-        UC11["View Headcount & Casualty Breakdown"]
-  end
- subgraph USERS["User Management"]
-        UC18["View All Users"]
-        UC19["Create User"]
-        UC20["Edit User"]
-        UC21["Toggle User Status"]
-        UC22["Search Users"]
-  end
- subgraph NEWS["News & Announcements"]
-        UC23["View News List"]
-        UC24["Create News"]
-        UC25["Edit News"]
-        UC26["Delete News"]
-  end
- subgraph CALENDAR["Calendar"]
-        UC28["View Events Calendar"]
-        UC29["Browse by Month"]
-  end
- subgraph LOGS["Activity Logs"]
-        UC30["View Activity Logs"]
-        UC31["Search Logs"]
-  end
- subgraph SETTINGS["Settings"]
-        UC32["Manage Clusters"]
-        UC33["Manage Units"]
-        UC34["Manage Locations"]
-        UC35["Manage Positions"]
-        UC36["Manage User Types"]
-        UC37["Manage Event Statuses"]
-        UC38["Manage Casualty Conditions"]
-        UC39["Manage Damage Conditions"]
-  end
-    Admin(["Administrator\n(Web)"]) --- AUTH & DASHBOARD & EVENTS & REPORTS & NEWS & CALENDAR & LOGS
-    SuperAdmin(["Super Admin\n(Web)"]) --- AUTH & DASHBOARD & EVENTS & REPORTS & USERS & NEWS & CALENDAR & LOGS & SETTINGS
-    UC3 -- includes --> UC4 & UC7
-    UC4 -- includes --> UC10 & UC11
-    UC8 -- includes --> UC9
+flowchart TB
+    Actor(["Super Admin"]) --- UC_Dash(("view dashboard<br>statistics")) & UC_Campuses(("view all<br>campuses")) & UC_Clusters(("view all<br>clusters")) & UC_Events(("view all<br>events")) & UC_Reports(("view all<br>reports")) & UC_Users(("view all<br>users")) & UC_Bystander(("view all<br>bystander reports")) & UC_Units(("view all<br>units")) & UC_Positions(("view all<br>positions")) & UC_Casualty(("view all<br>casualty conditions")) & UC_Damage(("view all<br>damage conditions")) & UC_SignIn(("sign-in")) & UC_SignOut(("sign-out"))
+    UC_Dash -. include .-> UC_Recent(("view recent<br>events")) & UC_Calendar(("view events<br>on calendar"))
+    UC_CampusCreate(("create campus")) -. extend .-> UC_Campuses
+    UC_CampusEdit(("edit campus")) -. extend .-> UC_Campuses
+    UC_CampusDelete(("delete campus")) -. extend .-> UC_Campuses
+    UC_CampusDetails(("view campus<br>details")) -. extend .-> UC_Campuses
+    UC_ClusterCreate(("create cluster")) -. extend .-> UC_Clusters
+    UC_ClusterEdit(("edit cluster")) -. extend .-> UC_Clusters
+    UC_ClusterDelete(("delete cluster")) -. extend .-> UC_Clusters
+    UC_EventCreate(("create event")) -. extend .-> UC_Events
+    UC_EventEdit(("edit event")) -. extend .-> UC_Events
+    UC_EventDelete(("delete event")) -. extend .-> UC_Events
+    UC_EventDetails(("view event<br>details")) -. extend .-> UC_Events
+    UC_ReportCreate(("create report")) -. extend .-> UC_Reports
+    UC_ReportEdit(("edit report")) -. extend .-> UC_Reports
+    UC_ReportDelete(("delete report")) -. extend .-> UC_Reports
+    UC_UserCreate(("create user")) -. extend .-> UC_Users
+    UC_UserEdit(("edit user")) -. extend .-> UC_Users
+    UC_UserDelete(("delete user")) -. extend .-> UC_Users
+    UC_BystanderVerify(("verify/dismiss<br>bystander report")) -. extend .-> UC_Bystander
+    UC_BystanderDelete(("delete bystander<br>report")) -. extend .-> UC_Bystander
+    UC_UnitCreate(("create unit")) -. extend .-> UC_Units
+    UC_UnitEdit(("edit unit")) -. extend .-> UC_Units
+    UC_UnitDelete(("delete unit")) -. extend .-> UC_Units
+    UC_PositionCreate(("create position")) -. extend .-> UC_Positions
+    UC_PositionEdit(("edit position")) -. extend .-> UC_Positions
+    UC_PositionDelete(("delete position")) -. extend .-> UC_Positions
+    UC_CasualtyCreate(("create casualty<br>condition")) -. extend .-> UC_Casualty
+    UC_CasualtyEdit(("edit casualty<br>condition")) -. extend .-> UC_Casualty
+    UC_CasualtyDelete(("delete casualty<br>condition")) -. extend .-> UC_Casualty
+    UC_DamageCreate(("create damage<br>condition")) -. extend .-> UC_Damage
+    UC_DamageEdit(("edit damage<br>condition")) -. extend .-> UC_Damage
+    UC_DamageDelete(("delete damage<br>condition")) -. extend .-> UC_Damage
+    UC_SignIn -. include .-> UC_NewProfile(("new user<br>create profile"))
+    UC_EditProfile(("edit profile")) -. extend .-> UC_NewProfile
 ```
 
-## Use-Case Diagram — Mobile
+## Use-Case Diagram — Admin
 
 ```mermaid
 ---
@@ -297,26 +291,56 @@ config:
   look: handDrawn
   theme: default
 ---
-flowchart LR
- subgraph AUTH["Authentication"]
-        UC1["Sign In"]
-        UC2["Sign Out"]
-  end
- subgraph REPORTS["Report Management"]
-        UC12["Submit Incident Report"]
-        UC13["Edit Submitted Report"]
-  end
- subgraph NEWS["News & Announcements"]
-        UC27["View News on Mobile"]
-  end
- subgraph MOBILE["Mobile Only"]
-        UC40["View Calendar & Events"]
-        UC41["View Submitted Reports"]
-        UC42["View Profile"]
-        UC43["View FAQs"]
-  end
-    ERT(["ERT Member (Mobile)"]) --- AUTH & UC12 & UC13 & UC27 & MOBILE
-    UC12 -- extends --> UC13
+flowchart TB
+    Actor(["Admin"]) --- UC_Dash(("view filtered dashboard<br>statistics")) & UC_Events(("view filtered<br>events")) & UC_Clusters(("view filtered<br>clusters")) & UC_Reports(("view filtered<br>reports")) & UC_Users(("view filtered<br>users")) & UC_Bystander(("view filtered<br>bystander reports")) & UC_Units(("view filtered<br>units")) & UC_Positions(("view all<br>positions")) & UC_Casualty(("view all<br>casualty conditions")) & UC_Damage(("view all<br>damage conditions")) & UC_SignIn(("sign-in")) & UC_SignOut(("sign-out"))
+    UC_Dash -. include .-> UC_Recent(("view recent<br>events")) & UC_Calendar(("view events<br>on calendar"))
+    UC_EventCreate(("create event")) -. extend .-> UC_Events
+    UC_EventEdit(("edit event")) -. extend .-> UC_Events
+    UC_EventDelete(("delete event")) -. extend .-> UC_Events
+    UC_EventDetails(("view event<br>details")) -. extend .-> UC_Events
+    UC_ClusterCreate(("create cluster")) -. extend .-> UC_Clusters
+    UC_ClusterEdit(("edit cluster")) -. extend .-> UC_Clusters
+    UC_ClusterDelete(("delete cluster")) -. extend .-> UC_Clusters
+    UC_ReportCreate(("create report")) -. extend .-> UC_Reports
+    UC_ReportEdit(("edit report")) -. extend .-> UC_Reports
+    UC_ReportDelete(("delete report")) -. extend .-> UC_Reports
+    UC_UserCreate(("create user")) -. extend .-> UC_Users
+    UC_UserEdit(("edit user")) -. extend .-> UC_Users
+    UC_UserDelete(("delete user")) -. extend .-> UC_Users
+    UC_BystanderVerify(("verify/dismiss<br>bystander report")) -. extend .-> UC_Bystander
+    UC_BystanderDelete(("delete bystander<br>report")) -. extend .-> UC_Bystander
+    UC_UnitCreate(("create unit")) -. extend .-> UC_Units
+    UC_UnitEdit(("edit unit")) -. extend .-> UC_Units
+    UC_UnitDelete(("delete unit")) -. extend .-> UC_Units
+    UC_PositionCreate(("create position")) -. extend .-> UC_Positions
+    UC_PositionEdit(("edit position")) -. extend .-> UC_Positions
+    UC_PositionDelete(("delete position")) -. extend .-> UC_Positions
+    UC_CasualtyCreate(("create casualty<br>condition")) -. extend .-> UC_Casualty
+    UC_CasualtyEdit(("edit casualty<br>condition")) -. extend .-> UC_Casualty
+    UC_CasualtyDelete(("delete casualty<br>condition")) -. extend .-> UC_Casualty
+    UC_DamageCreate(("create damage<br>condition")) -. extend .-> UC_Damage
+    UC_DamageEdit(("edit damage<br>condition")) -. extend .-> UC_Damage
+    UC_DamageDelete(("delete damage<br>condition")) -. extend .-> UC_Damage
+    UC_SignIn -. include .-> UC_NewProfile(("new user<br>create profile"))
+    UC_EditProfile(("edit profile")) -. extend .-> UC_NewProfile
+```
+
+## Use-Case Diagram — ERT Member
+
+```mermaid
+---
+config:
+  layout: elk
+  look: handDrawn
+  theme: default
+---
+flowchart TB
+    Actor(["ERT"]) --- UC_CreateReport(("create report")) & UC_SignIn(("sign-in/-sign-up")) & UC_SignOut(("sign-out"))
+    UC_CreateReport -. extend .-> UC_ViewReport(("view created<br>report"))
+    UC_AddMissing(("add missing<br>person")) -. extend .-> UC_ViewReport
+    UC_AddCasualty(("add casualty")) -. extend .-> UC_ViewReport
+    UC_SignIn -. include .-> UC_NewProfile(("new user<br>create profile"))
+    UC_EditProfile(("edit profile")) -. extend .-> UC_NewProfile
 ```
 
 ## Entity Relationship Diagram
@@ -329,6 +353,28 @@ config:
   theme: default
 ---
 erDiagram
+  campus {
+    uuid id PK
+    string name
+    bool is_active
+  }
+
+  clusters {
+    uuid id PK
+    string name UK
+    uuid campus_id FK
+    bool is_active
+    timestamptz created_at
+  }
+
+  units {
+    uuid id PK
+    string name
+    uuid cluster_id FK
+    bool is_active
+    timestamptz created_at
+  }
+
   users {
     uuid id PK
     uuid auth_id UK
@@ -341,7 +387,10 @@ erDiagram
     uuid unit_id FK
     uuid position_id FK
     uuid user_type_id FK
+    uuid cluster_id FK
+    uuid campus_id FK
     bool is_active
+    bool is_profile_complete
     timestamptz created_at
   }
 
@@ -349,7 +398,7 @@ erDiagram
     uuid id PK
     uuid user_id FK
     uuid status_id FK
-    uuid location_id FK
+    uuid campus_id FK
     string name
     string description
     string quarter
@@ -392,6 +441,7 @@ erDiagram
     string name
     int age
     string sex
+    string diagnosis
     timestamptz created_at
   }
 
@@ -434,29 +484,6 @@ erDiagram
     timestamptz created_at
   }
 
-  clusters {
-    uuid id PK
-    string name UK
-    bool is_active
-    timestamptz created_at
-  }
-
-  units {
-    uuid id PK
-    string name
-    uuid cluster_id FK
-    bool is_active
-    timestamptz created_at
-  }
-
-  locations {
-    uuid id PK
-    string name
-    uuid cluster_id FK
-    bool is_active
-    timestamptz created_at
-  }
-
   positions {
     uuid id PK
     string name UK
@@ -492,33 +519,11 @@ erDiagram
     timestamptz created_at
   }
 
-  news {
-    uuid id PK
-    string title
-    string content
-    string author
-    bool is_active
-    string image_url
-    string source_url
-    timestamptz published_at
-    timestamptz created_at
-  }
-
-  activity_logs {
-    uuid id PK
-    uuid user_id FK
-    string user_email
-    string action
-    string module
-    string doc_id
-    string doc_name
-    string status
-    json data
-    timestamptz created_at
-  }
-
+  campus ||--o{ clusters : "contains"
+  campus ||--o{ events : "hosts"
+  campus ||--o{ users : "scopes"
   clusters ||--o{ units : "contains"
-  clusters ||--o{ locations : "contains"
+  clusters ||--o{ users : "scopes"
   clusters ||--o{ reports : "tagged_on"
   clusters ||--o{ bystander_reports : "tagged_on"
   units ||--o{ users : "belongs_to"
@@ -528,9 +533,7 @@ erDiagram
   user_types ||--o{ users : "classifies"
   users ||--o{ reports : "submits"
   users ||--o{ events : "creates"
-  users ||--o{ activity_logs : "initiates"
   event_statuses ||--o{ events : "classifies"
-  locations ||--o{ events : "hosts"
   events ||--o{ reports : "has"
   reports ||--o{ report_casualties : "has"
   reports ||--o{ report_missing_persons : "has"
@@ -541,33 +544,6 @@ erDiagram
   casualty_conditions ||--o{ report_casualties : "classifies"
   damage_conditions ||--o{ reports : "classifies"
   damage_conditions ||--o{ bystander_reports : "classifies"
-```
-
-## Flowchart — Report Submission
-
-```mermaid
----
-config:
-  layout: dagre
-  look: handDrawn
-  theme: default
----
-flowchart TD
-  A([Field User opens mobile app]) --> B[Selects active event]
-  B --> C[Fills in incident report form]
-  C --> D{Form valid?}
-  D -- No --> C
-  D -- Yes --> E[Submits report]
-  E --> F[(Supabase — reports table)]
-  F --> G[Real-time subscription triggers]
-  G --> H[Web dashboard updates]
-  H --> I[Admin views reports page]
-  I --> J{Action needed?}
-  J -- View details --> K[Admin opens event details page]
-  J -- Review data --> L[Admin reviews headcount and casualties]
-  J -- No action --> M([End])
-  K --> M
-  L --> M
 ```
 
 ---
@@ -589,8 +565,6 @@ npm run seed       # Seed lookup data (clusters, positions, event types, etc.)
 
 **Bryan Mangapit** — Lead Developer
 [bruhhhyannnn.framer.website](https://bruhhhyannnn.framer.website) · [GitHub](https://github.com/bruhhhyannnn) · [LinkedIn](https://linkedin.com/in/bryanmangapit)
-**Yoshilyn Fujitani** — Lead Developer
-[yoshilyn.netlify.app](https://yoshilyn.netlify.app) · [GitHub](https://github.com/yoshilynfujitani) · [LinkedIn](https://linkedin.com/in/yoshilyn-fujitani)
 
 ---
 
