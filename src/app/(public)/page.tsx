@@ -1,15 +1,25 @@
 'use client';
 
 import { cn } from '@/lib';
+import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLandingData } from './use-landing-stats';
 
 /* ─────────────────────────────────────────────────────────────
    MAIN PAGE
 ───────────────────────────────────────────────────────────── */
+const heroContainer = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.15, delayChildren: 0.1 } },
+};
+const heroItem = {
+  hidden: { opacity: 0, y: 24 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const } },
+};
+
 export default function LandingPage() {
   const { data } = useLandingData();
 
@@ -99,10 +109,6 @@ export default function LandingPage() {
 
         .display { font-family: var(--font-sans); }
 
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(24px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
         @keyframes pulseDot {
           0%, 100% { opacity: 1; transform: scale(1); }
           50%       { opacity: 0.4; transform: scale(0.75); }
@@ -111,12 +117,6 @@ export default function LandingPage() {
           0%   { background-position: -400px 0; }
           100% { background-position: 400px 0; }
         }
-
-        .hero-anim-0 { animation: fadeUp 0.7s ease both 0.1s; }
-        .hero-anim-1 { animation: fadeUp 0.8s ease both 0.25s; }
-        .hero-anim-2 { animation: fadeUp 0.8s ease both 0.4s; }
-        .hero-anim-3 { animation: fadeUp 0.8s ease both 0.55s; }
-        .hero-anim-4 { animation: fadeUp 1s  ease both 0.7s; }
 
         .pulse-dot { animation: pulseDot 2s ease-in-out infinite; }
 
@@ -130,8 +130,11 @@ export default function LandingPage() {
 
       <div style={{ background: 'var(--cream)', color: 'var(--text-dark)', overflowX: 'hidden' }}>
         {/* ── NAV ── */}
-        <nav
-          className="fixed top-0 right-0 left-0 z-50 flex items-center justify-between px-6 transition-all duration-300 lg:px-16"
+        <motion.nav
+          initial={{ opacity: 0, y: -16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="fixed top-0 right-0 left-0 z-50 flex items-center justify-between px-6 transition-[background-color,backdrop-filter,border-color] duration-300 lg:px-16"
           style={{
             height: '72px',
             background: navScrolled ? 'rgba(250,248,245,0.92)' : 'transparent',
@@ -212,7 +215,7 @@ export default function LandingPage() {
               Access System
             </Link>
           </div>
-        </nav>
+        </motion.nav>
 
         {/* ── HERO ── */}
         <section
@@ -232,8 +235,16 @@ export default function LandingPage() {
             }}
           />
 
-          <div className="relative z-10 mx-auto w-full max-w-5xl px-6">
-            <div className="hero-anim-0 mb-8 flex flex-col flex-wrap items-center justify-center gap-2">
+          <motion.div
+            className="relative z-10 mx-auto w-full max-w-5xl px-6"
+            variants={heroContainer}
+            initial="hidden"
+            animate="show"
+          >
+            <motion.div
+              variants={heroItem}
+              className="mb-8 flex flex-col flex-wrap items-center justify-center gap-2"
+            >
               {/* logo images */}
               <div className="mb-2 flex flex-wrap items-center justify-center gap-3">
                 <Image
@@ -282,11 +293,12 @@ export default function LandingPage() {
                   Disaster Risk Reduction & Management in Health Program
                 </span>
               </div>
-            </div>
+            </motion.div>
 
             {/* headline */}
-            <h1
-              className="display hero-anim-1 mb-6 font-normal tracking-tight"
+            <motion.h1
+              variants={heroItem}
+              className="display mb-6 font-normal tracking-tight"
               style={{
                 fontSize: 'var(--text-hero)',
                 lineHeight: 1.1,
@@ -296,11 +308,12 @@ export default function LandingPage() {
               Smarter incident reporting
               <br />
               for <em style={{ color: 'var(--gold-light)' }}>emergency response</em> teams
-            </h1>
+            </motion.h1>
 
             {/* subtext */}
-            <p
-              className="hero-anim-2 mx-auto mb-10 font-light"
+            <motion.p
+              variants={heroItem}
+              className="mx-auto mb-10 font-light"
               style={{
                 fontSize: 'var(--text-hero-sub)',
                 color: 'rgba(255,255,255,0.75)',
@@ -310,25 +323,32 @@ export default function LandingPage() {
             >
               The Incident Reporting System automates documentation during emergency drills,
               generates real-time summaries, and helps evaluate ERT performance over time.
-            </p>
+            </motion.p>
 
             {/* CTAs */}
-            <div className="hero-anim-3 mb-16 flex flex-wrap items-center justify-center gap-3.5">
-              <Link
-                href="/signin"
-                target="_blank"
-                className="rounded-[10px] px-7 py-3.5 font-medium text-white no-underline transition-all duration-200 hover:-translate-y-0.5"
-                style={{
-                  background: 'var(--maroon)',
-                  boxShadow: '0 4px 20px rgba(139,26,26,0.28)',
-                  fontSize: 'var(--text-md)',
-                }}
-              >
-                Access the System
-              </Link>
-              <a
+            <motion.div
+              variants={heroItem}
+              className="mb-16 flex flex-wrap items-center justify-center gap-3.5"
+            >
+              <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}>
+                <Link
+                  href="/signin"
+                  target="_blank"
+                  className="rounded-[10px] block px-7 py-3.5 font-medium text-white no-underline transition-shadow duration-200"
+                  style={{
+                    background: 'var(--maroon)',
+                    boxShadow: '0 4px 20px rgba(139,26,26,0.28)',
+                    fontSize: 'var(--text-md)',
+                  }}
+                >
+                  Access the System
+                </Link>
+              </motion.div>
+              <motion.a
                 href="#features"
-                className="rounded-[10px] flex items-center justify-center gap-2 border px-6 py-3.5 font-normal no-underline transition-all duration-200"
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.97 }}
+                className="rounded-[10px] flex items-center justify-center gap-2 border px-6 py-3.5 font-normal no-underline"
                 style={{
                   color: 'var(--text-mid)',
                   borderColor: 'var(--border)',
@@ -338,12 +358,13 @@ export default function LandingPage() {
               >
                 Explore Features
                 <ChevronRight size={14} />
-              </a>
-            </div>
+              </motion.a>
+            </motion.div>
 
             {/* ── Dashboard Preview ── */}
-            <div
-              className="hero-anim-4 w-full overflow-hidden rounded-[20px] text-left"
+            <motion.div
+              variants={heroItem}
+              className="w-full overflow-hidden rounded-[20px] text-left"
               style={{
                 background: 'white',
                 border: '1px solid rgba(139,26,26,0.1)',
@@ -459,8 +480,8 @@ export default function LandingPage() {
                   </table>
                 </div>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           <div className="absolute inset-0 h-screen overflow-hidden">
             {track.map((src, i) => (
@@ -1037,6 +1058,7 @@ export default function LandingPage() {
                   className="rounded-full p-1.5"
                   style={{
                     border: '2.5px solid var(--gold-light)',
+                    boxShadow: '0 8px 40px rgba(26,18,8,0.3)',
                   }}
                 >
                   <Image
@@ -1258,145 +1280,150 @@ export default function LandingPage() {
               background: 'radial-gradient(circle, rgba(139,26,26,0.07) 0%, transparent 70%)',
             }}
           />
-          <h2
-            className="display mb-4 font-normal"
-            style={{
-              fontSize: 'var(--text-cta)',
-              lineHeight: 1.15,
-              color: 'var(--text-dark)',
-            }}
-          >
-            Ready to strengthen your
-            <br />
-            <em style={{ color: 'var(--maroon)' }}>emergency response?</em>
-          </h2>
-          <p
-            className="mx-auto mb-9 font-light"
-            style={{
-              color: 'var(--text-muted)',
-              maxWidth: '440px',
-              lineHeight: 1.65,
-              fontSize: 'var(--text-lg)',
-            }}
-          >
-            Access the IRS dashboard or reach out to the DRRM-H Center to get your team onboarded.
-          </p>
-          <div className="mb-16 flex flex-wrap justify-center gap-3.5">
-            <Link
-              href="/signin"
-              target="_blank"
-              className="rounded-[10px] px-7 py-3.5 font-medium text-white no-underline transition-all duration-200 hover:-translate-y-0.5"
+          <Reveal>
+            <h2
+              className="display mb-4 font-normal"
               style={{
-                background: 'var(--maroon)',
-                boxShadow: '0 4px 20px rgba(139,26,26,0.28)',
-                fontSize: 'var(--text-md)',
+                fontSize: 'var(--text-cta)',
+                lineHeight: 1.15,
+                color: 'var(--text-dark)',
               }}
             >
-              Access the System
-            </Link>
-            <Link
-              href="/bystander-report"
-              className="rounded-[10px] flex items-center justify-center gap-2 border px-6 py-3.5 no-underline transition-all duration-200 hover:-translate-y-0.5"
+              Ready to strengthen your
+              <br />
+              <em style={{ color: 'var(--maroon)' }}>emergency response?</em>
+            </h2>
+            <p
+              className="mx-auto mb-9 font-light"
               style={{
-                color: 'var(--maroon)',
-                borderColor: 'var(--border)',
-                background: 'rgba(255,255,255,0.6)',
-                fontSize: 'var(--text-md)',
+                color: 'var(--text-muted)',
+                maxWidth: '440px',
+                lineHeight: 1.65,
+                fontSize: 'var(--text-lg)',
               }}
             >
-              Submit a Bystander Report
-              <ChevronRight size={14} />
-            </Link>
-          </div>
+              Access the IRS dashboard or reach out to the DRRM-H Center to get your team onboarded.
+            </p>
+            <div className="mb-16 flex flex-wrap justify-center gap-3.5">
+              <Link
+                href="/signin"
+                target="_blank"
+                className="rounded-[10px] px-7 py-3.5 font-medium text-white no-underline transition-all duration-200 hover:-translate-y-0.5"
+                style={{
+                  background: 'var(--maroon)',
+                  boxShadow: '0 4px 20px rgba(139,26,26,0.28)',
+                  fontSize: 'var(--text-md)',
+                }}
+              >
+                Access the System
+              </Link>
+              <Link
+                href="/bystander-report"
+                className="rounded-[10px] flex items-center justify-center gap-2 border px-6 py-3.5 no-underline transition-all duration-200 hover:-translate-y-0.5"
+                style={{
+                  color: 'var(--maroon)',
+                  borderColor: 'var(--border)',
+                  background: 'rgba(255,255,255,0.6)',
+                  fontSize: 'var(--text-md)',
+                }}
+              >
+                Submit a Bystander Report
+                <ChevronRight size={14} />
+              </Link>
+            </div>
+          </Reveal>
 
           {/* live CTA stat strip */}
-          <div
-            className="mx-auto max-w-225 overflow-hidden rounded-[18px]"
-            style={{
-              border: '1px solid var(--border)',
-              boxShadow: '0 20px 60px rgba(26,18,8,0.1)',
-              background: 'white',
-            }}
-          >
+          <Reveal delay={100} className="mx-auto max-w-225 overflow-hidden rounded-[18px]">
             <div
-              className="flex items-center gap-2 px-4"
               style={{
-                height: '44px',
-                background: 'var(--cream2)',
-                borderBottom: '1px solid var(--border)',
+                border: '1px solid var(--border)',
+                boxShadow: '0 20px 60px rgba(26,18,8,0.1)',
+                background: 'white',
               }}
             >
-              <span className="h-3 w-3 rounded-full bg-[#FF5F57]" />
-              <span className="h-3 w-3 rounded-full bg-[#FEBC2E]" />
-              <span className="h-3 w-3 rounded-full bg-[#28C840]" />
-            </div>
-            <div className="grid grid-cols-2 gap-4 p-7 md:grid-cols-4">
-              {[
-                {
-                  label: 'Total Events',
-                  value: data?.totalEvents?.toLocaleString(),
-                  sub: 'From 2025-2026',
-                },
-                {
-                  label: 'Clusters Covered',
-                  value: '4',
-                  sub: 'Across UP Manila campuses',
-                },
-                {
-                  label: 'Established',
-                  value: '2022',
-                  sub: 'UP Manila DRRM-H launch',
-                },
-                {
-                  label: 'Active Events',
-                  value: data?.activeEvents?.toLocaleString(),
-                  sub: 'Currently running',
-                  accent: true,
-                },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-xl p-4"
-                  style={{
-                    background: item.accent ? 'var(--maroon)' : 'var(--cream)',
-                    border: item.accent ? 'none' : '1px solid var(--border)',
-                  }}
-                >
-                  <p
-                    className="mb-2 tracking-[0.7px] uppercase"
+              <div
+                className="flex items-center gap-2 px-4"
+                style={{
+                  height: '44px',
+                  background: 'var(--cream2)',
+                  borderBottom: '1px solid var(--border)',
+                }}
+              >
+                <span className="h-3 w-3 rounded-full bg-[#FF5F57]" />
+                <span className="h-3 w-3 rounded-full bg-[#FEBC2E]" />
+                <span className="h-3 w-3 rounded-full bg-[#28C840]" />
+              </div>
+              <div className="grid grid-cols-2 gap-4 p-7 md:grid-cols-4">
+                {[
+                  {
+                    label: 'Total Events',
+                    value: data?.totalEvents?.toLocaleString(),
+                    sub: 'From 2025-2026',
+                  },
+                  {
+                    label: 'Clusters Covered',
+                    value: '4',
+                    sub: 'Across UP Manila campuses',
+                  },
+                  {
+                    label: 'Established',
+                    value: '2022',
+                    sub: 'UP Manila DRRM-H launch',
+                  },
+                  {
+                    label: 'Active Events',
+                    value: data?.activeEvents?.toLocaleString(),
+                    sub: 'Currently running',
+                    accent: true,
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-xl p-4"
                     style={{
-                      color: item.accent ? 'rgba(255,255,255,0.6)' : 'var(--text-muted)',
-                      fontSize: 'var(--text-2xs)',
+                      background: item.accent ? 'var(--maroon)' : 'var(--cream)',
+                      border: item.accent ? 'none' : '1px solid var(--border)',
                     }}
                   >
-                    {item.label}
-                  </p>
-                  {item.value !== undefined ? (
                     <p
-                      className="display leading-none"
+                      className="mb-2 tracking-[0.7px] uppercase"
                       style={{
-                        color: item.accent ? 'white' : 'var(--text-dark)',
-                        fontSize: 'var(--text-2xl)',
+                        color: item.accent ? 'rgba(255,255,255,0.6)' : 'var(--text-muted)',
+                        fontSize: 'var(--text-2xs)',
                       }}
                     >
-                      {item.value}
+                      {item.label}
                     </p>
-                  ) : (
-                    <div
-                      className="skeleton h-7 w-12"
-                      style={{ background: item.accent ? 'rgba(255,255,255,0.2)' : undefined }}
-                    />
-                  )}
-                  <p
-                    className="mt-1 text-xs"
-                    style={{ color: item.accent ? 'rgba(255,255,255,0.55)' : 'var(--text-muted)' }}
-                  >
-                    {item.sub}
-                  </p>
-                </div>
-              ))}
+                    {item.value !== undefined ? (
+                      <p
+                        className="display leading-none"
+                        style={{
+                          color: item.accent ? 'white' : 'var(--text-dark)',
+                          fontSize: 'var(--text-2xl)',
+                        }}
+                      >
+                        {item.value}
+                      </p>
+                    ) : (
+                      <div
+                        className="skeleton h-7 w-12"
+                        style={{ background: item.accent ? 'rgba(255,255,255,0.2)' : undefined }}
+                      />
+                    )}
+                    <p
+                      className="mt-1 text-xs"
+                      style={{
+                        color: item.accent ? 'rgba(255,255,255,0.55)' : 'var(--text-muted)',
+                      }}
+                    >
+                      {item.sub}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          </Reveal>
         </div>
 
         {/* ── FOOTER ── */}
@@ -1549,7 +1576,7 @@ export default function LandingPage() {
                   fontSize: 'clamp(220px, 20vw, 320px)',
                   color: 'rgba(255,255,255,0.15)',
                   lineHeight: 0.92,
-                  marginBottom: '-0.30em',
+                  marginBottom: '-0.27em',
                 }}
               >
                 IRS
@@ -1698,8 +1725,10 @@ function FCard({
   className?: string;
 }) {
   return (
-    <div
-      className={`${className} rounded-[18px] border border-[rgba(139,26,26,0.1)] bg-[#FAF8F5] p-7 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg`}
+    <motion.div
+      whileHover={{ y: -6, boxShadow: '0 16px 40px rgba(26,18,8,0.12)' }}
+      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+      className={`${className} rounded-[18px] border border-[rgba(139,26,26,0.1)] bg-[#FAF8F5] p-7`}
     >
       <div className="mb-5 flex h-11.5 w-11.5 items-center justify-center rounded-xl bg-[#8B1A1A]">
         {icon}
@@ -1713,31 +1742,11 @@ function FCard({
       >
         {desc}
       </p>
-    </div>
+    </motion.div>
   );
 }
 
-/* Scroll reveal hook */
-function useReveal() {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const io = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
-          setVisible(true);
-          io.disconnect();
-        }
-      },
-      { threshold: 0.12 }
-    );
-    io.observe(ref.current);
-    return () => io.disconnect();
-  }, []);
-  return { ref, visible };
-}
-
+/* On-scroll reveal */
 function Reveal({
   children,
   delay = 0,
@@ -1747,19 +1756,16 @@ function Reveal({
   delay?: number;
   className?: string;
 }) {
-  const { ref, visible } = useReveal();
   return (
-    <div
-      ref={ref}
+    <motion.div
       className={className}
-      style={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(28px)',
-        transition: `opacity 0.7s ease ${delay}ms, transform 0.7s ease ${delay}ms`,
-      }}
+      initial={{ opacity: 0, y: 28 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.12 }}
+      transition={{ duration: 0.7, delay: delay / 1000, ease: [0.16, 1, 0.3, 1] }}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }
 
