@@ -1,25 +1,30 @@
 'use client';
 
 import { PageBreadcrumb } from '@/components/common';
+import { useCampuses } from '@/components/hooks/use-campus';
 import { useDeleteEvent, useEvents } from '@/components/hooks/use-events';
 import {
   Badge,
   Button,
   ConfirmDialog,
+  DeleteAction,
+  EditAction,
   Input,
   Modal,
   PageError,
+  Select,
   Spinner,
   Table,
+  TableActions,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
+  ViewAction,
 } from '@/components/ui';
 import { format } from 'date-fns';
-import { Eye, FileSpreadsheet, Pencil, Plus, Search, Trash2 } from 'lucide-react';
-import Link from 'next/link';
+import { FileSpreadsheet, Plus, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { EventForm } from './event-form';
@@ -28,7 +33,9 @@ import { exportEventToExcel } from './export-event';
 export default function EventsPage() {
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  const { data: events, isPending, isFetching, error } = useEvents(debouncedQuery);
+  const [campusId, setCampusId] = useState('');
+  const { data: campuses = [] } = useCampuses();
+  const { data: events, isPending, isFetching, error } = useEvents(debouncedQuery, campusId);
   const deleteEventMutation = useDeleteEvent();
   const [editId, setEditId] = useState('');
   const [deleteId, setDeleteId] = useState('');
@@ -66,17 +73,28 @@ export default function EventsPage() {
         <PageBreadcrumb pageTitle="Events" />
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="relative max-w-sm min-w-2xs flex-1">
-            <Search
-              size={16}
-              className="absolute top-1/2 z-1 left-3 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+          <div className="flex flex-1 flex-wrap items-center gap-3">
+            <div className="relative max-w-sm min-w-2xs flex-1">
+              <Search
+                size={16}
+                className="absolute top-1/2 z-1 left-3 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+              />
+              <Input
+                placeholder="Search events..."
+                className="pl-9"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+            <Select
+              placeholder="All campuses"
+              className="w-full max-w-2xs"
+              options={campuses.map((c) => ({ value: c.id, label: c.name }))}
+              value={campusId}
+              allowClear
+              onChange={setCampusId}
             />
-            <Input
-              placeholder="Search events..."
-              className="pl-9"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
+            <p className="text-sm text-gray-500 dark:text-gray-400">{events?.length ?? 0} total</p>
           </div>
           <Button onClick={() => setIsModalOpen(true)} startIcon={<Plus size={16} />}>
             Add Event
@@ -126,37 +144,25 @@ export default function EventsPage() {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Link
-                      href={`/events/details?id=${event.id}`}
-                      className="hover:text-brand-600 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100"
-                    >
-                      <Eye size={17} />
-                    </Link>
-                    <button
+                  <TableActions>
+                    <ViewAction href={`/events/details?id=${event.id}`} title="View" />
+                    <EditAction
                       onClick={() => {
                         setEditId(event.id);
                         setIsModalOpen(true);
                       }}
-                      className="hover:text-brand-600 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100"
-                    >
-                      <Pencil size={17} />
-                    </button>
+                    />
                     <button
                       onClick={() => handleExport(event.id)}
                       disabled={exportingId === event.id}
-                      className="hover:text-brand-600 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100 disabled:opacity-50"
+                      className="hover:text-brand-600 dark:hover:text-brand-400 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-500"
                       title="Export to Excel"
                     >
-                      <FileSpreadsheet size={17} />
+                      <FileSpreadsheet size={15} />
+                      Export
                     </button>
-                    <button
-                      className="hover:text-error-500 text-gray-400 transition-all duration-100 dark:text-gray-500"
-                      onClick={() => setDeleteId(event.id)}
-                    >
-                      <Trash2 size={17} />
-                    </button>
-                  </div>
+                    <DeleteAction onClick={() => setDeleteId(event.id)} />
+                  </TableActions>
                 </TableCell>
               </TableRow>
             ))}
@@ -185,7 +191,15 @@ export default function EventsPage() {
       <ConfirmDialog
         isOpen={!!deleteId}
         onClose={() => setDeleteId('')}
-        onConfirm={() => deleteEventMutation.mutate(deleteId, { onSuccess: () => setDeleteId('') })}
+        onConfirm={() =>
+          deleteEventMutation.mutate(deleteId, {
+            onSuccess: () => {
+              setDeleteId('');
+              toast.success('Event deleted');
+            },
+            onError: (err) => toast.error(err.message),
+          })
+        }
         title="Delete event"
         message="This event will be permanently deleted. This cannot be undone."
         confirmLabel="Delete"

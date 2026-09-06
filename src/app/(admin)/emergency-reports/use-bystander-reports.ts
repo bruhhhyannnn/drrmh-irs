@@ -1,5 +1,6 @@
 import {
   createBystanderReport,
+  deleteBystanderReport,
   getBystanderIncidentTypes,
   getBystanderReports,
   updateBystanderReportStatus,
@@ -36,6 +37,18 @@ export function useUpdateBystanderReportStatus() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bystander-reports'] });
       toast.success('Status updated');
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+export function useDeleteBystanderReport() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteBystanderReport(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bystander-reports'] });
+      toast.success('Report deleted');
     },
     onError: (err: Error) => toast.error(err.message),
   });

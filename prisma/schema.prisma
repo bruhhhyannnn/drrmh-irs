@@ -90,37 +90,38 @@ model Event {
 }
 
 model Report {
-  id                   String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  event_id             String                @db.Uuid
-  user_id              String?               @db.Uuid
-  cluster_id           String                @db.Uuid
-  unit_id              String?               @db.Uuid
-  faculty_members      Int                   @default(0)
-  admin_members        Int                   @default(0)
-  reps_members         Int                   @default(0)
-  ra_members           Int                   @default(0)
-  students             Int                   @default(0)
-  philcare_staff       Int                   @default(0)
-  security_personnel   Int                   @default(0)
-  construction_workers Int                   @default(0)
-  tenants              Int                   @default(0)
-  health_workers       Int                   @default(0)
-  non_academic_staff   Int                   @default(0)
-  guests               Int                   @default(0)
-  submitted_at         DateTime              @default(now()) @db.Timestamptz(6)
-  created_at           DateTime              @default(now()) @db.Timestamptz(6)
-  updated_at           DateTime              @default(now()) @updatedAt @db.Timestamptz(6)
-  damage_condition_id  String?               @db.Uuid
-  latitude             Decimal?              @db.Decimal(10, 8)
+  id                   String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  event_id             String                  @db.Uuid
+  user_id              String?                 @db.Uuid
+  cluster_id           String                  @db.Uuid
+  unit_id              String?                 @db.Uuid
+  faculty_members      Int                     @default(0)
+  admin_members        Int                     @default(0)
+  reps_members         Int                     @default(0)
+  ra_members           Int                     @default(0)
+  students             Int                     @default(0)
+  philcare_staff       Int                     @default(0)
+  security_personnel   Int                     @default(0)
+  construction_workers Int                     @default(0)
+  tenants              Int                     @default(0)
+  health_workers       Int                     @default(0)
+  non_academic_staff   Int                     @default(0)
+  guests               Int                     @default(0)
+  submitted_at         DateTime                @default(now()) @db.Timestamptz(6)
+  created_at           DateTime                @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime                @default(now()) @updatedAt @db.Timestamptz(6)
+  damage_condition_id  String?                 @db.Uuid
+  latitude             Decimal?                @db.Decimal(10, 8)
   location_name        String?
-  longitude            Decimal?              @db.Decimal(11, 8)
+  longitude            Decimal?                @db.Decimal(11, 8)
   casualties           ReportCasualty[]
   missing_persons      ReportMissingPerson[]
-  cluster              Cluster               @relation(fields: [cluster_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  damage_conditions    DamageCondition?      @relation(fields: [damage_condition_id], references: [id], onUpdate: NoAction)
-  event                Event                 @relation(fields: [event_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  unit                 Unit?                 @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  user                 User?                 @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  population_counts    ReportPopulationCount[]
+  cluster              Cluster                 @relation(fields: [cluster_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  damage_conditions    DamageCondition?        @relation(fields: [damage_condition_id], references: [id], onUpdate: NoAction)
+  event                Event                   @relation(fields: [event_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  unit                 Unit?                   @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user                 User?                   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([event_id])
   @@index([user_id])
@@ -263,10 +264,58 @@ model bystander_reports {
 }
 
 model campus {
-  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name      String
-  is_active Boolean   @default(true)
-  clusters  Cluster[]
-  events    Event[]
-  users     User[]
+  id                    String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                  String
+  is_active             Boolean                    @default(true)
+  population_categories CampusPopulationCategory[]
+  clusters              Cluster[]
+  events                Event[]
+  users                 User[]
+}
+
+model PopulationCategory {
+  id            String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code          String                     @unique
+  name          String
+  description   String?
+  is_active     Boolean                    @default(true)
+  created_at    DateTime                   @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime                   @default(now()) @updatedAt @db.Timestamptz(6)
+  campus_links  CampusPopulationCategory[]
+  report_counts ReportPopulationCount[]
+
+  @@map("population_categories")
+}
+
+model CampusPopulationCategory {
+  id          String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  campus_id   String             @db.Uuid
+  category_id String             @db.Uuid
+  sort_order  Int                @default(0)
+  is_required Boolean            @default(false)
+  is_active   Boolean            @default(true)
+  created_at  DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
+  campus      campus             @relation(fields: [campus_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  category    PopulationCategory @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([campus_id, category_id])
+  @@index([campus_id, sort_order], map: "idx_campus_pop_cat_campus")
+  @@map("campus_population_categories")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ReportPopulationCount {
+  id          String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  report_id   String             @db.Uuid
+  category_id String             @db.Uuid
+  count       Int                @default(0)
+  created_at  DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
+  category    PopulationCategory @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  report      Report             @relation(fields: [report_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([report_id, category_id])
+  @@index([report_id], map: "idx_report_pop_counts_report")
+  @@map("report_population_counts")
 }

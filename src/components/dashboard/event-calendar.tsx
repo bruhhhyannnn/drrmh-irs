@@ -1,6 +1,5 @@
 'use client';
 
-import { PageBreadcrumb } from '@/components/common';
 import { useEvents } from '@/components/hooks/use-events';
 import { Badge } from '@/components/ui';
 import {
@@ -18,7 +17,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
-export default function CalendarPage() {
+export function EventCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const { data: allEvents = [] } = useEvents();
 
@@ -38,8 +37,6 @@ export default function CalendarPage() {
 
   return (
     <div className="space-y-6">
-      <PageBreadcrumb pageTitle="Calendar" />
-
       {/* Events this month */}
       {events.length > 0 && (
         <div>

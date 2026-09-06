@@ -1,5 +1,6 @@
 'use client';
 
+import { EventSummary } from '@/app/(admin)/events/details/event-summary';
 import { PageBreadcrumb } from '@/components/common';
 import {
   useCampus,
@@ -28,6 +29,7 @@ import { useThemeStore } from '@/store';
 import { ChevronDown, Inbox, Pencil, Trash2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { CampusForm } from '../campus-form';
 
@@ -102,113 +104,28 @@ function CampusDetailsContent() {
       const unit = cluster?.units.find((c) => c.unit.id === selectedUnit?.id);
 
       if (!unit) return [];
-      return [
-        {
-          name: 'Faculty Members',
-          value: unit.facultyMembersCount,
-        },
-        { name: 'Admin Members', value: unit.adminMembersCount },
-        { name: 'Reps Members', value: unit.repMembersCount },
-        { name: 'RA Members', value: unit.raMembersCount },
-        { name: 'Students', value: unit.studentsCount },
-        {
-          name: 'Philcare Staff',
-          value: unit.philcareStaffCount,
-        },
-        {
-          name: 'Security Personnel',
-          value: unit.securityPersonelCount,
-        },
-        {
-          name: 'Construction Workers',
-          value: unit.constructionWorkersCount,
-        },
-        { name: 'Tenants', value: unit.tenantsCount },
-        {
-          name: 'Health Workers',
-          value: unit.healthWorkersCount,
-        },
-        {
-          name: 'Non Academic Staff',
-          value: unit.nonAcademicStaffCount,
-        },
-        { name: 'Guests', value: unit.guestsCount },
-      ];
+      return unit.counts.map((c) => ({ name: c.category.name, value: c.count }));
     }
 
     if (selectedCluster) {
       const cluster = campus.clusters.find((c) => c.cluster.id === selectedCluster?.id);
 
       if (!cluster) return [];
-      return [
-        {
-          name: 'Faculty Members',
-          value: cluster.facultyMembersCount,
-        },
-        { name: 'Admin Members', value: cluster.adminMembersCount },
-        { name: 'Reps Members', value: cluster.repMembersCount },
-        { name: 'RA Members', value: cluster.raMembersCount },
-        { name: 'Students', value: cluster.studentsCount },
-        {
-          name: 'Philcare Staff',
-          value: cluster.philcareStaffCount,
-        },
-        {
-          name: 'Security Personnel',
-          value: cluster.securityPersonelCount,
-        },
-        {
-          name: 'Construction Workers',
-          value: cluster.constructionWorkersCount,
-        },
-        { name: 'Tenants', value: cluster.tenantsCount },
-        {
-          name: 'Health Workers',
-          value: cluster.healthWorkersCount,
-        },
-        {
-          name: 'Non Academic Staff',
-          value: cluster.nonAcademicStaffCount,
-        },
-        { name: 'Guests', value: cluster.guestsCount },
-      ];
+      return cluster.counts.map((c) => ({ name: c.category.name, value: c.count }));
     }
 
-    return [
-      {
-        name: 'Faculty Members',
-        value: event?.reduce((sum, item) => sum + item.facultyMembersCount, 0),
-      },
-      {
-        name: 'Admin Members',
-        value: event?.reduce((sum, item) => sum + item.adminMembersCount, 0),
-      },
-      { name: 'Reps Members', value: event?.reduce((sum, item) => sum + item.repMembersCount, 0) },
-      { name: 'RA Members', value: event?.reduce((sum, item) => sum + item.raMembersCount, 0) },
-      { name: 'Students', value: event?.reduce((sum, item) => sum + item.studentsCount, 0) },
-      {
-        name: 'Philcare Staff',
-        value: event?.reduce((sum, item) => sum + item.philcareStaffCount, 0),
-      },
-      {
-        name: 'Security Personnel',
-        value: event?.reduce((sum, item) => sum + item.securityPersonelCount, 0),
-      },
-      {
-        name: 'Construction Workers',
-        value: event?.reduce((sum, item) => sum + item.constructionWorkersCount, 0),
-      },
-      { name: 'Tenants', value: event?.reduce((sum, item) => sum + item.tenantsCount, 0) },
-      {
-        name: 'Health Workers',
-        value: event?.reduce((sum, item) => sum + item.healthWorkersCount, 0),
-      },
-      {
-        name: 'Non Academic Staff',
-        value: event?.reduce((sum, item) => sum + item.nonAcademicStaffCount, 0),
-      },
-      { name: 'Guests', value: event?.reduce((sum, item) => sum + item.guestsCount, 0) },
-    ];
+    const totals = new Map<string, { name: string; value: number }>();
+    event.forEach((item) => {
+      item.counts.forEach((c) => {
+        const existing = totals.get(c.category.id);
+        if (existing) {
+          existing.value += c.count;
+        } else {
+          totals.set(c.category.id, { name: c.category.name, value: c.count });
+        }
+      });
+    });
+    return Array.from(totals.values());
   }, [event, selectedCluster, selectedUnit]);
   const totalCount = event?.reduce((sum, item) => sum + item.totalCount, 0) ?? 0;
   const { theme } = useThemeStore();
@@ -297,7 +214,13 @@ function CampusDetailsContent() {
               isOpen={!!deleteId}
               onClose={() => setDeleteId('')}
               onConfirm={() =>
-                deleteCampusMutation.mutate(deleteId, { onSuccess: () => setDeleteId('') })
+                deleteCampusMutation.mutate(deleteId, {
+                  onSuccess: () => {
+                    setDeleteId('');
+                    toast.success('Campus deleted');
+                  },
+                  onError: (err) => toast.error(err.message),
+                })
               }
               title="Delete campus"
               message="This campus will be permanently deleted. This cannot be undone."
@@ -369,7 +292,9 @@ function CampusDetailsContent() {
               <Dropdown
                 isOpen={eventsDropdownOpen}
                 onClose={() => setEventsDropdownOpen(false)}
-                className="w-60 p-2 right-6"
+                className="w-60 right-6"
+                searchable
+                searchPlaceholder="Search events..."
               >
                 {campusEvents.map((e) => (
                   <DropdownItem key={e.id} onClick={() => handleSelectedEvent(e)}>
@@ -388,6 +313,13 @@ function CampusDetailsContent() {
         {/* Charts and Tables */}
         {selectedEvent && (
           <>
+            <div className="mt-5">
+              <h2 className="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
+                Event Summary
+              </h2>
+              <EventSummary eventId={selectedEvent.id} />
+            </div>
+
             <div className="mt-5">
               <div className="flex flex-col rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-900">
                 <div className="mt-2 flex flex-wrap gap-2 justify-between">
@@ -417,7 +349,7 @@ function CampusDetailsContent() {
                       <Dropdown
                         isOpen={clustersDropdownOpen}
                         onClose={() => setClustersDropdownOpen(false)}
-                        className="w-60 p-2 right-4"
+                        className="w-60 right-4"
                       >
                         <DropdownItem onClick={() => handleSelectedCluster(null)} className="py-1">
                           <div className="w-full border-b border-gray-100 pb-1 dark:border-gray-800">
@@ -465,7 +397,7 @@ function CampusDetailsContent() {
                         <Dropdown
                           isOpen={unitsDropdownOpen}
                           onClose={() => setUnitsDropdownOpen(false)}
-                          className="w-60 p-2 right-4"
+                          className="w-60 right-4"
                         >
                           <DropdownItem onClick={() => handleSelectedUnit(null)} className="py-1">
                             <div className="w-full items-center border-b border-gray-100 pb-1 dark:border-gray-800">

@@ -2,6 +2,8 @@
 
 import { CasualtyFormData, MissingPersonFormData, ReportFormData } from '@/lib';
 import { prisma } from '@/lib/prisma';
+import { toFriendlyError } from '@/lib/prisma-error';
+import { mapPopulationCountsToLegacyColumns } from '@/lib/utils';
 import type { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
@@ -15,7 +17,7 @@ function serializeReport<T extends { latitude: unknown; longitude: unknown }>(r:
   };
 }
 
-export async function getReports(page: number = 1, query?: string) {
+export async function getReports(page: number = 1, query?: string, campusId?: string) {
   const where: Prisma.ReportWhereInput = {
     ...(query && {
       OR: [
@@ -24,6 +26,7 @@ export async function getReports(page: number = 1, query?: string) {
         { event: { name: { contains: query, mode: 'insensitive' } } },
       ],
     }),
+    ...(campusId && { cluster: { campus_id: campusId } }),
   };
 
   const [data, total] = await Promise.all([
@@ -40,6 +43,7 @@ export async function getReports(page: number = 1, query?: string) {
         },
         cluster: { select: { name: true } },
         unit: { select: { name: true } },
+        population_counts: { select: { count: true } },
         _count: { select: { casualties: true, missing_persons: true } },
       },
       orderBy: { created_at: 'desc' },
@@ -64,7 +68,7 @@ export async function getReport(id: string) {
           position: { select: { name: true } },
         },
       },
-      cluster: { select: { name: true } },
+      cluster: { select: { name: true, campus_id: true } },
       unit: { select: { name: true } },
       missing_persons: { select: { name: true } },
       casualties: {
@@ -72,6 +76,9 @@ export async function getReport(id: string) {
       },
       damage_conditions: {
         select: { name: true },
+      },
+      population_counts: {
+        include: { category: { select: { id: true, code: true, name: true } } },
       },
     },
   });
@@ -91,7 +98,7 @@ export async function getReportsByEvent(eventId: string) {
           position: { select: { name: true } },
         },
       },
-      cluster: { select: { name: true } },
+      cluster: { select: { name: true, campus_id: true } },
       unit: { select: { name: true } },
       missing_persons: { select: { name: true } },
       casualties: {
@@ -100,45 +107,65 @@ export async function getReportsByEvent(eventId: string) {
       damage_conditions: {
         select: { name: true },
       },
+      population_counts: {
+        include: { category: { select: { id: true, code: true, name: true } } },
+      },
     },
   });
   return reports.map(serializeReport);
 }
 
 export async function createReport(data: ReportFormData & { user_id?: string }) {
-  const { report_missing_persons, report_casualties, user_id, ...reportData } = data;
+  const { report_missing_persons, report_casualties, population_counts, user_id, ...reportData } =
+    data;
 
-  const report = await prisma.report.create({
-    data: {
-      ...reportData,
-      user_id: user_id ?? null,
-      unit_id: reportData.unit_id || null,
-      latitude: reportData.latitude ?? null,
-      longitude: reportData.longitude ?? null,
-      location_name: reportData.location_name ?? null,
-      damage_condition_id: reportData.damage_condition_id || null,
-      missing_persons: {
-        create: report_missing_persons ?? [],
+  try {
+    const report = await prisma.report.create({
+      data: {
+        ...reportData,
+        ...mapPopulationCountsToLegacyColumns(population_counts),
+        user_id: user_id ?? null,
+        unit_id: reportData.unit_id || null,
+        latitude: reportData.latitude ?? null,
+        longitude: reportData.longitude ?? null,
+        location_name: reportData.location_name ?? null,
+        damage_condition_id: reportData.damage_condition_id || null,
+        missing_persons: {
+          create: report_missing_persons ?? [],
+        },
+        casualties: {
+          create: report_casualties ?? [],
+        },
+        population_counts: {
+          create: population_counts.map(({ category_id, count }) => ({ category_id, count })),
+        },
       },
-      casualties: {
-        create: report_casualties ?? [],
-      },
-    },
-  });
+    });
 
-  revalidatePath('/reports');
-  return serializeReport(report);
+    revalidatePath('/reports');
+    return serializeReport(report);
+  } catch (err) {
+    throw toFriendlyError(err, 'report');
+  }
 }
 
 export async function updateReport(id: string, data: Prisma.ReportUpdateInput) {
-  const report = await prisma.report.update({ where: { id }, data });
-  revalidatePath('/reports');
-  return serializeReport(report);
+  try {
+    const report = await prisma.report.update({ where: { id }, data });
+    revalidatePath('/reports');
+    return serializeReport(report);
+  } catch (err) {
+    throw toFriendlyError(err, 'report');
+  }
 }
 
 export async function deleteReport(id: string) {
-  await prisma.report.delete({ where: { id } });
-  revalidatePath('/reports');
+  try {
+    await prisma.report.delete({ where: { id } });
+    revalidatePath('/reports');
+  } catch (err) {
+    throw toFriendlyError(err, 'report');
+  }
 }
 
 export async function getReportClusterSummary() {

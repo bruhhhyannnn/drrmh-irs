@@ -5,7 +5,6 @@ import { useSidebarStore } from '@/store';
 import {
   AlertTriangle,
   BarChart2,
-  Calendar,
   CalendarDays,
   ChevronDown,
   LayoutDashboard,
@@ -32,7 +31,6 @@ const navItems: NavItem[] = [
   { icon: <CalendarDays size={20} />, name: 'Events', path: '/events' },
   { icon: <BarChart2 size={20} />, name: 'Reports', path: '/reports' },
   { icon: <AlertTriangle size={20} />, name: 'Bystander Reports', path: '/emergency-reports' },
-  { icon: <Calendar size={20} />, name: 'Calendar', path: '/calendar' },
   { icon: <Users size={20} />, name: 'Users', path: '/users' },
   {
     icon: <Settings size={20} />,
@@ -43,6 +41,7 @@ const navItems: NavItem[] = [
       { name: 'Positions', path: '/settings/positions' },
       { name: 'Casualty Conditions', path: '/settings/casualty-conditions' },
       { name: 'Damage Conditions', path: '/settings/damage-conditions' },
+      { name: 'Population Fields', path: '/settings/population-fields' },
     ],
   },
 ];
@@ -163,10 +162,10 @@ export function AppSidebar() {
                             <Link
                               href={sub.path}
                               className={cn(
-                                'block rounded-lg px-4 py-2 text-xs transition',
+                                'block rounded-lg px-4 py-2 text-xs transition-all duration-200',
                                 isActive(sub.path)
-                                  ? 'text-brand-500 dark:text-brand-400 font-medium'
-                                  : 'text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-white'
+                                  ? 'text-brand-500 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/10 font-medium'
+                                  : 'text-gray-500 hover:bg-gray-100 hover:text-gray-950 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white'
                               )}
                             >
                               {sub.name}
@@ -208,7 +207,7 @@ export function AppSidebar() {
       {/* Footer */}
       {isVisible && (
         <div className="flex flex-col border-t border-gray-200 p-4 dark:border-gray-800">
-          <p className="text-center text-xs text-gray-500">UP Manila DRRM-H © 2026</p>
+          <p className="text-center text-xs text-gray-500">DRRM-H © 2026</p>
           <p className="text-center text-xs text-gray-400 dark:text-gray-600">Version {version}</p>
         </div>
       )}

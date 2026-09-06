@@ -19,10 +19,10 @@ import { CasualtyFormData, MissingPersonFormData, ReportFormData } from '@/lib';
 import type { Prisma } from '@prisma/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-export function useReports(page: number, query: string) {
+export function useReports(page: number, query: string, campusId?: string) {
   return useQuery({
-    queryKey: ['reports', page, query],
-    queryFn: () => getReports(page, query),
+    queryKey: ['reports', page, query, campusId],
+    queryFn: () => getReports(page, query, campusId),
   });
 }
 

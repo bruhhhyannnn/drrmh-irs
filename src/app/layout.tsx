@@ -7,7 +7,7 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'DRRM-H - IRS',
+  title: 'IRS | DRRM-H',
   description:
     'UP Manila Disaster Risk Reduction Management in Health Program - Incident Reporting System',
   icons: {

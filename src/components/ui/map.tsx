@@ -1757,5 +1757,3 @@ export {
   MarkerTooltip,
   useMap,
 };
-
-export type { MapArcDatum, MapArcEvent, MapRef, MapViewport };

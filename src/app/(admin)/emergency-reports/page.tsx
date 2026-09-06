@@ -2,13 +2,26 @@
 
 import type { getBystanderReports } from '@/actions/emergency-reports';
 import { PageBreadcrumb } from '@/components/common';
-import { useDeleteReport } from '@/components/hooks/use-reports';
-import { Badge, ConfirmDialog, DataTable, Input, Modal, PageError } from '@/components/ui';
+import {
+  Badge,
+  ConfirmDialog,
+  DataTable,
+  DeleteAction,
+  Input,
+  Modal,
+  PageError,
+  TableActions,
+  ViewAction,
+} from '@/components/ui';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { BookOpen, CheckCircle, Eye, Search, Trash2, XCircle } from 'lucide-react';
+import { BookOpen, CheckCircle, Search, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useBystanderReports, useUpdateBystanderReportStatus } from './use-bystander-reports';
+import {
+  useBystanderReports,
+  useDeleteBystanderReport,
+  useUpdateBystanderReportStatus,
+} from './use-bystander-reports';
 
 type BystanderRow = Awaited<ReturnType<typeof getBystanderReports>>[number];
 type StatusFilter = 'all' | 'pending' | 'reviewed' | 'verified' | 'dismissed';
@@ -34,7 +47,7 @@ export default function BystanderReportsPage() {
 
   const { data: reports = [], isPending, isFetching, error } = useBystanderReports(debounceQuery);
   const updateStatus = useUpdateBystanderReportStatus();
-  const deleteReport = useDeleteReport();
+  const deleteReport = useDeleteBystanderReport();
 
   useEffect(() => {
     const timer = setTimeout(() => setDebounceQuery(query), 400);
@@ -156,7 +169,7 @@ export default function BystanderReportsPage() {
       cell: ({ row: { original: r } }) => {
         const status = r.bystander_report_statuses?.name ?? 'pending';
         return (
-          <div className="flex flex-row items-center gap-2">
+          <TableActions>
             {/* Mark reviewed */}
             {status === 'pending' && (
               <button
@@ -193,24 +206,9 @@ export default function BystanderReportsPage() {
               </button>
             )}
 
-            {/* View detail */}
-            <button
-              title="View details"
-              className="hover:text-brand-600 dark:hover:text-brand-400 inline-flex items-center gap-1 text-sm text-gray-400 transition-all duration-100 dark:text-gray-500"
-              onClick={() => setDetailRow(r)}
-            >
-              <Eye size={17} />
-            </button>
-
-            {/* Delete */}
-            <button
-              title="Delete"
-              className="hover:text-error-500 text-gray-400 transition-all duration-100 dark:text-gray-500"
-              onClick={() => setDeleteId(r.id)}
-            >
-              <Trash2 size={17} />
-            </button>
-          </div>
+            <ViewAction title="View details" onClick={() => setDetailRow(r)} />
+            <DeleteAction onClick={() => setDeleteId(r.id)} />
+          </TableActions>
         );
       },
     },
@@ -274,7 +272,11 @@ export default function BystanderReportsPage() {
       <ConfirmDialog
         isOpen={!!deleteId}
         onClose={() => setDeleteId('')}
-        onConfirm={() => deleteReport.mutate(deleteId, { onSuccess: () => setDeleteId('') })}
+        onConfirm={() =>
+          deleteReport.mutate(deleteId, {
+            onSuccess: () => setDeleteId(''),
+          })
+        }
         title="Delete bystander report"
         message="This report will be permanently deleted. This cannot be undone."
         confirmLabel="Delete"

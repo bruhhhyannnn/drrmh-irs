@@ -1,6 +1,7 @@
 'use client';
 
 import { PageBreadcrumb } from '@/components/common';
+import { EventCalendar } from '@/components/dashboard/event-calendar';
 import { useEvents } from '@/components/hooks/use-events';
 import {
   useReportClusterSummary,
@@ -323,6 +324,11 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Calendar */}
+      <div className="mt-4">
+        <EventCalendar />
       </div>
     </div>
   );

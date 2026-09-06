@@ -10,6 +10,7 @@ type UserProfileType = Prisma.UserGetPayload<{
     unit: { include: { cluster: true } };
     position: true;
     user_type: true;
+    campus: true;
   };
 }>;
 

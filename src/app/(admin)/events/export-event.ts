@@ -3,7 +3,12 @@
 import { getEvent } from '@/actions/events';
 import type { getReportsByEvent } from '@/actions/reports';
 import { getReportsByEvent as fetchReportsByEvent } from '@/actions/reports';
-import { CLUSTERS, HEADCOUNT_FIELDS } from '@/lib';
+import { CLUSTERS } from '@/lib';
+import {
+  sumPopulationCountsByCategory,
+  totalPopulationCount,
+  uniquePopulationCategories,
+} from '@/lib/utils';
 import { format } from 'date-fns';
 import ExcelJS from 'exceljs';
 
@@ -11,7 +16,7 @@ type EventReport = Awaited<ReturnType<typeof getReportsByEvent>>[number];
 type EventDetail = NonNullable<Awaited<ReturnType<typeof getEvent>>>;
 
 function affectedOf(r: EventReport) {
-  return HEADCOUNT_FIELDS.reduce((sum, { key }) => sum + ((r as any)[key] ?? 0), 0);
+  return totalPopulationCount(r.population_counts);
 }
 
 function styleHeaderRow(row: ExcelJS.Row) {
@@ -52,26 +57,19 @@ function buildSummarySheet(wb: ExcelJS.Workbook, event: EventDetail, reports: Ev
 function buildClusterBreakdownSheet(wb: ExcelJS.Workbook, reports: EventReport[]) {
   const sheet = wb.addWorksheet('By Cluster');
 
-  const headers = ['Cluster', 'Reports', ...HEADCOUNT_FIELDS.map((f) => f.label), 'Total Affected'];
+  const categories = uniquePopulationCategories(reports);
+  const headers = ['Cluster', 'Reports', ...categories.map((c) => c.name), 'Total Affected'];
   sheet.addRow(headers);
   styleHeaderRow(sheet.getRow(1));
 
   CLUSTERS.forEach((cluster) => {
     const cr = reports.filter((r) => r.cluster.name === cluster);
-    const totals = cr.reduce(
-      (acc, r) => {
-        HEADCOUNT_FIELDS.forEach(({ key }) => {
-          acc[key] = (acc[key] ?? 0) + ((r as any)[key] ?? 0);
-        });
-        return acc;
-      },
-      {} as Record<string, number>
-    );
-    const totalAffected = HEADCOUNT_FIELDS.reduce((sum, { key }) => sum + (totals[key] ?? 0), 0);
+    const totalsById = new Map(sumPopulationCountsByCategory(cr).map((t) => [t.id, t.total]));
+    const totalAffected = categories.reduce((sum, c) => sum + (totalsById.get(c.id) ?? 0), 0);
     sheet.addRow([
       cluster,
       cr.length,
-      ...HEADCOUNT_FIELDS.map(({ key }) => totals[key] ?? 0),
+      ...categories.map((c) => totalsById.get(c.id) ?? 0),
       totalAffected,
     ]);
   });
@@ -85,13 +83,14 @@ function buildClusterBreakdownSheet(wb: ExcelJS.Workbook, reports: EventReport[]
 function buildReportsSheet(wb: ExcelJS.Workbook, reports: EventReport[]) {
   const sheet = wb.addWorksheet('Reports');
 
+  const categories = uniquePopulationCategories(reports);
   const headers = [
     'Submitted At',
     'Submitted By',
     'Position',
     'Cluster',
     'Unit',
-    ...HEADCOUNT_FIELDS.map((f) => f.label),
+    ...categories.map((c) => c.name),
     'Total Affected',
     'Casualties',
     'Missing',
@@ -101,13 +100,14 @@ function buildReportsSheet(wb: ExcelJS.Workbook, reports: EventReport[]) {
   styleHeaderRow(sheet.getRow(1));
 
   reports.forEach((r) => {
+    const countsById = new Map(r.population_counts.map((pc) => [pc.category.id, pc.count]));
     sheet.addRow([
       r.created_at ? format(new Date(r.created_at), 'MMM d, yyyy h:mm a') : '—',
       r.user ? `${r.user.first_name ?? ''} ${r.user.last_name ?? ''}`.trim() : '—',
       r.user?.position?.name ?? '—',
       r.cluster.name,
       r.unit?.name ?? '—',
-      ...HEADCOUNT_FIELDS.map(({ key }) => (r as any)[key] ?? 0),
+      ...categories.map((c) => countsById.get(c.id) ?? 0),
       affectedOf(r),
       r.casualties.length,
       r.missing_persons.length,

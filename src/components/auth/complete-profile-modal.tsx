@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useCampusClusters } from '../hooks/use-campus';
-import { useCampus, useClusters, usePositions, useUnits } from '../hooks/use-settings';
+import { useCampus, usePositions, useUnits } from '../hooks/use-settings';
 
 const OTHER_VALUE = '__other__';
 
@@ -14,7 +14,6 @@ export function CompleteProfileModal() {
   const { userProfile, loading, setUserProfile } = useAuthStore();
   const [campusId, setCampusId] = useState('');
   const { data: positions = [] } = usePositions();
-  const { data: clusters = [] } = useClusters();
   const { data: campus = [] } = useCampus();
   const { data: campusClusters = [] } = useCampusClusters(campusId ?? '');
 
@@ -82,16 +81,51 @@ export function CompleteProfileModal() {
 
       <div className="space-y-4">
         <Select
+          label="Campus"
+          placeholder="Select your campus..."
+          options={campusOptions}
+          value={campusId}
+          required
+          onChange={(value) => {
+            setCampusId(value);
+            setClusterId('');
+            setUnitId('');
+          }}
+        />
+
+        <Select
+          label="Cluster"
+          placeholder={campusId ? 'Select cluster...' : 'Select campus first'}
+          className={!campusId ? 'opacity-70' : ''}
+          options={clusterOptions}
+          value={clusterId}
+          disabled={!campusId}
+          required
+          onChange={(value) => {
+            setClusterId(value);
+            setUnitId('');
+          }}
+        />
+        <Select
+          label="Building / Unit"
+          placeholder={clusterId ? 'Select unit...' : 'Select cluster first'}
+          className={!clusterId ? 'opacity-70' : ''}
+          options={unitOptions}
+          value={unitId}
+          disabled={!clusterId}
+          required
+          onChange={setUnitId}
+        />
+
+        <Select
           label="Position"
           placeholder="Select your position..."
           options={positionOptions}
           value={positionId}
           required
-          onChange={(e) => {
-            setPositionId(e.target.value);
+          onChange={(value) => {
+            setPositionId(value);
             setCustomPosition('');
-            setClusterId('');
-            setUnitId('');
           }}
         />
 
@@ -109,43 +143,6 @@ export function CompleteProfileModal() {
             />
           </div>
         )}
-
-        <Select
-          label="Campus"
-          placeholder="Select your campus..."
-          options={campusOptions}
-          value={campusId}
-          required
-          onChange={(e) => {
-            setCampusId(e.target.value);
-            setClusterId('');
-            setUnitId('');
-          }}
-        />
-
-        <Select
-          label="Cluster"
-          placeholder={campusId ? 'Select cluster...' : 'Select campus first'}
-          className={!campusId ? 'opacity-70' : ''}
-          options={clusterOptions}
-          value={clusterId}
-          disabled={!campusId}
-          required
-          onChange={(e) => {
-            setClusterId(e.target.value);
-            setUnitId('');
-          }}
-        />
-        <Select
-          label="Building / Unit"
-          placeholder={clusterId ? 'Select unit...' : 'Select cluster first'}
-          className={!clusterId ? 'opacity-70' : ''}
-          options={unitOptions}
-          value={unitId}
-          disabled={!clusterId}
-          required
-          onChange={(e) => setUnitId(e.target.value)}
-        />
 
         <Button
           className="w-full"
