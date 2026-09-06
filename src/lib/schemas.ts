@@ -92,7 +92,12 @@ export const casualtySchema = z.object({
   diagnosis: z.string().optional().nullable(),
 });
 
-const headcountField = () => z.coerce.number().int().min(0).default(0);
+export const populationCountEntrySchema = z.object({
+  category_id: z.string().uuid(),
+  code: z.string(),
+  count: z.coerce.number().int().min(0).default(0),
+});
+
 export const reportSchema = z.object({
   event_id: z.string().uuid('Event is required'),
   cluster_id: z.string().uuid('Cluster is required'),
@@ -100,18 +105,7 @@ export const reportSchema = z.object({
   latitude: z.number().optional().nullable(),
   longitude: z.number().optional().nullable(),
   location_name: z.string().optional().nullable(),
-  faculty_members: headcountField(),
-  admin_members: headcountField(),
-  reps_members: headcountField(),
-  ra_members: headcountField(),
-  students: headcountField(),
-  philcare_staff: headcountField(),
-  security_personnel: headcountField(),
-  construction_workers: headcountField(),
-  tenants: headcountField(),
-  health_workers: headcountField(),
-  non_academic_staff: headcountField(),
-  guests: headcountField(),
+  population_counts: z.array(populationCountEntrySchema).default([]),
   damage_condition_id: z.preprocess(
     (v) => (v === '' ? null : v),
     z.string().uuid().optional().nullable()
@@ -177,6 +171,16 @@ export const damageConditionSchema = z.object({
   is_active: z.boolean().default(true),
 });
 
+export const populationCategorySchema = z.object({
+  code: z
+    .string()
+    .min(1, 'Code is required')
+    .regex(/^[a-z0-9_]+$/, 'Code must be lowercase letters, numbers, and underscores only'),
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().optional(),
+  is_active: z.boolean().default(true),
+});
+
 /* ─── Inferred types ─── */
 export type SignInFormData = z.infer<typeof signInSchema>;
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
@@ -184,8 +188,10 @@ export type UpdatePasswordFormData = z.infer<typeof updatePasswordSchema>;
 export type UserCreateFormData = z.infer<typeof userCreateSchema>;
 export type UserEditFormData = z.infer<typeof userEditSchema>;
 export type CampusFormData = z.infer<typeof campusSchema>;
+export type PopulationCategoryFormData = z.infer<typeof populationCategorySchema>;
 export type EventFormData = z.infer<typeof eventSchema>;
 export type ReportFormData = z.infer<typeof reportSchema>;
+export type PopulationCountEntry = z.infer<typeof populationCountEntrySchema>;
 export type MissingPersonFormData = z.infer<typeof missingPersonSchema>;
 export type CasualtyFormData = z.infer<typeof casualtySchema>;
 export type BystanderReportFormData = z.infer<typeof bystanderReportSchema>;
