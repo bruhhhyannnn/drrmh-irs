@@ -2,6 +2,7 @@
 
 import { upsertDamageCondition } from '@/actions/settings';
 import { PageBreadcrumb } from '@/components/common';
+import { useCampus } from '@/components/hooks/use-campus';
 import { useOngoingEvents } from '@/components/hooks/use-events';
 import { useCampusPopulationCategories } from '@/components/hooks/use-population-categories';
 import {
@@ -84,6 +85,7 @@ export function ReportForm({
   // an admin editing someone else's report may not share that report's campus.
   const campusId = isEdit ? existingReport?.cluster?.campus_id : userProfile?.campus_id;
   const { data: campusCategories = [] } = useCampusPopulationCategories(campusId ?? undefined);
+  const { data: campusInfo } = useCampus(campusId ?? undefined);
 
   const createCasualtyMutation = useCreateReportCasualty();
   const deleteCasualtyMutation = useDeleteReportCasualty();
@@ -365,6 +367,14 @@ export function ReportForm({
     { value: OTHER_DAMAGE, label: 'Other (please specify)' },
   ];
 
+  // ── Dynamic header info ────────────────────────────────────────
+  const selectedEvent = isEdit
+    ? existingReport?.event
+    : ongoingEvents.find((e) => e.id === watch('event_id'));
+  const campusName = campusInfo?.name ?? 'your campus';
+  const eventName = selectedEvent?.name ?? 'the selected event';
+  const quarter = selectedEvent?.quarter;
+
   return (
     <div className="space-y-6">
       {!standalone && <PageBreadcrumb pageTitle={isEdit ? 'Edit Report' : 'Submit Report'} />}
@@ -372,13 +382,14 @@ export function ReportForm({
       {/* ── Form info header ───────────────────────────────── */}
       <div className="max-w-2xl space-y-3 rounded-xl border border-gray-200 bg-white p-5 shadow-md dark:border-white/5 dark:bg-gray-900">
         <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-          Status Report for UPM-PGH NSED Q3 2026
+          Status Report — {campusName}
+          {selectedEvent && ` · ${eventName}`}
         </h2>
         <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
-          This form is intended to collect the status report for the UP Manila – Philippine General
-          Hospital (UPM-PGH) participation in the 3rd Quarter 2026 Nationwide Simultaneous
-          Earthquake Drill (NSED). Please provide accurate and complete information on the conduct
-          of the drill, including participation, observations, issues encountered, and
+          This form is intended to collect the status report for {campusName}&apos;s participation
+          in {eventName}
+          {quarter ? ` (${quarter})` : ''}. Please provide accurate and complete information on the
+          conduct of the drill, including participation, observations, issues encountered, and
           recommendations. The data will be consolidated for internal documentation and reporting to
           relevant authorities.
         </p>
@@ -389,7 +400,7 @@ export function ReportForm({
           <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-500">
             All information provided in this form will be collected and processed in accordance with
             the Data Privacy Act of 2012. The data will be used solely for documentation,
-            evaluation, and reporting purposes related to the NSED. Any personal information
+            evaluation, and reporting purposes related to this event. Any personal information
             collected will be kept confidential and will not be shared outside of authorized
             personnel without your consent.
           </p>
@@ -411,7 +422,7 @@ export function ReportForm({
               required
               disabled={!!eventId}
               value={watch('event_id') ?? ''}
-              onChange={(e) => setValue('event_id', e.target.value)}
+              onChange={(value) => setValue('event_id', value)}
             />
 
             {/* ── Reporting as ───────────────────────────── */}
@@ -447,10 +458,9 @@ export function ReportForm({
                   hint={errors.cluster_id?.message}
                   value={watch('cluster_id') ?? ''}
                   required
-                  onChange={(e) => {
-                    const id = e.target.value;
-                    setSelectedClusterId(id);
-                    setValue('cluster_id', id);
+                  onChange={(value) => {
+                    setSelectedClusterId(value);
+                    setValue('cluster_id', value);
                     setValue('unit_id', '');
                   }}
                 />
@@ -459,7 +469,7 @@ export function ReportForm({
                   label="Unit"
                   placeholder="Select unit..."
                   value={watch('unit_id') ?? ''}
-                  onChange={(e) => setValue('unit_id', e.target.value)}
+                  onChange={(value) => setValue('unit_id', value)}
                 />
               </div>
             )}
@@ -629,11 +639,10 @@ export function ReportForm({
                 placeholder="Select damage type..."
                 required
                 value={selectedDamageId}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setSelectedDamageId(val);
+                onChange={(value) => {
+                  setSelectedDamageId(value);
                   setCustomDamage('');
-                  setValue('damage_condition_id', val === OTHER_DAMAGE ? '' : val);
+                  setValue('damage_condition_id', value === OTHER_DAMAGE ? '' : value);
                 }}
               />
               {isOtherDamage && (
@@ -730,7 +739,14 @@ interface LocationPickerProps {
   onClear: () => void;
 }
 
-function LocationPicker({ lat, lng, locationName, error, onPick, onClear }: LocationPickerProps) {
+export function LocationPicker({
+  lat,
+  lng,
+  locationName,
+  error,
+  onPick,
+  onClear,
+}: LocationPickerProps) {
   const hasPin = lat !== null && lng !== null;
   const [showMap, setShowMap] = useState(true);
   const [isGeocoding, setIsGeocoding] = useState(false);
