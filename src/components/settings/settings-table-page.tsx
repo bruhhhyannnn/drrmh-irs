@@ -3,11 +3,23 @@
 import type { SettingsTable } from '@/actions/settings';
 import { PageBreadcrumb } from '@/components/common';
 import { SettingsForm } from '@/components/settings';
-import { Badge, Button, ConfirmDialog, DataTable, Input, Modal, PageError } from '@/components/ui';
+import {
+  Badge,
+  Button,
+  ConfirmDialog,
+  DataTable,
+  DeleteAction,
+  EditAction,
+  Input,
+  Modal,
+  PageError,
+  TableActions,
+} from '@/components/ui';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useDeleteSetting, useSettingsTable } from '../hooks/use-settings';
 
 interface SettingsPageProps {
@@ -70,21 +82,10 @@ export function SettingsTablePage({ title, table }: SettingsPageProps) {
       id: 'actions',
       header: 'Actions',
       cell: ({ row: { original: item } }) => (
-        <div className="flex flex-row items-center gap-3">
-          <button
-            className="hover:text-brand-500 text-gray-400"
-            onClick={() => handleOpen(item.id)}
-          >
-            <Pencil size={17} />
-          </button>
-          <button
-            className="hover:text-error-500 text-gray-400 transition-all duration-100"
-            disabled={deleteMutation.isPending}
-            onClick={() => setDeleteId(item.id)}
-          >
-            <Trash2 size={17} />
-          </button>
-        </div>
+        <TableActions>
+          <EditAction onClick={() => handleOpen(item.id)} />
+          <DeleteAction disabled={deleteMutation.isPending} onClick={() => setDeleteId(item.id)} />
+        </TableActions>
       ),
       enableSorting: false,
     },
@@ -103,17 +104,20 @@ export function SettingsTablePage({ title, table }: SettingsPageProps) {
         <PageBreadcrumb pageTitle={title} />
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="relative max-w-sm min-w-2xs flex-1">
-            <Search
-              size={16}
-              className="absolute top-1/2 z-1 left-3 -translate-y-1/2 text-gray-400 dark:text-gray-500"
-            />
-            <Input
-              placeholder={`Search ${title.toLowerCase()}...`}
-              className="pl-9"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
+          <div className="flex flex-1 flex-wrap items-center gap-3">
+            <div className="relative max-w-sm min-w-2xs flex-1">
+              <Search
+                size={16}
+                className="absolute top-1/2 z-1 left-3 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+              />
+              <Input
+                placeholder={`Search ${title.toLowerCase()}...`}
+                className="pl-9"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{items?.length ?? 0} total</p>
           </div>
           <Button onClick={() => handleOpen()} startIcon={<Plus size={16} />}>
             Add {title.replace(/s$/, '')}
@@ -142,7 +146,15 @@ export function SettingsTablePage({ title, table }: SettingsPageProps) {
       <ConfirmDialog
         isOpen={!!deleteId}
         onClose={() => setDeleteId('')}
-        onConfirm={() => deleteMutation.mutate(deleteId, { onSuccess: () => setDeleteId('') })}
+        onConfirm={() =>
+          deleteMutation.mutate(deleteId, {
+            onSuccess: () => {
+              setDeleteId('');
+              toast.success(`${title.replace(/s$/, '')} deleted`);
+            },
+            onError: (err) => toast.error(err.message),
+          })
+        }
         title={`Delete ${title.replace(/s$/, '').toLowerCase()}`}
         message="This item will be permanently deleted. This cannot be undone."
         confirmLabel="Delete"
