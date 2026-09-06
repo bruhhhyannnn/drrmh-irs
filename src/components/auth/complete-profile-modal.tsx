@@ -86,8 +86,8 @@ export function CompleteProfileModal() {
           options={campusOptions}
           value={campusId}
           required
-          onChange={(e) => {
-            setCampusId(e.target.value);
+          onChange={(value) => {
+            setCampusId(value);
             setClusterId('');
             setUnitId('');
           }}
@@ -101,8 +101,8 @@ export function CompleteProfileModal() {
           value={clusterId}
           disabled={!campusId}
           required
-          onChange={(e) => {
-            setClusterId(e.target.value);
+          onChange={(value) => {
+            setClusterId(value);
             setUnitId('');
           }}
         />
@@ -114,7 +114,7 @@ export function CompleteProfileModal() {
           value={unitId}
           disabled={!clusterId}
           required
-          onChange={(e) => setUnitId(e.target.value)}
+          onChange={setUnitId}
         />
 
         <Select
@@ -123,11 +123,9 @@ export function CompleteProfileModal() {
           options={positionOptions}
           value={positionId}
           required
-          onChange={(e) => {
-            setPositionId(e.target.value);
+          onChange={(value) => {
+            setPositionId(value);
             setCustomPosition('');
-            setClusterId('');
-            setUnitId('');
           }}
         />
 

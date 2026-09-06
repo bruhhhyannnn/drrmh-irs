@@ -4,7 +4,7 @@ import { PageBreadcrumb } from '@/components/common';
 import { useCampusClusters } from '@/components/hooks/use-campus';
 import { useCampus, usePositions, useUnits, useUserTypes } from '@/components/hooks/use-settings';
 import { useCreateUser, useUpdateUser, useUser } from '@/components/hooks/use-users';
-import { Button, Input, Label, Select, Spinner } from '@/components/ui';
+import { Button, Checkbox, Input, Select, Spinner } from '@/components/ui';
 import {
   userCreateSchema,
   userEditSchema,
@@ -204,10 +204,9 @@ export function UserForm({ editId, onSuccess, onCancel }: UserFormProps) {
                   error={!!campusError}
                   hint={campusError?.message}
                   value={watch('campus_id') ?? ''}
-                  {...register('campus_id')}
-                  onChange={(e) => {
-                    setCampusId(e.target.value);
-                    setValue('campus_id', e.target.value);
+                  onChange={(value) => {
+                    setCampusId(value);
+                    setValue('campus_id', value);
                     setClusterId('');
                     setValue('cluster_id', null);
                     setUnitId('');
@@ -276,9 +275,9 @@ export function UserForm({ editId, onSuccess, onCancel }: UserFormProps) {
                 value={watch('cluster_id') ?? ''}
                 disabled={!campusId}
                 required
-                onChange={(e) => {
-                  setClusterId(e.target.value);
-                  setValue('cluster_id', e.target.value);
+                onChange={(value) => {
+                  setClusterId(value);
+                  setValue('cluster_id', value);
                   setUnitId('');
                   setValue('unit_id', null);
                 }}
@@ -291,9 +290,9 @@ export function UserForm({ editId, onSuccess, onCancel }: UserFormProps) {
                 value={watch('unit_id') ?? ''}
                 disabled={!clusterId}
                 required
-                onChange={(e) => {
-                  setUnitId(e.target.value);
-                  setValue('unit_id', e.target.value);
+                onChange={(value) => {
+                  setUnitId(value);
+                  setValue('unit_id', value);
                 }}
               />
               <Select
@@ -301,7 +300,7 @@ export function UserForm({ editId, onSuccess, onCancel }: UserFormProps) {
                 options={positionOptions}
                 placeholder="Select position..."
                 value={watch('position_id') ?? ''}
-                onChange={(e) => setValue('position_id', e.target.value)}
+                onChange={(value) => setValue('position_id', value)}
                 error={!!errors.position_id}
               />
               <Select
@@ -310,24 +309,14 @@ export function UserForm({ editId, onSuccess, onCancel }: UserFormProps) {
                 options={userTypeOptions}
                 placeholder="Select type..."
                 value={watch('user_type_id') ?? ''}
-                onChange={(e) => setValue('user_type_id', e.target.value)}
+                onChange={(value) => setValue('user_type_id', value)}
                 error={!!errors.user_type_id}
                 hint={errors.user_type_id?.message}
               />
             </div>
 
             {/* Status */}
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                id="is_active"
-                {...register('is_active')}
-                className="h-4 w-4 rounded border-gray-300"
-              />
-              <Label htmlFor="is_active" className="mb-0">
-                Active
-              </Label>
-            </div>
+            <Checkbox id="is_active" label="Active" {...register('is_active')} />
 
             <div className="flex items-center gap-3 pt-2">
               <Button type="submit" isLoading={isPending} loadingText="Saving...">

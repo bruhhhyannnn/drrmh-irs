@@ -2,22 +2,28 @@
 
 import type { getReports } from '@/actions/reports';
 import { PageBreadcrumb } from '@/components/common';
+import { useCampuses } from '@/components/hooks/use-campus';
 import { useDeleteReport, useReports } from '@/components/hooks/use-reports';
 import {
   Badge,
   Button,
   ConfirmDialog,
   DataTable,
+  DeleteAction,
+  EditAction,
   Input,
   Modal,
   PageError,
   Pagination,
+  Select,
+  TableActions,
 } from '@/components/ui';
 import { totalPopulationCount } from '@/lib/utils';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { ReportForm } from './report-form';
 
 type ReportRow = Awaited<ReturnType<typeof getReports>>['data'][number];
@@ -28,8 +34,10 @@ export default function ReportsPage() {
   const [query, setQuery] = useState('');
   const [debounceQuery, setDebounceQuery] = useState('');
   const [page, setPage] = useState(1);
+  const [campusId, setCampusId] = useState('');
+  const { data: campuses = [] } = useCampuses();
 
-  const { data, isPending, isFetching, error } = useReports(page, debounceQuery);
+  const { data, isPending, isFetching, error } = useReports(page, debounceQuery, campusId);
 
   const deleteReport = useDeleteReport();
 
@@ -147,24 +155,15 @@ export default function ReportsPage() {
       id: 'actions',
       header: 'Actions',
       cell: ({ row: { original: r } }) => (
-        <div className="flex flex-row items-center gap-3">
-          {/* TODO: have another button here to view the individual report on its all details */}
-          <button
-            className="hover:text-brand-600 dark:hover:text-brand-400 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100 dark:text-gray-500"
+        <TableActions>
+          <EditAction
             onClick={() => {
               setIsModalOpen(true);
               setEditId(r.id);
             }}
-          >
-            <Pencil size={17} />
-          </button>
-          <button
-            className="hover:text-error-500 text-gray-400 transition-all duration-100 dark:text-gray-500"
-            onClick={() => setDeleteId(r.id)}
-          >
-            <Trash2 size={17} />
-          </button>
-        </div>
+          />
+          <DeleteAction onClick={() => setDeleteId(r.id)} />
+        </TableActions>
       ),
       enableSorting: false,
     },
@@ -178,8 +177,8 @@ export default function ReportsPage() {
         <PageBreadcrumb pageTitle="Reports" />
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="relative max-w-sm flex-1">
+          <div className="flex flex-1 flex-wrap items-center gap-3">
+            <div className="relative max-w-sm min-w-2xs flex-1">
               <Search
                 size={16}
                 className="absolute top-1/2 z-1 left-3 -translate-y-1/2 text-gray-400 dark:text-gray-500"
@@ -194,6 +193,17 @@ export default function ReportsPage() {
                 }}
               />
             </div>
+            <Select
+              placeholder="All campuses"
+              className="w-full max-w-2xs"
+              options={campuses.map((c) => ({ value: c.id, label: c.name }))}
+              value={campusId}
+              allowClear
+              onChange={(value) => {
+                setCampusId(value);
+                setPage(1);
+              }}
+            />
             <p className="text-sm text-gray-500 dark:text-gray-400">{data?.total ?? 0} total</p>
           </div>
           <Button onClick={() => setIsModalOpen(true)} startIcon={<Plus size={16} />}>
@@ -217,7 +227,15 @@ export default function ReportsPage() {
       <ConfirmDialog
         isOpen={!!deleteId}
         onClose={() => setDeleteId('')}
-        onConfirm={() => deleteReport.mutate(deleteId, { onSuccess: () => setDeleteId('') })}
+        onConfirm={() =>
+          deleteReport.mutate(deleteId, {
+            onSuccess: () => {
+              setDeleteId('');
+              toast.success('Report deleted');
+            },
+            onError: (err) => toast.error(err.message),
+          })
+        }
         title="Delete report"
         message="This report will be permanently deleted. This cannot be undone."
         confirmLabel="Delete"

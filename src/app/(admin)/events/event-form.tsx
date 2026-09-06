@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 
 interface EventFormProps {
@@ -41,6 +41,7 @@ export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
@@ -144,14 +145,21 @@ export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
               {...register('name')}
             />
             {role === 'Super Admin' && (
-              <Select
-                options={campusOptions}
-                label="Campus"
-                placeholder="Select campus..."
-                error={!!errors.campus_id}
-                hint={errors.campus_id?.message}
-                required
-                {...register('campus_id')}
+              <Controller
+                control={control}
+                name="campus_id"
+                render={({ field }) => (
+                  <Select
+                    options={campusOptions}
+                    label="Campus"
+                    placeholder="Select campus..."
+                    error={!!errors.campus_id}
+                    hint={errors.campus_id?.message}
+                    required
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
               />
             )}
             <Textarea
@@ -169,14 +177,21 @@ export function EventForm({ editId, onSuccess, onCancel }: EventFormProps) {
                 placeholder="e.g. Q1 2025"
                 {...register('quarter')}
               />
-              <Select
-                options={statusOptions}
-                label="Status"
-                placeholder="Select status..."
-                error={!!errors.status_id}
-                hint={errors.status_id?.message}
-                required
-                {...register('status_id')}
+              <Controller
+                control={control}
+                name="status_id"
+                render={({ field }) => (
+                  <Select
+                    options={statusOptions}
+                    label="Status"
+                    placeholder="Select status..."
+                    error={!!errors.status_id}
+                    hint={errors.status_id?.message}
+                    required
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
               />
               <Input
                 type="datetime-local"

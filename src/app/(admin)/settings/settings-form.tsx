@@ -8,7 +8,7 @@ import {
   useSettingsTable,
   useUpdateSetting,
 } from '@/components/hooks/use-settings';
-import { Button, Input, Label, Select } from '@/components/ui';
+import { Button, Checkbox, Input, Select } from '@/components/ui';
 import {
   campusSchema,
   casualtyConditionSchema,
@@ -19,7 +19,8 @@ import {
 } from '@/lib';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
+import toast from 'react-hot-toast';
 import { z } from 'zod';
 
 const SCHEMA_MAP = {
@@ -61,6 +62,7 @@ export function SettingsForm({ title, table, editId, onSuccess, onCancel }: Sett
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
@@ -86,12 +88,18 @@ export function SettingsForm({ title, table, editId, onSuccess, onCancel }: Sett
   }, [isEdit, items, editId, reset, needsCluster]);
 
   const onSubmit = async (data: AnyFormData) => {
-    if (isEdit) {
-      await updateMutation.mutateAsync({ id: editId!, data });
-    } else {
-      await createMutation.mutateAsync(data);
+    try {
+      if (isEdit) {
+        await updateMutation.mutateAsync({ id: editId!, data });
+        toast.success(`${singularTitle} updated`);
+      } else {
+        await createMutation.mutateAsync(data);
+        toast.success(`${singularTitle} created`);
+      }
+      onSuccess?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     }
-    onSuccess?.();
   };
 
   const singularTitle = title.replace(/s$/, '');
@@ -130,40 +138,44 @@ export function SettingsForm({ title, table, editId, onSuccess, onCancel }: Sett
         />
 
         {needsCluster && (
-          <Select
-            label="Cluster"
-            required
-            options={clusterOptions}
-            placeholder="Select cluster..."
-            error={!!clusterError}
-            hint={clusterError?.message}
-            {...register('cluster_id')}
+          <Controller
+            control={control}
+            name="cluster_id"
+            render={({ field }) => (
+              <Select
+                label="Cluster"
+                required
+                options={clusterOptions}
+                placeholder="Select cluster..."
+                error={!!clusterError}
+                hint={clusterError?.message}
+                value={field.value ?? ''}
+                onChange={field.onChange}
+              />
+            )}
           />
         )}
 
         {needsCampus && (
-          <Select
-            label="Campus"
-            required
-            options={campusOptions}
-            placeholder="Select campus..."
-            error={!!campusError}
-            hint={campusError?.message}
-            {...register('campus_id')}
+          <Controller
+            control={control}
+            name="campus_id"
+            render={({ field }) => (
+              <Select
+                label="Campus"
+                required
+                options={campusOptions}
+                placeholder="Select campus..."
+                error={!!campusError}
+                hint={campusError?.message}
+                value={field.value ?? ''}
+                onChange={field.onChange}
+              />
+            )}
           />
         )}
 
-        <div className="flex items-center gap-3">
-          <input
-            type="checkbox"
-            id="is_active"
-            {...register('is_active')}
-            className="h-4 w-4 rounded border-gray-300"
-          />
-          <Label htmlFor="is_active" className="mb-0">
-            Active
-          </Label>
-        </div>
+        <Checkbox id="is_active" label="Active" {...register('is_active')} />
 
         <div className="flex items-center gap-3 pt-2">
           <Button
