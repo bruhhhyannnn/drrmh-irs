@@ -15,7 +15,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 export function useCampuses(query?: string) {
   return useQuery({
     queryKey: ['campuses', query],
-    queryFn: () => getCampuses(query),
+    queryFn: () => getCampuses(),
   });
 }
 
@@ -31,7 +31,7 @@ export function useCreateCampus() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Prisma.campusCreateInput) => createCampus(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['campus'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['campuses'] }),
   });
 }
 
@@ -42,6 +42,7 @@ export function useUpdateCampus() {
       updateCampus(id, data),
     onSuccess: (_data, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['campus', id] });
+      queryClient.invalidateQueries({ queryKey: ['campuses'] });
     },
   });
 }
@@ -50,13 +51,13 @@ export function useDeleteCampus() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteCampus(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['campus'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['campuses'] }),
   });
 }
 
 export function useCampusEvents(query?: string) {
   return useQuery({
-    queryKey: ['campuses', query],
+    queryKey: ['campus-events', query],
     queryFn: () => getCampusEvents(query),
   });
 }

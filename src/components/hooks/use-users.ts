@@ -11,10 +11,10 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 /* ─── Users ──────────────────────────────────────────────── */
-export function useUsers(query?: string) {
+export function useUsers(query?: string, campusId?: string) {
   return useQuery({
-    queryKey: ['users', query],
-    queryFn: () => getUsers(query),
+    queryKey: ['users', query, campusId],
+    queryFn: () => getUsers(query, campusId),
   });
 }
 

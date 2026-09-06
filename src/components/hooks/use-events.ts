@@ -3,17 +3,16 @@ import {
   deleteEvent,
   getEvent,
   getEvents,
-  getOngoingEvent,
   getOngoingEvents,
   updateEvent,
 } from '@/actions/events';
 import type { Prisma } from '@prisma/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-export function useEvents(query?: string) {
+export function useEvents(query?: string, campusId?: string) {
   return useQuery({
-    queryKey: ['events', query],
-    queryFn: () => getEvents(query),
+    queryKey: ['events', query, campusId],
+    queryFn: () => getEvents(query, campusId),
   });
 }
 
@@ -50,14 +49,6 @@ export function useDeleteEvent() {
   return useMutation({
     mutationFn: (id: string) => deleteEvent(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['events'] }),
-  });
-}
-
-export function useOngoingEvent(campusId: string) {
-  return useQuery({
-    queryKey: ['events', 'ongoing', campusId],
-    queryFn: () => getOngoingEvent(campusId),
-    staleTime: 1000 * 60 * 2,
   });
 }
 
