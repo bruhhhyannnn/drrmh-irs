@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useCampusClusters } from '../hooks/use-campus';
-import { useCampus, useClusters, usePositions, useUnits } from '../hooks/use-settings';
+import { useCampus, usePositions, useUnits } from '../hooks/use-settings';
 
 const OTHER_VALUE = '__other__';
 
@@ -14,7 +14,6 @@ export function CompleteProfileModal() {
   const { userProfile, loading, setUserProfile } = useAuthStore();
   const [campusId, setCampusId] = useState('');
   const { data: positions = [] } = usePositions();
-  const { data: clusters = [] } = useClusters();
   const { data: campus = [] } = useCampus();
   const { data: campusClusters = [] } = useCampusClusters(campusId ?? '');
 
@@ -82,35 +81,6 @@ export function CompleteProfileModal() {
 
       <div className="space-y-4">
         <Select
-          label="Position"
-          placeholder="Select your position..."
-          options={positionOptions}
-          value={positionId}
-          required
-          onChange={(e) => {
-            setPositionId(e.target.value);
-            setCustomPosition('');
-            setClusterId('');
-            setUnitId('');
-          }}
-        />
-
-        {isOther && (
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Specify position <span className="text-error-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={customPosition}
-              onChange={(e) => setCustomPosition(e.target.value)}
-              placeholder="e.g. Safety Officer"
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
-            />
-          </div>
-        )}
-
-        <Select
           label="Campus"
           placeholder="Select your campus..."
           options={campusOptions}
@@ -146,6 +116,35 @@ export function CompleteProfileModal() {
           required
           onChange={(e) => setUnitId(e.target.value)}
         />
+
+        <Select
+          label="Position"
+          placeholder="Select your position..."
+          options={positionOptions}
+          value={positionId}
+          required
+          onChange={(e) => {
+            setPositionId(e.target.value);
+            setCustomPosition('');
+            setClusterId('');
+            setUnitId('');
+          }}
+        />
+
+        {isOther && (
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Specify position <span className="text-error-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={customPosition}
+              onChange={(e) => setCustomPosition(e.target.value)}
+              placeholder="e.g. Safety Officer"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
+            />
+          </div>
+        )}
 
         <Button
           className="w-full"
