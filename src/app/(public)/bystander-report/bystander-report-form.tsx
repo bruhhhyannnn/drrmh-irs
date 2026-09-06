@@ -5,6 +5,13 @@ import {
   useGetBystanderIncidentTypes,
 } from '@/app/(admin)/emergency-reports/use-bystander-reports';
 import {
+  CasualtyModal,
+  CasualtyRow,
+  MissingPersonRow,
+  PersonModal,
+} from '@/app/(admin)/reports/missing-casualty-modals';
+import { LocationPicker } from '@/app/(admin)/reports/report-form';
+import {
   useCasualtyConditions,
   useClusters,
   useDamageConditions,
@@ -12,18 +19,10 @@ import {
 } from '@/components/hooks/use-settings';
 import { Button, Input, Select, Textarea } from '@/components/ui';
 import { BystanderReportFormData, cn } from '@/lib';
-import { CheckCircle, Loader2, MapPin, Plus, Trash2 } from 'lucide-react';
+import { CheckCircle, Pencil, Plus, UserRound, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-const SEX_OPTIONS = [
-  { value: 'male', label: 'Male' },
-  { value: 'female', label: 'Female' },
-  { value: 'unknown', label: 'Unknown' },
-];
+import { Controller, useForm } from 'react-hook-form';
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
@@ -37,10 +36,19 @@ export function BystanderReportForm() {
   const { data: damageConditions = [] } = useDamageConditions();
 
   const [selectedClusterId, setSelectedClusterId] = useState('');
-  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [locating, setLocating] = useState(false);
-  const [locationError, setLocationError] = useState('');
   const [submitted, setSubmitted] = useState(false);
+
+  // ── Location state ──────────────────────────────────────────
+  const [pickedLat, setPickedLat] = useState<number | null>(null);
+  const [pickedLng, setPickedLng] = useState<number | null>(null);
+  const [pickedName, setPickedName] = useState<string | null>(null);
+  const [locationError, setLocationError] = useState(false);
+
+  // ── Missing persons / casualties ────────────────────────────
+  const [personModalOpen, setPersonModalOpen] = useState(false);
+  const [casualtyModalOpen, setCasualtyModalOpen] = useState(false);
+  const [missingPersons, setMissingPersons] = useState<MissingPersonRow[]>([]);
+  const [casualties, setCasualties] = useState<CasualtyRow[]>([]);
 
   const { data: units = [] } = useUnits(selectedClusterId || undefined);
 
@@ -53,61 +61,28 @@ export function BystanderReportForm() {
     formState: { isSubmitting },
   } = useForm<BystanderReportFormData>();
 
-  const {
-    fields: missingFields,
-    append: appendMissing,
-    remove: removeMissing,
-  } = useFieldArray({ control, name: 'report_missing_persons' });
-
-  const {
-    fields: casualtyFields,
-    append: appendCasualty,
-    remove: removeCasualty,
-  } = useFieldArray({ control, name: 'report_casualties' });
-
-  // ── GPS ───────────────────────────────────────────────────────────────────
-
-  const handleGetLocation = () => {
-    setLocationError('');
-    if (!navigator.geolocation) {
-      setLocationError('Geolocation is not supported by your browser.');
-      return;
-    }
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setCoords({ latitude, longitude });
-        setValue('latitude', latitude);
-        setValue('longitude', longitude);
-        setLocating(false);
-      },
-      () => {
-        setLocationError(
-          'Could not get your location. Please allow location access and try again.'
-        );
-        setLocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  };
-
   // ── Submit ────────────────────────────────────────────────────────────────
 
-  const onSubmit = async (values: BystanderReportFormData) => {
-    if (!coords) {
-      setLocationError('Please capture your location before submitting.');
+  const onSubmit = handleSubmit(async (values) => {
+    if (pickedLat === null || pickedLng === null) {
+      setLocationError(true);
+      document
+        .getElementById('location-section')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
+    setLocationError(false);
 
     await submitReport.mutateAsync({
       ...values,
-      latitude: coords.latitude,
-      longitude: coords.longitude,
+      latitude: pickedLat,
+      longitude: pickedLng,
+      report_missing_persons: missingPersons.filter((p) => p.name.trim()),
+      report_casualties: casualties.filter((c) => c.condition_id && c.name.trim()),
     });
 
     setSubmitted(true);
-  };
+  });
 
   // ── Options ───────────────────────────────────────────────────────────────
 
@@ -154,82 +129,108 @@ export function BystanderReportForm() {
         </p>
       </div>
 
-      {/* Disclaimer */}
-      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-sm dark:border-amber-800/40 dark:bg-amber-950/40">
-        <p className="text-sm leading-relaxed text-amber-700 dark:text-amber-300">
-          <span className="font-semibold">Anonymous submission.</span> Your identity will not be
-          stored. For life-threatening emergencies, call <span className="font-semibold">911</span>{' '}
-          immediately.
+      {/* ── Form info header ───────────────────────────────── */}
+      <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-5 shadow-md dark:border-white/5 dark:bg-gray-900">
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+          Bystander Emergency Report
+        </h2>
+        <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+          Use this form to report an emergency or incident you have witnessed on campus. Please
+          provide as much accurate information as possible — including location, affected people,
+          and any structural damage — so the DRRM-H Emergency Response Team can respond
+          appropriately.
         </p>
+        <div className="space-y-1 border-t border-gray-100 pt-3 dark:border-white/5">
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+            Data Privacy Notice:
+          </p>
+          <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-500">
+            This submission is anonymous — your identity will not be collected or stored. Any
+            information provided will be used solely for emergency response and internal
+            documentation purposes. For life-threatening emergencies, call{' '}
+            <span className="font-semibold">911</span> immediately.
+          </p>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={onSubmit} className="space-y-4">
         {/* ── Incident Type ───────────────────────────────────────────────── */}
         <SectionCard title="Incident" accent>
-          <Select
-            options={incidentTypeOptions}
-            label="Incident Type"
-            required
-            placeholder="What type of emergency is this?"
-            error={!watch('incident_type_id') && isSubmitting}
-            {...register('incident_type_id', { required: true })}
+          <Controller
+            control={control}
+            name="incident_type_id"
+            rules={{ required: true }}
+            render={({ field }) => (
+              <Select
+                options={incidentTypeOptions}
+                label="Incident Type"
+                required
+                placeholder="What type of emergency is this?"
+                error={!watch('incident_type_id') && isSubmitting}
+                value={field.value}
+                onChange={field.onChange}
+              />
+            )}
           />
         </SectionCard>
 
         {/* ── Location ────────────────────────────────────────────────────── */}
-        <SectionCard title="Your Location *">
-          <button
-            type="button"
-            onClick={handleGetLocation}
-            disabled={locating}
-            className={cn(
-              'flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-3 text-sm font-medium transition-all duration-200',
-              coords
-                ? 'border-green-300 bg-green-50 text-green-700 hover:bg-green-100 dark:border-green-800 dark:bg-green-950 dark:text-green-400'
-                : 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-800 dark:bg-red-950 dark:text-red-400',
-              locating && 'cursor-not-allowed opacity-60'
-            )}
-          >
-            {locating ? <Loader2 size={16} className="animate-spin" /> : <MapPin size={16} />}
-            {locating
-              ? 'Getting your location...'
-              : coords
-                ? 'Location captured — click to update'
-                : 'Get My Location'}
-          </button>
-
-          {coords && (
-            <div className="mt-3 rounded-lg bg-gray-100 px-4 py-2.5 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-              <span>Lat: {coords.latitude.toFixed(6)}</span>
-              <span className="ml-4">Lng: {coords.longitude.toFixed(6)}</span>
-            </div>
-          )}
-
-          {locationError && <p className="mt-2 text-xs text-red-500">{locationError}</p>}
+        <SectionCard title="Location *">
+          <LocationPicker
+            lat={pickedLat}
+            lng={pickedLng}
+            locationName={pickedName}
+            error={locationError}
+            onPick={(lat, lng, name) => {
+              setPickedLat(lat);
+              setPickedLng(lng);
+              setPickedName(name);
+              setLocationError(false);
+            }}
+            onClear={() => {
+              setPickedLat(null);
+              setPickedLng(null);
+              setPickedName(null);
+            }}
+          />
         </SectionCard>
 
         {/* ── Cluster & Unit ───────────────────────────────────────────────── */}
         <SectionCard title="Cluster / Unit *">
           <div className="space-y-4">
-            <Select
-              label="Cluster"
-              required
-              options={clusterOptions}
-              placeholder="Select cluster"
-              error={!watch('cluster_id') && isSubmitting}
-              {...register('cluster_id', { required: true })}
-              onChange={(e) => {
-                setSelectedClusterId(e.target.value);
-                setValue('cluster_id', e.target.value);
-                setValue('unit_id', '');
-              }}
+            <Controller
+              control={control}
+              name="cluster_id"
+              rules={{ required: true }}
+              render={({ field }) => (
+                <Select
+                  label="Cluster"
+                  required
+                  options={clusterOptions}
+                  placeholder="Select cluster"
+                  error={!watch('cluster_id') && isSubmitting}
+                  value={field.value}
+                  onChange={(value) => {
+                    setSelectedClusterId(value);
+                    field.onChange(value);
+                    setValue('unit_id', '');
+                  }}
+                />
+              )}
             />
-            <Select
-              label="Unit (optional)"
-              options={unitOptions}
-              placeholder={selectedClusterId ? 'Select unit' : 'Select cluster first'}
-              disabled={!selectedClusterId}
-              {...register('unit_id')}
+            <Controller
+              control={control}
+              name="unit_id"
+              render={({ field }) => (
+                <Select
+                  label="Unit (optional)"
+                  options={unitOptions}
+                  placeholder={selectedClusterId ? 'Select unit' : 'Select cluster first'}
+                  disabled={!selectedClusterId}
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              )}
             />
           </div>
         </SectionCard>
@@ -258,161 +259,113 @@ export function BystanderReportForm() {
 
         {/* ── Missing Persons ──────────────────────────────────────────────── */}
         <SectionCard title="Missing Persons">
-          <div className="space-y-3">
-            {missingFields.map((field, index) => (
-              <div
-                key={field.id}
-                className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                    Person {index + 1}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => removeMissing(index)}
-                    className="text-gray-400 transition hover:text-red-500"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {missingPersons.length === 0
+                ? 'No missing persons added'
+                : `${missingPersons.length} missing ${missingPersons.length === 1 ? 'person' : 'persons'}`}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setPersonModalOpen(true)}
+              startIcon={missingPersons.length === 0 ? <Plus size={13} /> : <Pencil size={13} />}
+            >
+              {missingPersons.length === 0 ? 'Add' : 'Manage'}
+            </Button>
+          </div>
 
-                <Input
-                  label="Full Name"
-                  id="Person Full Name"
-                  placeholder="e.g. Juan dela Cruz"
-                  {...register(`report_missing_persons.${index}.name`)}
-                />
-
-                <div className="grid grid-cols-2 gap-3">
-                  <Input
-                    label="Age"
-                    id="Person Age"
-                    type="number"
-                    placeholder="0"
-                    className="placeholder:text-gray-800 dark:placeholder:text-gray-200"
-                    min={0}
-                    max={120}
-                    value={
-                      watch(`report_missing_persons.${index}.age`) === 0
-                        ? ''
-                        : watch(`report_missing_persons.${index}.age`)
-                    }
-                    onKeyDown={(e) => {
-                      if (e.key === '-') e.preventDefault();
-                    }}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      const parsed = val === '' ? 0 : parseInt(val, 10);
-                      setValue(`report_missing_persons.${index}.age`, Math.max(0, parsed));
-                    }}
-                  />
-                  <Select
-                    label="Sex"
-                    options={SEX_OPTIONS}
-                    placeholder="Select"
-                    {...register(`report_missing_persons.${index}.sex`)}
-                  />
-                </div>
-              </div>
-            ))}
-
+          {missingPersons.length === 0 ? (
+            <div className="flex items-center gap-2 rounded-lg border border-dashed border-gray-200 p-4 dark:border-white/10">
+              <UserRound size={16} className="shrink-0 text-gray-300 dark:text-gray-600" />
+              <p className="text-sm text-gray-400">No missing persons added</p>
+            </div>
+          ) : (
             <button
               type="button"
-              onClick={() => appendMissing({ name: '', age: 0, sex: 'unknown' })}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 py-2.5 text-sm text-gray-500 transition hover:border-gray-400 hover:text-gray-700 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:text-gray-300"
+              onClick={() => setPersonModalOpen(true)}
+              className="w-full rounded-lg border border-gray-200 px-4 py-3 text-left transition hover:border-gray-300 hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/3"
             >
-              <Plus size={14} />
-              Add Missing Person
+              <div className="flex items-center gap-3">
+                <div className="bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400 flex h-9 w-9 shrink-0 items-center justify-center rounded-full">
+                  <UserRound size={16} />
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-xs text-gray-400">
+                    {missingPersons
+                      .slice(0, 2)
+                      .map((p) => p.name || 'Unnamed')
+                      .join(', ')}
+                    {missingPersons.length > 2 && ` +${missingPersons.length - 2} more`}
+                  </p>
+                </div>
+              </div>
             </button>
-          </div>
+          )}
         </SectionCard>
 
         {/* ── Casualties ───────────────────────────────────────────────────── */}
         <SectionCard title="Casualties">
-          <div className="space-y-3">
-            {casualtyFields.map((field, index) => (
-              <div
-                key={field.id}
-                className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                    Casualty {index + 1}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => removeCasualty(index)}
-                    className="text-gray-400 transition hover:text-red-500"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {casualties.length === 0
+                ? 'No casualty details added'
+                : `${casualties.length} ${casualties.length === 1 ? 'casualty' : 'casualties'}`}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setCasualtyModalOpen(true)}
+              startIcon={casualties.length === 0 ? <Plus size={13} /> : <Pencil size={13} />}
+            >
+              {casualties.length === 0 ? 'Add' : 'Manage'}
+            </Button>
+          </div>
 
-                <Select
-                  label="Condition"
-                  options={conditionOptions}
-                  placeholder="Select condition"
-                  {...register(`report_casualties.${index}.condition_id`)}
-                />
-
-                <Input
-                  label="Full Name"
-                  id="Casualty Full Name"
-                  placeholder="e.g. Maria Santos"
-                  {...register(`report_casualties.${index}.name`)}
-                />
-
-                <div className="grid grid-cols-3 gap-3">
-                  <Input
-                    label="Age"
-                    id="Casualty Age"
-                    type="number"
-                    placeholder="0"
-                    className="placeholder:text-gray-800 dark:placeholder:text-gray-200"
-                    min={0}
-                    max={120}
-                    value={
-                      watch(`report_casualties.${index}.age`) === 0
-                        ? ''
-                        : watch(`report_casualties.${index}.age`)
-                    }
-                    onKeyDown={(e) => {
-                      if (e.key === '-') e.preventDefault();
-                    }}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      const parsed = val === '' ? 0 : parseInt(val, 10);
-                      setValue(`report_casualties.${index}.age`, Math.max(0, parsed));
-                    }}
-                  />
-                  <Select
-                    label="Sex"
-                    options={SEX_OPTIONS}
-                    placeholder="Select"
-                    {...register(`report_casualties.${index}.sex`)}
-                  />
-                </div>
-              </div>
-            ))}
-
+          {casualties.length === 0 ? (
+            <div className="flex items-center gap-2 rounded-lg border border-dashed border-gray-200 p-4 dark:border-white/10">
+              <Users size={16} className="shrink-0 text-gray-300 dark:text-gray-600" />
+              <p className="text-sm text-gray-400">No casualty details added</p>
+            </div>
+          ) : (
             <button
               type="button"
-              onClick={() => appendCasualty({ condition_id: '', name: '', age: 0, sex: 'unknown' })}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 py-2.5 text-sm text-gray-500 transition hover:border-gray-400 hover:text-gray-700 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:text-gray-300"
+              onClick={() => setCasualtyModalOpen(true)}
+              className="w-full rounded-lg border border-gray-200 px-4 py-3 text-left transition hover:border-gray-300 hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/3"
             >
-              <Plus size={14} />
-              Add Casualty
+              <div className="flex items-center gap-3">
+                <div className="bg-error-100 text-error-600 dark:bg-error-900/30 dark:text-error-400 flex h-9 w-9 shrink-0 items-center justify-center rounded-full">
+                  <Users size={16} />
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-xs text-gray-400">
+                    {casualties
+                      .slice(0, 2)
+                      .map((c) => c.name || 'Unnamed')
+                      .join(', ')}
+                    {casualties.length > 2 && ` +${casualties.length - 2} more`}
+                  </p>
+                </div>
+              </div>
             </button>
-          </div>
+          )}
         </SectionCard>
 
         {/* ── Structural Damage ────────────────────────────────────────────── */}
         <SectionCard title="Structural Damage">
-          <Select
-            options={damageOptions}
-            placeholder="Select damage type"
-            {...register('damage_condition_id')}
+          <Controller
+            control={control}
+            name="damage_condition_id"
+            render={({ field }) => (
+              <Select
+                options={damageOptions}
+                placeholder="Select damage type"
+                value={field.value}
+                onChange={field.onChange}
+              />
+            )}
           />
         </SectionCard>
 
@@ -426,6 +379,20 @@ export function BystanderReportForm() {
           Submit Emergency Report
         </Button>
       </form>
+
+      <PersonModal
+        isOpen={personModalOpen}
+        onClose={() => setPersonModalOpen(false)}
+        persons={missingPersons}
+        onSave={(updated) => setMissingPersons(updated)}
+      />
+      <CasualtyModal
+        isOpen={casualtyModalOpen}
+        onClose={() => setCasualtyModalOpen(false)}
+        casualties={casualties}
+        conditionOptions={conditionOptions}
+        onSave={(updated) => setCasualties(updated)}
+      />
     </div>
   );
 }
