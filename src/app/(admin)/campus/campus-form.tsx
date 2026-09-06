@@ -2,7 +2,7 @@
 
 import { PageBreadcrumb } from '@/components/common';
 import { useCampus, useCreateCampus, useUpdateCampus } from '@/components/hooks/use-campus';
-import { Button, Input, Label, Spinner } from '@/components/ui';
+import { Button, Checkbox, Input, Spinner } from '@/components/ui';
 import { campusSchema, type CampusFormData } from '@/lib';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
@@ -98,17 +98,7 @@ export function CampusForm({ editId, onSuccess, onCancel }: CampusFormProps) {
               {...register('name')}
             />
 
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                id="is_active"
-                {...register('is_active')}
-                className="h-4 w-4 rounded border-gray-300"
-              />
-              <Label htmlFor="is_active" className="mb-0">
-                Active
-              </Label>
-            </div>
+            <Checkbox id="is_active" label="Active" {...register('is_active')} />
 
             <div className="flex items-center gap-3 pt-2">
               <Button type="submit" isLoading={isPending} loadingText="Saving...">
