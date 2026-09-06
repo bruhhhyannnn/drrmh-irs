@@ -1,6 +1,6 @@
 'use client';
 
-import { SignOutButton } from '@/components/auth';
+import { ProfileModal, SignOutButton } from '@/components/auth';
 import { Dropdown, DropdownItem } from '@/components/ui';
 import { useAuthStore, useSidebarStore, useThemeStore } from '@/store';
 import { ChevronDown, Menu, Moon, PanelRightClose, Sun, X } from 'lucide-react';
@@ -8,6 +8,7 @@ import { useState } from 'react';
 
 export function AppHeader() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
   const { isMobileOpen, isExpanded, toggleSidebar, toggleMobileSidebar } = useSidebarStore();
   const { theme, toggleTheme } = useThemeStore();
   const { user, userProfile } = useAuthStore();
@@ -70,7 +71,12 @@ export function AppHeader() {
             </button>
 
             <Dropdown isOpen={userMenuOpen} onClose={() => setUserMenuOpen(false)} className="w-60">
-              <DropdownItem>
+              <DropdownItem
+                onClick={() => {
+                  setUserMenuOpen(false);
+                  setProfileModalOpen(true);
+                }}
+              >
                 <div className="w-full items-start border-b border-gray-100 pb-1 dark:border-gray-800">
                   <p className="text-start text-sm font-medium truncate text-gray-900 dark:text-white">
                     {displayName}
@@ -83,6 +89,8 @@ export function AppHeader() {
           </div>
         </div>
       </div>
+
+      <ProfileModal isOpen={profileModalOpen} onClose={() => setProfileModalOpen(false)} />
     </header>
   );
 }
