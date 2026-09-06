@@ -9,13 +9,16 @@ import {
   Button,
   ConfirmDialog,
   DataTable,
+  DeleteAction,
+  EditAction,
   Input,
   Modal,
   PageError,
   Select,
+  TableActions,
 } from '@/components/ui';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Plus, Search, Trash2, UserPen } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { UserForm } from './user-form';
@@ -48,7 +51,13 @@ export default function UsersPage() {
 
   const handleToggleStatus = (id: string, current: boolean) => {
     if (!confirm(`${current ? 'Deactivate' : 'Activate'} this user?`)) return;
-    toggleStatus.mutate({ id, current });
+    toggleStatus.mutate(
+      { id, current },
+      {
+        onSuccess: () => toast.success(current ? 'User deactivated' : 'User activated'),
+        onError: (err) => toast.error(err.message),
+      }
+    );
   };
 
   const columns: ColumnDef<UserRow, unknown>[] = [
@@ -85,6 +94,31 @@ export default function UsersPage() {
       cell: ({ row: { original: r } }) => r.position?.name ?? '—',
     },
     {
+      id: 'campus',
+      header: 'Campus',
+      accessorFn: (r) => r.campus?.name ?? '',
+      cell: ({ row: { original: r } }) => r.campus?.name ?? '—',
+    },
+    {
+      id: 'reports',
+      header: 'Reports',
+      accessorFn: (r) => r._count.reports,
+      cell: ({ row: { original: r } }) => (
+        <span className="font-medium text-gray-900 dark:text-white">{r._count.reports}</span>
+      ),
+    },
+    {
+      id: 'profile',
+      header: 'Profile',
+      accessorFn: (r) => (r.is_profile_complete ? 'Complete' : 'Incomplete'),
+      cell: ({ row: { original: r } }) => (
+        <Badge color={r.is_profile_complete ? 'success' : 'warning'} size="sm">
+          {r.is_profile_complete ? 'Complete' : 'Incomplete'}
+        </Badge>
+      ),
+      enableSorting: false,
+    },
+    {
       id: 'type',
       header: 'Type',
       accessorFn: (r) => r.user_type.name,
@@ -116,28 +150,20 @@ export default function UsersPage() {
       id: 'actions',
       header: 'Actions',
       cell: ({ row: { original: r } }) => (
-        <div className="flex flex-row items-center gap-2">
-          <button
-            className="hover:text-brand-600 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100"
+        <TableActions>
+          <EditAction
             onClick={() => {
               setIsModalOpen(true);
               setEditId(r.id);
             }}
-          >
-            <UserPen size={17} />
-            Edit
-          </button>
-          <button
-            className="hover:text-error-500 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100"
+          />
+          <DeleteAction
             onClick={() => {
               setDeleteId(r.id);
               setDeleteName([r.first_name, r.last_name].filter(Boolean).join(' '));
             }}
-          >
-            <Trash2 size={17} />
-            Delete
-          </button>
-        </div>
+          />
+        </TableActions>
       ),
       enableSorting: false,
     },
@@ -177,8 +203,9 @@ export default function UsersPage() {
               options={campusOptions}
               value={campusId}
               allowClear
-              onChange={(e) => setCampusId(e.target.value)}
+              onChange={setCampusId}
             />
+            <p className="text-sm text-gray-500 dark:text-gray-400">{users.length} total</p>
           </div>
           <Button onClick={() => setIsModalOpen(true)} startIcon={<Plus size={16} />}>
             Add User
