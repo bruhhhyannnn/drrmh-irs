@@ -13,6 +13,7 @@ import {
   PageError,
   Pagination,
 } from '@/components/ui';
+import { totalPopulationCount } from '@/lib/utils';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
@@ -227,18 +228,5 @@ export default function ReportsPage() {
 }
 
 function totalAffected(r: ReportRow) {
-  return (
-    (r.students ?? 0) +
-    (r.faculty_members ?? 0) +
-    (r.admin_members ?? 0) +
-    (r.reps_members ?? 0) +
-    (r.ra_members ?? 0) +
-    (r.philcare_staff ?? 0) +
-    (r.security_personnel ?? 0) +
-    (r.construction_workers ?? 0) +
-    (r.tenants ?? 0) +
-    (r.health_workers ?? 0) +
-    (r.non_academic_staff ?? 0) +
-    (r.guests ?? 0)
-  );
+  return totalPopulationCount(r.population_counts);
 }
