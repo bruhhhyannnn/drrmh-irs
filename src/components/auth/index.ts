@@ -5,5 +5,6 @@ export { AuthHeader } from './auth-header';
 export { AuthProvider } from './auth-provider';
 export { CompleteProfileModal } from './complete-profile-modal';
 export { GoogleSignInForm } from './google-sign-in-form';
+export { ProfileModal } from './profile-modal';
 export { ProtectedRoute } from './protected-route';
 export { SignOutButton } from './sign-out-button';
