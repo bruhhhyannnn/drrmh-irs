@@ -25,7 +25,6 @@ export function SignInForm() {
     register,
     handleSubmit,
     trigger,
-    getValues,
     formState: { errors, isSubmitting },
   } = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
