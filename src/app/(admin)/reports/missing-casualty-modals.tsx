@@ -9,7 +9,7 @@ export type CasualtyRow = CasualtyFormData & { id?: string };
 export type MissingPersonRow = MissingPersonFormData & { id?: string };
 
 // ─── Missing Person Modal ─────────────────────────────────────────────────────
-export interface PersonModalProps {
+interface PersonModalProps {
   isOpen: boolean;
   onClose: () => void;
   persons: MissingPersonRow[];
@@ -101,9 +101,7 @@ export function PersonModal({ isOpen, onClose, persons, onSave }: PersonModalPro
               { value: 'unknown', label: 'Unknown' },
             ]}
             value={draft.sex}
-            onChange={(e) =>
-              setDraft((f) => ({ ...f, sex: e.target.value as MissingPersonRow['sex'] }))
-            }
+            onChange={(value) => setDraft((f) => ({ ...f, sex: value as MissingPersonRow['sex'] }))}
           />
         </div>
         <Button
@@ -138,7 +136,7 @@ export function PersonModal({ isOpen, onClose, persons, onSave }: PersonModalPro
 }
 
 // ─── Casualty Modal ───────────────────────────────────────────────────────────
-export interface CasualtyModalProps {
+interface CasualtyModalProps {
   isOpen: boolean;
   onClose: () => void;
   casualties: CasualtyRow[];
@@ -220,7 +218,7 @@ export function CasualtyModal({
           placeholder="Select condition..."
           options={conditionOptions}
           value={draft.condition_id}
-          onChange={(e) => setDraft((f) => ({ ...f, condition_id: e.target.value }))}
+          onChange={(value) => setDraft((f) => ({ ...f, condition_id: value }))}
         />
         <Input
           label="Full Name"
@@ -253,7 +251,7 @@ export function CasualtyModal({
               { value: 'unknown', label: 'Unknown' },
             ]}
             value={draft.sex}
-            onChange={(e) => setDraft((f) => ({ ...f, sex: e.target.value as CasualtyRow['sex'] }))}
+            onChange={(value) => setDraft((f) => ({ ...f, sex: value as CasualtyRow['sex'] }))}
           />
         </div>
         <Input
