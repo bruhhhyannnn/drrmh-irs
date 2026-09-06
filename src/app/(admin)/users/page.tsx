@@ -2,8 +2,18 @@
 
 import type { getUsers } from '@/actions/users';
 import { PageBreadcrumb } from '@/components/common';
+import { useCampuses } from '@/components/hooks/use-campus';
 import { useDeleteUser, useToggleUserStatus, useUsers } from '@/components/hooks/use-users';
-import { Badge, Button, ConfirmDialog, DataTable, Input, Modal, PageError } from '@/components/ui';
+import {
+  Badge,
+  Button,
+  ConfirmDialog,
+  DataTable,
+  Input,
+  Modal,
+  PageError,
+  Select,
+} from '@/components/ui';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Plus, Search, Trash2, UserPen } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -16,7 +26,14 @@ type UserRow = Awaited<ReturnType<typeof getUsers>>[number];
 export default function UsersPage() {
   const [query, setQuery] = useState('');
   const [debounceQuery, setDebounceQuery] = useState('');
-  const { data: users = [], isPending, isFetching, error } = useUsers(debounceQuery);
+  const [campusId, setCampusId] = useState('');
+  const { data: campuses = [] } = useCampuses();
+  const {
+    data: users = [],
+    isPending,
+    isFetching,
+    error,
+  } = useUsers(debounceQuery, campusId || undefined);
   const toggleStatus = useToggleUserStatus();
   const deleteUserMutation = useDeleteUser();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -131,6 +148,8 @@ export default function UsersPage() {
     return () => clearTimeout(timer);
   }, [query]);
 
+  const campusOptions = campuses.map((c) => ({ value: c.id, label: c.name }));
+
   if (error) return <PageError message={error.message} />;
 
   return (
@@ -139,16 +158,26 @@ export default function UsersPage() {
         <PageBreadcrumb pageTitle="Users" />
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="relative max-w-sm min-w-2xs flex-1">
-            <Search
-              size={16}
-              className="absolute top-1/2 z-1 left-3 -translate-y-1/2 text-gray-400 dark:text-gray-500"
-            />
-            <Input
-              placeholder="Search users..."
-              className="pl-9"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
+          <div className="flex flex-1 flex-wrap items-center gap-3">
+            <div className="relative max-w-sm min-w-2xs flex-1">
+              <Search
+                size={16}
+                className="absolute top-1/2 z-1 left-3 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+              />
+              <Input
+                placeholder="Search users..."
+                className="pl-9"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+            <Select
+              placeholder="All campuses"
+              className="w-full max-w-2xs"
+              options={campusOptions}
+              value={campusId}
+              allowClear
+              onChange={(e) => setCampusId(e.target.value)}
             />
           </div>
           <Button onClick={() => setIsModalOpen(true)} startIcon={<Plus size={16} />}>
