@@ -348,18 +348,9 @@ function ReportDetailsModal({
             </Section>
 
             <Section title="Headcount">
-              <Field label="Faculty Members" value={report.faculty_members} />
-              <Field label="Admin Members" value={report.admin_members} />
-              <Field label="REPS Members" value={report.reps_members} />
-              <Field label="RA Members" value={report.ra_members} />
-              <Field label="Students" value={report.students} />
-              <Field label="Philcare Staff" value={report.philcare_staff} />
-              <Field label="Security Personnel" value={report.security_personnel} />
-              <Field label="Construction Workers" value={report.construction_workers} />
-              <Field label="Tenants" value={report.tenants} />
-              <Field label="Health Workers" value={report.health_workers} />
-              <Field label="Non-Academic Staff" value={report.non_academic_staff} />
-              <Field label="Guests" value={report.guests} />
+              {report.population_counts.map((pc) => (
+                <Field key={pc.category.id} label={pc.category.name} value={pc.count} />
+              ))}
             </Section>
 
             {report.damage_conditions && (

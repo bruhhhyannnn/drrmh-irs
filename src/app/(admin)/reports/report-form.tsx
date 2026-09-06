@@ -3,6 +3,7 @@
 import { upsertDamageCondition } from '@/actions/settings';
 import { PageBreadcrumb } from '@/components/common';
 import { useOngoingEvents } from '@/components/hooks/use-events';
+import { useCampusPopulationCategories } from '@/components/hooks/use-population-categories';
 import {
   useCreateReport,
   useCreateReportCasualty,
@@ -31,7 +32,8 @@ import {
   Spinner,
   useMap,
 } from '@/components/ui';
-import { HEADCOUNT_FIELDS, reportSchema, type ReportFormData } from '@/lib';
+import { reportSchema, type ReportFormData } from '@/lib';
+import { mapPopulationCountsToLegacyColumns } from '@/lib/utils';
 import { useAuthStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
@@ -78,6 +80,11 @@ export function ReportForm({
   const { data: casualtyConditions = [] } = useCasualtyConditions();
   const { data: damageConditions = [] } = useDamageConditions();
 
+  // The report's own campus (via cluster) is the source of truth in edit mode, since
+  // an admin editing someone else's report may not share that report's campus.
+  const campusId = isEdit ? existingReport?.cluster?.campus_id : userProfile?.campus_id;
+  const { data: campusCategories = [] } = useCampusPopulationCategories(campusId ?? undefined);
+
   const createCasualtyMutation = useCreateReportCasualty();
   const deleteCasualtyMutation = useDeleteReportCasualty();
   const createMissingPersonMutation = useCreateReportMissingPerson();
@@ -105,6 +112,7 @@ export function ReportForm({
   // ─── Dynamic section state ───────────────────────────────────
   const [casualties, setCasualties] = useState<CasualtyRow[]>([]);
   const [missingPersons, setMissingPersons] = useState<MissingPersonRow[]>([]);
+  const [counts, setCounts] = useState<Record<string, number>>({});
 
   // ─── Structural damage — "Other" handling ────────────────────
   const OTHER_DAMAGE = '__other__';
@@ -123,18 +131,6 @@ export function ReportForm({
     resolver: zodResolver(reportSchema),
     defaultValues: {
       event_id: eventId ?? '',
-      faculty_members: 0,
-      admin_members: 0,
-      reps_members: 0,
-      ra_members: 0,
-      students: 0,
-      philcare_staff: 0,
-      security_personnel: 0,
-      construction_workers: 0,
-      tenants: 0,
-      health_workers: 0,
-      non_academic_staff: 0,
-      guests: 0,
       damage_condition_id: '',
     },
   });
@@ -146,18 +142,6 @@ export function ReportForm({
       event_id: existingReport.event_id,
       cluster_id: existingReport.cluster_id,
       unit_id: existingReport.unit_id ?? '',
-      faculty_members: existingReport.faculty_members,
-      admin_members: existingReport.admin_members,
-      reps_members: existingReport.reps_members,
-      ra_members: existingReport.ra_members,
-      students: existingReport.students,
-      philcare_staff: existingReport.philcare_staff,
-      security_personnel: existingReport.security_personnel,
-      construction_workers: existingReport.construction_workers,
-      tenants: existingReport.tenants,
-      health_workers: existingReport.health_workers,
-      non_academic_staff: existingReport.non_academic_staff,
-      guests: existingReport.guests,
       damage_condition_id: existingReport.damage_condition_id ?? '',
     });
     if (existingReport.cluster_id) setSelectedClusterId(existingReport.cluster_id);
@@ -172,6 +156,27 @@ export function ReportForm({
     if (r.longitude != null) setPickedLng(Number(r.longitude));
     if (r.location_name) setPickedName(r.location_name);
   }, [existingReport, reset]);
+
+  // Seed any newly-loaded category with 0 without clobbering counts already entered.
+  useEffect(() => {
+    if (campusCategories.length === 0) return;
+    setCounts((prev) => {
+      const next = { ...prev };
+      for (const cc of campusCategories) {
+        if (!(cc.category_id in next)) next[cc.category_id] = 0;
+      }
+      return next;
+    });
+  }, [campusCategories]);
+
+  useEffect(() => {
+    if (!existingReport?.population_counts) return;
+    setCounts((prev) => {
+      const next = { ...prev };
+      for (const pc of existingReport.population_counts) next[pc.category_id] = pc.count;
+      return next;
+    });
+  }, [existingReport]);
 
   useEffect(() => {
     if (existingCasualties.length > 0) {
@@ -225,6 +230,25 @@ export function ReportForm({
       return;
     }
     setLocationError(false);
+
+    const missingRequired = campusCategories.filter(
+      (cc) => cc.is_required && !counts[cc.category_id]
+    );
+    if (missingRequired.length > 0) {
+      toast.error(
+        `Please fill in required headcount field${missingRequired.length > 1 ? 's' : ''}: ${missingRequired
+          .map((cc) => cc.category.name)
+          .join(', ')}`
+      );
+      return;
+    }
+
+    const population_counts = campusCategories.map((cc) => ({
+      category_id: cc.category_id,
+      code: cc.category.code,
+      count: counts[cc.category_id] ?? 0,
+    }));
+
     try {
       // Resolve custom damage condition before saving
       if (isOtherDamage && customDamage.trim()) {
@@ -247,24 +271,21 @@ export function ReportForm({
             latitude: pickedLat,
             longitude: pickedLng,
             location_name: pickedName,
-            faculty_members: data.faculty_members,
-            admin_members: data.admin_members,
-            reps_members: data.reps_members,
-            ra_members: data.ra_members,
-            students: data.students,
-            philcare_staff: data.philcare_staff,
-            security_personnel: data.security_personnel,
-            construction_workers: data.construction_workers,
-            tenants: data.tenants,
-            health_workers: data.health_workers,
-            non_academic_staff: data.non_academic_staff,
-            guests: data.guests,
+            ...mapPopulationCountsToLegacyColumns(population_counts),
+            population_counts: {
+              deleteMany: {},
+              create: population_counts.map(({ category_id, count }) => ({
+                category_id,
+                count,
+              })),
+            },
           },
         });
         reportId = editId!;
       } else {
         const report = await createReportMutation.mutateAsync({
           ...data,
+          population_counts,
           cluster_id: profileClusterId ?? data.cluster_id,
           unit_id: profileUnitId ?? data.unit_id,
           user_id: userProfile?.id,
@@ -351,11 +372,11 @@ export function ReportForm({
       {/* ── Form info header ───────────────────────────────── */}
       <div className="max-w-2xl space-y-3 rounded-xl border border-gray-200 bg-white p-5 shadow-md dark:border-white/5 dark:bg-gray-900">
         <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-          Status Report for UPM-PGH NSED Q2 2026
+          Status Report for UPM-PGH NSED Q3 2026
         </h2>
         <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
           This form is intended to collect the status report for the UP Manila – Philippine General
-          Hospital (UPM-PGH) participation in the 2nd Quarter 2026 Nationwide Simultaneous
+          Hospital (UPM-PGH) participation in the 3rd Quarter 2026 Nationwide Simultaneous
           Earthquake Drill (NSED). Please provide accurate and complete information on the conduct
           of the drill, including participation, observations, issues encountered, and
           recommendations. The data will be consolidated for internal documentation and reporting to
@@ -469,27 +490,27 @@ export function ReportForm({
             <div>
               <p className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">Headcount</p>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {HEADCOUNT_FIELDS.map((field) => (
-                  <div key={field.key}>
+                {campusCategories.map((cc) => (
+                  <div key={cc.category_id}>
                     <Input
                       type="number"
-                      label={field.label}
-                      id={field.label}
+                      label={cc.category.name}
+                      required={cc.is_required}
+                      id={cc.category.name}
                       min={0}
                       placeholder="0"
                       className="placeholder:text-gray-800 dark:placeholder:text-gray-200"
-                      value={
-                        (watch(field.key as keyof ReportFormData) as number) === 0
-                          ? ''
-                          : (watch(field.key as keyof ReportFormData) as number)
-                      }
+                      value={counts[cc.category_id] === 0 ? '' : (counts[cc.category_id] ?? '')}
                       onKeyDown={(e) => {
                         if (e.key === '-') e.preventDefault();
                       }}
                       onChange={(e) => {
                         const val = e.target.value;
                         const parsed = val === '' ? 0 : parseInt(val, 10);
-                        setValue(field.key as keyof ReportFormData, Math.max(0, parsed));
+                        setCounts((prev) => ({
+                          ...prev,
+                          [cc.category_id]: Math.max(0, parsed),
+                        }));
                       }}
                     />
                   </div>
