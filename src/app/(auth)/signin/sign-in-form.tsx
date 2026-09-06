@@ -1,6 +1,6 @@
 'use client';
 
-import { GoogleSignInForm } from '@/components/auth/google-sign-in-form';
+import { GoogleSignInForm } from '@/components/auth';
 import { Button, Input, Label } from '@/components/ui';
 import { SignInFormData, signInSchema, supabase } from '@/lib';
 import { useAuthStore, useThemeStore } from '@/store';
