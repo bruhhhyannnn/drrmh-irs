@@ -69,11 +69,7 @@ export function AppHeader() {
               />
             </button>
 
-            <Dropdown
-              isOpen={userMenuOpen}
-              onClose={() => setUserMenuOpen(false)}
-              className="w-60 p-2"
-            >
+            <Dropdown isOpen={userMenuOpen} onClose={() => setUserMenuOpen(false)} className="w-60">
               <DropdownItem>
                 <div className="w-full items-start border-b border-gray-100 pb-1 dark:border-gray-800">
                   <p className="text-start text-sm font-medium truncate text-gray-900 dark:text-white">
