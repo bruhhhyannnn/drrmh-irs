@@ -1,6 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { toFriendlyError } from '@/lib/prisma-error';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { revalidatePath } from 'next/cache';
 
@@ -22,24 +23,28 @@ export type CreateUserInput = {
 
 export type UpdateUserInput = Omit<Partial<CreateUserInput>, 'password'>;
 
-export async function getUsers(query?: string) {
+export async function getUsers(query?: string, campusId?: string) {
   return prisma.user.findMany({
-    where: query
-      ? {
-          OR: [
-            { first_name: { contains: query, mode: 'insensitive' } },
-            { last_name: { contains: query, mode: 'insensitive' } },
-            { email: { contains: query, mode: 'insensitive' } },
-            { username: { contains: query, mode: 'insensitive' } },
-          ],
-        }
-      : undefined,
+    where: {
+      ...(query
+        ? {
+            OR: [
+              { first_name: { contains: query, mode: 'insensitive' } },
+              { last_name: { contains: query, mode: 'insensitive' } },
+              { email: { contains: query, mode: 'insensitive' } },
+              { username: { contains: query, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+      ...(campusId ? { campus_id: campusId } : {}),
+    },
     include: {
       cluster: true,
       unit: { include: { cluster: true } },
       position: true,
       user_type: true,
       campus: true,
+      _count: { select: { reports: true } },
     },
     orderBy: { created_at: 'desc' },
   });
@@ -100,26 +105,34 @@ export async function createUser(data: CreateUserInput) {
     return user;
   } catch (err) {
     await supabaseAdmin.auth.admin.deleteUser(auth_id);
-    throw err;
+    throw toFriendlyError(err, 'user');
   }
 }
 
 export async function updateUser(id: string, data: UpdateUserInput) {
-  const user = await prisma.user.update({
-    where: { id },
-    data,
-  });
-  revalidatePath('/users');
-  return user;
+  try {
+    const user = await prisma.user.update({
+      where: { id },
+      data,
+    });
+    revalidatePath('/users');
+    return user;
+  } catch (err) {
+    throw toFriendlyError(err, 'user');
+  }
 }
 
 export async function toggleUserStatus(id: string, current: boolean) {
-  const user = await prisma.user.update({
-    where: { id },
-    data: { is_active: !current },
-  });
-  revalidatePath('/users');
-  return user;
+  try {
+    const user = await prisma.user.update({
+      where: { id },
+      data: { is_active: !current },
+    });
+    revalidatePath('/users');
+    return user;
+  } catch (err) {
+    throw toFriendlyError(err, 'user');
+  }
 }
 
 export async function completeUserProfile(
@@ -173,7 +186,11 @@ export async function deleteUser(id: string) {
   // Nullify user_id on any reports before deleting to avoid FK constraint violation
   await prisma.report.updateMany({ where: { user_id: id }, data: { user_id: null } });
 
-  await prisma.user.delete({ where: { id } });
+  try {
+    await prisma.user.delete({ where: { id } });
+  } catch (err) {
+    throw toFriendlyError(err, 'user');
+  }
 
   if (user.auth_id) {
     await supabaseAdmin.auth.admin.deleteUser(user.auth_id);

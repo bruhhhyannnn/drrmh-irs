@@ -2,15 +2,11 @@
 
 import { toSettingsPath } from '@/lib';
 import { prisma } from '@/lib/prisma';
+import { toFriendlyError } from '@/lib/prisma-error';
 import { revalidatePath } from 'next/cache';
 
 export type SettingsTable =
-  | 'clusters'
-  | 'units'
-  | 'positions'
-  | 'casualty_conditions'
-  | 'campus'
-  | 'damage_conditions';
+  'clusters' | 'units' | 'positions' | 'casualty_conditions' | 'campus' | 'damage_conditions';
 
 const MODEL_MAP = {
   clusters: 'cluster',
@@ -41,12 +37,20 @@ export async function getSettingsItems(table: SettingsTable) {
   return prisma[model].findMany({ orderBy: { name: 'asc' } });
 }
 
+function singularLabel(table: SettingsTable) {
+  return TITLE_MAP[table].replace(/s$/, '').toLowerCase();
+}
+
 export async function createSettingsItem(table: SettingsTable, data: Record<string, unknown>) {
   const model = MODEL_MAP[table];
-  // @ts-expect-error dynamic model access
-  const result = await prisma[model].create({ data });
-  revalidateTable(table);
-  return result;
+  try {
+    // @ts-expect-error dynamic model access
+    const result = await prisma[model].create({ data });
+    revalidateTable(table);
+    return result;
+  } catch (err) {
+    throw toFriendlyError(err, singularLabel(table));
+  }
 }
 
 export async function updateSettingsItem(
@@ -55,17 +59,25 @@ export async function updateSettingsItem(
   data: Record<string, unknown>
 ) {
   const model = MODEL_MAP[table];
-  // @ts-expect-error dynamic model access
-  const result = await prisma[model].update({ where: { id }, data });
-  revalidateTable(table);
-  return result;
+  try {
+    // @ts-expect-error dynamic model access
+    const result = await prisma[model].update({ where: { id }, data });
+    revalidateTable(table);
+    return result;
+  } catch (err) {
+    throw toFriendlyError(err, singularLabel(table));
+  }
 }
 
 export async function deleteSettingsItem(table: SettingsTable, id: string) {
   const model = MODEL_MAP[table];
-  // @ts-expect-error dynamic model access
-  await prisma[model].delete({ where: { id } });
-  revalidateTable(table);
+  try {
+    // @ts-expect-error dynamic model access
+    await prisma[model].delete({ where: { id } });
+    revalidateTable(table);
+  } catch (err) {
+    throw toFriendlyError(err, singularLabel(table));
+  }
 }
 
 // Individual Settings Item
