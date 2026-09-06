@@ -1,11 +1,18 @@
+'use client';
+
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import { useEffect } from 'react';
 
 interface PageBreadcrumbProps {
   pageTitle: string;
 }
 
 export function PageBreadcrumb({ pageTitle }: PageBreadcrumbProps) {
+  useEffect(() => {
+    document.title = `${pageTitle} | IRS`;
+  }, [pageTitle]);
+
   return (
     <div className="mb-6 flex flex-col flex-wrap justify-between gap-3">
       <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90">{pageTitle}</h2>
