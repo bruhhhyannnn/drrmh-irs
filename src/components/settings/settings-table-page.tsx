@@ -130,6 +130,8 @@ export function SettingsTablePage({ title, table }: SettingsPageProps) {
           globalFilter={debounceQuery}
           loading={isPending || isFetching}
           emptyMessage={`No ${title.toLowerCase()} found`}
+          paginate
+          pageSize={10}
         />
       </div>
 
