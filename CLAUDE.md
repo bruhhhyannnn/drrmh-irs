@@ -16,8 +16,14 @@ npm run lint:fix      # ESLint --fix
 npm run type-check    # tsc --noEmit
 npm run seed           # Seed lookup data (tsx prisma/seed.ts)
 npx prisma generate    # Regenerate Prisma client (also runs automatically via postinstall)
-npx prisma migrate dev # Create + apply a migration
 ```
+
+> **IMPORTANT / DISALLOWED COMMANDS:**
+> Do NOT execute destructive or direct database modification commands:
+> - `npx prisma db push` (DISALLOWED)
+> - `npx prisma migrate dev` (DISALLOWED)
+> - `npx prisma migrate reset` (DISALLOWED)
+
 
 There is no test suite configured (`npm run test` is commented out in CI). Verify changes with `npm run lint`, `npm run type-check`, and `npm run build`.
 
