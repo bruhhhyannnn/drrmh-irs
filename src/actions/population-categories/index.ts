@@ -1,6 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { toFriendlyError } from '@/lib/prisma-error';
 import { revalidatePath } from 'next/cache';
 
 function revalidatePopulationFields() {
@@ -19,18 +20,26 @@ export async function createPopulationCategory(data: {
   description?: string;
   is_active?: boolean;
 }) {
-  const category = await prisma.populationCategory.create({ data });
-  revalidatePopulationFields();
-  return category;
+  try {
+    const category = await prisma.populationCategory.create({ data });
+    revalidatePopulationFields();
+    return category;
+  } catch (err) {
+    throw toFriendlyError(err, 'population category');
+  }
 }
 
 export async function updatePopulationCategory(
   id: string,
   data: Partial<{ code: string; name: string; description: string; is_active: boolean }>
 ) {
-  const category = await prisma.populationCategory.update({ where: { id }, data });
-  revalidatePopulationFields();
-  return category;
+  try {
+    const category = await prisma.populationCategory.update({ where: { id }, data });
+    revalidatePopulationFields();
+    return category;
+  } catch (err) {
+    throw toFriendlyError(err, 'population category');
+  }
 }
 
 /* ─── Per-campus field assignment ─── */
