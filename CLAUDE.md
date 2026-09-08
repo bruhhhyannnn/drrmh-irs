@@ -20,10 +20,10 @@ npx prisma generate    # Regenerate Prisma client (also runs automatically via p
 
 > **IMPORTANT / DISALLOWED COMMANDS:**
 > Do NOT execute destructive or direct database modification commands:
+>
 > - `npx prisma db push` (DISALLOWED)
 > - `npx prisma migrate dev` (DISALLOWED)
 > - `npx prisma migrate reset` (DISALLOWED)
-
 
 There is no test suite configured (`npm run test` is commented out in CI). Verify changes with `npm run lint`, `npm run type-check`, and `npm run build`.
 
@@ -64,3 +64,24 @@ CI (`.github/workflows/ci.yml`) runs on PRs/pushes to `main`: `npm ci` → `pris
 - Prettier: single quotes, semicolons, 100 print width, Tailwind class sorting and import organizing run automatically via `prettier-plugin-tailwindcss` / `prettier-plugin-organize-imports` — don't hand-order imports or Tailwind classes.
 - `src/components/ui/map.tsx` is vendored (from mapcn) and excluded from linting — don't "fix" lint issues there.
 - Zod schemas for forms live in `src/lib/schemas.ts`; forms use `react-hook-form` + `@hookform/resolvers`.
+
+## Documentation & Planning Workflow
+
+All non-trivial tasks, reviews, bug analyses, and feature specifications must be documented under `docs/`:
+
+```text
+docs/
+├── README.md       # Docs workflow overview & guidelines
+└── plan/
+    ├── review/     # Code audits, PR reviews, security & performance findings
+    ├── fix/        # Step-by-step resolution & refactor execution plans
+    ├── bugs/       # Bug reports, reproduction steps & root-cause analyses (RCA)
+    └── feature/    # Feature specifications, RFCs & task breakdowns
+```
+
+**Conventions:**
+
+- Use kebab-case with ticket/date prefixes (e.g. `docs/plan/fix/DRRM-003-incident-fix.md` or `docs/plan/review/2026-09-08-dev-branch-audit.md`).
+- Use standardized headers: `- **Status:** [Draft | In Review | Approved | In Progress | Done]`.
+- Map git branches 1:1 to their plan file (e.g. branch `bugfix/DRRM-003-...` ↔ `docs/plan/fix/DRRM-003-...`).
+- Templates for new docs are available at `docs/plan/{review,bugs,fix,feature}/TEMPLATE.md`.
