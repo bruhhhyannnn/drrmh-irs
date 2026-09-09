@@ -237,7 +237,7 @@ export function ReportForm({
     setLocationError(false);
 
     const missingRequired = campusCategories.filter(
-      (cc) => cc.is_required && !counts[cc.category_id]
+      (cc) => cc.is_required && counts[cc.category_id] == null
     );
     if (missingRequired.length > 0) {
       toast.error(
@@ -572,7 +572,7 @@ export function ReportForm({
                       min={0}
                       placeholder="0"
                       className="placeholder:text-gray-800 dark:placeholder:text-gray-200"
-                      value={counts[cc.category_id] === 0 ? '' : (counts[cc.category_id] ?? '')}
+                      value={counts[cc.category_id] ?? ''}
                       onKeyDown={(e) => {
                         if (e.key === '-') e.preventDefault();
                       }}
