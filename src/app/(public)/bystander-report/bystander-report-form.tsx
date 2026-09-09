@@ -11,6 +11,7 @@ import {
   PersonModal,
 } from '@/app/(admin)/reports/missing-casualty-modals';
 import { LocationPicker } from '@/app/(admin)/reports/report-form';
+import { DataPrivacyNotice } from '@/components/common';
 import {
   useCasualtyConditions,
   useClusters,
@@ -140,17 +141,7 @@ export function BystanderReportForm() {
           and any structural damage — so the DRRM-H Emergency Response Team can respond
           appropriately.
         </p>
-        <div className="space-y-1 border-t border-gray-100 pt-3 dark:border-white/5">
-          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-            Data Privacy Notice:
-          </p>
-          <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-500">
-            This submission is anonymous — your identity will not be collected or stored. Any
-            information provided will be used solely for emergency response and internal
-            documentation purposes. For life-threatening emergencies, call{' '}
-            <span className="font-semibold">911</span> immediately.
-          </p>
-        </div>
+        <DataPrivacyNotice summary="This submission is anonymous — your identity will not be collected or stored. Any information provided will be used solely for emergency response and internal documentation purposes. For life-threatening emergencies, call 911 immediately." />
       </div>
 
       <form onSubmit={onSubmit} className="space-y-4">

@@ -83,17 +83,17 @@ export function useMyReport(userId?: string) {
   });
 }
 
-export function useReportClusterSummary() {
+export function useReportClusterSummary(campusId?: string) {
   return useQuery({
-    queryKey: ['report-cluster-summary'],
-    queryFn: () => getReportClusterSummary(),
+    queryKey: ['report-cluster-summary', campusId],
+    queryFn: () => getReportClusterSummary(campusId),
   });
 }
 
-export function useReportTotals() {
+export function useReportTotals(campusId?: string) {
   return useQuery({
-    queryKey: ['report-totals'],
-    queryFn: () => getReportTotals(),
+    queryKey: ['report-totals', campusId],
+    queryFn: () => getReportTotals(campusId),
   });
 }
 

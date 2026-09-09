@@ -58,8 +58,23 @@ export function AppSidebar() {
   } = useSidebarStore();
   const pathname = usePathname();
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const hoverCloseTimer = useRef<NodeJS.Timeout | null>(null);
 
   const isVisible = isExpanded || isHovered || isMobileOpen;
+
+  const handleMouseEnter = () => {
+    if (hoverCloseTimer.current) {
+      clearTimeout(hoverCloseTimer.current);
+      hoverCloseTimer.current = null;
+    }
+    if (!isExpanded) setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    hoverCloseTimer.current = setTimeout(() => {
+      setIsHovered(false);
+    }, 300);
+  };
 
   const isActive = useCallback(
     (path?: string) => {
@@ -79,11 +94,18 @@ export function AppSidebar() {
     setOpenSubmenu(activeParent?.name ?? null);
   }, [pathname]);
 
+  // Cleanup hover timer on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverCloseTimer.current) clearTimeout(hoverCloseTimer.current);
+    };
+  }, []);
+
   return (
     <aside
       ref={sidebarRef}
-      onMouseEnter={() => !isExpanded && setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       className={cn(
         'fixed top-0 left-0 z-2 flex h-screen flex-col border-r border-gray-200 bg-white transition-all duration-300 dark:border-gray-800 dark:bg-gray-900',
         isVisible ? 'w-72.5' : 'w-20',
@@ -93,9 +115,9 @@ export function AppSidebar() {
       {/* Logo */}
       <div
         className={cn(
-          'flex items-center border-b border-gray-200 py-4 dark:border-gray-800',
+          'flex h-20 items-center border-b border-gray-200 dark:border-gray-800',
           isVisible ? 'justify-start px-6' : 'justify-center px-4',
-          isMobileOpen && 'mt-16'
+          isMobileOpen && 'mt-20'
         )}
       >
         <Link href="/dashboard" className="flex items-center gap-3">

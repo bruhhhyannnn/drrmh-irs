@@ -1,7 +1,7 @@
 'use client';
 
 import { upsertDamageCondition } from '@/actions/settings';
-import { PageBreadcrumb } from '@/components/common';
+import { DataPrivacyNotice, PageBreadcrumb } from '@/components/common';
 import { useCampus } from '@/components/hooks/use-campus';
 import { useOngoingEvents } from '@/components/hooks/use-events';
 import { useCampusPopulationCategories } from '@/components/hooks/use-population-categories';
@@ -393,18 +393,7 @@ export function ReportForm({
           recommendations. The data will be consolidated for internal documentation and reporting to
           relevant authorities.
         </p>
-        <div className="space-y-1 border-t border-gray-100 pt-3 dark:border-white/5">
-          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-            Data Privacy Notice:
-          </p>
-          <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-500">
-            All information provided in this form will be collected and processed in accordance with
-            the Data Privacy Act of 2012. The data will be used solely for documentation,
-            evaluation, and reporting purposes related to this event. Any personal information
-            collected will be kept confidential and will not be shared outside of authorized
-            personnel without your consent.
-          </p>
-        </div>
+        <DataPrivacyNotice summary="All information provided in this form will be collected and processed in accordance with the Data Privacy Act of 2012. The data will be used solely for documentation, evaluation, and reporting purposes related to this event. Any personal information collected will be kept confidential and will not be shared outside of authorized personnel without your consent." />
       </div>
 
       <div className="max-w-2xl rounded-xl border border-gray-200 bg-white p-6 shadow-md dark:border-white/5 dark:bg-gray-900">
