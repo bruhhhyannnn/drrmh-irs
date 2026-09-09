@@ -70,7 +70,12 @@ export function AppHeader() {
               />
             </button>
 
-            <Dropdown isOpen={userMenuOpen} onClose={() => setUserMenuOpen(false)} className="w-60">
+            <Dropdown
+              isOpen={userMenuOpen}
+              onClose={() => setUserMenuOpen(false)}
+              align="right"
+              className="w-60"
+            >
               <DropdownItem
                 onClick={() => {
                   setUserMenuOpen(false);

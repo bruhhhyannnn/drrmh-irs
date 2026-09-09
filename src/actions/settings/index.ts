@@ -31,8 +31,25 @@ function revalidateTable(table: SettingsTable) {
   revalidatePath(toSettingsPath(TITLE_MAP[table]));
 }
 
-export async function getSettingsItems(table: SettingsTable) {
+export async function getSettingsItems(table: SettingsTable, filterId?: string) {
   const model = MODEL_MAP[table];
+
+  if (table === 'clusters') {
+    return prisma.cluster.findMany({
+      where: filterId ? { campus_id: filterId } : undefined,
+      select: { id: true, name: true, is_active: true, created_at: true },
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  if (table === 'units') {
+    return prisma.unit.findMany({
+      where: filterId ? { cluster_id: filterId } : undefined,
+      select: { id: true, name: true, is_active: true, created_at: true },
+      orderBy: { name: 'asc' },
+    });
+  }
+
   // @ts-expect-error dynamic model access
   return prisma[model].findMany({ orderBy: { name: 'asc' } });
 }

@@ -62,6 +62,7 @@ export function UserForm({ editId, onSuccess, onCancel }: UserFormProps) {
       unit_id: '',
       position_id: '',
       user_type_id: '',
+      is_active: true,
     },
   });
 

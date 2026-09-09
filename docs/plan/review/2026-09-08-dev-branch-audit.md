@@ -533,36 +533,49 @@
 
 ## 11. Prioritized Remediation Checklist
 
-| Priority | ID   | Area              | Description                                                                             |
-| -------- | ---- | ----------------- | --------------------------------------------------------------------------------------- |
-| 🔴 P0    | §1.1 | Data Integrity    | Fix `deleteUser` to nullify `events.user_id` before delete                              |
-| 🔴 P0    | §1.2 | Auth              | Fix `provisionGoogleUser` to update `auth_id` on email collision                        |
-| 🔴 P0    | §1.3 | Auth              | Fix `fetchProfile` stale-cache check to compare `auth_id`                               |
-| 🔴 P0    | §5.1 | Emergency Reports | Throw on missing `pending` status seed in `createBystanderReport`                       |
-| 🟠 P1    | §1.4 | Data Correctness  | Replace hardcoded `CLUSTERS` with dynamic data in event summary and export              |
-| 🟠 P1    | §1.5 | Data Correctness  | Fix landing page active event count to use `prisma.event.count`                         |
-| 🟠 P1    | §7.1 | Data Integrity    | Make report casualty/missing-person saves atomic in a single Server Action              |
-| 🟠 P1    | §8.1 | UX                | Add `profileError` state to escape infinite spinner in `ProtectedRoute`                 |
-| 🟠 P1    | §5.3 | Security          | Add auth guard to `updateBystanderReportStatus` and `deleteBystanderReport`             |
-| 🟡 P2    | §2.1 | Performance       | Move `getReportClusterSummary` aggregation to Postgres `groupBy`                        |
-| 🟡 P2    | §2.2 | Performance       | Collapse N+1 queries in `getCampusHeadcountPerEvent` into a single query                |
-| 🟡 P2    | §2.3 | Performance       | Replace `useUsers()` on dashboard with `useUserCount()`                                 |
-| 🟡 P2    | §2.4 | Performance       | Collapse 2-query status lookup in `getOngoingEvents` (and `getMyReportForOngoingEvent`) |
-| 🟡 P2    | §3.1 | Cache             | Fix `revalidatePath('/bystander-reports')` → `'/emergency-reports'`                     |
-| 🟡 P2    | §5.2 | Cache             | Add `revalidatePath` to `createBystanderReport`; make all three mutations consistent    |
-| 🟡 P2    | §3.2 | Cache             | Invalidate `['campuses']` alongside `['campus']` on mutations                           |
-| 🟡 P2    | §3.3 | UX                | Normalize event status name comparison to lowercase in badge                            |
-| 🟡 P2    | §6.1 | Type Safety       | Replace `@ts-expect-error` dynamic model access in settings actions                     |
-| 🟡 P2    | §6.2 | Bug               | Fix `singularLabel` stripping `s` from `campus` → `campu`                               |
-| 🟡 P2    | §7.2 | Correctness       | Remove `profileClusterId ?? data.cluster_id` override on report submit                  |
-| 🟡 P2    | §9.4 | Bug               | Fix `useCampus(campusId)` ignoring its argument                                         |
-| 🔵 P3    | §4.1 | Schema            | Normalize model naming to PascalCase across schema                                      |
-| 🔵 P3    | §4.2 | Schema            | Add `@@map`, `created_at`, `updated_at` to `campus` model                               |
-| 🔵 P3    | §4.3 | Schema            | Add `@@index([cluster_id])` to `bystander_reports`                                      |
-| 🔵 P3    | §6.3 | Performance       | Add pagination to `getSettingsItems`                                                    |
-| 🔵 P3    | §8.3 | Maintainability   | Centralize `ADMIN_USER_TYPES` in `constants.ts`                                         |
-| 🔵 P3    | §9.2 | Data Integrity    | Add DB check constraint on `ReportCasualty` and `ReportMissingPerson` parent FKs        |
-| 🔵 P3    | §9.3 | Code Quality      | Centralize Decimal→Number serialization for lat/lng                                     |
-| 🔵 P3    | §9.5 | Code Quality      | Remove dead `location_id` field from `eventSchema`                                      |
-| 🔵 P3    | §8.2 | Code Quality      | Remove or implement `lastUserIdRef` in `AuthProvider`                                   |
-| 🔵 P3    | §10  | Tech Debt         | Audit & complete migration away from legacy flat headcount columns                      |
+| Priority | ID   | Area              | Description                                                                             | Execution Plan                                                                                              |
+| -------- | ---- | ----------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| 🔴 P0    | §1.1 | Data Integrity    | Fix `deleteUser` to nullify `events.user_id` before delete                              | [DRRM-004](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-004-events-dynamic-clusters.md)     |
+| 🔴 P0    | §1.2 | Auth              | Fix `provisionGoogleUser` to update `auth_id` on email collision                        | [DRRM-001](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-001-auth-session-recovery.md)       |
+| 🔴 P0    | §1.3 | Auth              | Fix `fetchProfile` stale-cache check to compare `auth_id`                               | [DRRM-001](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-001-auth-session-recovery.md)       |
+| 🔴 P0    | §5.1 | Emergency Reports | Throw on missing `pending` status seed in `createBystanderReport`                       | [DRRM-002](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-002-emergency-reports-hardening.md) |
+| 🟠 P1    | §1.4 | Data Correctness  | Replace hardcoded `CLUSTERS` with dynamic data in event summary and export              | [DRRM-004](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-004-events-dynamic-clusters.md)     |
+| 🟠 P1    | §1.5 | Data Correctness  | Fix landing page active event count to use `prisma.event.count`                         | [DRRM-004](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-004-events-dynamic-clusters.md)     |
+| 🟠 P1    | §7.1 | Data Integrity    | Make report casualty/missing-person saves atomic in a single Server Action              | [DRRM-003](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-003-report-form-atomicity.md)       |
+| 🟠 P1    | §8.1 | UX                | Add `profileError` state to escape infinite spinner in `ProtectedRoute`                 | [DRRM-001](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-001-auth-session-recovery.md)       |
+| 🟠 P1    | §5.3 | Security          | Add auth guard to `updateBystanderReportStatus` and `deleteBystanderReport`             | [DRRM-002](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-002-emergency-reports-hardening.md) |
+| 🟡 P2    | §2.1 | Performance       | Move `getReportClusterSummary` aggregation to Postgres `groupBy`                        | [DRRM-003](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-003-report-form-atomicity.md)       |
+| 🟡 P2    | §2.2 | Performance       | Collapse N+1 queries in `getCampusHeadcountPerEvent` into a single query                | [DRRM-004](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-004-events-dynamic-clusters.md)     |
+| 🟡 P2    | §2.3 | Performance       | Replace `useUsers()` on dashboard with `useUserCount()`                                 | [DRRM-005](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-005-settings-hooks-performance.md)  |
+| 🟡 P2    | §2.4 | Performance       | Collapse 2-query status lookup in `getOngoingEvents` (and `getMyReportForOngoingEvent`) | [DRRM-004](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-004-events-dynamic-clusters.md)     |
+| 🟡 P2    | §3.1 | Cache             | Fix `revalidatePath('/bystander-reports')` → `'/emergency-reports'`                     | [DRRM-002](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-002-emergency-reports-hardening.md) |
+| 🟡 P2    | §5.2 | Cache             | Add `revalidatePath` to `createBystanderReport`; make all three mutations consistent    | [DRRM-002](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-002-emergency-reports-hardening.md) |
+| 🟡 P2    | §3.2 | Cache             | Invalidate `['campuses']` alongside `['campus']` on mutations                           | [DRRM-005](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-005-settings-hooks-performance.md)  |
+| 🟡 P2    | §3.3 | UX                | Normalize event status name comparison to lowercase in badge                            | [DRRM-004](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-004-events-dynamic-clusters.md)     |
+| 🟡 P2    | §6.1 | Type Safety       | Replace `@ts-expect-error` dynamic model access in settings actions                     | [DRRM-005](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-005-settings-hooks-performance.md)  |
+| 🟡 P2    | §6.2 | Bug               | Fix `singularLabel` stripping `s` from `campus` → `campu`                               | [DRRM-005](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-005-settings-hooks-performance.md)  |
+| 🟡 P2    | §7.2 | Correctness       | Remove `profileClusterId ?? data.cluster_id` override on report submit                  | [DRRM-003](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-003-report-form-atomicity.md)       |
+| 🟡 P2    | §9.4 | Bug               | Fix `useCampus(campusId)` ignoring its argument                                         | [DRRM-005](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-005-settings-hooks-performance.md)  |
+| 🔵 P3    | §4.1 | Schema            | Normalize model naming to PascalCase across schema                                      | [DRRM-006](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-006-schema-dual-write-sunset.md)    |
+| 🔵 P3    | §4.2 | Schema            | Add `@@map`, `created_at`, `updated_at` to `campus` model                               | [DRRM-006](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-006-schema-dual-write-sunset.md)    |
+| 🔵 P3    | §4.3 | Schema            | Add `@@index([cluster_id])` to `bystander_reports`                                      | [DRRM-006](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-006-schema-dual-write-sunset.md)    |
+| 🔵 P3    | §6.3 | Performance       | Add pagination to `getSettingsItems`                                                    | [DRRM-005](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-005-settings-hooks-performance.md)  |
+| 🔵 P3    | §8.3 | Maintainability   | Centralize `ADMIN_USER_TYPES` in `constants.ts`                                         | [DRRM-001](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-001-auth-session-recovery.md)       |
+| 🔵 P3    | §9.2 | Data Integrity    | Add DB check constraint on `ReportCasualty` and `ReportMissingPerson` parent FKs        | [DRRM-006](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-006-schema-dual-write-sunset.md)    |
+| 🔵 P3    | §9.3 | Code Quality      | Centralize Decimal→Number serialization for lat/lng                                     | [DRRM-002](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-002-emergency-reports-hardening.md) |
+| 🔵 P3    | §9.5 | Code Quality      | Remove dead `location_id` field from `eventSchema`                                      | [DRRM-004](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-004-events-dynamic-clusters.md)     |
+| 🔵 P3    | §8.2 | Code Quality      | Remove or implement `lastUserIdRef` in `AuthProvider`                                   | [DRRM-001](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-001-auth-session-recovery.md)       |
+| 🔵 P3    | §10  | Tech Debt         | Audit & complete migration away from legacy flat headcount columns                      | [DRRM-006](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-006-schema-dual-write-sunset.md)    |
+
+---
+
+## 12. Execution Roadmap & Distribution
+
+| Wave       | Track       | Plan Document                                                                                                 | Target Branch                       | Focus Areas                                                                            |
+| ---------- | ----------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------- |
+| **Wave 1** | **Track A** | [`DRRM-001`](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-001-auth-session-recovery.md)       | `fix/auth-session-recovery`         | OAuth email linking, auth store stale cache, protected route error boundary            |
+| **Wave 1** | **Track B** | [`DRRM-002`](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-002-emergency-reports-hardening.md) | `fix/emergency-reports-hardening`   | Emergency report seed checks, auth guards, cache path fixes, coordinate serializer     |
+| **Wave 2** | **Track C** | [`DRRM-003`](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-003-report-form-atomicity.md)       | `fix/report-form-atomicity`         | Report form atomic submit transaction, cluster override fix, Postgres aggregation      |
+| **Wave 2** | **Track D** | [`DRRM-004`](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-004-events-dynamic-clusters.md)     | `fix/events-dynamic-clusters`       | User deletion FK nullification, dynamic clusters, landing page stats, N+1 queries      |
+| **Wave 2** | **Track E** | [`DRRM-005`](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-005-settings-hooks-performance.md)  | `fix/settings-hooks-performance`    | Dashboard count query, settings type delegation, 'campu' regex bug, cache invalidation |
+| **Wave 3** | **Track F** | [`DRRM-006`](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-006-schema-dual-write-sunset.md)    | `refactor/schema-dual-write-sunset` | PascalCase schema models, @@map, timestamps, check constraints, dual-write sunset      |

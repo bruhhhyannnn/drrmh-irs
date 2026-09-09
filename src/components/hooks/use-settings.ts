@@ -15,10 +15,10 @@ import {
 } from '@/actions/settings';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-export function useSettingsTable(table: SettingsTable) {
+export function useSettingsTable(table: SettingsTable, filterId?: string) {
   return useQuery({
-    queryKey: [table],
-    queryFn: () => getSettingsItems(table),
+    queryKey: [table, filterId],
+    queryFn: () => getSettingsItems(table, filterId),
   });
 }
 

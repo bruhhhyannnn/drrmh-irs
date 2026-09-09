@@ -19,6 +19,20 @@ export async function provisionGoogleUser(
   });
   if (existing) return { userTypeName: existing.user_type.name };
 
+  // Check if a user already exists with this email (e.g. created by admin or password-based)
+  const existingByEmail = await prisma.user.findFirst({
+    where: { email },
+    include: { user_type: true },
+  });
+  if (existingByEmail) {
+    const updated = await prisma.user.update({
+      where: { id: existingByEmail.id },
+      data: { auth_id: authId },
+      include: { user_type: true },
+    });
+    return { userTypeName: updated.user_type.name };
+  }
+
   // Resolve ERT Member user type
   const ertType = await prisma.userType.findFirst({ where: { name: 'ERT Member' } });
   if (!ertType) throw new Error('ERT Member user type not found in the database.');
@@ -51,7 +65,7 @@ export async function provisionGoogleUser(
     });
     return { userTypeName: newUser.user_type.name };
   } catch (err: unknown) {
-    // P2002 = unique constraint violation — email already belongs to a password-based account
+    // P2002 = unique constraint violation — email already belongs to a pre-existing account
     if (
       typeof err === 'object' &&
       err !== null &&
@@ -62,7 +76,14 @@ export async function provisionGoogleUser(
         where: { email },
         include: { user_type: true },
       });
-      if (byEmail) return { userTypeName: byEmail.user_type.name };
+      if (byEmail) {
+        const updated = await prisma.user.update({
+          where: { id: byEmail.id },
+          data: { auth_id: authId },
+          include: { user_type: true },
+        });
+        return { userTypeName: updated.user_type.name };
+      }
     }
     throw err;
   }

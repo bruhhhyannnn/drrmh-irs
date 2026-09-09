@@ -1,12 +1,12 @@
 'use client';
 
+import { createReport } from '@/actions/reports';
 import { upsertDamageCondition } from '@/actions/settings';
 import { DataPrivacyNotice, PageBreadcrumb } from '@/components/common';
 import { useCampus } from '@/components/hooks/use-campus';
 import { useOngoingEvents } from '@/components/hooks/use-events';
 import { useCampusPopulationCategories } from '@/components/hooks/use-population-categories';
 import {
-  useCreateReport,
   useCreateReportCasualty,
   useCreateReportMissingPerson,
   useDeleteReportCasualty,
@@ -34,11 +34,12 @@ import {
   useMap,
 } from '@/components/ui';
 import { reportSchema, type ReportFormData } from '@/lib';
+import { getQueuedFieldReportCount, isNetworkError, queueFieldReport } from '@/lib/offline-queue';
 import { mapPopulationCountsToLegacyColumns } from '@/lib/utils';
-import { useAuthStore } from '@/store';
+import { useAuthStore, useOfflineQueueStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
-import { MapPin, Pencil, Plus, UserRound, Users } from 'lucide-react';
+import { CloudOff, MapPin, Pencil, Plus, UserRound, Users, WifiOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -70,10 +71,12 @@ export function ReportForm({
   const queryClient = useQueryClient();
   const isEdit = !!editId;
   const { userProfile } = useAuthStore();
+  const isOnline = useOfflineQueueStore((s) => s.isOnline);
+  const pendingCount = useOfflineQueueStore((s) => s.pendingCount);
+  const setPendingCount = useOfflineQueueStore((s) => s.setPendingCount);
 
   // ─── Data fetching ───────────────────────────────────────────
   const { data: existingReport, isLoading: isReportLoading } = useReport(editId);
-  const createReportMutation = useCreateReport();
   const updateReportMutation = useUpdateReport();
 
   const { data: ongoingEvents = [] } = useOngoingEvents(userProfile?.campus_id ?? '');
@@ -234,7 +237,7 @@ export function ReportForm({
     setLocationError(false);
 
     const missingRequired = campusCategories.filter(
-      (cc) => cc.is_required && !counts[cc.category_id]
+      (cc) => cc.is_required && counts[cc.category_id] == null
     );
     if (missingRequired.length > 0) {
       toast.error(
@@ -285,7 +288,11 @@ export function ReportForm({
         });
         reportId = editId!;
       } else {
-        const report = await createReportMutation.mutateAsync({
+        // New reports only — offline queueing bundles casualties/missing persons into one
+        // payload (see queueFieldReport below), which doesn't map onto the edit flow's
+        // delete-then-recreate mutations. Editing an existing report always requires being
+        // online.
+        const createPayload = {
           ...data,
           population_counts,
           cluster_id: profileClusterId ?? data.cluster_id,
@@ -294,10 +301,53 @@ export function ReportForm({
           latitude: pickedLat,
           longitude: pickedLng,
           location_name: pickedName,
-          report_missing_persons: [],
-          report_casualties: [],
-        });
+          report_missing_persons: missingPersons
+            .filter((p) => p.name.trim())
+            .map((p) => ({ name: p.name.trim(), age: p.age, sex: p.sex })),
+          report_casualties: casualties
+            .filter((c) => c.condition_id && c.name.trim())
+            .map((c) => ({
+              condition_id: c.condition_id,
+              name: c.name.trim(),
+              age: c.age,
+              sex: c.sex,
+              diagnosis: c.diagnosis,
+            })),
+        };
+
+        if (!navigator.onLine) {
+          await queueFieldReport(createPayload);
+          setPendingCount(await getQueuedFieldReportCount());
+          toast.success(
+            "No connection — report saved on this device. It'll submit automatically once you're back online."
+          );
+          onSuccess ? onSuccess() : router.push('/reports');
+          return;
+        }
+
+        let report;
+        try {
+          report = await createReport(createPayload);
+        } catch (err) {
+          if (isNetworkError(err)) {
+            await queueFieldReport(createPayload);
+            setPendingCount(await getQueuedFieldReportCount());
+            toast.success(
+              "Connection dropped — report saved on this device. It'll submit automatically once you're back online."
+            );
+            onSuccess ? onSuccess() : router.push('/reports');
+            return;
+          }
+          throw err;
+        }
         reportId = report.id;
+
+        // Casualties and missing persons were already bundled into the create call above —
+        // nothing further to attach for a brand-new report.
+        queryClient.invalidateQueries({ queryKey: ['reports'] });
+        toast.success('Report submitted');
+        onSuccess ? onSuccess() : router.push('/reports');
+        return;
       }
 
       // Casualties — delete all existing, re-create current
@@ -378,6 +428,29 @@ export function ReportForm({
   return (
     <div className="space-y-6">
       {!standalone && <PageBreadcrumb pageTitle={isEdit ? 'Edit Report' : 'Submit Report'} />}
+
+      {!isOnline && (
+        <div className="flex items-center gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
+          <WifiOff size={16} className="shrink-0" />
+          <span>
+            {isEdit
+              ? "You're offline. Editing an existing report requires a connection — try again once you're back online."
+              : "You're offline. You can still fill out and submit this report — it will be saved on this device and sent automatically once you're back online."}
+          </span>
+        </div>
+      )}
+
+      {pendingCount > 0 && (
+        <div className="flex items-center gap-2.5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300">
+          <CloudOff size={16} className="shrink-0" />
+          <span>
+            {pendingCount === 1
+              ? '1 report saved on this device is waiting to sync.'
+              : `${pendingCount} reports saved on this device are waiting to sync.`}{' '}
+            {isOnline ? "It'll submit shortly." : "It'll submit automatically once you're online."}
+          </span>
+        </div>
+      )}
 
       {/* ── Form info header ───────────────────────────────── */}
       <div className="max-w-2xl space-y-3 rounded-xl border border-gray-200 bg-white p-5 shadow-md dark:border-white/5 dark:bg-gray-900">
@@ -499,7 +572,7 @@ export function ReportForm({
                       min={0}
                       placeholder="0"
                       className="placeholder:text-gray-800 dark:placeholder:text-gray-200"
-                      value={counts[cc.category_id] === 0 ? '' : (counts[cc.category_id] ?? '')}
+                      value={counts[cc.category_id] ?? ''}
                       onKeyDown={(e) => {
                         if (e.key === '-') e.preventDefault();
                       }}
@@ -661,8 +734,13 @@ export function ReportForm({
                   Cancel
                 </Button>
               )}
-              <Button type="submit" isLoading={isSubmitting} loadingText="Saving...">
-                {isEdit ? 'Update Report' : 'Submit Report'}
+              <Button
+                type="submit"
+                isLoading={isSubmitting}
+                loadingText="Saving..."
+                disabled={isEdit && !isOnline}
+              >
+                {isEdit ? 'Update Report' : isOnline ? 'Submit Report' : 'Save Report (Offline)'}
               </Button>
             </div>
           </form>
