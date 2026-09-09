@@ -18,10 +18,12 @@ interface AuthState {
   user: User | null;
   session: Session | null;
   userProfile: UserProfileType | null;
+  profileError: string | null;
   loading: boolean;
   setUser: (user: User | null) => void;
   setSession: (session: Session | null) => void;
   setUserProfile: (profile: UserProfileType | null) => void;
+  setProfileError: (error: string | null) => void;
   setLoading: (loading: boolean) => void;
   reset: () => void;
 }
@@ -32,6 +34,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       session: null,
       userProfile: null,
+      profileError: null,
       loading: true,
 
       setUser(user: User | null) {
@@ -46,12 +49,16 @@ export const useAuthStore = create<AuthState>()(
         set({ userProfile });
       },
 
+      setProfileError(profileError: string | null) {
+        set({ profileError });
+      },
+
       setLoading(loading: boolean) {
         set({ loading });
       },
 
       reset() {
-        set({ user: null, session: null, userProfile: null, loading: false });
+        set({ user: null, session: null, userProfile: null, profileError: null, loading: false });
       },
     }),
     {

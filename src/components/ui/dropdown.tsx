@@ -9,6 +9,8 @@ interface DropdownProps {
   onClose: () => void;
   children: React.ReactNode;
   className?: string;
+  /** Alignment relative to the trigger. Defaults to 'left'. */
+  align?: 'left' | 'right';
   /** Show a search input pinned to the top of the dropdown that filters items by their text content. */
   searchable?: boolean;
   searchPlaceholder?: string;
@@ -21,6 +23,7 @@ export function Dropdown({
   onClose,
   children,
   className,
+  align = 'left',
   searchable = false,
   searchPlaceholder = 'Search...',
   maxHeight = 280,
@@ -61,7 +64,8 @@ export function Dropdown({
     <div
       ref={ref}
       className={cn(
-        'shadow-theme-lg dark:bg-gray-dark absolute right-0 z-1 mt-2 flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800',
+        'shadow-theme-lg dark:bg-gray-dark absolute z-50 mt-2 flex min-w-[200px] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800',
+        align === 'right' ? 'right-0' : 'left-0',
         className
       )}
     >
