@@ -168,15 +168,19 @@ export async function deleteReport(id: string) {
   }
 }
 
-export async function getReportClusterSummary() {
+export async function getReportClusterSummary(campusId?: string) {
   const [rows, clusters] = await Promise.all([
     prisma.report.findMany({
+      where: campusId ? { cluster: { campus_id: campusId } } : undefined,
       select: {
         cluster_id: true,
         _count: { select: { casualties: true, missing_persons: true } },
       },
     }),
-    prisma.cluster.findMany({ select: { id: true, name: true } }),
+    prisma.cluster.findMany({
+      where: campusId ? { campus_id: campusId } : undefined,
+      select: { id: true, name: true },
+    }),
   ]);
 
   const nameMap = Object.fromEntries(clusters.map((c) => [c.id, c.name]));
@@ -196,11 +200,16 @@ export async function getReportClusterSummary() {
   }));
 }
 
-export async function getReportTotals() {
+export async function getReportTotals(campusId?: string) {
+  const reportWhere = campusId ? { cluster: { campus_id: campusId } } : undefined;
   const [reports, casualties, missing] = await Promise.all([
-    prisma.report.count(),
-    prisma.reportCasualty.count(),
-    prisma.reportMissingPerson.count(),
+    prisma.report.count({ where: reportWhere }),
+    prisma.reportCasualty.count({
+      where: campusId ? { report: { cluster: { campus_id: campusId } } } : undefined,
+    }),
+    prisma.reportMissingPerson.count({
+      where: campusId ? { report: { cluster: { campus_id: campusId } } } : undefined,
+    }),
   ]);
 
   return { reports, casualties, missing };

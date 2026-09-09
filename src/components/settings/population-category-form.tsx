@@ -10,6 +10,7 @@ import { populationCategorySchema, type PopulationCategoryFormData } from '@/lib
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import toast from 'react-hot-toast';
 
 interface PopulationCategoryFormProps {
   editId?: string;
@@ -52,12 +53,18 @@ export function PopulationCategoryForm({
   }, [isEdit, categories, editId, reset]);
 
   const onSubmit = async (data: PopulationCategoryFormData) => {
-    if (isEdit) {
-      await updateMutation.mutateAsync({ id: editId!, data });
-    } else {
-      await createMutation.mutateAsync(data);
+    try {
+      if (isEdit) {
+        await updateMutation.mutateAsync({ id: editId!, data });
+        toast.success('Category updated');
+      } else {
+        await createMutation.mutateAsync(data);
+        toast.success('Category created');
+      }
+      onSuccess?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     }
-    onSuccess?.();
   };
 
   return (
