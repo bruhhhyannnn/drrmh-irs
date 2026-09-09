@@ -9,16 +9,14 @@ import {
   Button,
   ConfirmDialog,
   DataTable,
-  DeleteAction,
-  EditAction,
   Input,
   Modal,
   PageError,
+  RowActions,
   Select,
-  TableActions,
 } from '@/components/ui';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Plus, Search } from 'lucide-react';
+import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { UserForm } from './user-form';
@@ -150,20 +148,27 @@ export default function UsersPage() {
       id: 'actions',
       header: 'Actions',
       cell: ({ row: { original: r } }) => (
-        <TableActions>
-          <EditAction
-            onClick={() => {
+        <RowActions
+          quickAction={{
+            label: 'Edit user',
+            icon: Pencil,
+            onClick: () => {
               setIsModalOpen(true);
               setEditId(r.id);
-            }}
-          />
-          <DeleteAction
-            onClick={() => {
-              setDeleteId(r.id);
-              setDeleteName([r.first_name, r.last_name].filter(Boolean).join(' '));
-            }}
-          />
-        </TableActions>
+            },
+          }}
+          actions={[
+            {
+              label: 'Delete user',
+              icon: Trash2,
+              variant: 'danger',
+              onClick: () => {
+                setDeleteId(r.id);
+                setDeleteName([r.first_name, r.last_name].filter(Boolean).join(' '));
+              },
+            },
+          ]}
+        />
       ),
       enableSorting: false,
     },

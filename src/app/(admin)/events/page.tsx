@@ -1,5 +1,6 @@
 'use client';
 
+import type { getEvents } from '@/actions/events';
 import { PageBreadcrumb } from '@/components/common';
 import { useCampuses } from '@/components/hooks/use-campus';
 import { useDeleteEvent, useEvents } from '@/components/hooks/use-events';
@@ -7,35 +8,29 @@ import {
   Badge,
   Button,
   ConfirmDialog,
-  DeleteAction,
-  EditAction,
+  DataTable,
+  DateTimeCell,
   Input,
   Modal,
   PageError,
+  RowActions,
   Select,
-  Spinner,
-  Table,
-  TableActions,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  ViewAction,
 } from '@/components/ui';
-import { format } from 'date-fns';
-import { FileSpreadsheet, Plus, Search } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import type { ColumnDef } from '@tanstack/react-table';
+import { Eye, FileSpreadsheet, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { EventForm } from './event-form';
 import { exportEventToExcel } from './export-event';
+
+type EventRow = NonNullable<Awaited<ReturnType<typeof getEvents>>>[number];
 
 export default function EventsPage() {
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [campusId, setCampusId] = useState('');
   const { data: campuses = [] } = useCampuses();
-  const { data: events, isPending, isFetching, error } = useEvents(debouncedQuery, campusId);
+  const { data: events = [], isPending, isFetching, error } = useEvents(debouncedQuery, campusId);
   const deleteEventMutation = useDeleteEvent();
   const [editId, setEditId] = useState('');
   const [deleteId, setDeleteId] = useState('');
@@ -64,6 +59,101 @@ export default function EventsPage() {
     const timer = setTimeout(() => setDebouncedQuery(query), 400);
     return () => clearTimeout(timer);
   }, [query]);
+
+  const columns = useMemo<ColumnDef<EventRow, unknown>[]>(
+    () => [
+      {
+        id: 'name',
+        header: 'Event Name',
+        accessorKey: 'name',
+        cell: ({ row: { original: event } }) => (
+          <span className="font-medium text-gray-900 dark:text-white">{event.name}</span>
+        ),
+      },
+      {
+        id: 'campus',
+        header: 'Campus',
+        accessorFn: (event) => event.campus.name,
+        cell: ({ row: { original: event } }) => (
+          <span className="text-gray-700 dark:text-gray-300">{event.campus.name}</span>
+        ),
+      },
+      {
+        id: 'started_at',
+        header: 'Date & Time',
+        accessorFn: (event) => event.started_at ?? '',
+        cell: ({ row: { original: event } }) => <DateTimeCell date={event.started_at} />,
+      },
+      {
+        id: 'reports',
+        header: 'Reports',
+        accessorFn: (event) => event._count.reports,
+        cell: ({ row: { original: event } }) => (
+          <span className="font-medium text-gray-900 dark:text-white">{event._count.reports}</span>
+        ),
+      },
+      {
+        id: 'status',
+        header: 'Status',
+        accessorFn: (event) => event.status.name,
+        cell: ({ row: { original: event } }) => {
+          const statusLower = event.status.name.toLowerCase();
+          return (
+            <Badge
+              color={
+                statusLower === 'ongoing'
+                  ? 'success'
+                  : statusLower === 'completed'
+                    ? 'primary'
+                    : 'warning'
+              }
+              size="sm"
+            >
+              {event.status.name}
+            </Badge>
+          );
+        },
+      },
+      {
+        id: 'actions',
+        header: 'Action',
+        cell: ({ row: { original: event } }) => (
+          <RowActions
+            quickAction={{
+              label: 'View details',
+              icon: Eye,
+              href: `/events/details?id=${event.id}`,
+            }}
+            actions={[
+              {
+                label: 'Edit event',
+                icon: Pencil,
+                onClick: () => {
+                  setEditId(event.id);
+                  setIsModalOpen(true);
+                },
+              },
+              {
+                label: exportingId === event.id ? 'Exporting...' : 'Export to Excel',
+                icon: FileSpreadsheet,
+                disabled: exportingId === event.id,
+                onClick: () => handleExport(event.id),
+              },
+              {
+                divider: true,
+                label: 'Delete event',
+                icon: Trash2,
+                variant: 'danger',
+                onClick: () => setDeleteId(event.id),
+              },
+            ]}
+          />
+        ),
+        enableSorting: false,
+      },
+    ],
+    [exportingId]
+  );
 
   if (error) return <PageError message={error.message} />;
 
@@ -94,94 +184,22 @@ export default function EventsPage() {
               allowClear
               onChange={setCampusId}
             />
-            <p className="text-sm text-gray-500 dark:text-gray-400">{events?.length ?? 0} total</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{events.length} total</p>
           </div>
           <Button onClick={() => setIsModalOpen(true)} startIcon={<Plus size={16} />}>
             Add Event
           </Button>
         </div>
 
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Event Name</TableHead>
-              <TableHead>Campus</TableHead>
-              <TableHead>Date & Time</TableHead>
-              <TableHead>Reports Submitted</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {events?.map((event) => (
-              <TableRow key={event.id}>
-                <TableCell className="font-medium text-gray-900 dark:text-white">
-                  {event.name}
-                </TableCell>
-                <TableCell className="font-medium text-gray-900 dark:text-white">
-                  {event.campus.name}
-                </TableCell>
-                <TableCell>
-                  {event.started_at
-                    ? format(new Date(event.started_at), 'MMM d, yyyy | h:mm a')
-                    : '—'}
-                </TableCell>
-                <TableCell className="font-medium text-gray-900 dark:text-white">
-                  {event._count.reports}
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    color={
-                      event.status.name.toLocaleLowerCase() === 'ongoing'
-                        ? 'success'
-                        : event.status.name.toLocaleLowerCase() === 'completed'
-                          ? 'primary'
-                          : 'warning'
-                    }
-                    size="sm"
-                  >
-                    {event.status.name}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <TableActions>
-                    <ViewAction href={`/events/details?id=${event.id}`} title="View" />
-                    <EditAction
-                      onClick={() => {
-                        setEditId(event.id);
-                        setIsModalOpen(true);
-                      }}
-                    />
-                    <button
-                      onClick={() => handleExport(event.id)}
-                      disabled={exportingId === event.id}
-                      className="hover:text-brand-600 dark:hover:text-brand-400 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-500"
-                      title="Export to Excel"
-                    >
-                      <FileSpreadsheet size={15} />
-                      Export
-                    </button>
-                    <DeleteAction onClick={() => setDeleteId(event.id)} />
-                  </TableActions>
-                </TableCell>
-              </TableRow>
-            ))}
-            {(isPending || isFetching) && (
-              <TableRow>
-                <TableCell className="py-10" colSpan={5}>
-                  <Spinner center />
-                </TableCell>
-              </TableRow>
-            )}
-            {!events?.length && !isPending && !isFetching && (
-              <TableRow>
-                <TableCell className="py-10 text-center text-gray-400" colSpan={5}>
-                  No events found
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+        <DataTable
+          columns={columns}
+          data={events}
+          loading={isPending || isFetching}
+          emptyMessage="No events found"
+          emptyDescription="Create an event to start recording drill and incident reports."
+          paginate
+          pageSize={10}
+        />
       </div>
 
       <Modal isOpen={isModalOpen} onClose={handleClose}>
