@@ -49,6 +49,10 @@ export function SettingsTablePage({ title, table }: SettingsPageProps) {
     error,
   } = useSettingsTable(table, isClusters ? campusId : isUnits ? clusterId : undefined);
   const { data: campusList = [] } = useCampus();
+  // Intentionally unscoped: the Units filter lets admins pick any cluster to filter by,
+  // regardless of campus. Cluster names are unique across the whole system (not just
+  // per-campus — see `Cluster.name` in prisma/schema.prisma), and the cluster list is small
+  // enough that a single flat dropdown is simpler than adding a campus-first filter step.
   const { data: clusterList = [] } = useClusters();
   const deleteMutation = useDeleteSetting(table);
   const [deleteId, setDeleteId] = useState('');

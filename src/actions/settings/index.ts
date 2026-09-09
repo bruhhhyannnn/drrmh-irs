@@ -37,6 +37,7 @@ export async function getSettingsItems(table: SettingsTable, filterId?: string) 
   if (table === 'clusters') {
     return prisma.cluster.findMany({
       where: filterId ? { campus_id: filterId } : undefined,
+      select: { id: true, name: true, is_active: true, created_at: true },
       orderBy: { name: 'asc' },
     });
   }
@@ -44,6 +45,7 @@ export async function getSettingsItems(table: SettingsTable, filterId?: string) 
   if (table === 'units') {
     return prisma.unit.findMany({
       where: filterId ? { cluster_id: filterId } : undefined,
+      select: { id: true, name: true, is_active: true, created_at: true },
       orderBy: { name: 'asc' },
     });
   }
