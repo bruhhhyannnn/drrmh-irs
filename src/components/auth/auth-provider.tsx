@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store';
 import { useEffect, useRef } from 'react';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { setUser, setSession, setUserProfile, setLoading } = useAuthStore();
+  const { setUser, setSession, setUserProfile, setLoading, setProfileError } = useAuthStore();
   const lastUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -14,7 +14,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) fetchProfile(session.user.id);
-      else setLoading(false);
+      else {
+        lastUserIdRef.current = null;
+        setProfileError(null);
+        setLoading(false);
+      }
     });
 
     const {
@@ -30,6 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         lastUserIdRef.current = null;
         setUserProfile(null);
+        setProfileError(null);
         setLoading(false);
       }
     });
@@ -39,17 +44,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function fetchProfile(userId: string) {
     const { userProfile } = useAuthStore.getState();
-    if (userProfile !== null) {
-      setLoading(false); // ← must clear loading even when skipping the fetch
+
+    // If cached profile belongs to this exact user, reuse it and skip the fetch
+    if (userProfile && userProfile.auth_id === userId) {
+      lastUserIdRef.current = userId;
+      setProfileError(null);
+      setLoading(false);
       return;
     }
 
+    lastUserIdRef.current = userId;
     setLoading(true);
+    setProfileError(null);
+
     try {
       const user = await getUserByAuthId(userId);
-      setUserProfile(user ?? null);
+      if (!user) {
+        setUserProfile(null);
+        setProfileError('Your user account could not be found. Please contact an administrator.');
+      } else {
+        setUserProfile(user);
+        setProfileError(null);
+      }
     } catch (err) {
       console.error('Error fetching profile:', err);
+      setUserProfile(null);
+      setProfileError(
+        err instanceof Error ? err.message : 'An error occurred while loading your profile.'
+      );
     } finally {
       setLoading(false);
     }

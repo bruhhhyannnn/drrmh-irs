@@ -42,3 +42,16 @@ Use lowercase kebab-case with ticket prefixes or ISO dates:
 - `bugs/DRRM-003-auth-profile-sync.md`
 - `fix/DRRM-001-audit-resolution.md`
 - `feature/DRRM-004-dynamic-campus-clusters.md`
+
+---
+
+## Active Execution Plans
+
+| Ticket                                                                                                        | Title                                                 | Wave / Track     | Target Branch                       | Status       |
+| ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | ---------------- | ----------------------------------- | ------------ |
+| [`DRRM-001`](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-001-auth-session-recovery.md)       | Auth Flow & Session Recovery Hardening                | Wave 1 (Track A) | `fix/auth-session-recovery`         | `[Done]`     |
+| [`DRRM-002`](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-002-emergency-reports-hardening.md) | Emergency Reports Hardening & Mutation Consistency    | Wave 1 (Track B) | `fix/emergency-reports-hardening`   | `[Approved]` |
+| [`DRRM-003`](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-003-report-form-atomicity.md)       | Report Form Atomicity & Aggregation Optimization      | Wave 2 (Track C) | `fix/report-form-atomicity`         | `[Approved]` |
+| [`DRRM-004`](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-004-events-dynamic-clusters.md)     | Events, Dynamic Clusters & Query Optimization         | Wave 2 (Track D) | `fix/events-dynamic-clusters`       | `[Approved]` |
+| [`DRRM-005`](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-005-settings-hooks-performance.md)  | Settings Actions, Query Hooks & Dashboard Performance | Wave 2 (Track E) | `fix/settings-hooks-performance`    | `[Approved]` |
+| [`DRRM-006`](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-006-schema-dual-write-sunset.md)    | Schema Normalization & Legacy Dual-Write Sunset       | Wave 3 (Track F) | `refactor/schema-dual-write-sunset` | `[Approved]` |

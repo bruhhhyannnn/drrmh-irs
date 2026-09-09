@@ -20,7 +20,7 @@ import {
 } from '@/components/hooks/use-reports';
 import { useCasualtyConditions } from '@/components/hooks/use-settings';
 import { Button, Modal, Spinner } from '@/components/ui';
-import { cn, getInitials, supabase } from '@/lib';
+import { cn, getInitials, isAdminUserType, supabase } from '@/lib';
 import { useAuthStore, useThemeStore } from '@/store';
 import type { Prisma } from '@prisma/client';
 import { CheckCircle, ClipboardList, LogOut, Moon, Pencil, Plus, Sun } from 'lucide-react';
@@ -65,7 +65,7 @@ export default function ErtReportPage() {
   useEffect(() => {
     if (!loading && user && userProfile) {
       const type = userProfile.user_type?.name;
-      if (type === 'Administrator' || type === 'Super Admin') {
+      if (isAdminUserType(type)) {
         router.replace('/dashboard');
       }
     }
