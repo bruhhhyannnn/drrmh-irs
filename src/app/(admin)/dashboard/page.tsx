@@ -73,7 +73,7 @@ export default function DashboardPage() {
       <PageBreadcrumb pageTitle="Dashboard" />
 
       <div className="flex flex-col gap-4 xl:h-[calc(100vh-240px)] xl:flex-row">
-        {/* RIGHT COLUMN */}
+        {/* LEFT COLUMN */}
         <div className="w-full xl:h-full xl:w-1/3">
           <div className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-900">
             <div className="mb-4 flex items-start justify-between border-b border-gray-100 pb-3 dark:border-white/10">
@@ -146,7 +146,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* LEFT COLUMN */}
+        {/* RIGHT COLUMN */}
         <div className="flex w-full flex-col gap-4 xl:w-2/3">
           {/* Stats grid — 2 cols on sm+, 4 on xl */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
