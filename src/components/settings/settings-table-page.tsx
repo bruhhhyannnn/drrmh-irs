@@ -13,6 +13,7 @@ import {
   Input,
   Modal,
   PageError,
+  Select,
   TableActions,
 } from '@/components/ui';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -20,7 +21,7 @@ import { format } from 'date-fns';
 import { Plus, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { useDeleteSetting, useSettingsTable } from '../hooks/use-settings';
+import { useCampus, useClusters, useDeleteSetting, useSettingsTable } from '../hooks/use-settings';
 
 interface SettingsPageProps {
   title: string;
@@ -37,7 +38,18 @@ type SettingItem = {
 export function SettingsTablePage({ title, table }: SettingsPageProps) {
   const [query, setQuery] = useState('');
   const [debounceQuery, setDebounceQuery] = useState('');
-  const { data: items, isPending, isFetching, error } = useSettingsTable(table);
+  const [campusId, setCampusId] = useState('');
+  const [clusterId, setClusterId] = useState('');
+  const isClusters = table === 'clusters';
+  const isUnits = table === 'units';
+  const {
+    data: items,
+    isPending,
+    isFetching,
+    error,
+  } = useSettingsTable(table, isClusters ? campusId : isUnits ? clusterId : undefined);
+  const { data: campusList = [] } = useCampus();
+  const { data: clusterList = [] } = useClusters();
   const deleteMutation = useDeleteSetting(table);
   const [deleteId, setDeleteId] = useState('');
   const [editId, setEditId] = useState('');
@@ -117,6 +129,32 @@ export function SettingsTablePage({ title, table }: SettingsPageProps) {
                 onChange={(e) => setQuery(e.target.value)}
               />
             </div>
+            {isClusters && (
+              <Select
+                className="max-w-2xs"
+                placeholder="All campuses"
+                allowClear
+                options={(campusList as { id: string; name: string }[]).map((c) => ({
+                  value: c.id,
+                  label: c.name,
+                }))}
+                value={campusId}
+                onChange={setCampusId}
+              />
+            )}
+            {isUnits && (
+              <Select
+                className="max-w-2xs"
+                placeholder="All clusters"
+                allowClear
+                options={(clusterList as { id: string; name: string }[]).map((c) => ({
+                  value: c.id,
+                  label: c.name,
+                }))}
+                value={clusterId}
+                onChange={setClusterId}
+              />
+            )}
             <p className="text-sm text-gray-500 dark:text-gray-400">{items?.length ?? 0} total</p>
           </div>
           <Button onClick={() => handleOpen()} startIcon={<Plus size={16} />}>
