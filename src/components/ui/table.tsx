@@ -1,11 +1,26 @@
 import { cn } from '@/lib';
 import React from 'react';
 
-export function Table({ children, className }: { children: React.ReactNode; className?: string }) {
+export function Table({
+  children,
+  className,
+  containerClassName,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  containerClassName?: string;
+}) {
   return (
-    <div className="shadow-theme-md overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/5 dark:bg-white/3">
+    <div
+      className={cn(
+        'shadow-theme-xs overflow-hidden rounded-xl border border-gray-200/90 bg-white dark:border-gray-800 dark:bg-gray-900',
+        containerClassName
+      )}
+    >
       <div className="max-w-full overflow-x-auto">
-        <table className={cn('w-full border-collapse', className)}>{children}</table>
+        <table className={cn('w-full border-collapse text-left text-sm', className)}>
+          {children}
+        </table>
       </div>
     </div>
   );
@@ -19,7 +34,12 @@ export function TableHeader({
   className?: string;
 }) {
   return (
-    <thead className={cn('border-b border-gray-100 dark:border-white/5', className)}>
+    <thead
+      className={cn(
+        'border-b border-gray-200/80 bg-gray-50/75 dark:border-gray-800 dark:bg-white/[0.02]',
+        className
+      )}
+    >
       {children}
     </thead>
   );
@@ -33,7 +53,7 @@ export function TableBody({
   className?: string;
 }) {
   return (
-    <tbody className={cn('divide-y divide-gray-100 dark:divide-white/5', className)}>
+    <tbody className={cn('divide-y divide-gray-100 dark:divide-gray-800', className)}>
       {children}
     </tbody>
   );
@@ -46,7 +66,13 @@ export function TableRow({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <tr className={cn('hover:bg-gray-50 dark:hover:bg-white/2', className)}>{children}</tr>;
+  return (
+    <tr
+      className={cn('transition-colors hover:bg-gray-50/60 dark:hover:bg-white/[0.02]', className)}
+    >
+      {children}
+    </tr>
+  );
 }
 
 export function TableHead({
@@ -62,7 +88,7 @@ export function TableHead({
     <th
       onClick={onClick}
       className={cn(
-        'text-md bg-gray-50 px-5 py-3 text-start font-medium text-gray-500 dark:bg-white/3 dark:text-gray-400',
+        'px-5 py-3.5 text-start text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400',
         className
       )}
     >
@@ -81,7 +107,10 @@ export function TableCell({
   colSpan?: number;
 }) {
   return (
-    <td colSpan={colSpan} className={cn('px-5 py-3 text-gray-600 dark:text-gray-300', className)}>
+    <td
+      colSpan={colSpan}
+      className={cn('px-5 py-3.5 text-sm text-gray-600 dark:text-gray-300 align-middle', className)}
+    >
       {children}
     </td>
   );
