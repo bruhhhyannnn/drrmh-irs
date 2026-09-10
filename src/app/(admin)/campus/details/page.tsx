@@ -317,7 +317,7 @@ function CampusDetailsContent() {
               <h2 className="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
                 Event Summary
               </h2>
-              <EventSummary eventId={selectedEvent.id} />
+              <EventSummary eventId={selectedEvent?.id} campusId={campusId} />{' '}
             </div>
 
             <div className="mt-5">

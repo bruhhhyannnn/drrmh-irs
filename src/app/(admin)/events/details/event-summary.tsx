@@ -1,9 +1,10 @@
 'use client';
 
 import type { getReportsByEvent } from '@/actions/reports';
+import { useCampusClusters } from '@/components/hooks/use-campus';
 import { useEventReports } from '@/components/hooks/use-reports';
 import { Badge, Spinner } from '@/components/ui';
-import { CLUSTERS, getInitials } from '@/lib';
+import { getInitials } from '@/lib';
 import { sumPopulationCountsByCategory, totalPopulationCount } from '@/lib/utils';
 import { useThemeStore } from '@/store';
 import { format } from 'date-fns';
@@ -26,11 +27,14 @@ import {
 type EventReport = Awaited<ReturnType<typeof getReportsByEvent>>[number];
 
 // ─── Event summary — shared between /events/details and /campus/details ───
-export function EventSummary({ eventId }: { eventId?: string }) {
+export function EventSummary({ eventId, campusId }: { eventId?: string; campusId?: string }) {
   const { data: reports = [], isPending: loadingReports } = useEventReports(eventId);
+  const { data: campusClusters = [], isPending: loadingClusters } = useCampusClusters(
+    campusId ?? ''
+  );
   const { theme } = useThemeStore();
 
-  if (loadingReports) {
+  if (loadingReports || (!!campusId && loadingClusters)) {
     return (
       <div className="flex h-40 items-center justify-center">
         <Spinner size="md" />
@@ -38,8 +42,13 @@ export function EventSummary({ eventId }: { eventId?: string }) {
     );
   }
 
-  // Group reports by cluster, respecting CLUSTERS order
-  const reportsByCluster = CLUSTERS.reduce(
+  // Dynamic cluster list for this campus. Falls back to whatever cluster
+  // names show up in the reports if no campusId was passed in.
+  const clusterNames = campusId
+    ? campusClusters.filter((c) => c.is_active).map((c) => c.name)
+    : Array.from(new Set(reports.map((r) => r.cluster.name)));
+
+  const reportsByCluster = clusterNames.reduce(
     (acc, cluster) => {
       acc[cluster] = reports.filter((r) => r.cluster.name === cluster);
       return acc;
@@ -48,10 +57,10 @@ export function EventSummary({ eventId }: { eventId?: string }) {
   );
 
   // Clusters that actually have reports
-  const activeClusters = CLUSTERS.filter((c) => reportsByCluster[c].length > 0);
+  const activeClusters = clusterNames.filter((c) => reportsByCluster[c].length > 0);
 
   // Clusters that have zero reports (pending)
-  const pendingClusters = CLUSTERS.filter((c) => reportsByCluster[c].length === 0);
+  const pendingClusters = clusterNames.filter((c) => reportsByCluster[c].length === 0);
 
   const totalCasualties = reports.reduce((s, r) => s + r.casualties.length, 0);
   const totalMissing = reports.reduce((s, r) => s + r.missing_persons.length, 0);
@@ -141,7 +150,7 @@ export function EventSummary({ eventId }: { eventId?: string }) {
                 reportsByCluster={reportsByCluster}
                 theme={theme}
               />
-              <ClusterSummaryChart reports={reports} theme={theme} />
+              <ClusterSummaryChart reports={reports} theme={theme} clusterNames={activeClusters} />{' '}
               {totalCasualties > 0 && <CasualtyConditionsChart reports={reports} theme={theme} />}
               <DamageConditionsChart reports={reports} theme={theme} />
             </div>
@@ -530,18 +539,24 @@ function UnitBreakdownTabbed({
 }
 
 // ─── Chart 2: Reports + affected + casualties by cluster ──
-function ClusterSummaryChart({ reports, theme }: ChartProps) {
-  const data = CLUSTERS.map((cluster) => {
-    const cr = reports.filter((r) => r.cluster.name === cluster);
-    if (!cr.length) return null;
-    const affected = cr.reduce((s, r) => s + totalPopulationCount(r.population_counts), 0);
-    return {
-      name: cluster,
-      reports: cr.length,
-      affected,
-      casualties: cr.reduce((s, r) => s + r.casualties.length, 0),
-    };
-  }).filter(Boolean) as { name: string; reports: number; affected: number; casualties: number }[];
+function ClusterSummaryChart({
+  reports,
+  theme,
+  clusterNames,
+}: ChartProps & { clusterNames: string[] }) {
+  const data = clusterNames
+    .map((cluster) => {
+      const cr = reports.filter((r) => r.cluster.name === cluster);
+      if (!cr.length) return null;
+      const affected = cr.reduce((s, r) => s + totalPopulationCount(r.population_counts), 0);
+      return {
+        name: cluster,
+        reports: cr.length,
+        affected,
+        casualties: cr.reduce((s, r) => s + r.casualties.length, 0),
+      };
+    })
+    .filter(Boolean) as { name: string; reports: number; affected: number; casualties: number }[];
 
   const ts = chartTooltipStyle(theme);
 
