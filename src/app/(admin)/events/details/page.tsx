@@ -42,7 +42,6 @@ function EventDetailsContent() {
   return (
     <div className="space-y-8">
       <PageBreadcrumb pageTitle="Event Details" />
-
       <div className="shadow-theme-sm rounded-xl border border-gray-200 bg-white p-6 dark:border-white/5 dark:bg-white/3">
         <div className="mt-2 flex flex-wrap gap-2">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{event.name}</h1>
@@ -81,8 +80,7 @@ function EventDetailsContent() {
           )}
         </div>
       </div>
-
-      <EventSummary eventId={eventId} />
+      <EventSummary eventId={eventId} campusId={event?.campus_id} />{' '}
     </div>
   );
 }
