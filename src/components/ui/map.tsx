@@ -2,8 +2,14 @@
 'use client';
 
 import { Loader2, Locate, Maximize, Minus, Plus, X } from 'lucide-react';
-import MapLibreGL, { type MarkerOptions, type PopupOptions } from 'maplibre-gl';
+import type { MarkerOptions, PopupOptions } from 'maplibre-gl';
+import * as MapLibreGL from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+
+if (typeof window !== 'undefined') {
+  MapLibreGL.setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
+}
+
 import {
   createContext,
   forwardRef,
@@ -31,9 +37,7 @@ type Theme = 'light' | 'dark';
 // Check document class for theme (works with next-themes, etc.)
 function getDocumentTheme(): Theme | null {
   if (typeof document === 'undefined') return null;
-  if (document.documentElement.classList.contains('dark')) return 'dark';
-  if (document.documentElement.classList.contains('light')) return 'light';
-  return null;
+  return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
 }
 
 // Get system preference
@@ -214,6 +218,8 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
   // Initialize the map
   useEffect(() => {
     if (!containerRef.current) return;
+
+    MapLibreGL.setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
     const initialStyle = resolvedTheme === 'dark' ? mapStyles.dark : mapStyles.light;
     currentStyleRef.current = initialStyle;

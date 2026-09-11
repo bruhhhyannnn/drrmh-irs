@@ -28,8 +28,8 @@ export function AppHeader() {
   const email = userProfile?.email ?? user?.email ?? '';
 
   return (
-    <header className="sticky top-0 z-2 flex w-full border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-      <div className="flex w-full items-center justify-between px-4 py-3 lg:px-6">
+    <header className="sticky top-0 z-2 flex h-20 w-full items-center border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="flex w-full items-center justify-between px-4 lg:px-6">
         {/* Left - toggle */}
         <button
           onClick={handleToggle}
