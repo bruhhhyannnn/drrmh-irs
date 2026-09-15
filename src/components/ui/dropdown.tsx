@@ -85,7 +85,7 @@ export function Dropdown({
           />
         </div>
       )}
-      <div className="custom-scrollbar overflow-y-auto p-2" style={{ maxHeight }}>
+      <div className="custom-scrollbar overflow-y-auto p-1.5" style={{ maxHeight }}>
         {searchable &&
         React.Children.count(children) > 0 &&
         items &&
@@ -122,9 +122,10 @@ export function DropdownItem({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className={cn(
-        'flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5',
+        'flex w-full items-center text-left gap-2.5 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-white/5 transition-colors',
         className
       )}
     >

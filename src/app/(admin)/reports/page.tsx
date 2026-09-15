@@ -9,19 +9,17 @@ import {
   Button,
   ConfirmDialog,
   DataTable,
-  DeleteAction,
-  EditAction,
+  DateTimeCell,
   Input,
   Modal,
   PageError,
   Pagination,
+  RowActions,
   Select,
-  TableActions,
 } from '@/components/ui';
 import { totalPopulationCount } from '@/lib/utils';
 import type { ColumnDef } from '@tanstack/react-table';
-import { format } from 'date-fns';
-import { Plus, Search } from 'lucide-react';
+import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { ReportForm } from './report-form';
@@ -63,19 +61,7 @@ export default function ReportsPage() {
       id: 'date',
       header: 'Submitted',
       accessorFn: (r) => r.created_at ?? '',
-      cell: ({ row: { original: r } }) =>
-        r.created_at ? (
-          <div className="text-sm">
-            <div className="text-gray-800 dark:text-gray-200">
-              {format(new Date(r.created_at), 'MMM d, yyyy')}
-            </div>
-            <div className="text-xs text-gray-400 dark:text-gray-500">
-              {format(new Date(r.created_at), 'h:mm a')}
-            </div>
-          </div>
-        ) : (
-          '—'
-        ),
+      cell: ({ row: { original: r } }) => <DateTimeCell date={r.created_at} />,
     },
     {
       id: 'submitted_by',
@@ -155,15 +141,24 @@ export default function ReportsPage() {
       id: 'actions',
       header: 'Actions',
       cell: ({ row: { original: r } }) => (
-        <TableActions>
-          <EditAction
-            onClick={() => {
+        <RowActions
+          quickAction={{
+            label: 'Edit report',
+            icon: Pencil,
+            onClick: () => {
               setIsModalOpen(true);
               setEditId(r.id);
-            }}
-          />
-          <DeleteAction onClick={() => setDeleteId(r.id)} />
-        </TableActions>
+            },
+          }}
+          actions={[
+            {
+              label: 'Delete report',
+              icon: Trash2,
+              variant: 'danger',
+              onClick: () => setDeleteId(r.id),
+            },
+          ]}
+        />
       ),
       enableSorting: false,
     },

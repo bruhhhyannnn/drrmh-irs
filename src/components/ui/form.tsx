@@ -125,14 +125,14 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
     const selected = options.find((opt) => opt.value === value);
 
     return (
-      <div>
+      <div className={cn('w-full', className)}>
         {label && (
           <Label htmlFor={id}>
             {label}
             {required && <span className="text-error-500 ml-1">*</span>}
           </Label>
         )}
-        <div className="relative">
+        <div className="relative w-full">
           <button
             ref={ref}
             type="button"
@@ -148,8 +148,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                 ? 'border-error-500 focus:ring-error-500/10'
                 : 'focus:border-brand-300 focus:ring-brand-500/10 dark:focus:border-brand-800 border-gray-300 dark:border-gray-700',
               disabled &&
-                'cursor-not-allowed border-gray-300 bg-gray-50 text-gray-500 dark:bg-gray-800',
-              className
+                'cursor-not-allowed border-gray-300 bg-gray-50 text-gray-500 dark:bg-gray-800'
             )}
           >
             <span className="truncate">{selected ? selected.label : placeholder}</span>
@@ -158,25 +157,36 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
           <Dropdown
             isOpen={isOpen && !disabled}
             onClose={() => setIsOpen(false)}
-            className="w-full"
+            className="w-full min-w-[max(100%,220px)]"
+            align="left"
             searchable={searchable}
           >
             {allowClear && (
               <DropdownItem
+                className={cn(
+                  'justify-between',
+                  !value
+                    ? 'bg-gray-100 font-medium text-gray-900 dark:bg-white/10 dark:text-white'
+                    : 'text-gray-500 dark:text-gray-400'
+                )}
                 onClick={() => {
                   onChange?.('');
                   setIsOpen(false);
                 }}
               >
-                <span className="italic text-gray-400 dark:text-gray-500">{placeholder}</span>
+                <span className="truncate">{placeholder}</span>
+                {!value && (
+                  <Check size={14} className="shrink-0 text-brand-600 dark:text-brand-400" />
+                )}
               </DropdownItem>
             )}
             {options.map((opt) => (
               <DropdownItem
                 key={opt.value}
                 className={cn(
+                  'justify-between',
                   opt.value === value &&
-                    'bg-gray-100 text-gray-900 dark:bg-white/10 dark:text-white',
+                    'bg-gray-100 font-medium text-gray-900 dark:bg-white/10 dark:text-white',
                   opt.disabled && 'pointer-events-none opacity-40'
                 )}
                 onClick={() => {
@@ -185,7 +195,10 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                   setIsOpen(false);
                 }}
               >
-                {opt.label}
+                <span className="truncate">{opt.label}</span>
+                {opt.value === value && (
+                  <Check size={14} className="shrink-0 text-brand-600 dark:text-brand-400" />
+                )}
               </DropdownItem>
             ))}
           </Dropdown>

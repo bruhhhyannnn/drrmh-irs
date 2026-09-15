@@ -6,16 +6,15 @@ import {
   Badge,
   ConfirmDialog,
   DataTable,
-  DeleteAction,
+  DateTimeCell,
   Input,
   Modal,
   PageError,
-  TableActions,
-  ViewAction,
+  RowActions,
 } from '@/components/ui';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { BookOpen, CheckCircle, Search, XCircle } from 'lucide-react';
+import { BookOpen, CheckCircle, Eye, Search, Trash2, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   useBystanderReports,
@@ -159,8 +158,7 @@ export default function BystanderReportsPage() {
       id: 'submitted',
       header: 'Submitted',
       accessorFn: (r) => r.submitted_at ?? '',
-      cell: ({ row: { original: r } }) =>
-        r.submitted_at ? format(new Date(r.submitted_at), 'MMM d, yyyy') : '—',
+      cell: ({ row: { original: r } }) => <DateTimeCell date={r.submitted_at} />,
     },
     {
       id: 'actions',
@@ -169,46 +167,41 @@ export default function BystanderReportsPage() {
       cell: ({ row: { original: r } }) => {
         const status = r.bystander_report_statuses?.name ?? 'pending';
         return (
-          <TableActions>
-            {/* Mark reviewed */}
-            {status === 'pending' && (
-              <button
-                title="Mark as reviewed"
-                className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-900/60"
-                onClick={() => setPendingStatus({ id: r.id, status: 'reviewed' })}
-              >
-                <BookOpen size={13} />
-                Review
-              </button>
-            )}
-
-            {/* Verify */}
-            {(status === 'pending' || status === 'reviewed') && (
-              <button
-                title="Verify"
-                className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-1 text-xs font-medium text-green-700 transition-colors hover:bg-green-200 dark:bg-green-900/40 dark:text-green-300 dark:hover:bg-green-900/60"
-                onClick={() => setPendingStatus({ id: r.id, status: 'verified' })}
-              >
-                <CheckCircle size={13} />
-                Verify
-              </button>
-            )}
-
-            {/* Dismiss */}
-            {status !== 'dismissed' && status !== 'verified' && (
-              <button
-                title="Dismiss"
-                className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-200 dark:bg-red-900/40 dark:text-red-300 dark:hover:bg-red-900/60"
-                onClick={() => setPendingStatus({ id: r.id, status: 'dismissed' })}
-              >
-                <XCircle size={13} />
-                Dismiss
-              </button>
-            )}
-
-            <ViewAction title="View details" onClick={() => setDetailRow(r)} />
-            <DeleteAction onClick={() => setDeleteId(r.id)} />
-          </TableActions>
+          <RowActions
+            quickAction={{
+              label: 'View details',
+              icon: Eye,
+              onClick: () => setDetailRow(r),
+            }}
+            actions={[
+              status === 'pending' && {
+                label: 'Mark as reviewed',
+                icon: BookOpen,
+                variant: 'info',
+                onClick: () => setPendingStatus({ id: r.id, status: 'reviewed' }),
+              },
+              (status === 'pending' || status === 'reviewed') && {
+                label: 'Verify report',
+                icon: CheckCircle,
+                variant: 'success',
+                onClick: () => setPendingStatus({ id: r.id, status: 'verified' }),
+              },
+              status !== 'dismissed' &&
+                status !== 'verified' && {
+                  label: 'Dismiss report',
+                  icon: XCircle,
+                  variant: 'danger',
+                  onClick: () => setPendingStatus({ id: r.id, status: 'dismissed' }),
+                },
+              {
+                divider: true,
+                label: 'Delete report',
+                icon: Trash2,
+                variant: 'danger',
+                onClick: () => setDeleteId(r.id),
+              },
+            ]}
+          />
         );
       },
     },

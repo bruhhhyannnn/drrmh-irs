@@ -8,17 +8,15 @@ import {
   Button,
   ConfirmDialog,
   DataTable,
-  DeleteAction,
-  EditAction,
+  DateTimeCell,
   Input,
   Modal,
   PageError,
+  RowActions,
   Select,
-  TableActions,
 } from '@/components/ui';
 import type { ColumnDef } from '@tanstack/react-table';
-import { format } from 'date-fns';
-import { Plus, Search } from 'lucide-react';
+import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useCampus, useClusters, useDeleteSetting, useSettingsTable } from '../hooks/use-settings';
@@ -91,17 +89,28 @@ export function SettingsTablePage({ title, table }: SettingsPageProps) {
     {
       accessorKey: 'created_at',
       header: 'Created',
-      cell: ({ row: { original: item } }) =>
-        item.created_at ? format(new Date(item.created_at), 'MMM d, yyyy') : '—',
+      cell: ({ row: { original: item } }) => <DateTimeCell date={item.created_at} />,
     },
     {
       id: 'actions',
       header: 'Actions',
       cell: ({ row: { original: item } }) => (
-        <TableActions>
-          <EditAction onClick={() => handleOpen(item.id)} />
-          <DeleteAction disabled={deleteMutation.isPending} onClick={() => setDeleteId(item.id)} />
-        </TableActions>
+        <RowActions
+          quickAction={{
+            label: 'Edit',
+            icon: Pencil,
+            onClick: () => handleOpen(item.id),
+          }}
+          actions={[
+            {
+              label: 'Delete',
+              icon: Trash2,
+              variant: 'danger',
+              disabled: deleteMutation.isPending,
+              onClick: () => setDeleteId(item.id),
+            },
+          ]}
+        />
       ),
       enableSorting: false,
     },
