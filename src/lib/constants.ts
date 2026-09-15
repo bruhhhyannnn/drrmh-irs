@@ -197,3 +197,10 @@ export const USER_TYPES = {
   2: 'Administrator',
   3: 'Super Admin',
 } as const;
+
+export const ADMIN_USER_TYPES = ['Administrator', 'Super Admin'] as const;
+export type AdminUserType = (typeof ADMIN_USER_TYPES)[number];
+
+export function isAdminUserType(type?: string | null): type is AdminUserType {
+  return (ADMIN_USER_TYPES as readonly string[]).includes(type ?? '');
+}

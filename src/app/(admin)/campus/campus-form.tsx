@@ -31,6 +31,9 @@ export function CampusForm({ editId, onSuccess, onCancel }: CampusFormProps) {
     formState: { errors, isSubmitting },
   } = useForm<CampusFormData>({
     resolver: zodResolver(campusSchema),
+    defaultValues: {
+      is_active: true,
+    },
   });
 
   useEffect(() => {

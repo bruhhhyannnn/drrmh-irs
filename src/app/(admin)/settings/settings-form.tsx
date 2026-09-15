@@ -70,6 +70,7 @@ export function SettingsForm({ title, table, editId, onSuccess, onCancel }: Sett
     resolver: zodResolver(schema),
     defaultValues: {
       campus_id: '',
+      is_active: true,
     },
   });
 

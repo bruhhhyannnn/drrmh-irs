@@ -1,5 +1,6 @@
 'use server';
 
+import { isAdminUserType } from '@/lib';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -76,8 +77,6 @@ export async function getUserByAuthId(authId: string) {
   });
 }
 
-const ADMIN_USER_TYPES = ['Administrator', 'Super Admin'];
-
 export async function createUser(data: CreateUserInput) {
   const { password, ...profileData } = data;
 
@@ -85,7 +84,7 @@ export async function createUser(data: CreateUserInput) {
     where: { id: profileData.user_type_id },
     select: { name: true },
   });
-  const is_profile_complete = ADMIN_USER_TYPES.includes(userType?.name ?? '');
+  const is_profile_complete = isAdminUserType(userType?.name);
 
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email: profileData.email,

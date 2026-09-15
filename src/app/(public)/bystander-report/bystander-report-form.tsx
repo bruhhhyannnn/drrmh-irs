@@ -1,9 +1,7 @@
 'use client';
 
-import {
-  useCreateBystanderReport,
-  useGetBystanderIncidentTypes,
-} from '@/app/(admin)/emergency-reports/use-bystander-reports';
+import { createBystanderReport } from '@/actions/emergency-reports';
+import { useGetBystanderIncidentTypes } from '@/app/(admin)/emergency-reports/use-bystander-reports';
 import {
   CasualtyModal,
   CasualtyRow,
@@ -20,16 +18,23 @@ import {
 } from '@/components/hooks/use-settings';
 import { Button, Input, Select, Textarea } from '@/components/ui';
 import { BystanderReportFormData, cn } from '@/lib';
-import { CheckCircle, Pencil, Plus, UserRound, Users } from 'lucide-react';
+import { getQueuedReportCount, isNetworkError, queueBystanderReport } from '@/lib/offline-queue';
+import { useOfflineQueueStore } from '@/store';
+import { useQueryClient } from '@tanstack/react-query';
+import { CheckCircle, CloudOff, Pencil, Plus, UserRound, Users, WifiOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import toast from 'react-hot-toast';
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function BystanderReportForm() {
   const router = useRouter();
-  const submitReport = useCreateBystanderReport();
+  const queryClient = useQueryClient();
+  const isOnline = useOfflineQueueStore((s) => s.isOnline);
+  const pendingCount = useOfflineQueueStore((s) => s.pendingCount);
+  const setPendingCount = useOfflineQueueStore((s) => s.setPendingCount);
 
   const { data: incidentTypes = [] } = useGetBystanderIncidentTypes();
   const { data: clusters = [] } = useClusters();
@@ -38,6 +43,8 @@ export function BystanderReportForm() {
 
   const [selectedClusterId, setSelectedClusterId] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [savedOffline, setSavedOffline] = useState(false);
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
   // ── Location state ──────────────────────────────────────────
   const [pickedLat, setPickedLat] = useState<number | null>(null);
@@ -74,15 +81,44 @@ export function BystanderReportForm() {
     }
     setLocationError(false);
 
-    await submitReport.mutateAsync({
+    const payload: BystanderReportFormData = {
       ...values,
       latitude: pickedLat,
       longitude: pickedLng,
       report_missing_persons: missingPersons.filter((p) => p.name.trim()),
       report_casualties: casualties.filter((c) => c.condition_id && c.name.trim()),
-    });
+    };
 
-    setSubmitted(true);
+    setIsSubmittingReport(true);
+    try {
+      // No point even trying the network call if the browser already knows it's offline —
+      // go straight to the local queue.
+      if (!navigator.onLine) {
+        await queueBystanderReport(payload);
+        setPendingCount(await getQueuedReportCount());
+        setSavedOffline(true);
+        setSubmitted(true);
+        return;
+      }
+
+      await createBystanderReport(payload);
+      queryClient.invalidateQueries({ queryKey: ['bystander-reports'] });
+      toast.success('Report submitted successfully');
+      setSubmitted(true);
+    } catch (err) {
+      if (isNetworkError(err)) {
+        // Connection dropped mid-submit — fall back to the same local queue rather than
+        // losing what was just filled in.
+        await queueBystanderReport(payload);
+        setPendingCount(await getQueuedReportCount());
+        setSavedOffline(true);
+        setSubmitted(true);
+      } else {
+        toast.error(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      }
+    } finally {
+      setIsSubmittingReport(false);
+    }
   });
 
   // ── Options ───────────────────────────────────────────────────────────────
@@ -98,14 +134,26 @@ export function BystanderReportForm() {
   if (submitted) {
     return (
       <div className="flex w-full max-w-xl flex-col items-center gap-4 py-12 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-500/15">
-          <CheckCircle size={32} className="text-green-600 dark:text-green-400" />
+        <div
+          className={cn(
+            'flex h-16 w-16 items-center justify-center rounded-full',
+            savedOffline ? 'bg-amber-100 dark:bg-amber-500/15' : 'bg-green-100 dark:bg-green-500/15'
+          )}
+        >
+          {savedOffline ? (
+            <CloudOff size={32} className="text-amber-600 dark:text-amber-400" />
+          ) : (
+            <CheckCircle size={32} className="text-green-600 dark:text-green-400" />
+          )}
         </div>
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Report Received</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {savedOffline ? 'Report Saved Offline' : 'Report Received'}
+          </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Thank you. Your report has been received and will be reviewed by the DRRM-H Emergency
-            Response Team.
+            {savedOffline
+              ? "No internet connection was found, so your report was saved on this device. It will be submitted automatically as soon as you're back online — you don't need to do anything else."
+              : 'Thank you. Your report has been received and will be reviewed by the DRRM-H Emergency Response Team.'}
           </p>
         </div>
         <button
@@ -129,6 +177,28 @@ export function BystanderReportForm() {
           Anonymous bystander submission
         </p>
       </div>
+
+      {!isOnline && (
+        <div className="flex items-center gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
+          <WifiOff size={16} className="shrink-0" />
+          <span>
+            You&apos;re offline. You can still fill out and submit this form — it will be saved on
+            this device and sent automatically once you&apos;re back online.
+          </span>
+        </div>
+      )}
+
+      {pendingCount > 0 && (
+        <div className="flex items-center gap-2.5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300">
+          <CloudOff size={16} className="shrink-0" />
+          <span>
+            {pendingCount === 1
+              ? '1 report saved on this device is waiting to sync.'
+              : `${pendingCount} reports saved on this device are waiting to sync.`}{' '}
+            {isOnline ? "It'll submit shortly." : "It'll submit automatically once you're online."}
+          </span>
+        </div>
+      )}
 
       {/* ── Form info header ───────────────────────────────── */}
       <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-5 shadow-md dark:border-white/5 dark:bg-gray-900">
@@ -364,10 +434,10 @@ export function BystanderReportForm() {
         <Button
           type="submit"
           className="w-full"
-          isLoading={isSubmitting || submitReport.isPending}
+          isLoading={isSubmitting || isSubmittingReport}
           loadingText="Submitting..."
         >
-          Submit Emergency Report
+          {isOnline ? 'Submit Emergency Report' : 'Save Report (Offline)'}
         </Button>
       </form>
 
