@@ -26,6 +26,8 @@ model User {
   campus_id           String?   @db.Uuid
   events              Event[]   @relation("CreatedBy")
   reports             Report[]
+  matatag_assessments  MatatagAssessment[]
+  matatag_form_assignments MatatagFormAssignment[]
   campus              campus?   @relation(fields: [campus_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   cluster             Cluster?  @relation(fields: [cluster_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   position            Position? @relation(fields: [position_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -271,6 +273,78 @@ model campus {
   clusters              Cluster[]
   events                Event[]
   users                 User[]
+  matatag_assessments    MatatagAssessment[]
+  matatag_forms          MatatagForm[]
+}
+
+model MatatagForm {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  campus_id  String   @db.Uuid
+  title      String
+  is_open    Boolean  @default(false)
+  phase      String   @default("PRE")
+  access_mode String  @default("CAMPUS")
+  version    Int      @default(1)
+  created_by String   @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  campus     campus   @relation(fields: [campus_id], references: [id], onDelete: NoAction)
+  templates  MatatagTemplate[]
+  responses  MatatagAssessment[]
+  assignments MatatagFormAssignment[]
+
+  @@index([campus_id, updated_at])
+  @@map("matatag_forms")
+}
+
+model MatatagFormAssignment {
+  form_id    String   @db.Uuid
+  user_id    String   @db.Uuid
+  created_by String   @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  form       MatatagForm @relation(fields: [form_id], references: [id], onDelete: Cascade)
+  user       User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@id([form_id, user_id])
+  @@index([user_id])
+  @@map("matatag_form_assignments")
+}
+
+model MatatagTemplate {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  revision   Int
+  form_id    String?  @db.Uuid
+  definition Json     @db.JsonB
+  created_by String   @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  form       MatatagForm? @relation(fields: [form_id], references: [id], onDelete: NoAction)
+
+  @@unique([form_id, revision])
+
+  @@map("matatag_templates")
+}
+
+model MatatagAssessment {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id      String   @db.Uuid
+  campus_id    String   @db.Uuid
+  form_id      String?  @db.Uuid
+  phase        String   @default("PRE")
+  building     String
+  evaluator    String
+  status       String   @default("DRAFT")
+  version      Int      @default(1)
+  document     Json     @db.JsonB
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  user         User     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  campus       campus   @relation(fields: [campus_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  form         MatatagForm? @relation(fields: [form_id], references: [id], onDelete: NoAction)
+
+  @@index([form_id, updated_at])
+  @@index([campus_id, updated_at])
+  @@index([user_id, updated_at])
+  @@map("matatag_assessments")
 }
 
 model PopulationCategory {

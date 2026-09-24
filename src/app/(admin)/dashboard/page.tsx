@@ -10,7 +10,7 @@ import {
 } from '@/components/hooks/use-reports';
 import { useUsers } from '@/components/hooks/use-users';
 import { Badge } from '@/components/ui';
-import { useThemeStore } from '@/store';
+import { useAuthStore, useThemeStore } from '@/store';
 import { format } from 'date-fns';
 import {
   Activity,
@@ -44,6 +44,9 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function DashboardPage() {
+  const isSuperAdmin = useAuthStore(
+    (s) => s.userProfile?.is_active && s.userProfile.user_type.name === 'Super Admin'
+  );
   const { data: events } = useEvents();
   const { data: reportsData } = useReports(1, '');
   const { data: users = [] } = useUsers();
@@ -71,6 +74,17 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col">
       <PageBreadcrumb pageTitle="Dashboard" />
+      {isSuperAdmin && (
+        <Link
+          href="/assessments"
+          className="mb-5 rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-900 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:hover:bg-gray-800"
+        >
+          <strong>MATATAG Assessments</strong>
+          <span className="mt-1 block text-gray-600 dark:text-gray-300">
+            Create campus assessments and review responses.
+          </span>
+        </Link>
+      )}
 
       <div className="flex flex-col gap-4 xl:h-[calc(100vh-240px)] xl:flex-row">
         {/* LEFT COLUMN */}

@@ -1,0 +1,1194 @@
+{
+  "sections": {
+    "I": {
+      "en": "Crisis Plans/Emergency Preparedness",
+      "fil": "Plano sa Krisis/ Paghahanda sa Sakuna"
+    },
+    "II": {
+      "en": "Building Exterior and Grounds",
+      "fil": "Loob at Labas ng Gusali"
+    },
+    "III": {
+      "en": "Doors, Windows, and Openings",
+      "fil": "Pinto, Bintana, at Bukasan"
+    },
+    "IV": {
+      "en": "Lighting and Electrical Safety",
+      "fil": "Ilaw at Kaligtasan sa Kuryente"
+    },
+    "V": {
+      "en": "Fire Protection Systems",
+      "fil": "Proteksyon sa Sunog"
+    },
+    "VI": {
+      "en": "Walls, Floors, and Ceilings",
+      "fil": "Pader, Sahig, at Kisame"
+    },
+    "VII": {
+      "en": "Stairwells",
+      "fil": "Hagdan"
+    },
+    "VIII": {
+      "en": "Exits and Corridors",
+      "fil": "Labasan at Pasilyo"
+    },
+    "IX": {
+      "en": "Bathrooms",
+      "fil": "Palikuran"
+    },
+    "X": {
+      "en": "Custodial Services/Maintenance",
+      "fil": "Serbisyong Pagsasaayos/ Pagkukumpuni"
+    },
+    "XI": {
+      "en": "Offices",
+      "fil": "Opisina"
+    },
+    "XII": {
+      "en": "Classrooms/ multi-purpose rooms/ libraries",
+      "fil": "Silid-Aralan/ Multi-purpose Rooms/ Mga Aklatan"
+    },
+    "XIII": {
+      "en": "Laboratories",
+      "fil": "Laboratoryo"
+    },
+    "XIV": {
+      "en": "Playgrounds",
+      "fil": "Palaruan"
+    },
+    "XV": {
+      "en": "Athletic Facilities/ Gymnasium",
+      "fil": "Pasilidad Pang-atletiko/ Gym"
+    },
+    "XVI": {
+      "en": "Swimming Pools",
+      "fil": "Palanguyan"
+    },
+    "XVII": {
+      "en": "Dormitories",
+      "fil": "Dormitoryo"
+    }
+  },
+  "items": {
+    "I-1": {
+      "en": "Is there a designated Incident Commander in the office/unit/college/building?",
+      "fil": "Mayroon bang nakatalagang Incident Commander sa opisina/unit/kolehiyo/gusali?",
+      "reference": ""
+    },
+    "I-2": {
+      "en": "Are Nationwide Simultaneous Earthquake Drills (NSED) practiced at least twice a year?",
+      "fil": "Naisasagawa ba ang Nationwide Simultaneous Earthquake Drills (NSED) nang hindi bababa sa dalawang beses sa isang taon?",
+      "reference": ""
+    },
+    "I-3": {
+      "en": "Does the office/unit/college/building maintain the following plans to address such potential crises as fire, floods, bomb threat, civil disturbance, accidents, intruders, etc.?",
+      "fil": "Ang opisina/unit/kolehiyo/gusali ba ay nagpapanatili ng isang plano (hal., plano sa krisis, plano sa paghahanda sa emerhensiya, Plano sa Pagpapatuloy ng Serbisyong Pampubliko, atbp.) upang matugunan ang mga potensyal na krisis gaya ng sunog, baha, pagbabanta ng bomba, kaguluhang sibil, mga aksidente, mga nanghihimasok, atbp.?",
+      "reference": ""
+    },
+    "I-3.1": {
+      "en": "Crisis Plan",
+      "fil": "Plano sa Krisis",
+      "reference": ""
+    },
+    "I-3.2": {
+      "en": "Emergency Preparedness Plan",
+      "fil": "Plano sa Paghahanda sa Emerhensiya",
+      "reference": ""
+    },
+    "I-3.3": {
+      "en": "Public Service Continuity Plan",
+      "fil": "Plano sa Pagpapatuloy ng Serbisyong Pampubliko",
+      "reference": ""
+    },
+    "I-3.4": {
+      "en": "Contingency Plan",
+      "fil": "Plano para sa mga Hindi Inaasahang Pangyayari",
+      "reference": ""
+    },
+    "I-4": {
+      "en": "Is the plan comprehensive? (Organizational Structure AND Response Protocols are present)",
+      "fil": "Komprehensibo ba ang plano? (mayroong Organizational Structure AT Response Protocols)",
+      "reference": ""
+    },
+    "I-5": {
+      "en": "Is the plan properly disseminated to office personnel?",
+      "fil": "Ang plano ba ay binahagi sa mga tauhan ng opisina?",
+      "reference": ""
+    },
+    "I-6": {
+      "en": "Is the plan updated and tested?",
+      "fil": "Na-update at naisasagawa ba ang plano?",
+      "reference": ""
+    },
+    "I-7": {
+      "en": "Are emergency evacuation plans posted on strategic and conspicuous locations in the building? (e.g., \"you are here\" markings, primary routes, etc)",
+      "fil": "Nakapaskil ba ang mga plano sa emergency evacuation sa mga estratehiko at kapansin-pansing lokasyon sa gusali? (hal., \"nandito ka\" na mga marka, pangunahing ruta, atbp)",
+      "reference": "Reference: RA 9514, IRR, Sec. 10.2.5.13 Emergency Evacuation Plan"
+    },
+    "I-8": {
+      "en": "Are there hotlines for emergencies displayed near the office telephones?",
+      "fil": "Makikita ba ang mga emergency hotlines malapit sa mga telepono ng opisina?",
+      "reference": ""
+    },
+    "I-9": {
+      "en": "Does your unit have an open space or an alternative safe zone in case of an emergency?",
+      "fil": "Mayroon bang bakanteng espasyo o alternatibong ligtas na lugar na maaaring puntahan kung may insidente?",
+      "reference": ""
+    },
+    "II-1": {
+      "en": "Are exterior walls and trim in good repair?",
+      "fil": "Ang mga panlabas na pader at trim ay maayos ang pagkumpuni?",
+      "reference": ""
+    },
+    "II-2": {
+      "en": "Are drainages properly secured, covered, and free of debris?",
+      "fil": "Ang mga drainage ba ay maayos na na-secure, may takip, at walang mga debris?",
+      "reference": ""
+    },
+    "II-3": {
+      "en": "Are outdoor floorings slippery/accident-prone (e.g., presence of moss) during the rainy season?",
+      "fil": "Ang sahig sa labas ba ay madulas/madaling maaksidente (hal., pagkakaroon ng lumot) sa panahon ng tag-ulan?",
+      "reference": ""
+    },
+    "II-4": {
+      "en": "Are light poles sturdy, secured, and properly anchored?",
+      "fil": "Ang mga poste ng ilaw ba ay matibay, ligtas, at maayos na nakaangkla?",
+      "reference": ""
+    },
+    "II-5": {
+      "en": "Are roofs in good repair?",
+      "fil": "Maayos ba ang pagkaayos ng mga bubong?",
+      "reference": ""
+    },
+    "II-6": {
+      "en": "Are propane tanks containing 125 to 500 gallons, 501 to 2000 gallons, or more than 2000 gallons near 10 feet, 25 feet, or 50 feet from any building?",
+      "fil": "Ang mga propane tanks ba na mayroong 125-500 gallons, 501-2000, at higit sa 2000 gallons ay malayo nang 10 talampakan, 25 talampakan, o 50 talampakan mula sa mga gusali?",
+      "reference": "Reference: West Virginia University Environmental Health and Safety. (n.d.). Propane Tank Safety. https://www.ehs.wvu.edu/files/d/e0551716-cd29-4fd5-9dd5-55d6d54d7036/propane-tank-safety.pdf"
+    },
+    "II-7": {
+      "en": "Are the branches of trees near the building and parking lot regularly maintained to prevent accidents?",
+      "fil": "Ang mga sanga ba ng puno na malapit sa gusali at parking lot ay madalas asikasuhin upang maiwasan ang aksidente?",
+      "reference": ""
+    },
+    "III-1": {
+      "en": "From the exterior of the building, are doors, windows, and other building openings secured? (i.e. Complete railings, doorframes in good repair)",
+      "fil": "Mula sa labas ng gusali, maayos at ligtas ba ang mga pinto, bintana, at iba pang mga bukasan? (i.e. complete railings, walang sira na doorframes)",
+      "reference": ""
+    },
+    "III-2": {
+      "en": "From inside the following areas, are the doors in proper working order? The door should be opened outwards.",
+      "fil": "Mula sa loob ng mga sumusunod na lugar, ang mga pinto ba ay nasa tamang kondisyon? Ang pinto ay dapat nabubuksan palabas.",
+      "reference": "References: Fire Code of the Philippines, Section 10.2.5.3; National Building Code of the Philippines, Chapter 12, Section 1207 (c) (1)"
+    },
+    "III-2.1": {
+      "en": "Bathrooms",
+      "fil": "Palikuran",
+      "reference": ""
+    },
+    "III-2.2": {
+      "en": "Offices",
+      "fil": "Opisina",
+      "reference": ""
+    },
+    "III-2.3": {
+      "en": "Classrooms/ Multi-purpose Rooms/ Libraries",
+      "fil": "Silid-aralan/ Ibang Silid/ Silid-aklatan",
+      "reference": ""
+    },
+    "III-2.4": {
+      "en": "Laboratories",
+      "fil": "Laboratoryo",
+      "reference": ""
+    },
+    "III-2.5": {
+      "en": "Athletic Facilities/ Gymnasium",
+      "fil": "Lugar-pampalakasan/ Gym",
+      "reference": ""
+    },
+    "III-2.6": {
+      "en": "Dormitories",
+      "fil": "Dormitoryo",
+      "reference": ""
+    },
+    "III-3": {
+      "en": "Is every room provided with a window or windows that open directly to a courtyard, public street or alley, or open water courses?",
+      "fil": "Ang bawat silid ba ay mayroong bintana o mga bintana na bumubukas sa isang patyo, pampublikong kalye o eskinita, o mga katawang tubig?",
+      "reference": "Reference: National Building Code of the Philippines, Chapter 8, Section 808 (a)"
+    },
+    "III-4": {
+      "en": "In the following areas, are the windows and shades in good repair and operating condition and free of cracks?",
+      "fil": "Sa mga sumusunod na lugar, ang mga bintana at kurtina ba ay nasa tamang kondisyon, maayos na nabubuksan at naisasara, at walang mga bitak?",
+      "reference": ""
+    },
+    "III-4.1": {
+      "en": "Corridors",
+      "fil": "Pasilyo",
+      "reference": ""
+    },
+    "III-4.2": {
+      "en": "Bathrooms",
+      "fil": "Palikuran",
+      "reference": ""
+    },
+    "III-4.3": {
+      "en": "Offices",
+      "fil": "Opisina",
+      "reference": ""
+    },
+    "III-4.4": {
+      "en": "Classrooms/ Multi-purpose Rooms/ Libraries",
+      "fil": "Silid-aralan/ Ibang Silid/ Silid-aklatan",
+      "reference": ""
+    },
+    "III-4.5": {
+      "en": "Laboratories",
+      "fil": "Laboratoryo",
+      "reference": ""
+    },
+    "III-4.6": {
+      "en": "Athletic Facilities/ Gymnasium",
+      "fil": "Lugar-pampalakasan/ Gym",
+      "reference": ""
+    },
+    "III-4.7": {
+      "en": "Dormitories",
+      "fil": "Dormitoryo",
+      "reference": ""
+    },
+    "IV-1": {
+      "en": "In the following areas, are light bulbs/ fluorescent lights securely mounted and working properly in good condition?",
+      "fil": "Sa mga sumusunod na lugar, ang mga bumbilya/ ilaw ba ay nakakabit nang maayos at gumagana nang maayos sa tamang kondisyon?",
+      "reference": ""
+    },
+    "IV-1.1": {
+      "en": "Building Exterior and Grounds",
+      "fil": "Labas at Paligid ng Gusali",
+      "reference": ""
+    },
+    "IV-1.2": {
+      "en": "Corridors",
+      "fil": "Pasilyo",
+      "reference": ""
+    },
+    "IV-1.3": {
+      "en": "Bathrooms",
+      "fil": "Palikuran",
+      "reference": ""
+    },
+    "IV-1.4": {
+      "en": "Offices",
+      "fil": "Opisina",
+      "reference": ""
+    },
+    "IV-1.5": {
+      "en": "Classrooms/ Multi-purpose Rooms/ Libraries",
+      "fil": "Silid-aralan/ Ibang Silid/ Silid-aklatan",
+      "reference": ""
+    },
+    "IV-1.6": {
+      "en": "Laboratories",
+      "fil": "Laboratoryo",
+      "reference": ""
+    },
+    "IV-1.7": {
+      "en": "Athletic Facilities/ Gymnasium",
+      "fil": "Lugar-pampalakasan/ Gym",
+      "reference": ""
+    },
+    "IV-1.8": {
+      "en": "Dormitories",
+      "fil": "Dormitoryo",
+      "reference": ""
+    },
+    "IV-2": {
+      "en": "In the following areas, are the electrical boxes, switches, wiring, and electrical outlets functional and are safely covered?",
+      "fil": "Sa mga sumusunod na lugar, ang mga electrical box, switch, kable, at saksakan ng kuryente ba ay gumagana at ligtas na nakatakip?",
+      "reference": ""
+    },
+    "IV-2.1": {
+      "en": "Corridors",
+      "fil": "Pasilyo",
+      "reference": ""
+    },
+    "IV-2.2": {
+      "en": "Bathrooms",
+      "fil": "Palikuran",
+      "reference": ""
+    },
+    "IV-2.3": {
+      "en": "Offices",
+      "fil": "Opisina",
+      "reference": ""
+    },
+    "IV-2.4": {
+      "en": "Classrooms/ Multi-purpose Rooms/ Libraries",
+      "fil": "Silid-aralan/ Ibang Silid/ Silid-aklatan",
+      "reference": ""
+    },
+    "IV-2.5": {
+      "en": "Laboratories",
+      "fil": "Laboratoryo",
+      "reference": ""
+    },
+    "IV-2.6": {
+      "en": "Athletic Facilities/ Gymnasium",
+      "fil": "Lugar-pampalakasan/ Gym",
+      "reference": ""
+    },
+    "IV-2.7": {
+      "en": "Dormitories",
+      "fil": "Dormitoryo",
+      "reference": ""
+    },
+    "IV-3": {
+      "en": "In the following areas, is the lighting adequate for all events at all times? (i.e. visible surroundings, not flickering)",
+      "fil": "Sa mga sumusunod na lugar, ang ilaw ba ay sapat para sa lahat ng kaganapan sa lahat ng pagkakataon? (nakikita ang paligid, hindi umaandap-andap o kumikislap)",
+      "reference": "Reference: Occupational Safety and Health Standards, Rule 1075 Illumination"
+    },
+    "IV-3.1": {
+      "en": "Corridors",
+      "fil": "Pasilyo",
+      "reference": ""
+    },
+    "IV-3.2": {
+      "en": "Bathrooms",
+      "fil": "Palikuran",
+      "reference": ""
+    },
+    "IV-3.3": {
+      "en": "Offices",
+      "fil": "Opisina",
+      "reference": ""
+    },
+    "IV-3.4": {
+      "en": "Classrooms/ Multi-purpose Rooms/ Libraries",
+      "fil": "Silid-aralan/ Ibang Silid/ Silid-aklatan",
+      "reference": ""
+    },
+    "IV-3.5": {
+      "en": "Laboratories",
+      "fil": "Laboratoryo",
+      "reference": ""
+    },
+    "IV-3.6": {
+      "en": "Athletic Facilities/ Gymnasium",
+      "fil": "Lugar-pampalakasan/ Gym",
+      "reference": ""
+    },
+    "IV-3.7": {
+      "en": "Dormitories",
+      "fil": "Dormitoryo",
+      "reference": ""
+    },
+    "V-1": {
+      "en": "Are fire drill escape plan signs provided and up to date?",
+      "fil": "Mayroon at wasto ba ang mga fire drill escape plan signs?",
+      "reference": ""
+    },
+    "V-2": {
+      "en": "Are fire evacuation plans posted on strategic and conspicuous locations in the building?",
+      "fil": "Nakapaskil ba ang mga plano sa fire evacuation sa mga estratehiko at kapansin-pansing lokasyon sa gusali?",
+      "reference": ""
+    },
+    "V-3": {
+      "en": "Can the fire department unobstructedly enter the building?",
+      "fil": "Kaya ba ng mga bumbero pumasok ng gusali nang hindi nasasagabal?",
+      "reference": ""
+    },
+    "V-4": {
+      "en": "Are all fire alarms functional and audible in all areas?",
+      "fil": "Ang lahat ba ng alarma sa sunog ay gumagana at naririnig sa lahat ng lugar?",
+      "reference": "Reference: Fire Code of the Philippines Sections 10.2.8.8, 10.2.9.5, 10.2.14.3"
+    },
+    "V-5": {
+      "en": "In the following areas, are fire extinguishers located in readily accessible positions? (Unobstructed access)",
+      "fil": "Sa mga sumusunod na lugar, matatagpuan ba ang mga fire extinguisher sa mga lokasyon na madaling maabot? (Hindi nasasagabal)",
+      "reference": "Reference: Fire Code of the Philippines, Section 10.2.6.9"
+    },
+    "V-5.1": {
+      "en": "Corridors",
+      "fil": "Pasilyo",
+      "reference": ""
+    },
+    "V-5.2": {
+      "en": "Bathrooms",
+      "fil": "Palikuran",
+      "reference": ""
+    },
+    "V-5.3": {
+      "en": "Offices",
+      "fil": "Opisina",
+      "reference": ""
+    },
+    "V-5.4": {
+      "en": "Classrooms/ Multi-purpose Rooms/ Libraries",
+      "fil": "Silid-aralan/ Ibang Silid/ Silid-aklatan",
+      "reference": ""
+    },
+    "V-5.5": {
+      "en": "Laboratories",
+      "fil": "Laboratoryo",
+      "reference": ""
+    },
+    "V-5.6": {
+      "en": "Athletic Facilities/ Gymnasium",
+      "fil": "Lugar-pampalakasan/ Gym",
+      "reference": ""
+    },
+    "V-5.7": {
+      "en": "Dormitories",
+      "fil": "Dormitoryo",
+      "reference": ""
+    },
+    "V-6": {
+      "en": "In the following areas, in buildings with 3 or more floors, are there sprinklers present?",
+      "fil": "Sa mga sumusunod na lugar, sa mga gusali na may 3 o higit na lapag, mayroon bang mga sprinkler?",
+      "reference": ""
+    },
+    "V-6.1": {
+      "en": "Corridors",
+      "fil": "Pasilyo",
+      "reference": ""
+    },
+    "V-6.2": {
+      "en": "Bathrooms",
+      "fil": "Palikuran",
+      "reference": ""
+    },
+    "V-6.3": {
+      "en": "Offices",
+      "fil": "Opisina",
+      "reference": ""
+    },
+    "V-6.4": {
+      "en": "Classrooms/ Multi-purpose Rooms/ Libraries",
+      "fil": "Silid-aralan/ Ibang Silid/ Silid-aklatan",
+      "reference": ""
+    },
+    "V-6.5": {
+      "en": "Laboratories",
+      "fil": "Laboratoryo",
+      "reference": ""
+    },
+    "V-6.6": {
+      "en": "Athletic Facilities/ Gymnasium",
+      "fil": "Lugar-pampalakasan/ Gym",
+      "reference": ""
+    },
+    "V-6.7": {
+      "en": "Dormitories",
+      "fil": "Dormitoryo",
+      "reference": ""
+    },
+    "V-7": {
+      "en": "In the following areas, are there smoke detectors and alarms present and functional?",
+      "fil": "Sa mga sumusunod na lugar, mayroon at gumagana bang mga detectors at alarms para sa usok?",
+      "reference": ""
+    },
+    "V-7.1": {
+      "en": "Corridors",
+      "fil": "Pasilyo",
+      "reference": ""
+    },
+    "V-7.2": {
+      "en": "Bathrooms",
+      "fil": "Palikuran",
+      "reference": ""
+    },
+    "V-7.3": {
+      "en": "Offices",
+      "fil": "Opisina",
+      "reference": ""
+    },
+    "V-7.4": {
+      "en": "Classrooms/ Multi-purpose Rooms/ Libraries",
+      "fil": "Silid-aralan/ Ibang Silid/ Silid-aklatan",
+      "reference": ""
+    },
+    "V-7.5": {
+      "en": "Laboratories",
+      "fil": "Laboratoryo",
+      "reference": ""
+    },
+    "V-7.6": {
+      "en": "Athletic Facilities/ Gymnasium",
+      "fil": "Lugar-pampalakasan/ Gym",
+      "reference": ""
+    },
+    "V-7.7": {
+      "en": "Dormitories",
+      "fil": "Dormitoryo",
+      "reference": ""
+    },
+    "VI-1": {
+      "en": "In the following areas, do the walls have visible and distinct cracks? If yes, please consult structural professionals for further assessment.",
+      "fil": "Mayroon bang nakikitang mga kakaibang bitak sa mga pader? Kung mayroon, mangyaring sumangguni sa mga propesyonal sa istruktura para sa karagdagang pagsusuri.",
+      "reference": ""
+    },
+    "VI-1.1": {
+      "en": "Corridors",
+      "fil": "Pasilyo",
+      "reference": ""
+    },
+    "VI-1.2": {
+      "en": "Bathrooms",
+      "fil": "Palikuran",
+      "reference": ""
+    },
+    "VI-1.3": {
+      "en": "Offices",
+      "fil": "Opisina",
+      "reference": ""
+    },
+    "VI-1.4": {
+      "en": "Classrooms/ Multi-purpose Rooms/ Libraries",
+      "fil": "Silid-aralan/ Ibang Silid/ Silid-aklatan",
+      "reference": ""
+    },
+    "VI-1.5": {
+      "en": "Laboratories",
+      "fil": "Laboratoryo",
+      "reference": ""
+    },
+    "VI-1.6": {
+      "en": "Athletic Facilities/ Gymnasium",
+      "fil": "Lugar-pampalakasan/ Gym",
+      "reference": ""
+    },
+    "VI-1.7": {
+      "en": "Dormitories",
+      "fil": "Dormitoryo",
+      "reference": ""
+    },
+    "VI-2": {
+      "en": "In the following areas, are walls in good condition with no signs of water leakage (e.g., water stains, discoloration, peeling, or bubbling paint)?",
+      "fil": "Sa mga sumusunod na lugar, ang mga pader ba ay nasa mabuting kondisyon at walang bakas ng pagtagas ng tubig (hal., mantsa ng tubig, kakaibang kulay, pagbabalat o bumubulwak na pintura)?",
+      "reference": ""
+    },
+    "VI-2.1": {
+      "en": "Corridors",
+      "fil": "Pasilyo",
+      "reference": ""
+    },
+    "VI-2.2": {
+      "en": "Bathrooms",
+      "fil": "Palikuran",
+      "reference": ""
+    },
+    "VI-2.3": {
+      "en": "Offices",
+      "fil": "Opisina",
+      "reference": ""
+    },
+    "VI-2.4": {
+      "en": "Classrooms/ Multi-purpose Rooms/ Libraries",
+      "fil": "Silid-aralan/ Ibang Silid/ Silid-aklatan",
+      "reference": ""
+    },
+    "VI-2.5": {
+      "en": "Laboratories",
+      "fil": "Laboratoryo",
+      "reference": ""
+    },
+    "VI-2.6": {
+      "en": "Athletic Facilities/ Gymnasium",
+      "fil": "Lugar-pampalakasan/ Gym",
+      "reference": ""
+    },
+    "VI-2.7": {
+      "en": "Dormitories",
+      "fil": "Dormitoryo",
+      "reference": ""
+    },
+    "VI-3": {
+      "en": "Are \"WARNING\" signs placed around wet floor areas? Note: If there are no wet floor areas during observation, ask the accompanying personnel regarding the procedure",
+      "fil": "Nakalagay ba ang mga \"BABALA\" na karatula sa paligid ng mga basang lugar sa sahig? Note: Kung walang ma obserbahan na basa, itanong sa kasamang personnel tungkol sa procedure",
+      "reference": "Reference: Occupational Safety and Health Standards, Rule 1060 Premises of Establishments"
+    },
+    "VI-4": {
+      "en": "Are all floor coverings (e.g., rugs, mats, etc.) firmly attached and do they have non-slip surfaces?",
+      "fil": "Ang lahat ba ng mga panakip sa sahig (hal., mga alpombra, pamunas, atbp.) ay mahigpit na nakakabit at mayroon ba silang mga hindi madulas na ibabaw?",
+      "reference": "Reference: Occupational Safety and Health Standards, Rule 1063.02 Slipping Hazards"
+    },
+    "VI-5": {
+      "en": "Are all floor surfaces free of obstruction or hazards to traffic flow? (e.g., broken stair edges, objects left on the surface, chipped concrete, missing floor tiles, etc.)",
+      "fil": "Ang sahig ay walang sagabal o mga panganib (hal., sirang mga gilid ng hagdan, mga bagay na naiwan sa ibabaw, mga chipped concrete, nawawalang mga tile sa sahig, atbp.)",
+      "reference": "Reference: Occupational Safety and Health Standards, Rule 1063.01 Stumbling Hazards"
+    },
+    "VI-6": {
+      "en": "Are tripping hazards eliminated? (e.g., absence of electrical cords on floors, etc.)",
+      "fil": "Tinatanggal ba ang mga panganib na maaring matalapid? (hal., mga kable ng kuryente sa sahig, atbp.)",
+      "reference": "Reference: Occupational Safety and Health Standards, Rule 1063.01 Stumbling Hazards"
+    },
+    "VI-7": {
+      "en": "In the following areas, are floor surfaces in good repair? (e.g. no broken tiles, complete covering)",
+      "fil": "Sa mga sumusunod na lugar, ang mga sahig ba ay maayos ang pagkakakumpuni? (e.g. no broken tiles, complete covering)",
+      "reference": ""
+    },
+    "VI-7.1": {
+      "en": "Corridors",
+      "fil": "Pasilyo",
+      "reference": ""
+    },
+    "VI-7.2": {
+      "en": "Bathrooms",
+      "fil": "Palikuran",
+      "reference": ""
+    },
+    "VI-7.3": {
+      "en": "Offices",
+      "fil": "Opisina",
+      "reference": ""
+    },
+    "VI-7.4": {
+      "en": "Classrooms/ Multi-purpose Rooms/ Libraries",
+      "fil": "Silid-aralan/ Ibang Silid/ Silid-aklatan",
+      "reference": ""
+    },
+    "VI-7.5": {
+      "en": "Laboratories",
+      "fil": "Laboratoryo",
+      "reference": ""
+    },
+    "VI-7.6": {
+      "en": "Athletic Facilities/ Gymnasium",
+      "fil": "Lugar-pampalakasan/ Gym",
+      "reference": ""
+    },
+    "VI-7.7": {
+      "en": "Dormitories",
+      "fil": "Dormitoryo",
+      "reference": ""
+    },
+    "VI-8": {
+      "en": "In the following areas, are ceiling panels or plaster in good condition with no signs of water leakage (e.g., water stains, discoloration, peeling, or bubbling paint)?",
+      "fil": "Sa mga sumusunod na lugar mga ceiling panels o plaster ba ay nasa mabuting kondisyon at walang bakas ng pagtagas ng tubig (hal., mantsa ng tubig, kakaibang kulay, pagbabalat o bumubulwak na pintura)?",
+      "reference": ""
+    },
+    "VI-8.1": {
+      "en": "Corridors",
+      "fil": "Pasilyo",
+      "reference": ""
+    },
+    "VI-8.2": {
+      "en": "Bathrooms",
+      "fil": "Palikuran",
+      "reference": ""
+    },
+    "VI-8.3": {
+      "en": "Offices",
+      "fil": "Opisina",
+      "reference": ""
+    },
+    "VI-8.4": {
+      "en": "Classrooms/ Multi-purpose Rooms/ Libraries",
+      "fil": "Silid-aralan/ Ibang Silid/ Silid-aklatan",
+      "reference": ""
+    },
+    "VI-8.5": {
+      "en": "Laboratories",
+      "fil": "Laboratoryo",
+      "reference": ""
+    },
+    "VI-8.6": {
+      "en": "Athletic Facilities/ Gymnasium",
+      "fil": "Lugar-pampalakasan/ Gym",
+      "reference": ""
+    },
+    "VI-8.7": {
+      "en": "Dormitories",
+      "fil": "Dormitoryo",
+      "reference": ""
+    },
+    "VI-9": {
+      "en": "Are there signs of molds on walls and ceilings?",
+      "fil": "Mayroon bang bakas ng amag sa mga pader at kisame?",
+      "reference": ""
+    },
+    "VII-1": {
+      "en": "Are all handrails in good repair and provided?",
+      "fil": "Mayroon ba at maayos ang mga handrails?",
+      "reference": "Reference: National Building Code of the Philippines, Section 1207 (e) (8); Occupational Safety and Health Standards, Rule 1065.07 Railings"
+    },
+    "VII-2": {
+      "en": "Are tiles or plaster in proper repair?",
+      "fil": "Maayos ba ang mga tile o plaster?",
+      "reference": ""
+    },
+    "VII-3": {
+      "en": "Are emergency lights and exit signs in good working order?",
+      "fil": "Nasa maayos na kondisyon ba ang mga ilaw na pang-emergency at exit signs?",
+      "reference": "Reference: Occupational Safety and Health Standards, Rule 1075.06 Emergency Lighting"
+    },
+    "VII-4": {
+      "en": "Are landings kept free of obstructions that may cause accidents?",
+      "fil": "Wala bang mga nakaharang sa mga palapag na maaaring magdulot ng aksidente?",
+      "reference": "Reference: Occupational Safety and Health Standards, Rule 1063.01 Stumbling Hazards, Rule 1063.02 Slipping Hazards, Rule 1065 Stairs"
+    },
+    "VII-5": {
+      "en": "Are the stair treads made of non-skid material?",
+      "fil": "Gawa ba ang mga hagdanan sa iwas-dulas na materyales?",
+      "reference": "Reference: Occupational Safety and Health Standards, Rule 1063.02 Slipping Hazards"
+    },
+    "VII-6": {
+      "en": "Are the stair treads in good repair and have no damages?",
+      "fil": "Maayos ba ang mga hagdanan at walang mga sira?",
+      "reference": ""
+    },
+    "VII-7": {
+      "en": "Are stair treads and edges properly anchored?",
+      "fil": "Maayos ba na nakaangkla ba ang mga tapakan at gilid ng mga hagdanan?",
+      "reference": "Reference: Occupational Safety and Health Standards, Rule 1063.02 Slipping Hazards"
+    },
+    "VIII-1": {
+      "en": "Are \"EXIT\" signs green in color and illuminated and maintained as required?",
+      "fil": "Ang mga “EXIT” sign ba ay berde/luntian ang kulay at umiilaw at pinapanatili?",
+      "reference": "Reference: Fire Code of the Philippines, Section 10.2.5.12; Occupational Safety and Health Standards, Rule 1060 Premises of Establishments"
+    },
+    "VIII-2": {
+      "en": "Are emergency exits located in the building?",
+      "fil": "Mayroon bang mga emergency exists sa gusali?",
+      "reference": "Reference: Fire Code of the Philippines, Section 10.2.5.12 Exit Marking"
+    },
+    "VIII-3": {
+      "en": "Are all emergency exits clearly labeled and free from all obstructions?",
+      "fil": "Ang mga emergency exit ba ay mayroong malinaw na label at walang mga nakaharang?",
+      "reference": ""
+    },
+    "VIII-4": {
+      "en": "Are directions for exiting the buildings in case of an emergency posted by the exits in each building?",
+      "fil": "Ang bawat gusali ba ay mayroong mga direksyon para sa paglikas ng gusali papunta sa mga labasan?",
+      "reference": "Reference: Fire Code of the Philippines, Section 10.2.5.12 Exit Marking"
+    },
+    "VIII-5": {
+      "en": "Are emergency exits kept unlocked at all times? The exit door shall be openable from the inside without the use of a key or any special knowledge or effort.",
+      "fil": "Ang mga emergency exit ba ay palaging hindi nakakandado? Ang pinto palabas ay dapat na nabubuksan mula sa loob kahit walang susi o kahit anong kaalaman o pagsisikap.",
+      "reference": "Reference: National Building Code of the Philippines, Chapter 12, Section 1207 (c) (2)"
+    },
+    "VIII-6": {
+      "en": "Are emergency lights in proper working order?",
+      "fil": "Ang mga emergency light ba ay wastong gumagana?",
+      "reference": "Reference: Fire Code of the Philippines, Section 10.2.5.11 Illumination of Means of Egress; Occupational Safety and Health Standards, Rule 1075.06 Emergency Lighting"
+    },
+    "VIII-7": {
+      "en": "Are necessary furniture (e.g., student lockers) in good repair and have no sharp edges to users or passersby?",
+      "fil": "Ang mga kinakailangang kasangkapan (hal., mga locker ng mag-aaral) ay nasa maayos na pagkukumpuni at walang matatalim na gilid sa mga gumagamit o dumadaan?",
+      "reference": ""
+    },
+    "VIII-8": {
+      "en": "Are the corridors free of unnecessary obstructions? There should be enough space for the passage of people.",
+      "fil": "Ang mga pasilyo ba ay walang mga nakaharang? Dapat ay mayroong sapat na espasyo para makadaan ang mga tao.",
+      "reference": "Reference: National Building Code of the Philippines, Section 1207 (d) (1)"
+    },
+    "IX-1": {
+      "en": "Are there available sinks or facilities for cleaning and/or washing hands?",
+      "fil": "Mayroon bang mga lababo o pasilidad para makapaglinis o makapghugas ng kamay?",
+      "reference": ""
+    },
+    "IX-2": {
+      "en": "Are the mirrors free of cracks?",
+      "fil": "Wala bang sira ang mga salamin?",
+      "reference": ""
+    },
+    "IX-3": {
+      "en": "Are the mirrors properly anchored?",
+      "fil": "Naka-angkla ba nang maayos ang mga salamin?",
+      "reference": ""
+    },
+    "IX-4": {
+      "en": "Are stalls and doors (knobs, hinges, locks, etc.) in proper working order?",
+      "fil": "Maayos ba ang mga kuwadra at pintuan (hawakan ng pinto, bisagra, kandado, atbp.)?",
+      "reference": ""
+    },
+    "IX-5": {
+      "en": "Are toilet seats in good condition, free of cracks and splits?",
+      "fil": "Maayos ba ang mga upuan sa banyo, walang bitak or sira?",
+      "reference": ""
+    },
+    "IX-6": {
+      "en": "Are unused fixture drains sealed or capped?",
+      "fil": "Selyado ba o nilagyan ng takip ang mga hindi ginagamit na fixture drains?",
+      "reference": ""
+    },
+    "IX-7": {
+      "en": "Are chemicals or cleaning materials properly labeled and stored, not exposed?",
+      "fil": "Ang mga kemikal o panlinis ba ay maayos na may label at nakatago, hindi nakalantad?",
+      "reference": ""
+    },
+    "X-1": {
+      "en": "Are all areas kept clean, orderly, and sanitary?",
+      "fil": "Lahat ba ng mga lugar ay malinis, maayos, at walang dumi?",
+      "reference": ""
+    },
+    "X-2": {
+      "en": "Are all new or used spray bottles with cleaning chemicals properly labeled?",
+      "fil": "Mayroon bang label (etiketa) ang mga bago o gamit na spray bottle na mayroong kemikal?",
+      "reference": ""
+    },
+    "X-3": {
+      "en": "Are new and used cleaning materials stored properly and securely?",
+      "fil": "Maayos bang nakatago ang mga bago o nagamit na kagamitang panlinis?",
+      "reference": ""
+    },
+    "XI-1": {
+      "en": "Are shelves bolted to the wall?",
+      "fil": "Nakakabit ba nang maayos ang mga estante sa pader?",
+      "reference": ""
+    },
+    "XI-2": {
+      "en": "Are overhead shelves properly loaded? (e.g. Heavy objects should always be loaded at floor level. Chemicals should never be loaded at eye level.)",
+      "fil": "Maayos ba ang bigat na nilalagay sa mga estante (e.g. Ang mga mabibigat na gamit ay nasa pinakamababang palapag. Ang mga kemikal ay wala sa lebel ng mata.)",
+      "reference": ""
+    },
+    "XI-3": {
+      "en": "Are desks, chairs, and tables in good repair?",
+      "fil": "Ang mga mesa, silya, at lamesa ba ay nasa maayos na kondisyon?",
+      "reference": ""
+    },
+    "XI-4": {
+      "en": "Are potential hazards eliminated? (e.g. uncovered extension cords across aisles, improperly grounded electrical equipment, Venetian blinds in poor repair, etc.)",
+      "fil": "Tinatanggal ba ang mga potensyal na panganib? (e.g. mga nakalantad na extension cord sa pasilyo, maling paggamit ng de-kuryenteng kagamitan, mga hindi maayos na Venetian blinds)",
+      "reference": ""
+    },
+    "XI-5": {
+      "en": "Is there adequate space provided for a quick evacuation of employees? (Unobstructed aisles)",
+      "fil": "Mayroong bang sapat na espasyo para sa paglikas ng mga empleyado? (Walang harang)",
+      "reference": ""
+    },
+    "XII-1": {
+      "en": "Are aquariums and stands properly secured and anchored?",
+      "fil": "Ang mga akwaryum at mga patungan ba nito ay maayos na nakakabit at nakaangkla?",
+      "reference": ""
+    },
+    "XII-2": {
+      "en": "Are bookcases securely fastened to the wall or floor?",
+      "fil": "Ang mga estante ng libro ba ay ligtas na nakakabit sa dingding o sahig?",
+      "reference": ""
+    },
+    "XII-3": {
+      "en": "Are desks, chairs, and tables in good repair?",
+      "fil": "Ang mga mesa, silya, at lamesa ba ay nasa maayos na kondisyon?",
+      "reference": ""
+    },
+    "XII-4": {
+      "en": "Are overhead shelves properly loaded? (e.g. Heavy objects should always be loaded at floor level. Chemicals should never be loaded at eye level.)",
+      "fil": "Ang mga overhead shelves ba ay maayos na nakaayos? (halimbawa, ang mga mabibigat na bagay ay dapat laging nakaayos sa antas ng sahig. Ang mga kemikal ay hindi dapat nakaayos sa antas ng mata.)",
+      "reference": ""
+    },
+    "XII-5": {
+      "en": "Are potential hazards eliminated? (e.g., uncovered extension cords across aisles, improperly grounded electrical equipment, Venetian blinds in poor repair, etc.)",
+      "fil": "Ang mga potensyal na panganib ba ay naalis? (halimbawa, hindi nakatakip na mga extension cord sa mga pasilyo, hindi maayos na grounded na mga kagamitan sa kuryente, mga Venetian blinds na sira, atbp.)",
+      "reference": ""
+    },
+    "XII-6": {
+      "en": "Are shelves bolted to the wall?",
+      "fil": "Ang mga estante ba ay naka-akla sa dingding?",
+      "reference": ""
+    },
+    "XII-7": {
+      "en": "Are televisions, projectors, and others anchored to carts to prevent accidents?",
+      "fil": "Ang mga telebisyon, projector, at iba pa ba ay naka-angkla sa mga cart upang maiwasan ang aksidente?",
+      "reference": ""
+    },
+    "XII-8": {
+      "en": "Are blackboards, whiteboards, and wall-mounted projection screens in proper working order and properly secured to the wall?",
+      "fil": "Ang mga pisara, whiteboards, at mga wall-mounted projection screens ba ay nasa maayos na kondisyon at ligtas na nakakabit sa dingding?",
+      "reference": ""
+    },
+    "XII-9": {
+      "en": "Is adequate aisle space provided such that a quick exit of students/employees is possible?",
+      "fil": "May sapat bang espasyo sa pasilyo upang mabilis na makalabas ang mga estudyante/empleyado?",
+      "reference": ""
+    },
+    "XIII-1": {
+      "en": "Are all biological hazards identified, labeled, stored, and disposed of according to standard?",
+      "fil": "Ang lahat ba ng mga biological hazard ay natukoy, may label, nakaimbak, at itinatapon ayon sa pamantayan?",
+      "reference": "Reference: Occupational Safety and Health Standards, Rule 1090 Hazardous Materials"
+    },
+    "XIII-2": {
+      "en": "Are all original containers of chemicals properly labeled, indicating all the hazards of that chemical as well as stating any potential hazard and precautions to be taken, including protective equipment, when necessary, to be used while handling that chemical?",
+      "fil": "Ang lahat ba ng orihinal na lalagyan ng mga kemikal ay may tamang label, na nagpapahiwatig ng lahat ng panganib ng kemikal pati na rin ang anumang potensyal na panganib at mga pag-iingat na dapat gawin, kabilang ang mga proteksiyon na kagamitan, kung kinakailangan, habang hinahawakan ang kemikal na iyon?",
+      "reference": "Reference: Occupational Safety and Health Standards, Rule 1093.04 Marking of Containers"
+    },
+    "XIII-3": {
+      "en": "Are appropriate chemical spill clean-up kits available (brooms, pillows, absorbents) in the storage room and/or laboratory?",
+      "fil": "Mayroon bang angkop na mga kit para sa paglilinis ng mga natapong kemikal (walis, unan, absorbent) sa imbakan at/o laboratoryo?",
+      "reference": "Reference: Occupational Safety and Health Standards, Rule 1093.08 Cleaning"
+    },
+    "XIII-4": {
+      "en": "Are chemical fume hoods in proper working order?",
+      "fil": "Ang mga chemical fume hood ba ay nasa maayos na kondisyon?",
+      "reference": ""
+    },
+    "XIII-5": {
+      "en": "Are chemicals stored according to their chemical properties? Those chemicals having hazardous properties must be stored in special protective cabinets. Incompatible chemicals should be stored separately.",
+      "fil": "Ang mga kemikal ba ay nakaimbak ayon sa kanilang mga katangian? Ang mga kemikal na may mapanganib na katangian ay dapat nakaimbak sa mga espesyal na proteksiyon na kabinet. Ang mga hindi magkatugmang kemikal ay dapat nakaimbak nang hiwalay.",
+      "reference": ""
+    },
+    "XIII-6": {
+      "en": "Are emergency gas valves properly labeled and in good working order?",
+      "fil": "Ang mga emergency gas valve ba ay may tamang label at nasa maayos na kondisyon?",
+      "reference": ""
+    },
+    "XIII-7": {
+      "en": "Are fire blankets provided in laboratories in working order?",
+      "fil": "Mayroon bang mga kumot na pang-apoy sa mga laboratoryo na nasa maayos na kondisyon?",
+      "reference": ""
+    },
+    "XIII-8": {
+      "en": "Are first aid materials kept in adequate supply and readily available?",
+      "fil": "Ang mga first aid ba ay maysapat na suplay at madaling makuha?",
+      "reference": ""
+    },
+    "XIII-9": {
+      "en": "Are heavy items stored on lower shelves?",
+      "fil": "Ang mga mabibigat na bagay ba ay nakaimbak sa mas mababang estante?",
+      "reference": ""
+    },
+    "XIII-10": {
+      "en": "Are shelves securely fastened to the wall?",
+      "fil": "Ang mga estante ba ay ligtas na nakakabit sa dingding?",
+      "reference": ""
+    },
+    "XIII-11": {
+      "en": "Is all electrical equipment properly grounded?",
+      "fil": "Ang lahat ba ng kagamitang elektrikal ay may tamang ground?",
+      "reference": ""
+    },
+    "XIII-12": {
+      "en": "Is emergency eye wash and shower equipment readily available for each laboratory and checked periodically to ensure that they are in operational condition?",
+      "fil": "Ang emergency eye wash at shower equipment ba ay madaling makuha sa bawat laboratoryo at regular na sinusuri upang matiyak na sila ay gumagana?",
+      "reference": ""
+    },
+    "XIII-13": {
+      "en": "Is there an easily accessible approved wall-mounted fire extinguisher available in the laboratory/storage area?",
+      "fil": "Mayroon bang madaling maabot na aprubadong wall-mounted fire extinguisher sa laboratoryo/imbakan?",
+      "reference": ""
+    },
+    "XIII-14": {
+      "en": "Do all the chemicals inside the laboratory each have a Material Data Safety Sheet (MSDS)?",
+      "fil": "Ang bawat kemikal ba sa loob ng laboratoryo ay may MSDS (Material Safety Data Sheet)?",
+      "reference": ""
+    },
+    "XIII-15": {
+      "en": "Are there established protocols for disposing of chemicals?",
+      "fil": "Mayroon bang itinatag na mga pamantayan sa pagtatapon ng mga kemikal?",
+      "reference": ""
+    },
+    "XIII-16": {
+      "en": "Are there proper security protocols for the usage of chemicals?",
+      "fil": "Mayroon bang maayos na pamantayan para seguridad ng paggamit ng mga kemikal?",
+      "reference": ""
+    },
+    "XIV-1": {
+      "en": "Are all hooks and rings closed tightly?",
+      "fil": "Ang lahat ba ng mga kawit at singsing ay mahigpit na nakasara?",
+      "reference": ""
+    },
+    "XIV-2": {
+      "en": "Are all moving parts oiled and moving smoothly?",
+      "fil": "Ang lahat ba ng gumagalaw na bahagi ay may langis at gumagalaw nang maayos?",
+      "reference": ""
+    },
+    "XIV-3": {
+      "en": "Are all sharp, protruding edges or broken parts eliminated? Are all screws and bolts tight?",
+      "fil": "Ang lahat ba ng matutulis na bahagi o sirang bahagi ay naalis na? Ang lahat ba ng mga turnilyo at bolt ay mahigpit na nakakabit?",
+      "reference": ""
+    },
+    "XIV-4": {
+      "en": "Are fences free of sharp edges, holes, or other damage?",
+      "fil": "Ang mga bakod ba ay walang matutulis na gilid, butas, o ibang pinsala?",
+      "reference": ""
+    },
+    "XIV-5": {
+      "en": "Are garbage/debris containers covered and placed away from the playground area to adequately contain the contents?",
+      "fil": "Ang mga basurahan ba ay may takip at nakalagay malayo sa lugar ng palaruan upang maayos na mapanatili ang laman nito?",
+      "reference": ""
+    },
+    "XIV-6": {
+      "en": "Are hazardous branches removed from the playground area? (i.e. branches that are above high-density areas)",
+      "fil": "Ang mga mababang sanga ng puno ba ay tinanggal mula sa lugar ng palaruan?",
+      "reference": ""
+    },
+    "XIV-7": {
+      "en": "Are play areas free of surface irregularities such as holes and sprinkler heads?",
+      "fil": "Ang mga lugar ng laro ba ay walang mga irregularidad sa ibabaw tulad ng mga butas at sprinkler heads?",
+      "reference": ""
+    },
+    "XIV-8": {
+      "en": "Are playground areas provided with continuous supervision during school hours and a reasonable period before and after school?",
+      "fil": "Ang mga palaruan ba ay may tuloy-tuloy na pagbabantay sa oras ng klase at isang makatwirang panahon bago at pagkatapos ng klase?",
+      "reference": ""
+    },
+    "XIV-9": {
+      "en": "Are playground paved surfaces free of loose gravel and debris?",
+      "fil": "Ang mga aspaltadong ibabaw ng palaruan ba ay walang mga maluwag na graba at basura?",
+      "reference": ""
+    },
+    "XIV-10": {
+      "en": "Are playground surfaces free of excess water buildup?",
+      "fil": "Ang mga ibabaw ng palaruan ba ay walang sobrang tubig na naiipon?",
+      "reference": ""
+    },
+    "XIV-11": {
+      "en": "Are all equipment anchored firmly? Are footings below ground surface and not exposed?",
+      "fil": "Ang lahat ba ng kagamitan ay matibay na naka-angkla? Ang mga pundasyon ba ay nasa ilalim ng ibabaw ng lupa at hindi nakalantad?",
+      "reference": ""
+    },
+    "XIV-12": {
+      "en": "Is all playground equipment inspected regularly and in good condition (e.g., no rust)?",
+      "fil": "Ang lahat ba ng kagamitan sa palaruan ay regular na sinusuri at nasa mabuting kondisyon (hal., walang kalawang)?",
+      "reference": ""
+    },
+    "XIV-13": {
+      "en": "Is the playground area free of hazardous debris such as broken glass?",
+      "fil": "Ang lugar ba ng palaruan ay walang mapanganib na basura tulad ng basag na salamin?",
+      "reference": ""
+    },
+    "XV-1": {
+      "en": "Are the bleachers in good condition and structurally adequate, both indoors and outdoors? Loose bolts, nuts or rusted parts, splintered boards, damaged railings, etc. are typical items to periodically check.",
+      "fil": "Ang mga bleachers ba ay nasa maayos na kondisyon at sapat ang istruktura, kapwa sa loob at labas? Ang maluwag na mga bolt, nuts o kalawangin na bahagi, nasirang mga tabla, nasirang mga railings, atbp. ay mga tipikal na bagay na dapat suriin nang pana-panahon.",
+      "reference": ""
+    },
+    "XV-2": {
+      "en": "Are the conditions of the playing fields satisfactory, e.g., no holes, rocks, glass, etc.?",
+      "fil": "Ang kalagayan ba ng mga palaruan ay kaaya-aya, halimbawa, walang mga butas, bato, salamin, atbp.?",
+      "reference": ""
+    },
+    "XV-3": {
+      "en": "Are athletic equipment properly stored?",
+      "fil": "Ang mga kagamitang pang-atletiko ba ay maayos na nakatago?",
+      "reference": ""
+    },
+    "XV-4": {
+      "en": "Are the gymnasium equipment in good condition?",
+      "fil": "Ang mga kagamitang sa gym ba ay nasa maayos na kondisyon?",
+      "reference": ""
+    },
+    "XV-5": {
+      "en": "Are lighting adequate for all events occurring in the gymnasium?",
+      "fil": "Ang ilaw ba ay sapat para sa lahat ng mga kaganapan sa gym?",
+      "reference": ""
+    },
+    "XVI-1": {
+      "en": "Are proper safeguards in place to ensure the pool is not used at all times when it is unsupervised?",
+      "fil": "Mayroon bang tamang mga pag-iingat upang matiyak na ang pool ay hindi nagagamit kapag ito ay walang bantay?",
+      "reference": ""
+    },
+    "XVI-2": {
+      "en": "Is there an assigned lifeguard on duty when the pool is open for use?",
+      "fil": "Mayroon bang nakatalagang lifeguard na naka-duty kapag bukas ang palanguyan?",
+      "reference": ""
+    },
+    "XVI-3": {
+      "en": "Are swimming pool rules and warning signs properly posted?",
+      "fil": "Ang mga patakaran ng swimming pool at mga babala ba ay maayos na nakapaskil?",
+      "reference": ""
+    },
+    "XVI-4": {
+      "en": "Does the swimming pool area have a non-slip surface?",
+      "fil": "Mayroon bang hindi madulas na lugar sa may swimming pool?",
+      "reference": ""
+    },
+    "XVII-1": {
+      "en": "Are there hotlines for emergencies displayed near the office telephones?",
+      "fil": "Makikita ba ang mga emergency hotlines malapit sa mga telepono ng opisina?",
+      "reference": ""
+    },
+    "XVII-2": {
+      "en": "Is there regular maintenance in the dormitory? (e.g., pest control, cleaning, etc.)",
+      "fil": "Mayroon bang regular na pagpapanatili sa dormitoryo (hal., pagkontrol ng peste, paglilinis, atbp.)?",
+      "reference": ""
+    },
+    "XVII-3": {
+      "en": "Are all light bulbs or fluorescent lights securely mounted and in good condition?",
+      "fil": "Nakakabit ba ng maayos at nasa maayos na kondisyon ang lahat ng bumbilya o fluorescent lights?",
+      "reference": ""
+    },
+    "XVII-4": {
+      "en": "Are fire drill escape plan signs provided and up to date?",
+      "fil": "Mayroon ba at wasto ang mga fire drill escape plan signs?",
+      "reference": ""
+    },
+    "XVII-5": {
+      "en": "Are windows and shades in proper working order and glass free of cracks?",
+      "fil": "Ang mga bintana at kurtina ba ay gumagana at walang basag?",
+      "reference": ""
+    },
+    "XVII-6": {
+      "en": "Are fire extinguishers located in readily accessible positions?",
+      "fil": "Matatagpuan ba ang mga fire extinguisher sa mga lokasyon na madaling maabot?",
+      "reference": ""
+    },
+    "XVII-7": {
+      "en": "Are shelves bolted to the wall?",
+      "fil": "Nakakabit ba ng maayos ang mga estante sa pader?",
+      "reference": ""
+    },
+    "XVII-8": {
+      "en": "Are floors in good condition and not slippery?",
+      "fil": "Nasa maayos ba na kondisyon at hindi madulas ang mga sahig?",
+      "reference": ""
+    },
+    "XVII-9": {
+      "en": "Are overhead shelves properly loaded? (e.g. Heavy objects should always be loaded at floor level. Chemicals should never be loaded at eye level.)",
+      "fil": "Maayos ba ang bigat na nilalagay sa mga istante (e.g. ang mga mabibigat na gamit ay nasa pinakamababang na patag, ang mga kemikal ay wala sa antas ng mata)",
+      "reference": ""
+    },
+    "XVII-10": {
+      "en": "Are potential hazards eliminated? (e.g. uncovered extension cords across aisles, improperly grounded electrical equipment, Venetian blinds in poor repair, etc.)",
+      "fil": "Tinatanggal ba ang mga potensyal na panganib? (e.g. mga nakalantad na extension cord sa pasilyo, maling paggamit ng de-kuryenteng kagamitan, mga hindi maayos na Venetian blinds)",
+      "reference": ""
+    },
+    "XVII-11": {
+      "en": "Do all electrical boxes have covers, and are all switches and electrical outlets in good condition?",
+      "fil": "Ang lahat ba ng mga kahon ng kuryente ay may takip, at ang lahat ng switch at saksakan ng kuryente ay nasa mabuting kondisyon?",
+      "reference": ""
+    },
+    "XVII-12": {
+      "en": "Is adequate aisle space provided such that a quick exit of dormers is possible?",
+      "fil": "Mayroong bang angkop na aisle space para sa pag evacuate ng mga dormer?",
+      "reference": ""
+    },
+    "XVII-13": {
+      "en": "Are there sprinklers installed? Note: Sprinklers should be installed in buildings with 3 floors or above.",
+      "fil": "Mayroon bang naka-install na mga sprinkler system? Dagdag: Dapat may mga sprinklers sa mga gusali na may 3 o higit na lapag.",
+      "reference": ""
+    },
+    "XVII-14": {
+      "en": "Are ceiling panels or plaster in good condition?",
+      "fil": "Ang mga ceiling panels o plaster ba ay nasa mabuting kondisyon?",
+      "reference": ""
+    },
+    "XVII-15": {
+      "en": "Are desks, chairs, and tables in good repair?",
+      "fil": "Ang mga mesa, silya, at lamesa ba ay nasa maayos na kondisyon?",
+      "reference": ""
+    },
+    "XVII-16": {
+      "en": "Are there smoke alarms present in the building?",
+      "fil": "Mayroon bang mga smoke alarm sa gusali?",
+      "reference": ""
+    },
+    "XVII-17": {
+      "en": "Do dormitory room doors open in \"outwards\" direction?",
+      "fil": "Ang mga pinto ng mga kwarto sa dormitoryo ba ay nagbubukas sa palabas na direksyon?",
+      "reference": ""
+    },
+    "XVII-18": {
+      "en": "Are dormitory beds in good condition?",
+      "fil": "Ang mga kama sa dormitoryo ba ay nasa mabuting kondisyon?",
+      "reference": ""
+    },
+    "XVII-19": {
+      "en": "Are first aid kits visible and readily available?",
+      "fil": "Ang first aid box ba ay mabilis makita at madaling makuha?",
+      "reference": ""
+    },
+    "XVII-20": {
+      "en": "Are first aid kits kept in adequate supply? Note: Small kit: 1-24 people; Medium kit: 25-100; Large kit: more than 100",
+      "fil": "Ang first aid box ba ay may sapat na suplay? Dagdag: Maliit: 1-24 na tao; Medium: 25-100; Malaki: higit sa 100",
+      "reference": "Reference: American National Standards Institute. (2024). Workplace First Aid Kit Requirements: OSHA & ANSI Z308.1 https://blog.ansi.org/ansi/workplace-first-aid-kit-requirements-ansi-z308-1/"
+    }
+  }
+}

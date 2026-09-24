@@ -1,12 +1,13 @@
 'use client';
 
 import { cn } from '@/lib';
-import { useSidebarStore } from '@/store';
+import { useAuthStore, useSidebarStore } from '@/store';
 import {
   AlertTriangle,
   BarChart2,
   CalendarDays,
   ChevronDown,
+  ClipboardCheck,
   LayoutDashboard,
   Settings,
   University,
@@ -22,7 +23,8 @@ type NavItem = {
   name: string;
   icon: React.ReactNode;
   path?: string;
-  subItems?: { name: string; path?: string }[];
+  superAdminOnly?: boolean;
+  subItems?: { name: string; path?: string; superAdminOnly?: boolean }[];
 };
 
 const navItems: NavItem[] = [
@@ -30,6 +32,15 @@ const navItems: NavItem[] = [
   { icon: <University size={20} />, name: 'Campus', path: '/campus' },
   { icon: <CalendarDays size={20} />, name: 'Events', path: '/events' },
   { icon: <BarChart2 size={20} />, name: 'Reports', path: '/reports' },
+  {
+    icon: <ClipboardCheck size={20} />,
+    name: 'MATATAG',
+    subItems: [
+      { name: 'Dashboard', path: '/matatag/dashboard' },
+      { name: 'Assessments', path: '/assessments' },
+      { name: 'Default Template', path: '/assessments/matatag/template', superAdminOnly: true },
+    ],
+  },
   { icon: <AlertTriangle size={20} />, name: 'Bystander Reports', path: '/emergency-reports' },
   { icon: <Users size={20} />, name: 'Users', path: '/users' },
   {
@@ -47,6 +58,9 @@ const navItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+  const isSuperAdmin = useAuthStore(
+    (s) => s.userProfile?.is_active && s.userProfile.user_type.name === 'Super Admin'
+  );
   const {
     isExpanded,
     isMobileOpen,
@@ -79,7 +93,7 @@ export function AppSidebar() {
   const isActive = useCallback(
     (path?: string) => {
       if (!path) return false;
-      if (path === '/dashboard') return pathname === '/dashboard';
+      if (path === '/dashboard' || path === '/matatag') return pathname === path;
       return pathname.startsWith(path);
     },
     [pathname]
@@ -141,88 +155,92 @@ export function AppSidebar() {
       {/* Nav */}
       <nav className="custom-scrollbar flex-1 overflow-y-auto px-3 py-4">
         <ul className="flex flex-col gap-1">
-          {navItems.map((item) => (
-            <li key={item.name}>
-              {item.subItems ? (
-                <>
-                  <button
-                    onClick={() => toggleSubmenu(item.name)}
+          {navItems
+            .filter((item) => !item.superAdminOnly || isSuperAdmin)
+            .map((item) => (
+              <li key={item.name}>
+                {item.subItems ? (
+                  <>
+                    <button
+                      onClick={() => toggleSubmenu(item.name)}
+                      className={cn(
+                        'menu-item w-full',
+                        openSubmenu === item.name ? 'menu-item-active' : 'menu-item-inactive',
+                        !isVisible && 'lg:justify-center'
+                      )}
+                    >
+                      <span
+                        className={
+                          openSubmenu === item.name
+                            ? 'menu-item-icon-active'
+                            : 'menu-item-icon-inactive'
+                        }
+                      >
+                        {item.icon}
+                      </span>
+                      {isVisible && (
+                        <>
+                          <span className="menu-item-text flex-1 text-start">{item.name}</span>
+                          <ChevronDown
+                            size={16}
+                            className={cn(
+                              'transition-transform duration-200',
+                              openSubmenu === item.name && 'rotate-180'
+                            )}
+                          />
+                        </>
+                      )}
+                    </button>
+
+                    {isVisible && openSubmenu === item.name && (
+                      <ul className="mt-1 ml-9 flex flex-col gap-1">
+                        {item.subItems
+                          .filter((sub) => !sub.superAdminOnly || isSuperAdmin)
+                          .map((sub) => (
+                            <li key={sub.name}>
+                              {sub.path ? (
+                                <Link
+                                  href={sub.path}
+                                  className={cn(
+                                    'block rounded-lg px-4 py-2 text-xs transition-all duration-200',
+                                    isActive(sub.path)
+                                      ? 'text-brand-500 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/10 font-medium'
+                                      : 'text-gray-500 hover:bg-gray-100 hover:text-gray-950 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white'
+                                  )}
+                                >
+                                  {sub.name}
+                                </Link>
+                              ) : (
+                                <span className="block rounded-lg px-3 py-2 text-sm text-gray-400">
+                                  {sub.name}
+                                </span>
+                              )}
+                            </li>
+                          ))}
+                      </ul>
+                    )}
+                  </>
+                ) : (
+                  <Link
+                    href={item.path!}
                     className={cn(
-                      'menu-item w-full',
-                      openSubmenu === item.name ? 'menu-item-active' : 'menu-item-inactive',
+                      'menu-item',
+                      isActive(item.path) ? 'menu-item-active' : 'menu-item-inactive',
                       !isVisible && 'lg:justify-center'
                     )}
                   >
                     <span
                       className={
-                        openSubmenu === item.name
-                          ? 'menu-item-icon-active'
-                          : 'menu-item-icon-inactive'
+                        isActive(item.path) ? 'menu-item-icon-active' : 'menu-item-icon-inactive'
                       }
                     >
                       {item.icon}
                     </span>
-                    {isVisible && (
-                      <>
-                        <span className="menu-item-text flex-1 text-start">{item.name}</span>
-                        <ChevronDown
-                          size={16}
-                          className={cn(
-                            'transition-transform duration-200',
-                            openSubmenu === item.name && 'rotate-180'
-                          )}
-                        />
-                      </>
-                    )}
-                  </button>
-
-                  {isVisible && openSubmenu === item.name && (
-                    <ul className="mt-1 ml-9 flex flex-col gap-1">
-                      {item.subItems.map((sub) => (
-                        <li key={sub.name}>
-                          {sub.path ? (
-                            <Link
-                              href={sub.path}
-                              className={cn(
-                                'block rounded-lg px-4 py-2 text-xs transition-all duration-200',
-                                isActive(sub.path)
-                                  ? 'text-brand-500 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/10 font-medium'
-                                  : 'text-gray-500 hover:bg-gray-100 hover:text-gray-950 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white'
-                              )}
-                            >
-                              {sub.name}
-                            </Link>
-                          ) : (
-                            <span className="block rounded-lg px-3 py-2 text-sm text-gray-400">
-                              {sub.name}
-                            </span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </>
-              ) : (
-                <Link
-                  href={item.path!}
-                  className={cn(
-                    'menu-item',
-                    isActive(item.path) ? 'menu-item-active' : 'menu-item-inactive',
-                    !isVisible && 'lg:justify-center'
-                  )}
-                >
-                  <span
-                    className={
-                      isActive(item.path) ? 'menu-item-icon-active' : 'menu-item-icon-inactive'
-                    }
-                  >
-                    {item.icon}
-                  </span>
-                  {isVisible && <span className="menu-item-text">{item.name}</span>}
-                </Link>
-              )}
-            </li>
-          ))}
+                    {isVisible && <span className="menu-item-text">{item.name}</span>}
+                  </Link>
+                )}
+              </li>
+            ))}
         </ul>
       </nav>
 

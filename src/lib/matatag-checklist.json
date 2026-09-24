@@ -1,0 +1,1930 @@
+[
+  {
+    "id": "I",
+    "page": 2,
+    "items": [
+      {
+        "number": "1",
+        "starred": false,
+        "text": "Is there a designated Incident Commander in the office/unit/college/building? Mayroon bang nakatalagang Incident Commander sa opisina/unit/kolehiyo/gusali?",
+        "page": 2,
+        "id": "I-1",
+        "group": false
+      },
+      {
+        "number": "2",
+        "starred": false,
+        "text": "Are Nationwide Simultaneous Earthquake Drills (NSED) practiced at least twice a year? Naisasagawa ba ang Nationwide Simultaneous Earthquake Drills (NSED) nang hindi bababa sa dalawang beses sa isang taon?",
+        "page": 2,
+        "id": "I-2",
+        "group": false
+      },
+      {
+        "number": "3",
+        "starred": false,
+        "text": "Does the office/unit/college/building maintain the following plans to address such potential crises as fire, floods, bomb threat, civil disturbance, accidents, intruders, etc.? Ang opisina/unit/kolehiyo/gusali ba ay nagpapanatili ng isang plano (hal., plano sa krisis, plano sa paghahanda sa emerhensiya, Plano sa Pagpapatuloy ng Serbisyong Pampubliko, atbp.) upang matugunan ang mga potensyal na krisis gaya ng sunog, baha, pagbabanta ng bomba, kaguluhang sibil, mga aksidente, mga nanghihimasok, atbp.?",
+        "page": 2,
+        "id": "I-3",
+        "group": true
+      },
+      {
+        "number": "3.1",
+        "starred": false,
+        "text": "Crisis Plan",
+        "page": 2,
+        "id": "I-3.1",
+        "group": false
+      },
+      {
+        "number": "3.2",
+        "starred": false,
+        "text": "Emergency Preparedness Plan",
+        "page": 2,
+        "id": "I-3.2",
+        "group": false
+      },
+      {
+        "number": "3.3",
+        "starred": false,
+        "text": "Public Service Continuity Plan",
+        "page": 2,
+        "id": "I-3.3",
+        "group": false
+      },
+      {
+        "number": "3.4",
+        "starred": false,
+        "text": "Contingency Plan",
+        "page": 2,
+        "id": "I-3.4",
+        "group": false
+      },
+      {
+        "number": "4",
+        "starred": false,
+        "text": "Is the plan comprehensive? (Organizational Structure AND Response Protocols are present) Komprehensibo ba ang plano? (mayroong Organizational Structure AT Response Protocols)",
+        "page": 2,
+        "id": "I-4",
+        "group": false
+      },
+      {
+        "number": "5",
+        "starred": false,
+        "text": "Is the plan properly disseminated to office personnel? Ang plano ba ay binahagi sa mga tauhan ng opisina?",
+        "page": 2,
+        "id": "I-5",
+        "group": false
+      },
+      {
+        "number": "6",
+        "starred": false,
+        "text": "Is the plan updated and tested? Na-update at naisasagawa ba ang plano?",
+        "page": 2,
+        "id": "I-6",
+        "group": false
+      },
+      {
+        "number": "7",
+        "starred": false,
+        "text": "Are emergency evacuation plans posted on strategic and conspicuous locations in the building? (e.g., \"you are here\" markings, primary routes, etc) Nakapaskil ba ang mga plano sa emergency evacuation sa mga estratehiko at kapansin-pansing lokasyon sa gusali? (hal., \"nandito ka\" na mga marka, pangunahing ruta, atbp) Reference: RA 9514, IRR, Sec. 10.2.5.13 Emergency Evacuation Plan",
+        "page": 2,
+        "id": "I-7",
+        "group": false
+      },
+      {
+        "number": "8",
+        "starred": false,
+        "text": "Are there hotlines for emergencies displayed near the office telephones? Makikita ba ang mga emergency hotlines malapit sa mga telepono ng opisina?",
+        "page": 2,
+        "id": "I-8",
+        "group": false
+      },
+      {
+        "number": "9",
+        "starred": false,
+        "text": "Does your unit have an open space or an alternative safe zone in case of an emergency? Mayroon bang bakanteng espasyo o alternatibong ligtas na lugar na maaaring puntahan kung may insidente?",
+        "page": 3,
+        "id": "I-9",
+        "group": false
+      }
+    ],
+    "title": "Crisis Plans/Emergency Preparedness",
+    "translation": "Plano sa Krisis/ Paghahanda sa Sakuna"
+  },
+  {
+    "id": "II",
+    "page": 3,
+    "items": [
+      {
+        "number": "1",
+        "starred": false,
+        "text": "Are exterior walls and trim in good repair? Ang mga panlabas na pader at trim ay maayos ang pagkumpuni?",
+        "page": 3,
+        "id": "II-1",
+        "group": false
+      },
+      {
+        "number": "2",
+        "starred": false,
+        "text": "Are drainages properly secured, covered, and free of debris? Ang mga drainage ba ay maayos na na-secure, may takip, at walang mga debris?",
+        "page": 3,
+        "id": "II-2",
+        "group": false
+      },
+      {
+        "number": "3",
+        "starred": true,
+        "text": "Are outdoor floorings slippery/accident-prone (e.g., presence of moss) during the rainy season? Ang sahig sa labas ba ay madulas/madaling maaksidente (hal., pagkakaroon ng lumot) sa panahon ng tag-ulan?",
+        "page": 3,
+        "id": "II-3",
+        "group": false
+      },
+      {
+        "number": "4",
+        "starred": false,
+        "text": "Are light poles sturdy, secured, and properly anchored? Ang mga poste ng ilaw ba ay matibay, ligtas, at maayos na nakaangkla?",
+        "page": 3,
+        "id": "II-4",
+        "group": false
+      },
+      {
+        "number": "5",
+        "starred": false,
+        "text": "Are roofs in good repair? Maayos ba ang pagkaayos ng mga bubong?",
+        "page": 3,
+        "id": "II-5",
+        "group": false
+      },
+      {
+        "number": "6",
+        "starred": false,
+        "text": "Are propane tanks containing 125 to 500 gallons, 501 to 2000 gallons, or more than 2000 gallons near 10 feet, 25 feet, or 50 feet from any building? Ang mga propane tanks ba na mayroong 125-500 gallons, 501-2000, at higit sa 2000 gallons ay malayo nang 10 talampakan, 25 talampakan, o 50 talampakan mula sa mga gusali? Reference: West Virginia University Environmental Health and Safety. (n.d.). Propane Tank Safety. https://www.ehs.wvu.edu/files/d/e0551716-cd29-4fd5-9dd5-55d6d54d7036/propane-tank-safety.pdf",
+        "page": 3,
+        "id": "II-6",
+        "group": false
+      },
+      {
+        "number": "7",
+        "starred": false,
+        "text": "Are the branches of trees near the building and parking lot regularly maintained to prevent accidents? Ang mga sanga ba ng puno na malapit sa gusali at parking lot ay madalas asikasuhin upang maiwasan ang aksidente?",
+        "page": 3,
+        "id": "II-7",
+        "group": false
+      }
+    ],
+    "title": "Building Exterior and Grounds",
+    "translation": "Loob at Labas ng Gusali"
+  },
+  {
+    "id": "III",
+    "page": 4,
+    "items": [
+      {
+        "number": "1",
+        "starred": false,
+        "text": "From the exterior of the building, are doors, windows, and other building openings secured? (i.e. Complete railings, doorframes in good repair) Mula sa labas ng gusali, maayos at ligtas ba ang mga pinto, bintana, at iba pang mga bukasan? (i.e. complete railings, walang sira na doorframes)",
+        "page": 4,
+        "id": "III-1",
+        "group": false
+      },
+      {
+        "number": "2",
+        "starred": false,
+        "text": "From inside the following areas, are the doors in proper working order? The door should be opened outwards. Mula sa loob ng mga sumusunod na lugar, ang mga pinto ba ay nasa tamang kondisyon? Ang pinto ay dapat nabubuksan palabas. References: Fire Code of the Philippines, Section 10.2.5.3; National Building Code of the Philippines, Chapter 12, Section 1207 (c) (1)",
+        "page": 4,
+        "id": "III-2",
+        "group": true
+      },
+      {
+        "number": "2.1",
+        "starred": false,
+        "text": "Bathrooms (Palikuran)",
+        "page": 4,
+        "id": "III-2.1",
+        "group": false
+      },
+      {
+        "number": "2.2",
+        "starred": false,
+        "text": "Offices (Opisina)",
+        "page": 4,
+        "id": "III-2.2",
+        "group": false
+      },
+      {
+        "number": "2.3",
+        "starred": false,
+        "text": "Classrooms/ Multi-purpose Rooms/ Libraries (Silid-aralan/ Ibang Silid/ Silid-aklatan)",
+        "page": 4,
+        "id": "III-2.3",
+        "group": false
+      },
+      {
+        "number": "2.4",
+        "starred": false,
+        "text": "Laboratories (Laboratoryo)",
+        "page": 4,
+        "id": "III-2.4",
+        "group": false
+      },
+      {
+        "number": "2.5",
+        "starred": false,
+        "text": "Athletic Facilities/ Gymnasium (Lugar-pampalakasan/ Gym)",
+        "page": 4,
+        "id": "III-2.5",
+        "group": false
+      },
+      {
+        "number": "2.6",
+        "starred": false,
+        "text": "Dormitories (Dormitoryo)",
+        "page": 4,
+        "id": "III-2.6",
+        "group": false
+      },
+      {
+        "number": "3",
+        "starred": false,
+        "text": "Is every room provided with a window or windows that open directly to a courtyard, public street or alley, or open water courses? Ang bawat silid ba ay mayroong bintana o mga bintana na bumubukas sa isang patyo, pampublikong kalye o eskinita, o mga katawang tubig? Reference: National Building Code of the Philippines, Chapter 8, Section 808 (a)",
+        "page": 4,
+        "id": "III-3",
+        "group": false
+      },
+      {
+        "number": "4",
+        "starred": false,
+        "text": "In the following areas, are the windows and shades in good repair and operating condition and free of cracks? Sa mga sumusunod na lugar, ang mga bintana at kurtina ba ay nasa tamang kondisyon, maayos na nabubuksan at naisasara, at walang mga bitak?",
+        "page": 4,
+        "id": "III-4",
+        "group": true
+      },
+      {
+        "number": "4.1",
+        "starred": false,
+        "text": "Corridors (Pasilyo)",
+        "page": 4,
+        "id": "III-4.1",
+        "group": false
+      },
+      {
+        "number": "4.2",
+        "starred": false,
+        "text": "Bathrooms (Palikuran)",
+        "page": 4,
+        "id": "III-4.2",
+        "group": false
+      },
+      {
+        "number": "4.3",
+        "starred": false,
+        "text": "Offices (Opisina)",
+        "page": 4,
+        "id": "III-4.3",
+        "group": false
+      },
+      {
+        "number": "4.4",
+        "starred": false,
+        "text": "Classrooms/ Multi-purpose Rooms/ Libraries (Silid-aralan/ Ibang Silid/ Silid-aklatan)",
+        "page": 4,
+        "id": "III-4.4",
+        "group": false
+      },
+      {
+        "number": "4.5",
+        "starred": false,
+        "text": "Laboratories (Laboratoryo)",
+        "page": 5,
+        "id": "III-4.5",
+        "group": false
+      },
+      {
+        "number": "4.6",
+        "starred": false,
+        "text": "Athletic Facilities/ Gymnasium (Lugar-pampalakasan/ Gym)",
+        "page": 5,
+        "id": "III-4.6",
+        "group": false
+      },
+      {
+        "number": "4.7",
+        "starred": false,
+        "text": "Dormitories (Dormitoryo)",
+        "page": 5,
+        "id": "III-4.7",
+        "group": false
+      }
+    ],
+    "title": "Doors, Windows, and Openings",
+    "translation": "Pinto, Bintana, at Bukasan"
+  },
+  {
+    "id": "IV",
+    "page": 5,
+    "items": [
+      {
+        "number": "1",
+        "starred": false,
+        "text": "In the following areas, are light bulbs/ fluorescent lights securely mounted and working properly in good condition? Sa mga sumusunod na lugar, ang mga bumbilya/ ilaw ba ay nakakabit nang maayos at gumagana nang maayos sa tamang kondisyon?",
+        "page": 5,
+        "id": "IV-1",
+        "group": true
+      },
+      {
+        "number": "1.1",
+        "starred": false,
+        "text": "Building Exterior and Grounds (Labas at Paligid ng Gusali)",
+        "page": 5,
+        "id": "IV-1.1",
+        "group": false
+      },
+      {
+        "number": "1.2",
+        "starred": false,
+        "text": "Corridors (Pasilyo)",
+        "page": 5,
+        "id": "IV-1.2",
+        "group": false
+      },
+      {
+        "number": "1.3",
+        "starred": false,
+        "text": "Bathrooms (Palikuran)",
+        "page": 5,
+        "id": "IV-1.3",
+        "group": false
+      },
+      {
+        "number": "1.4",
+        "starred": false,
+        "text": "Offices (Opisina)",
+        "page": 5,
+        "id": "IV-1.4",
+        "group": false
+      },
+      {
+        "number": "1.5",
+        "starred": false,
+        "text": "Classrooms/ Multi-purpose Rooms/ Libraries (Silid-aralan/ Ibang Silid/ Silid-aklatan)",
+        "page": 5,
+        "id": "IV-1.5",
+        "group": false
+      },
+      {
+        "number": "1.6",
+        "starred": false,
+        "text": "Laboratories (Laboratoryo)",
+        "page": 5,
+        "id": "IV-1.6",
+        "group": false
+      },
+      {
+        "number": "1.7",
+        "starred": false,
+        "text": "Athletic Facilities/ Gymnasium (Lugar-pampalakasan/ Gym)",
+        "page": 5,
+        "id": "IV-1.7",
+        "group": false
+      },
+      {
+        "number": "1.8",
+        "starred": false,
+        "text": "Dormitories (Dormitoryo)",
+        "page": 5,
+        "id": "IV-1.8",
+        "group": false
+      },
+      {
+        "number": "2",
+        "starred": false,
+        "text": "In the following areas, are the electrical boxes, switches, wiring, and electrical outlets functional and are safely covered? Sa mga sumusunod na lugar, ang mga electrical box, switch, kable, at saksakan ng kuryente ba ay gumagana at ligtas na nakatakip?",
+        "page": 5,
+        "id": "IV-2",
+        "group": true
+      },
+      {
+        "number": "2.1",
+        "starred": false,
+        "text": "Corridors (Pasilyo)",
+        "page": 5,
+        "id": "IV-2.1",
+        "group": false
+      },
+      {
+        "number": "2.2",
+        "starred": false,
+        "text": "Bathrooms (Palikuran)",
+        "page": 5,
+        "id": "IV-2.2",
+        "group": false
+      },
+      {
+        "number": "2.3",
+        "starred": false,
+        "text": "Offices (Opisina)",
+        "page": 5,
+        "id": "IV-2.3",
+        "group": false
+      },
+      {
+        "number": "2.4",
+        "starred": false,
+        "text": "Classrooms/ Multi-purpose Rooms/ Libraries (Silid-aralan/ Ibang Silid/ Silid-aklatan)",
+        "page": 5,
+        "id": "IV-2.4",
+        "group": false
+      },
+      {
+        "number": "2.5",
+        "starred": false,
+        "text": "Laboratories (Laboratoryo)",
+        "page": 5,
+        "id": "IV-2.5",
+        "group": false
+      },
+      {
+        "number": "2.6",
+        "starred": false,
+        "text": "Athletic Facilities/ Gymnasium (Lugar-pampalakasan/ Gym)",
+        "page": 5,
+        "id": "IV-2.6",
+        "group": false
+      },
+      {
+        "number": "2.7",
+        "starred": false,
+        "text": "Dormitories (Dormitoryo)",
+        "page": 5,
+        "id": "IV-2.7",
+        "group": false
+      },
+      {
+        "number": "3",
+        "starred": false,
+        "text": "In the following areas, is the lighting adequate for all events at all times? (i.e. visible surroundings, not flickering) Sa mga sumusunod na lugar, ang ilaw ba ay sapat para sa lahat ng kaganapan sa lahat ng pagkakataon? (nakikita ang paligid, hindi umaandap-andap o kumikislap) Reference: Occupational Safety and Health Standards, Rule 1075 Illumination",
+        "page": 5,
+        "id": "IV-3",
+        "group": true
+      },
+      {
+        "number": "3.1",
+        "starred": false,
+        "text": "Corridors (Pasilyo)",
+        "page": 5,
+        "id": "IV-3.1",
+        "group": false
+      },
+      {
+        "number": "3.2",
+        "starred": false,
+        "text": "Bathrooms (Palikuran)",
+        "page": 5,
+        "id": "IV-3.2",
+        "group": false
+      },
+      {
+        "number": "3.3",
+        "starred": false,
+        "text": "Offices (Opisina)",
+        "page": 6,
+        "id": "IV-3.3",
+        "group": false
+      },
+      {
+        "number": "3.4",
+        "starred": false,
+        "text": "Classrooms/ Multi-purpose Rooms/ Libraries (Silid-aralan/ Ibang Silid/ Silid-aklatan)",
+        "page": 6,
+        "id": "IV-3.4",
+        "group": false
+      },
+      {
+        "number": "3.5",
+        "starred": false,
+        "text": "Laboratories (Laboratoryo)",
+        "page": 6,
+        "id": "IV-3.5",
+        "group": false
+      },
+      {
+        "number": "3.6",
+        "starred": false,
+        "text": "Athletic Facilities/ Gymnasium (Lugar-pampalakasan/ Gym)",
+        "page": 6,
+        "id": "IV-3.6",
+        "group": false
+      },
+      {
+        "number": "3.7",
+        "starred": false,
+        "text": "Dormitories (Dormitoryo)",
+        "page": 6,
+        "id": "IV-3.7",
+        "group": false
+      }
+    ],
+    "title": "Lighting and Electrical Safety",
+    "translation": "Ilaw at Kaligtasan sa Kuryente"
+  },
+  {
+    "id": "V",
+    "page": 6,
+    "items": [
+      {
+        "number": "1",
+        "starred": false,
+        "text": "Are fire drill escape plan signs provided and up to date? Mayroon at wasto ba ang mga fire drill escape plan signs?",
+        "page": 6,
+        "id": "V-1",
+        "group": false
+      },
+      {
+        "number": "2",
+        "starred": false,
+        "text": "Are fire evacuation plans posted on strategic and conspicuous locations in the building? Nakapaskil ba ang mga plano sa fire evacuation sa mga estratehiko at kapansin-pansing lokasyon sa gusali?",
+        "page": 6,
+        "id": "V-2",
+        "group": false
+      },
+      {
+        "number": "3",
+        "starred": false,
+        "text": "Can the fire department unobstructedly enter the building? Kaya ba ng mga bumbero pumasok ng gusali nang hindi nasasagabal?",
+        "page": 6,
+        "id": "V-3",
+        "group": false
+      },
+      {
+        "number": "4",
+        "starred": false,
+        "text": "Are all fire alarms functional and audible in all areas? Ang lahat ba ng alarma sa sunog ay gumagana at naririnig sa lahat ng lugar? Reference: Fire Code of the Philippines Sections 10.2.8.8, 10.2.9.5, 10.2.14.3",
+        "page": 6,
+        "id": "V-4",
+        "group": false
+      },
+      {
+        "number": "5",
+        "starred": false,
+        "text": "In the following areas, are fire extinguishers located in readily accessible positions? (Unobstructed access) Sa mga sumusunod na lugar, matatagpuan ba ang mga fire extinguisher sa mga lokasyon na madaling maabot? (Hindi nasasagabal) Reference: Fire Code of the Philippines, Section 10.2.6.9",
+        "page": 6,
+        "id": "V-5",
+        "group": true
+      },
+      {
+        "number": "5.1",
+        "starred": false,
+        "text": "Corridors (Pasilyo)",
+        "page": 6,
+        "id": "V-5.1",
+        "group": false
+      },
+      {
+        "number": "5.2",
+        "starred": false,
+        "text": "Bathrooms (Palikuran)",
+        "page": 6,
+        "id": "V-5.2",
+        "group": false
+      },
+      {
+        "number": "5.3",
+        "starred": false,
+        "text": "Offices (Opisina)",
+        "page": 6,
+        "id": "V-5.3",
+        "group": false
+      },
+      {
+        "number": "5.4",
+        "starred": false,
+        "text": "Classrooms/ Multi-purpose Rooms/ Libraries (Silid-aralan/ Ibang Silid/ Silid-aklatan)",
+        "page": 6,
+        "id": "V-5.4",
+        "group": false
+      },
+      {
+        "number": "5.5",
+        "starred": false,
+        "text": "Laboratories (Laboratoryo)",
+        "page": 6,
+        "id": "V-5.5",
+        "group": false
+      },
+      {
+        "number": "5.6",
+        "starred": false,
+        "text": "Athletic Facilities/ Gymnasium (Lugar-pampalakasan/ Gym)",
+        "page": 6,
+        "id": "V-5.6",
+        "group": false
+      },
+      {
+        "number": "5.7",
+        "starred": false,
+        "text": "Dormitories (Dormitoryo)",
+        "page": 6,
+        "id": "V-5.7",
+        "group": false
+      },
+      {
+        "number": "6",
+        "starred": false,
+        "text": "In the following areas, in buildings with 3 or more floors, are there sprinklers present? Sa mga sumusunod na lugar, sa mga gusali na may 3 o higit na lapag, mayroon bang mga sprinkler?",
+        "page": 6,
+        "id": "V-6",
+        "group": true
+      },
+      {
+        "number": "6.1",
+        "starred": false,
+        "text": "Corridors (Pasilyo)",
+        "page": 7,
+        "id": "V-6.1",
+        "group": false
+      },
+      {
+        "number": "6.2",
+        "starred": false,
+        "text": "Bathrooms (Palikuran)",
+        "page": 7,
+        "id": "V-6.2",
+        "group": false
+      },
+      {
+        "number": "6.3",
+        "starred": false,
+        "text": "Offices (Opisina)",
+        "page": 7,
+        "id": "V-6.3",
+        "group": false
+      },
+      {
+        "number": "6.4",
+        "starred": false,
+        "text": "Classrooms/ Multi-purpose Rooms/ Libraries (Silid-aralan/ Ibang Silid/ Silid-aklatan)",
+        "page": 7,
+        "id": "V-6.4",
+        "group": false
+      },
+      {
+        "number": "6.5",
+        "starred": false,
+        "text": "Laboratories (Laboratoryo)",
+        "page": 7,
+        "id": "V-6.5",
+        "group": false
+      },
+      {
+        "number": "6.6",
+        "starred": false,
+        "text": "Athletic Facilities/ Gymnasium (Lugar-pampalakasan/ Gym)",
+        "page": 7,
+        "id": "V-6.6",
+        "group": false
+      },
+      {
+        "number": "6.7",
+        "starred": false,
+        "text": "Dormitories (Dormitoryo)",
+        "page": 7,
+        "id": "V-6.7",
+        "group": false
+      },
+      {
+        "number": "7",
+        "starred": false,
+        "text": "In the following areas, are there smoke detectors and alarms present and functional? Sa mga sumusunod na lugar, mayroon at gumagana bang mga detectors at alarms para sa usok?",
+        "page": 7,
+        "id": "V-7",
+        "group": true
+      },
+      {
+        "number": "7.1",
+        "starred": false,
+        "text": "Corridors (Pasilyo)",
+        "page": 7,
+        "id": "V-7.1",
+        "group": false
+      },
+      {
+        "number": "7.2",
+        "starred": false,
+        "text": "Bathrooms (Palikuran)",
+        "page": 7,
+        "id": "V-7.2",
+        "group": false
+      },
+      {
+        "number": "7.3",
+        "starred": false,
+        "text": "Offices (Opisina)",
+        "page": 7,
+        "id": "V-7.3",
+        "group": false
+      },
+      {
+        "number": "7.4",
+        "starred": false,
+        "text": "Classrooms/ Multi-purpose Rooms/ Libraries (Silid-aralan/ Ibang Silid/ Silid-aklatan)",
+        "page": 7,
+        "id": "V-7.4",
+        "group": false
+      },
+      {
+        "number": "7.5",
+        "starred": false,
+        "text": "Laboratories (Laboratoryo)",
+        "page": 7,
+        "id": "V-7.5",
+        "group": false
+      },
+      {
+        "number": "7.6",
+        "starred": false,
+        "text": "Athletic Facilities/ Gymnasium (Lugar-pampalakasan/ Gym)",
+        "page": 7,
+        "id": "V-7.6",
+        "group": false
+      },
+      {
+        "number": "7.7",
+        "starred": false,
+        "text": "Dormitories (Dormitoryo)",
+        "page": 7,
+        "id": "V-7.7",
+        "group": false
+      }
+    ],
+    "title": "Fire Protection Systems",
+    "translation": "Proteksyon sa Sunog"
+  },
+  {
+    "id": "VI",
+    "page": 7,
+    "items": [
+      {
+        "number": "1",
+        "starred": true,
+        "text": "In the following areas, do the walls have visible and distinct cracks? If yes, please consult structural professionals for further assessment. Mayroon bang nakikitang mga kakaibang bitak sa mga pader? Kung mayroon, mangyaring sumangguni sa mga propesyonal sa istruktura para sa karagdagang pagsusuri.",
+        "page": 7,
+        "id": "VI-1",
+        "group": true
+      },
+      {
+        "number": "1.1",
+        "starred": false,
+        "text": "Corridors (Pasilyo)",
+        "page": 7,
+        "id": "VI-1.1",
+        "group": false
+      },
+      {
+        "number": "1.2",
+        "starred": false,
+        "text": "Bathrooms (Palikuran)",
+        "page": 7,
+        "id": "VI-1.2",
+        "group": false
+      },
+      {
+        "number": "1.3",
+        "starred": false,
+        "text": "Offices (Opisina)",
+        "page": 7,
+        "id": "VI-1.3",
+        "group": false
+      },
+      {
+        "number": "1.4",
+        "starred": false,
+        "text": "Classrooms/ Multi-purpose Rooms/ Libraries (Silid-aralan/ Ibang Silid/ Silid-aklatan)",
+        "page": 7,
+        "id": "VI-1.4",
+        "group": false
+      },
+      {
+        "number": "1.5",
+        "starred": false,
+        "text": "Laboratories (Laboratoryo)",
+        "page": 7,
+        "id": "VI-1.5",
+        "group": false
+      },
+      {
+        "number": "1.6",
+        "starred": false,
+        "text": "Athletic Facilities/ Gymnasium (Lugar-pampalakasan/ Gym)",
+        "page": 7,
+        "id": "VI-1.6",
+        "group": false
+      },
+      {
+        "number": "1.7",
+        "starred": false,
+        "text": "Dormitories (Dormitoryo)",
+        "page": 7,
+        "id": "VI-1.7",
+        "group": false
+      },
+      {
+        "number": "2",
+        "starred": false,
+        "text": "In the following areas, are walls in good condition with no signs of water leakage (e.g., water stains, discoloration, peeling, or bubbling paint)? Sa mga sumusunod na lugar, ang mga pader ba ay nasa mabuting kondisyon at walang bakas ng pagtagas ng tubig (hal., mantsa ng tubig, kakaibang kulay, pagbabalat o bumubulwak na pintura)?",
+        "page": 7,
+        "id": "VI-2",
+        "group": true
+      },
+      {
+        "number": "2.1",
+        "starred": false,
+        "text": "Corridors (Pasilyo)",
+        "page": 8,
+        "id": "VI-2.1",
+        "group": false
+      },
+      {
+        "number": "2.2",
+        "starred": false,
+        "text": "Bathrooms (Palikuran)",
+        "page": 8,
+        "id": "VI-2.2",
+        "group": false
+      },
+      {
+        "number": "2.3",
+        "starred": false,
+        "text": "Offices (Opisina)",
+        "page": 8,
+        "id": "VI-2.3",
+        "group": false
+      },
+      {
+        "number": "2.4",
+        "starred": false,
+        "text": "Classrooms/ Multi-purpose Rooms/ Libraries (Silid-aralan/ Ibang Silid/ Silid-aklatan)",
+        "page": 8,
+        "id": "VI-2.4",
+        "group": false
+      },
+      {
+        "number": "2.5",
+        "starred": false,
+        "text": "Laboratories (Laboratoryo)",
+        "page": 8,
+        "id": "VI-2.5",
+        "group": false
+      },
+      {
+        "number": "2.6",
+        "starred": false,
+        "text": "Athletic Facilities/ Gymnasium (Lugar-pampalakasan/ Gym)",
+        "page": 8,
+        "id": "VI-2.6",
+        "group": false
+      },
+      {
+        "number": "2.7",
+        "starred": false,
+        "text": "Dormitories (Dormitoryo)",
+        "page": 8,
+        "id": "VI-2.7",
+        "group": false
+      },
+      {
+        "number": "3",
+        "starred": false,
+        "text": "Are \"WARNING\" signs placed around wet floor areas? Note: If there are no wet floor areas during observation, ask the accompanying personnel regarding the procedure Nakalagay ba ang mga \"BABALA\" na karatula sa paligid ng mga basang lugar sa sahig? Note: Kung walang ma obserbahan na basa, itanong sa kasamang personnel tungkol sa procedure Reference: Occupational Safety and Health Standards, Rule 1060 Premises of Establishments",
+        "page": 8,
+        "id": "VI-3",
+        "group": false
+      },
+      {
+        "number": "4",
+        "starred": false,
+        "text": "Are all floor coverings (e.g., rugs, mats, etc.) firmly attached and do they have non-slip surfaces? Ang lahat ba ng mga panakip sa sahig (hal., mga alpombra, pamunas, atbp.) ay mahigpit na nakakabit at mayroon ba silang mga hindi madulas na ibabaw? Reference: Occupational Safety and Health Standards, Rule 1063.02 Slipping Hazards",
+        "page": 8,
+        "id": "VI-4",
+        "group": false
+      },
+      {
+        "number": "5",
+        "starred": false,
+        "text": "Are all floor surfaces free of obstruction or hazards to traffic flow? (e.g., broken stair edges, objects left on the surface, chipped concrete, missing floor tiles, etc.) Ang sahig ay walang sagabal o mga panganib (hal., sirang mga gilid ng hagdan, mga bagay na naiwan sa ibabaw, mga chipped concrete, nawawalang mga tile sa sahig, atbp.) Reference: Occupational Safety and Health Standards, Rule 1063.01 Stumbling Hazards",
+        "page": 8,
+        "id": "VI-5",
+        "group": false
+      },
+      {
+        "number": "6",
+        "starred": false,
+        "text": "Are tripping hazards eliminated? (e.g., absence of electrical cords on floors, etc.) Tinatanggal ba ang mga panganib na maaring matalapid? (hal., mga kable ng kuryente sa sahig, atbp.) Reference: Occupational Safety and Health Standards, Rule 1063.01 Stumbling Hazards",
+        "page": 8,
+        "id": "VI-6",
+        "group": false
+      },
+      {
+        "number": "7",
+        "starred": false,
+        "text": "In the following areas, are floor surfaces in good repair? (e.g. no broken tiles, complete covering) Sa mga sumusunod na lugar, ang mga sahig ba ay maayos ang pagkakakumpuni? (e.g. no broken tiles, complete covering)",
+        "page": 8,
+        "id": "VI-7",
+        "group": true
+      },
+      {
+        "number": "7.1",
+        "starred": false,
+        "text": "Corridors (Pasilyo)",
+        "page": 9,
+        "id": "VI-7.1",
+        "group": false
+      },
+      {
+        "number": "7.2",
+        "starred": false,
+        "text": "Bathrooms (Palikuran)",
+        "page": 9,
+        "id": "VI-7.2",
+        "group": false
+      },
+      {
+        "number": "7.3",
+        "starred": false,
+        "text": "Offices (Opisina)",
+        "page": 9,
+        "id": "VI-7.3",
+        "group": false
+      },
+      {
+        "number": "7.4",
+        "starred": false,
+        "text": "Classrooms/ Multi-purpose Rooms/ Libraries (Silid-aralan/ Ibang Silid/ Silid-aklatan)",
+        "page": 9,
+        "id": "VI-7.4",
+        "group": false
+      },
+      {
+        "number": "7.5",
+        "starred": false,
+        "text": "Laboratories (Laboratoryo)",
+        "page": 9,
+        "id": "VI-7.5",
+        "group": false
+      },
+      {
+        "number": "7.6",
+        "starred": false,
+        "text": "Athletic Facilities/ Gymnasium (Lugar-pampalakasan/ Gym)",
+        "page": 9,
+        "id": "VI-7.6",
+        "group": false
+      },
+      {
+        "number": "7.7",
+        "starred": false,
+        "text": "Dormitories (Dormitoryo)",
+        "page": 9,
+        "id": "VI-7.7",
+        "group": false
+      },
+      {
+        "number": "8",
+        "starred": false,
+        "text": "In the following areas, are ceiling panels or plaster in good condition with no signs of water leakage (e.g., water stains, discoloration, peeling, or bubbling paint)? Sa mga sumusunod na lugar mga ceiling panels o plaster ba ay nasa mabuting kondisyon at walang bakas ng pagtagas ng tubig (hal., mantsa ng tubig, kakaibang kulay, pagbabalat o bumubulwak na pintura)?",
+        "page": 9,
+        "id": "VI-8",
+        "group": true
+      },
+      {
+        "number": "8.1",
+        "starred": false,
+        "text": "Corridors (Pasilyo)",
+        "page": 9,
+        "id": "VI-8.1",
+        "group": false
+      },
+      {
+        "number": "8.2",
+        "starred": false,
+        "text": "Bathrooms (Palikuran)",
+        "page": 9,
+        "id": "VI-8.2",
+        "group": false
+      },
+      {
+        "number": "8.3",
+        "starred": false,
+        "text": "Offices (Opisina)",
+        "page": 9,
+        "id": "VI-8.3",
+        "group": false
+      },
+      {
+        "number": "8.4",
+        "starred": false,
+        "text": "Classrooms/ Multi-purpose Rooms/ Libraries (Silid-aralan/ Ibang Silid/ Silid-aklatan)",
+        "page": 9,
+        "id": "VI-8.4",
+        "group": false
+      },
+      {
+        "number": "8.5",
+        "starred": false,
+        "text": "Laboratories (Laboratoryo)",
+        "page": 9,
+        "id": "VI-8.5",
+        "group": false
+      },
+      {
+        "number": "8.6",
+        "starred": false,
+        "text": "Athletic Facilities/ Gymnasium (Lugar-pampalakasan/ Gym)",
+        "page": 9,
+        "id": "VI-8.6",
+        "group": false
+      },
+      {
+        "number": "8.7",
+        "starred": false,
+        "text": "Dormitories (Dormitoryo)",
+        "page": 9,
+        "id": "VI-8.7",
+        "group": false
+      },
+      {
+        "number": "9",
+        "starred": true,
+        "text": "Are there signs of molds on walls and ceilings? Mayroon bang bakas ng amag sa mga pader at kisame?",
+        "page": 9,
+        "id": "VI-9",
+        "group": false
+      }
+    ],
+    "title": "Walls, Floors, and Ceilings",
+    "translation": "Pader, Sahig, at Kisame"
+  },
+  {
+    "id": "VII",
+    "page": 10,
+    "items": [
+      {
+        "number": "1",
+        "starred": false,
+        "text": "Are all handrails in good repair and provided? Mayroon ba at maayos ang mga handrails? Reference: National Building Code of the Philippines, Section 1207 (e) (8); Occupational Safety and Health Standards, Rule 1065.07 Railings",
+        "page": 10,
+        "id": "VII-1",
+        "group": false
+      },
+      {
+        "number": "2",
+        "starred": false,
+        "text": "Are tiles or plaster in proper repair? Maayos ba ang mga tile o plaster?",
+        "page": 10,
+        "id": "VII-2",
+        "group": false
+      },
+      {
+        "number": "3",
+        "starred": false,
+        "text": "Are emergency lights and exit signs in good working order? Nasa maayos na kondisyon ba ang mga ilaw na pang-emergency at exit signs? Reference: Occupational Safety and Health Standards, Rule 1075.06 Emergency Lighting",
+        "page": 10,
+        "id": "VII-3",
+        "group": false
+      },
+      {
+        "number": "4",
+        "starred": false,
+        "text": "Are landings kept free of obstructions that may cause accidents? Wala bang mga nakaharang sa mga palapag na maaaring magdulot ng aksidente? Reference: Occupational Safety and Health Standards, Rule 1063.01 Stumbling Hazards, Rule 1063.02 Slipping Hazards, Rule 1065 Stairs",
+        "page": 10,
+        "id": "VII-4",
+        "group": false
+      },
+      {
+        "number": "5",
+        "starred": false,
+        "text": "Are the stair treads made of non-skid material? Gawa ba ang mga hagdanan sa iwas-dulas na materyales? Reference: Occupational Safety and Health Standards, Rule 1063.02 Slipping Hazards",
+        "page": 10,
+        "id": "VII-5",
+        "group": false
+      },
+      {
+        "number": "6",
+        "starred": false,
+        "text": "Are the stair treads in good repair and have no damages? Maayos ba ang mga hagdanan at walang mga sira?",
+        "page": 10,
+        "id": "VII-6",
+        "group": false
+      },
+      {
+        "number": "7",
+        "starred": false,
+        "text": "Are stair treads and edges properly anchored? Maayos ba na nakaangkla ba ang mga tapakan at gilid ng mga hagdanan? Reference: Occupational Safety and Health Standards, Rule 1063.02 Slipping Hazards",
+        "page": 10,
+        "id": "VII-7",
+        "group": false
+      }
+    ],
+    "title": "Stairwells",
+    "translation": "Hagdan"
+  },
+  {
+    "id": "VIII",
+    "page": 11,
+    "items": [
+      {
+        "number": "1",
+        "starred": false,
+        "text": "Are \"EXIT\" signs green in color and illuminated and maintained as required? Ang mga “EXIT” sign ba ay berde/luntian ang kulay at umiilaw at pinapanatili? Reference: Fire Code of the Philippines, Section 10.2.5.12; Occupational Safety and Health Standards, Rule 1060 Premises of Establishments",
+        "page": 11,
+        "id": "VIII-1",
+        "group": false
+      },
+      {
+        "number": "2",
+        "starred": false,
+        "text": "Are emergency exits located in the building? Mayroon bang mga emergency exists sa gusali? Reference: Fire Code of the Philippines, Section 10.2.5.12 Exit Marking",
+        "page": 11,
+        "id": "VIII-2",
+        "group": false
+      },
+      {
+        "number": "3",
+        "starred": false,
+        "text": "Are all emergency exits clearly labeled and free from all obstructions? Ang mga emergency exit ba ay mayroong malinaw na label at walang mga nakaharang?",
+        "page": 11,
+        "id": "VIII-3",
+        "group": false
+      },
+      {
+        "number": "4",
+        "starred": false,
+        "text": "Are directions for exiting the buildings in case of an emergency posted by the exits in each building? Ang bawat gusali ba ay mayroong mga direksyon para sa paglikas ng gusali papunta sa mga labasan? Reference: Fire Code of the Philippines, Section 10.2.5.12 Exit Marking",
+        "page": 11,
+        "id": "VIII-4",
+        "group": false
+      },
+      {
+        "number": "5",
+        "starred": false,
+        "text": "Are emergency exits kept unlocked at all times? The exit door shall be openable from the inside without the use of a key or any special knowledge or effort. Ang mga emergency exit ba ay palaging hindi nakakandado? Ang pinto palabas ay dapat na nabubuksan mula sa loob kahit walang susi o kahit anong kaalaman o pagsisikap. Reference: National Building Code of the Philippines, Chapter 12, Section 1207 (c) (2)",
+        "page": 11,
+        "id": "VIII-5",
+        "group": false
+      },
+      {
+        "number": "6",
+        "starred": false,
+        "text": "Are emergency lights in proper working order? Ang mga emergency light ba ay wastong gumagana? Reference: Fire Code of the Philippines, Section 10.2.5.11 Illumination of Means of Egress; Occupational Safety and Health Standards, Rule 1075.06 Emergency Lighting",
+        "page": 11,
+        "id": "VIII-6",
+        "group": false
+      },
+      {
+        "number": "7",
+        "starred": false,
+        "text": "Are necessary furniture (e.g., student lockers) in good repair and have no sharp edges to users or passersby? Ang mga kinakailangang kasangkapan (hal., mga locker ng mag-aaral) ay nasa maayos na pagkukumpuni at walang matatalim na gilid sa mga gumagamit o dumadaan?",
+        "page": 11,
+        "id": "VIII-7",
+        "group": false
+      },
+      {
+        "number": "8",
+        "starred": false,
+        "text": "Are the corridors free of unnecessary obstructions? There should be enough space for the passage of people. Ang mga pasilyo ba ay walang mga nakaharang? Dapat ay mayroong sapat na espasyo para makadaan ang mga tao. Reference: National Building Code of the Philippines, Section 1207 (d) (1)",
+        "page": 12,
+        "id": "VIII-8",
+        "group": false
+      }
+    ],
+    "title": "Exits and Corridors",
+    "translation": "Labasan at Pasilyo"
+  },
+  {
+    "id": "IX",
+    "page": 13,
+    "items": [
+      {
+        "number": "1",
+        "starred": false,
+        "text": "Are there available sinks or facilities for cleaning and/or washing hands? Mayroon bang mga lababo o pasilidad para makapaglinis o makapghugas ng kamay?",
+        "page": 13,
+        "id": "IX-1",
+        "group": false
+      },
+      {
+        "number": "2",
+        "starred": false,
+        "text": "Are the mirrors free of cracks? Wala bang sira ang mga salamin?",
+        "page": 13,
+        "id": "IX-2",
+        "group": false
+      },
+      {
+        "number": "3",
+        "starred": false,
+        "text": "Are the mirrors properly anchored? Naka-angkla ba nang maayos ang mga salamin?",
+        "page": 13,
+        "id": "IX-3",
+        "group": false
+      },
+      {
+        "number": "4",
+        "starred": false,
+        "text": "Are stalls and doors (knobs, hinges, locks, etc.) in proper working order? Maayos ba ang mga kuwadra at pintuan (hawakan ng pinto, bisagra, kandado, atbp.)?",
+        "page": 13,
+        "id": "IX-4",
+        "group": false
+      },
+      {
+        "number": "5",
+        "starred": false,
+        "text": "Are toilet seats in good condition, free of cracks and splits? Maayos ba ang mga upuan sa banyo, walang bitak or sira?",
+        "page": 13,
+        "id": "IX-5",
+        "group": false
+      },
+      {
+        "number": "6",
+        "starred": false,
+        "text": "Are unused fixture drains sealed or capped? Selyado ba o nilagyan ng takip ang mga hindi ginagamit na fixture drains?",
+        "page": 13,
+        "id": "IX-6",
+        "group": false
+      },
+      {
+        "number": "7",
+        "starred": false,
+        "text": "Are chemicals or cleaning materials properly labeled and stored, not exposed? Ang mga kemikal o panlinis ba ay maayos na may label at nakatago, hindi nakalantad?",
+        "page": 13,
+        "id": "IX-7",
+        "group": false
+      }
+    ],
+    "title": "Bathrooms",
+    "translation": "Palikuran"
+  },
+  {
+    "id": "X",
+    "page": 13,
+    "items": [
+      {
+        "number": "1",
+        "starred": false,
+        "text": "Are all areas kept clean, orderly, and sanitary? Lahat ba ng mga lugar ay malinis, maayos, at walang dumi?",
+        "page": 13,
+        "id": "X-1",
+        "group": false
+      },
+      {
+        "number": "2",
+        "starred": false,
+        "text": "Are all new or used spray bottles with cleaning chemicals properly labeled? Mayroon bang label (etiketa) ang mga bago o gamit na spray bottle na mayroong kemikal?",
+        "page": 13,
+        "id": "X-2",
+        "group": false
+      },
+      {
+        "number": "3",
+        "starred": false,
+        "text": "Are new and used cleaning materials stored properly and securely? Maayos bang nakatago ang mga bago o nagamit na kagamitang panlinis?",
+        "page": 13,
+        "id": "X-3",
+        "group": false
+      }
+    ],
+    "title": "Custodial Services/Maintenance",
+    "translation": "Serbisyong Pagsasaayos/ Pagkukumpuni"
+  },
+  {
+    "id": "XI",
+    "page": 14,
+    "items": [
+      {
+        "number": "1",
+        "starred": false,
+        "text": "Are shelves bolted to the wall? Nakakabit ba nang maayos ang mga estante sa pader?",
+        "page": 14,
+        "id": "XI-1",
+        "group": false
+      },
+      {
+        "number": "2",
+        "starred": false,
+        "text": "Are overhead shelves properly loaded? (e.g. Heavy objects should always be loaded at floor level. Chemicals should never be loaded at eye level.) Maayos ba ang bigat na nilalagay sa mga estante (e.g. Ang mga mabibigat na gamit ay nasa pinakamababang palapag. Ang mga kemikal ay wala sa lebel ng mata.)",
+        "page": 14,
+        "id": "XI-2",
+        "group": false
+      },
+      {
+        "number": "3",
+        "starred": false,
+        "text": "Are desks, chairs, and tables in good repair? Ang mga mesa, silya, at lamesa ba ay nasa maayos na kondisyon?",
+        "page": 14,
+        "id": "XI-3",
+        "group": false
+      },
+      {
+        "number": "4",
+        "starred": false,
+        "text": "Are potential hazards eliminated? (e.g. uncovered extension cords across aisles, improperly grounded electrical equipment, Venetian blinds in poor repair, etc.) Tinatanggal ba ang mga potensyal na panganib? (e.g. mga nakalantad na extension cord sa pasilyo, maling paggamit ng de-kuryenteng kagamitan, mga hindi maayos na Venetian blinds)",
+        "page": 14,
+        "id": "XI-4",
+        "group": false
+      },
+      {
+        "number": "5",
+        "starred": false,
+        "text": "Is there adequate space provided for a quick evacuation of employees? (Unobstructed aisles) Mayroong bang sapat na espasyo para sa paglikas ng mga empleyado? (Walang harang)",
+        "page": 14,
+        "id": "XI-5",
+        "group": false
+      }
+    ],
+    "title": "Offices",
+    "translation": "Opisina"
+  },
+  {
+    "id": "XII",
+    "page": 15,
+    "items": [
+      {
+        "number": "1",
+        "starred": false,
+        "text": "Are aquariums and stands properly secured and anchored? Ang mga akwaryum at mga patungan ba nito ay maayos na nakakabit at nakaangkla?",
+        "page": 15,
+        "id": "XII-1",
+        "group": false
+      },
+      {
+        "number": "2",
+        "starred": false,
+        "text": "Are bookcases securely fastened to the wall or floor? Ang mga estante ng libro ba ay ligtas na nakakabit sa dingding o sahig?",
+        "page": 15,
+        "id": "XII-2",
+        "group": false
+      },
+      {
+        "number": "3",
+        "starred": false,
+        "text": "Are desks, chairs, and tables in good repair? Ang mga mesa, silya, at lamesa ba ay nasa maayos na kondisyon?",
+        "page": 15,
+        "id": "XII-3",
+        "group": false
+      },
+      {
+        "number": "4",
+        "starred": false,
+        "text": "Are overhead shelves properly loaded? (e.g. Heavy objects should always be loaded at floor level. Chemicals should never be loaded at eye level.) Ang mga overhead shelves ba ay maayos na nakaayos? (halimbawa, ang mga mabibigat na bagay ay dapat laging nakaayos sa antas ng sahig. Ang mga kemikal ay hindi dapat nakaayos sa antas ng mata.)",
+        "page": 15,
+        "id": "XII-4",
+        "group": false
+      },
+      {
+        "number": "5",
+        "starred": false,
+        "text": "Are potential hazards eliminated? (e.g., uncovered extension cords across aisles, improperly grounded electrical equipment, Venetian blinds in poor repair, etc.) Ang mga potensyal na panganib ba ay naalis? (halimbawa, hindi nakatakip na mga extension cord sa mga pasilyo, hindi maayos na grounded na mga kagamitan sa kuryente, mga Venetian blinds na sira, atbp.)",
+        "page": 15,
+        "id": "XII-5",
+        "group": false
+      },
+      {
+        "number": "6",
+        "starred": false,
+        "text": "Are shelves bolted to the wall? Ang mga estante ba ay naka-akla sa dingding?",
+        "page": 15,
+        "id": "XII-6",
+        "group": false
+      },
+      {
+        "number": "7",
+        "starred": false,
+        "text": "Are televisions, projectors, and others anchored to carts to prevent accidents? Ang mga telebisyon, projector, at iba pa ba ay naka-angkla sa mga cart upang maiwasan ang aksidente?",
+        "page": 15,
+        "id": "XII-7",
+        "group": false
+      },
+      {
+        "number": "8",
+        "starred": false,
+        "text": "Are blackboards, whiteboards, and wall-mounted projection screens in proper working order and properly secured to the wall? Ang mga pisara, whiteboards, at mga wall-mounted projection screens ba ay nasa maayos na kondisyon at ligtas na nakakabit sa dingding?",
+        "page": 15,
+        "id": "XII-8",
+        "group": false
+      },
+      {
+        "number": "9",
+        "starred": false,
+        "text": "Is adequate aisle space provided such that a quick exit of students/employees is possible? May sapat bang espasyo sa pasilyo upang mabilis na makalabas ang mga estudyante/empleyado?",
+        "page": 15,
+        "id": "XII-9",
+        "group": false
+      }
+    ],
+    "title": "Classrooms/ multi-purpose rooms/ libraries",
+    "translation": "Silid-Aralan/ Multi-purpose Rooms/ Mga Aklatan"
+  },
+  {
+    "id": "XIII",
+    "page": 17,
+    "items": [
+      {
+        "number": "1",
+        "starred": false,
+        "text": "Are all biological hazards identified, labeled, stored, and disposed of according to standard? Ang lahat ba ng mga biological hazard ay natukoy, may label, nakaimbak, at itinatapon ayon sa pamantayan? Reference: Occupational Safety and Health Standards, Rule 1090 Hazardous Materials",
+        "page": 17,
+        "id": "XIII-1",
+        "group": false
+      },
+      {
+        "number": "2",
+        "starred": false,
+        "text": "Are all original containers of chemicals properly labeled, indicating all the hazards of that chemical as well as stating any potential hazard and precautions to be taken, including protective equipment, when necessary, to be used while handling that chemical? Ang lahat ba ng orihinal na lalagyan ng mga kemikal ay may tamang label, na nagpapahiwatig ng lahat ng panganib ng kemikal pati na rin ang anumang potensyal na panganib at mga pag-iingat na dapat gawin, kabilang ang mga proteksiyon na kagamitan, kung kinakailangan, habang hinahawakan ang kemikal na iyon? Reference: Occupational Safety and Health Standards, Rule 1093.04 Marking of Containers",
+        "page": 17,
+        "id": "XIII-2",
+        "group": false
+      },
+      {
+        "number": "3",
+        "starred": false,
+        "text": "Are appropriate chemical spill clean-up kits available (brooms, pillows, absorbents) in the storage room and/or laboratory? Mayroon bang angkop na mga kit para sa paglilinis ng mga natapong kemikal (walis, unan, absorbent) sa imbakan at/o laboratoryo? Reference: Occupational Safety and Health Standards, Rule 1093.08 Cleaning",
+        "page": 17,
+        "id": "XIII-3",
+        "group": false
+      },
+      {
+        "number": "4",
+        "starred": false,
+        "text": "Are chemical fume hoods in proper working order? Ang mga chemical fume hood ba ay nasa maayos na kondisyon?",
+        "page": 17,
+        "id": "XIII-4",
+        "group": false
+      },
+      {
+        "number": "5",
+        "starred": false,
+        "text": "Are chemicals stored according to their chemical properties? Those chemicals having hazardous properties must be stored in special protective cabinets. Incompatible chemicals should be stored separately. Ang mga kemikal ba ay nakaimbak ayon sa kanilang mga katangian? Ang mga kemikal na may mapanganib na katangian ay dapat nakaimbak sa mga espesyal na proteksiyon na kabinet. Ang mga hindi magkatugmang kemikal ay dapat nakaimbak nang hiwalay.",
+        "page": 17,
+        "id": "XIII-5",
+        "group": false
+      },
+      {
+        "number": "6",
+        "starred": false,
+        "text": "Are emergency gas valves properly labeled and in good working order? Ang mga emergency gas valve ba ay may tamang label at nasa maayos na kondisyon?",
+        "page": 17,
+        "id": "XIII-6",
+        "group": false
+      },
+      {
+        "number": "7",
+        "starred": false,
+        "text": "Are fire blankets provided in laboratories in working order? Mayroon bang mga kumot na pang-apoy sa mga laboratoryo na nasa maayos na kondisyon?",
+        "page": 17,
+        "id": "XIII-7",
+        "group": false
+      },
+      {
+        "number": "8",
+        "starred": false,
+        "text": "Are first aid materials kept in adequate supply and readily available? Ang mga first aid ba ay maysapat na suplay at madaling makuha?",
+        "page": 18,
+        "id": "XIII-8",
+        "group": false
+      },
+      {
+        "number": "9",
+        "starred": false,
+        "text": "Are heavy items stored on lower shelves? Ang mga mabibigat na bagay ba ay nakaimbak sa mas mababang estante?",
+        "page": 18,
+        "id": "XIII-9",
+        "group": false
+      },
+      {
+        "number": "10",
+        "starred": false,
+        "text": "Are shelves securely fastened to the wall? Ang mga estante ba ay ligtas na nakakabit sa dingding?",
+        "page": 18,
+        "id": "XIII-10",
+        "group": false
+      },
+      {
+        "number": "11",
+        "starred": false,
+        "text": "Is all electrical equipment properly grounded? Ang lahat ba ng kagamitang elektrikal ay may tamang ground?",
+        "page": 18,
+        "id": "XIII-11",
+        "group": false
+      },
+      {
+        "number": "12",
+        "starred": false,
+        "text": "Is emergency eye wash and shower equipment readily available for each laboratory and checked periodically to ensure that they are in operational condition? Ang emergency eye wash at shower equipment ba ay madaling makuha sa bawat laboratoryo at regular na sinusuri upang matiyak na sila ay gumagana?",
+        "page": 18,
+        "id": "XIII-12",
+        "group": false
+      },
+      {
+        "number": "13",
+        "starred": false,
+        "text": "Is there an easily accessible approved wall-mounted fire extinguisher available in the laboratory/storage area? Mayroon bang madaling maabot na aprubadong wall-mounted fire extinguisher sa laboratoryo/imbakan?",
+        "page": 18,
+        "id": "XIII-13",
+        "group": false
+      },
+      {
+        "number": "14",
+        "starred": false,
+        "text": "Do all the chemicals inside the laboratory each have a Material Data Safety Sheet (MSDS)? Ang bawat kemikal ba sa loob ng laboratoryo ay may MSDS (Material Safety Data Sheet)?",
+        "page": 18,
+        "id": "XIII-14",
+        "group": false
+      },
+      {
+        "number": "15",
+        "starred": false,
+        "text": "Are there established protocols for disposing of chemicals? Mayroon bang itinatag na mga pamantayan sa pagtatapon ng mga kemikal?",
+        "page": 18,
+        "id": "XIII-15",
+        "group": false
+      },
+      {
+        "number": "16",
+        "starred": false,
+        "text": "Are there proper security protocols for the usage of chemicals? Mayroon bang maayos na pamantayan para seguridad ng paggamit ng mga kemikal?",
+        "page": 18,
+        "id": "XIII-16",
+        "group": false
+      }
+    ],
+    "title": "Laboratories",
+    "translation": "Laboratoryo"
+  },
+  {
+    "id": "XIV",
+    "page": 19,
+    "items": [
+      {
+        "number": "1",
+        "starred": false,
+        "text": "Are all hooks and rings closed tightly? Ang lahat ba ng mga kawit at singsing ay mahigpit na nakasara?",
+        "page": 19,
+        "id": "XIV-1",
+        "group": false
+      },
+      {
+        "number": "2",
+        "starred": false,
+        "text": "Are all moving parts oiled and moving smoothly? Ang lahat ba ng gumagalaw na bahagi ay may langis at gumagalaw nang maayos?",
+        "page": 19,
+        "id": "XIV-2",
+        "group": false
+      },
+      {
+        "number": "3",
+        "starred": false,
+        "text": "Are all sharp, protruding edges or broken parts eliminated? Are all screws and bolts tight? Ang lahat ba ng matutulis na bahagi o sirang bahagi ay naalis na? Ang lahat ba ng mga turnilyo at bolt ay mahigpit na nakakabit?",
+        "page": 19,
+        "id": "XIV-3",
+        "group": false
+      },
+      {
+        "number": "4",
+        "starred": false,
+        "text": "Are fences free of sharp edges, holes, or other damage? Ang mga bakod ba ay walang matutulis na gilid, butas, o ibang pinsala?",
+        "page": 19,
+        "id": "XIV-4",
+        "group": false
+      },
+      {
+        "number": "5",
+        "starred": false,
+        "text": "Are garbage/debris containers covered and placed away from the playground area to adequately contain the contents? Ang mga basurahan ba ay may takip at nakalagay malayo sa lugar ng palaruan upang maayos na mapanatili ang laman nito?",
+        "page": 19,
+        "id": "XIV-5",
+        "group": false
+      },
+      {
+        "number": "6",
+        "starred": false,
+        "text": "Are hazardous branches removed from the playground area? (i.e. branches that are above high-density areas) Ang mga mababang sanga ng puno ba ay tinanggal mula sa lugar ng palaruan?",
+        "page": 19,
+        "id": "XIV-6",
+        "group": false
+      },
+      {
+        "number": "7",
+        "starred": false,
+        "text": "Are play areas free of surface irregularities such as holes and sprinkler heads? Ang mga lugar ng laro ba ay walang mga irregularidad sa ibabaw tulad ng mga butas at sprinkler heads?",
+        "page": 19,
+        "id": "XIV-7",
+        "group": false
+      },
+      {
+        "number": "8",
+        "starred": false,
+        "text": "Are playground areas provided with continuous supervision during school hours and a reasonable period before and after school? Ang mga palaruan ba ay may tuloy-tuloy na pagbabantay sa oras ng klase at isang makatwirang panahon bago at pagkatapos ng klase?",
+        "page": 19,
+        "id": "XIV-8",
+        "group": false
+      },
+      {
+        "number": "9",
+        "starred": false,
+        "text": "Are playground paved surfaces free of loose gravel and debris? Ang mga aspaltadong ibabaw ng palaruan ba ay walang mga maluwag na graba at basura?",
+        "page": 20,
+        "id": "XIV-9",
+        "group": false
+      },
+      {
+        "number": "10",
+        "starred": false,
+        "text": "Are playground surfaces free of excess water buildup? Ang mga ibabaw ng palaruan ba ay walang sobrang tubig na naiipon?",
+        "page": 20,
+        "id": "XIV-10",
+        "group": false
+      },
+      {
+        "number": "11",
+        "starred": false,
+        "text": "Are all equipment anchored firmly? Are footings below ground surface and not exposed? Ang lahat ba ng kagamitan ay matibay na naka-angkla? Ang mga pundasyon ba ay nasa ilalim ng ibabaw ng lupa at hindi nakalantad?",
+        "page": 20,
+        "id": "XIV-11",
+        "group": false
+      },
+      {
+        "number": "12",
+        "starred": false,
+        "text": "Is all playground equipment inspected regularly and in good condition (e.g., no rust)? Ang lahat ba ng kagamitan sa palaruan ay regular na sinusuri at nasa mabuting kondisyon (hal., walang kalawang)?",
+        "page": 20,
+        "id": "XIV-12",
+        "group": false
+      },
+      {
+        "number": "13",
+        "starred": false,
+        "text": "Is the playground area free of hazardous debris such as broken glass? Ang lugar ba ng palaruan ay walang mapanganib na basura tulad ng basag na salamin?",
+        "page": 20,
+        "id": "XIV-13",
+        "group": false
+      }
+    ],
+    "title": "Playgrounds",
+    "translation": "Palaruan"
+  },
+  {
+    "id": "XV",
+    "page": 21,
+    "items": [
+      {
+        "number": "1",
+        "starred": false,
+        "text": "Are the bleachers in good condition and structurally adequate, both indoors and outdoors? Loose bolts, nuts or rusted parts, splintered boards, damaged railings, etc. are typical items to periodically check. Ang mga bleachers ba ay nasa maayos na kondisyon at sapat ang istruktura, kapwa sa loob at labas? Ang maluwag na mga bolt, nuts o kalawangin na bahagi, nasirang mga tabla, nasirang mga railings, atbp. ay mga tipikal na bagay na dapat suriin nang pana-panahon.",
+        "page": 21,
+        "id": "XV-1",
+        "group": false
+      },
+      {
+        "number": "2",
+        "starred": false,
+        "text": "Are the conditions of the playing fields satisfactory, e.g., no holes, rocks, glass, etc.? Ang kalagayan ba ng mga palaruan ay kaaya-aya, halimbawa, walang mga butas, bato, salamin, atbp.?",
+        "page": 21,
+        "id": "XV-2",
+        "group": false
+      },
+      {
+        "number": "3",
+        "starred": false,
+        "text": "Are athletic equipment properly stored? Ang mga kagamitang pang-atletiko ba ay maayos na nakatago?",
+        "page": 21,
+        "id": "XV-3",
+        "group": false
+      },
+      {
+        "number": "4",
+        "starred": false,
+        "text": "Are the gymnasium equipment in good condition? Ang mga kagamitang sa gym ba ay nasa maayos na kondisyon?",
+        "page": 21,
+        "id": "XV-4",
+        "group": false
+      },
+      {
+        "number": "5",
+        "starred": false,
+        "text": "Are lighting adequate for all events occurring in the gymnasium? Ang ilaw ba ay sapat para sa lahat ng mga kaganapan sa gym?",
+        "page": 21,
+        "id": "XV-5",
+        "group": false
+      }
+    ],
+    "title": "Athletic Facilities/ Gymnasium",
+    "translation": "Pasilidad Pang-atletiko/ Gym"
+  },
+  {
+    "id": "XVI",
+    "page": 21,
+    "items": [
+      {
+        "number": "1",
+        "starred": false,
+        "text": "Are proper safeguards in place to ensure the pool is not used at all times when it is unsupervised? Mayroon bang tamang mga pag-iingat upang matiyak na ang pool ay hindi nagagamit kapag ito ay walang bantay?",
+        "page": 21,
+        "id": "XVI-1",
+        "group": false
+      },
+      {
+        "number": "2",
+        "starred": false,
+        "text": "Is there an assigned lifeguard on duty when the pool is open for use? Mayroon bang nakatalagang lifeguard na naka-duty kapag bukas ang palanguyan?",
+        "page": 21,
+        "id": "XVI-2",
+        "group": false
+      },
+      {
+        "number": "3",
+        "starred": false,
+        "text": "Are swimming pool rules and warning signs properly posted? Ang mga patakaran ng swimming pool at mga babala ba ay maayos na nakapaskil?",
+        "page": 21,
+        "id": "XVI-3",
+        "group": false
+      },
+      {
+        "number": "4",
+        "starred": false,
+        "text": "Does the swimming pool area have a non-slip surface? Mayroon bang hindi madulas na lugar sa may swimming pool?",
+        "page": 22,
+        "id": "XVI-4",
+        "group": false
+      }
+    ],
+    "title": "Swimming Pools",
+    "translation": "Palanguyan"
+  },
+  {
+    "id": "XVII",
+    "page": 23,
+    "items": [
+      {
+        "number": "1",
+        "starred": false,
+        "text": "Are there hotlines for emergencies displayed near the office telephones? Makikita ba ang mga emergency hotlines malapit sa mga telepono ng opisina?",
+        "page": 23,
+        "id": "XVII-1",
+        "group": false
+      },
+      {
+        "number": "2",
+        "starred": false,
+        "text": "Is there regular maintenance in the dormitory? (e.g., pest control, cleaning, etc.) Mayroon bang regular na pagpapanatili sa dormitoryo (hal., pagkontrol ng peste, paglilinis, atbp.)?",
+        "page": 23,
+        "id": "XVII-2",
+        "group": false
+      },
+      {
+        "number": "3",
+        "starred": false,
+        "text": "Are all light bulbs or fluorescent lights securely mounted and in good condition? Nakakabit ba ng maayos at nasa maayos na kondisyon ang lahat ng bumbilya o fluorescent lights?",
+        "page": 23,
+        "id": "XVII-3",
+        "group": false
+      },
+      {
+        "number": "4",
+        "starred": false,
+        "text": "Are fire drill escape plan signs provided and up to date? Mayroon ba at wasto ang mga fire drill escape plan signs?",
+        "page": 23,
+        "id": "XVII-4",
+        "group": false
+      },
+      {
+        "number": "5",
+        "starred": false,
+        "text": "Are windows and shades in proper working order and glass free of cracks? Ang mga bintana at kurtina ba ay gumagana at walang basag?",
+        "page": 23,
+        "id": "XVII-5",
+        "group": false
+      },
+      {
+        "number": "6",
+        "starred": false,
+        "text": "Are fire extinguishers located in readily accessible positions? Matatagpuan ba ang mga fire extinguisher sa mga lokasyon na madaling maabot?",
+        "page": 23,
+        "id": "XVII-6",
+        "group": false
+      },
+      {
+        "number": "7",
+        "starred": false,
+        "text": "Are shelves bolted to the wall? Nakakabit ba ng maayos ang mga estante sa pader?",
+        "page": 23,
+        "id": "XVII-7",
+        "group": false
+      },
+      {
+        "number": "8",
+        "starred": false,
+        "text": "Are floors in good condition and not slippery? Nasa maayos ba na kondisyon at hindi madulas ang mga sahig?",
+        "page": 23,
+        "id": "XVII-8",
+        "group": false
+      },
+      {
+        "number": "9",
+        "starred": false,
+        "text": "Are overhead shelves properly loaded? (e.g. Heavy objects should always be loaded at floor level. Chemicals should never be loaded at eye level.) Maayos ba ang bigat na nilalagay sa mga istante (e.g. ang mga mabibigat na gamit ay nasa pinakamababang na patag, ang mga kemikal ay wala sa antas ng mata)",
+        "page": 23,
+        "id": "XVII-9",
+        "group": false
+      },
+      {
+        "number": "10",
+        "starred": false,
+        "text": "Are potential hazards eliminated? (e.g. uncovered extension cords across aisles, improperly grounded electrical equipment, Venetian blinds in poor repair, etc.) Tinatanggal ba ang mga potensyal na panganib? (e.g. mga nakalantad na extension cord sa pasilyo, maling paggamit ng de-kuryenteng kagamitan, mga hindi maayos na Venetian blinds)",
+        "page": 24,
+        "id": "XVII-10",
+        "group": false
+      },
+      {
+        "number": "11",
+        "starred": false,
+        "text": "Do all electrical boxes have covers, and are all switches and electrical outlets in good condition? Ang lahat ba ng mga kahon ng kuryente ay may takip, at ang lahat ng switch at saksakan ng kuryente ay nasa mabuting kondisyon?",
+        "page": 24,
+        "id": "XVII-11",
+        "group": false
+      },
+      {
+        "number": "12",
+        "starred": false,
+        "text": "Is adequate aisle space provided such that a quick exit of dormers is possible? Mayroong bang angkop na aisle space para sa pag evacuate ng mga dormer?",
+        "page": 24,
+        "id": "XVII-12",
+        "group": false
+      },
+      {
+        "number": "13",
+        "starred": false,
+        "text": "Are there sprinklers installed? Note: Sprinklers should be installed in buildings with 3 floors or above. Mayroon bang naka-install na mga sprinkler system? Dagdag: Dapat may mga sprinklers sa mga gusali na may 3 o higit na lapag.",
+        "page": 24,
+        "id": "XVII-13",
+        "group": false
+      },
+      {
+        "number": "14",
+        "starred": false,
+        "text": "Are ceiling panels or plaster in good condition? Ang mga ceiling panels o plaster ba ay nasa mabuting kondisyon?",
+        "page": 24,
+        "id": "XVII-14",
+        "group": false
+      },
+      {
+        "number": "15",
+        "starred": false,
+        "text": "Are desks, chairs, and tables in good repair? Ang mga mesa, silya, at lamesa ba ay nasa maayos na kondisyon?",
+        "page": 24,
+        "id": "XVII-15",
+        "group": false
+      },
+      {
+        "number": "16",
+        "starred": false,
+        "text": "Are there smoke alarms present in the building? Mayroon bang mga smoke alarm sa gusali?",
+        "page": 24,
+        "id": "XVII-16",
+        "group": false
+      },
+      {
+        "number": "17",
+        "starred": false,
+        "text": "Do dormitory room doors open in \"outwards\" direction? Ang mga pinto ng mga kwarto sa dormitoryo ba ay nagbubukas sa palabas na direksyon?",
+        "page": 24,
+        "id": "XVII-17",
+        "group": false
+      },
+      {
+        "number": "18",
+        "starred": false,
+        "text": "Are dormitory beds in good condition? Ang mga kama sa dormitoryo ba ay nasa mabuting kondisyon?",
+        "page": 24,
+        "id": "XVII-18",
+        "group": false
+      },
+      {
+        "number": "19",
+        "starred": false,
+        "text": "Are first aid kits visible and readily available? Ang first aid box ba ay mabilis makita at madaling makuha?",
+        "page": 25,
+        "id": "XVII-19",
+        "group": false
+      },
+      {
+        "number": "20",
+        "starred": false,
+        "text": "Are first aid kits kept in adequate supply? Note: Small kit: 1-24 people; Medium kit: 25-100; Large kit: more than 100 Ang first aid box ba ay may sapat na suplay? Dagdag: Maliit: 1-24 na tao; Medium: 25-100; Malaki: higit sa 100 Reference: American National Standards Institute. (2024). Workplace First Aid Kit Requirements: OSHA & ANSI Z308.1 https://blog.ansi.org/ansi/workplace-first-aid-kit-requirements-ansi-z308-1/",
+        "page": 25,
+        "id": "XVII-20",
+        "group": false
+      }
+    ],
+    "title": "Dormitories",
+    "translation": "Dormitoryo"
+  }
+]

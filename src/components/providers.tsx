@@ -24,7 +24,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
-    setMounted(true);
+    const mount = async () => {
+      if (process.env.NODE_ENV === 'development' && 'serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        if (registrations.length) {
+          await Promise.all(registrations.map((registration) => registration.unregister()));
+          if ('caches' in window) {
+            await Promise.all((await caches.keys()).map((key) => caches.delete(key)));
+          }
+          window.location.reload();
+          return;
+        }
+      }
+      setMounted(true);
+    };
+    void mount().catch(() => setMounted(true));
   }, []);
 
   if (!mounted) return null;

@@ -1,9 +1,74 @@
 import { z } from 'zod';
+import { MATATAG_VERSION, assessmentSections } from './matatag';
+import { matatagTemplateSchema } from './matatag-template';
+
+const matatagText = z.string().max(4000);
+export const matatagDocumentSchema = z
+  .object({
+    version: z.union([z.literal(MATATAG_VERSION), z.string().uuid()]),
+    template: matatagTemplateSchema.optional(),
+    details: z.object({
+      phase: z.enum(['PRE', 'POST']).default('PRE'),
+      campusId: z.union([z.string().uuid(), z.literal('')]),
+      campus: matatagText,
+      unit: matatagText,
+      buildings: matatagText,
+      buildingCount: z
+        .string()
+        .regex(/^(?:[1-9]\d{0,3})?$/, 'Enter a positive whole number of buildings.'),
+      floorCount: z
+        .string()
+        .regex(/^(?:[1-9]\d{0,3})?$/, 'Enter a positive whole number of floors.'),
+      commander: matatagText,
+      evaluator: matatagText,
+      date: z.union([z.string().date(), z.literal('')]),
+      timeStart: z.string().regex(/^(?:([01]\d|2[0-3]):[0-5]\d)?$/),
+      timeEnd: z.string().regex(/^(?:([01]\d|2[0-3]):[0-5]\d)?$/),
+      overallScore: z.string().max(100),
+    }),
+    answers: z.record(z.string().max(80), z.string().max(80)),
+    remarks: z.record(z.string().max(80), matatagText),
+    sections: z.record(
+      z.string().max(80),
+      z.object({
+        notApplicable: z.boolean(),
+        score: z.string().max(100),
+        comments: matatagText,
+      })
+    ),
+  })
+  .superRefine((document, ctx) => {
+    if (document.version !== MATATAG_VERSION && !document.template)
+      ctx.addIssue({
+        code: 'custom',
+        path: ['template'],
+        message: 'The assessment checklist is missing.',
+      });
+    const sections = assessmentSections(document);
+    const items = new Map(sections.flatMap((s) => s.items.map((item) => [item.id, item] as const)));
+    for (const [id, answer] of Object.entries(document.answers)) {
+      const item = items.get(id);
+      if (!item || item.group || !item.options.some((option) => option.value === answer))
+        ctx.addIssue({
+          code: 'custom',
+          path: ['answers', id],
+          message: 'Select an available answer for this question.',
+        });
+    }
+    for (const id of Object.keys(document.remarks)) {
+      if (!items.has(id))
+        ctx.addIssue({ code: 'custom', path: ['remarks', id], message: 'Unknown question.' });
+    }
+    for (const id of Object.keys(document.sections)) {
+      if (!sections.some((s) => s.id === id))
+        ctx.addIssue({ code: 'custom', path: ['sections', id], message: 'Unknown section.' });
+    }
+  });
 
 /* ─── Auth ─── */
 export const signInSchema = z.object({
   email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: z.string().min(1, 'Password is required'),
 });
 
 const passwordSchema = z

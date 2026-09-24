@@ -175,11 +175,13 @@ export default function LandingPage() {
               { href: '#features', label: 'Features' },
               { href: '#how-it-works', label: 'How It Works' },
               { href: '#about', label: 'About' },
+              { href: '/matatag', label: 'MATATAG' },
             ].map((item) => (
               <a
                 key={item.href}
                 href={item.href}
                 onClick={(e) => {
+                  if (!item.href.startsWith('#')) return;
                   e.preventDefault();
                   smoothScroll(item.href.replace('#', ''));
                 }}
