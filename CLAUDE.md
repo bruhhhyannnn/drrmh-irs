@@ -10,7 +10,7 @@ Centralized admin web dashboard (Next.js) for the UPM DRRM-H Incident Reporting 
 
 ```bash
 npm run dev          # Start dev server
-npm run build         # Production build
+npm run build         # Production build (next build --webpack — required by next-pwa, don't switch to turbopack)
 npm run lint          # ESLint on src/**/*.{ts,tsx}
 npm run lint:fix      # ESLint --fix
 npm run type-check    # tsc --noEmit
@@ -41,18 +41,21 @@ CI (`.github/workflows/ci.yml`) runs on PRs/pushes to `main`: `npm ci` → `pris
 - `src/lib/supabase.ts` — client-side Supabase SDK (anon key), used for **auth only** (`AuthProvider`, sign-in/out) and any Supabase Realtime subscriptions.
 - `src/lib/supabase-admin.ts` — server-side Supabase client (service role key), for privileged operations Prisma can't do (e.g. Supabase Auth admin API).
 
-**Auth flow:** Supabase Auth (Google OAuth restricted to `@up.edu.ph` emails) is the identity provider; `users` table (Prisma) holds the app profile, linked via `auth_id`. `AuthProvider` (`src/components/auth/auth-provider.tsx`) listens to `supabase.auth.onAuthStateChange`, then loads the profile via `getUserByAuthId` server action into `useAuthStore` (Zustand). New Google sign-ins are provisioned into `users` by `provisionGoogleUser` (`src/actions/auth`), defaulting to the "ERT Member" user type. `ProtectedRoute` gates admin pages by role.
+**Auth flow:** Supabase Auth (Google OAuth restricted to `@up.edu.ph` emails) is the identity provider; `users` table (Prisma) holds the app profile, linked via `auth_id`. `AuthProvider` (`src/components/auth/auth-provider.tsx`) listens to `supabase.auth.onAuthStateChange`, then loads the profile via `getUserByAuthId` server action into `useAuthStore` (Zustand). New Google sign-ins are provisioned into `users` by `provisionGoogleUser` (`src/actions/auth`), defaulting to the "ERT Member" user type. `ProtectedRoute` gates admin pages by role. Admin vs. non-admin is decided by `isAdminUserType()` (`src/lib/constants.ts`) — "Administrator"/"Super Admin" land on `/dashboard`, everyone else on `/report`. Non-admin profiles start with `is_profile_complete = false`; `CompleteProfileModal` blocks the UI until the user sets campus/cluster/unit/position via `completeUserProfile` (`src/actions/users`), and new field reports auto-fill cluster/unit from that profile.
+
+**Offline / PWA:** the app is a PWA (`@ducanh2912/next-pwa` in `next.config.ts`, disabled in dev, offline fallback page `/~offline`). New reports submitted with no connection (or on a network-shaped failure — see `isNetworkError`) are persisted to IndexedDB via `src/lib/offline-queue.ts`, which has two separate stores: field reports (`ReportForm` → `createReport`) and bystander reports (`createBystanderReport`). `OfflineQueueProvider` (`src/components/pwa/`, mounted in `src/components/providers.tsx`) replays them on the `online` event, on mount, and every 45s; network errors stop the flush and leave entries queued, server-side rejections mark the entry `failed` (never auto-retried). Connectivity and pending count live in `useOfflineQueueStore`. Editing an existing report is online-only. Because the queue replays a single create payload, `createReport` takes casualties/missing persons/population counts nested in one call — keep new-report data bundled that way.
 
 **Route groups** under `src/app/`:
 
 - `(admin)/` — protected dashboard pages (dashboard, events, reports, emergency-reports, users, calendar, settings, campus)
 - `(auth)/` — sign-in
-- `(ert)/` and `(public)/` — ERT member and public-facing pages (e.g. QR-accessible incident/bystander report submission), not behind admin auth
+- `(ert)/` — `/report`, the signed-in ERT member's status-report page (redirects to `/signin` if logged out, admins to `/dashboard`); one report per user per ongoing event (`getMyReportForOngoingEvent`), after which only missing persons/casualties can be edited
+- `(public)/` — landing page and the anonymous QR-accessible bystander report form (no auth)
 - `auth/` — OAuth callback route
 
 **Settings pages are generic/table-driven.** The many lookup tables (clusters, units, locations, positions, user types, event statuses, casualty/damage conditions) share one implementation: `src/components/settings/settings-table-page.tsx` + `src/actions/settings`. When adding a new lookup table, extend this generic pattern instead of writing a bespoke CRUD page.
 
-**Multi-campus/cluster scoping:** most domain models (`users`, `reports`, `bystander_reports`, `clusters`) are scoped by `campus_id`/`cluster_id`. Check existing action functions (e.g. `getOngoingEvent(campusId)`) for the expected filtering pattern before adding new queries.
+**Multi-campus/cluster scoping:** most domain models (`users`, `reports`, `bystander_reports`, `clusters`) are scoped by `campus_id`/`cluster_id`. Check existing action functions (e.g. `getOngoingEvents(campusId)` in `src/actions/events`) for the expected filtering pattern before adding new queries.
 
 **Prisma schema** (`prisma/schema.prisma`) uses `snake_case` DB columns/tables (`@map`/`@@map`) with PascalCase Prisma model names — e.g. model `User` maps to table `users`. IDs are DB-generated UUIDs (`dbgenerated("gen_random_uuid()")`). The generated client is emitted to `src/generated/` — never hand-edit it.
 
