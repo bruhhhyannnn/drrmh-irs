@@ -15,55 +15,65 @@
 
 ## About
 
-This is the **admin web dashboard** for the UPM DRRM-H Incident Reporting System — a centralized web platform designed to manage, monitor, and analyze incident reports submitted by field teams across the UP Manila campus during drills, emergencies, and other DRRM-H-related events.
+This is the web platform for the UPM DRRM-H Incident Reporting System. It is a centralized system for managing, monitoring, and analyzing incident reports submitted during drills, emergencies, and other DRRM-H-related events, across multiple UP campuses.
 
-Field teams and bystanders submit reports directly through the web app (including QR-accessible public forms), with data flowing into Supabase. This dashboard gives administrators a centralized view of all incidents, headcounts, drill statuses, and post-event summaries.
+ERT members submit status reports through the signed-in `/report` page, and bystanders submit incident reports anonymously through a QR-accessible public form. Both forms work offline: reports are saved on the device and sent automatically once the connection returns. Administrators get a centralized view of all incidents, headcounts, drill statuses, and post-event summaries.
 
 ### What it does
 
-- **Dashboard** — Live stats on events, reports, and affected personnel with charts
-- **Events** — Track drills and incidents from creation to resolution
-- **Event Details** — Per-cluster headcount board with casualty and missing person breakdowns
-- **Reports** — View and search submitted field reports with full headcount details and GPS-pinned location
-- **Bystander Reports** — Public incident submissions with location, incident type, and casualty details
-- **Users** — Manage field team accounts, roles, and access levels
-- **Calendar** — Visual monthly timeline of all events
-- **Activity Logs** — Full audit trail of all system actions
-- **News** — Post announcements and advisories for field teams
-- **Settings** — Configure clusters, units, locations, positions, user types, event statuses, casualty conditions, and damage conditions
+**For administrators**
+
+- **Dashboard** — Stats and charts on events, reports, and affected personnel, plus an events calendar
+- **Campus** — Manage campuses and view per-campus clusters, events, and headcount summaries
+- **Events** — Track drills and incidents from creation to completion, and export an event to Excel
+- **Event Details** — Per-cluster headcount board with casualty, missing person, and structural damage breakdowns
+- **Reports** — View, search, edit, and delete field reports with full headcount details and GPS-pinned location
+- **Bystander Reports** — Review public incident submissions and mark them reviewed, verified, or dismissed
+- **Users** — Manage accounts, roles, and active status
+- **Settings** — Configure clusters, units, positions, casualty conditions, damage conditions, and per-campus population (headcount) fields
+
+**For ERT members and bystanders**
+
+- **Landing page** — Public home page with summary stats
+- **ERT Report page** (`/report`) — One status report per member per ongoing event, with location pin, headcount, damage, missing persons, and casualties
+- **Bystander Report** (`/bystander-report`) — Anonymous incident report, reachable by QR code
+- **Offline support (PWA)** — Installable app, offline fallback page, and an on-device queue that syncs reports when back online
 
 ### System Context
 
 The IRS is a centralized web platform consisting of:
 
-| Component     | Description                   |
-| ------------- | ----------------------------- |
-| **This repo** | Admin web dashboard (Next.js) |
-| Supabase      | PostgreSQL database and auth  |
+| Component     | Description                                          |
+| ------------- | ---------------------------------------------------- |
+| **This repo** | Next.js web app (admin dashboard + ERT/public forms) |
+| Supabase      | PostgreSQL database and authentication               |
+| Vercel        | Hosting and deployment                               |
+| Nominatim     | Place-name lookup for pinned report locations        |
 
 ---
 
 ## Tech Stack
 
-| Category               | Technology                      |
-| ---------------------- | ------------------------------- |
-| **Framework**          | Next.js 16 (App Router)         |
-| **Language**           | TypeScript 5                    |
-| **Styling**            | Tailwind CSS v4                 |
-| **Database**           | Supabase (PostgreSQL)           |
-| **Auth**               | Supabase Auth                   |
-| **ORM**                | Prisma 7                        |
-| **State Management**   | Zustand 5                       |
-| **Data Fetching**      | TanStack Query v5 (React Query) |
-| **Table**              | TanStack Table v8               |
-| **Forms & Validation** | React Hook Form 7 + Zod 3       |
-| **Charts**             | Recharts 3                      |
-| **Maps**               | MapLibre GL 5 + Nominatim       |
-| **Date Utilities**     | date-fns 4                      |
-| **Notifications**      | React Hot Toast                 |
-| **Icons**              | Lucide React + HugeIcons        |
-| **Email**              | Nodemailer 8                    |
-| **PWA**                | @ducanh2912/next-pwa            |
+| Category               | Technology                                     |
+| ---------------------- | ---------------------------------------------- |
+| **Framework**          | Next.js 16 (App Router), React 19              |
+| **Language**           | TypeScript 5                                   |
+| **Styling**            | Tailwind CSS v4                                |
+| **Database**           | Supabase (PostgreSQL)                          |
+| **Auth**               | Supabase Auth                                  |
+| **ORM**                | Prisma 7                                       |
+| **State Management**   | Zustand 5                                      |
+| **Data Fetching**      | TanStack Query v5 (React Query)                |
+| **Table**              | TanStack Table v8                              |
+| **Forms & Validation** | React Hook Form 7 + Zod 3                      |
+| **Charts**             | Recharts 3                                     |
+| **Maps**               | MapLibre GL 5 + Nominatim                      |
+| **Date Utilities**     | date-fns 4                                     |
+| **Notifications**      | React Hot Toast                                |
+| **Icons**              | Lucide React + HugeIcons                       |
+| **Excel Export**       | ExcelJS 4                                      |
+| **PWA / Offline**      | @ducanh2912/next-pwa + IndexedDB offline queue |
+| **Analytics**          | Vercel Analytics                               |
 
 ---
 
@@ -71,80 +81,89 @@ The IRS is a centralized web platform consisting of:
 
 ### Prerequisites
 
-- Node.js v18 or higher
-- A Supabase project with the IRS database schema applied
+- Node.js 20.9 or higher (required by Next.js 16)
+- Access to the project's Supabase database (the IRS schema must already be applied)
+- Google OAuth enabled in Supabase (see step 6)
 
 ### Installation
 
-1 **Clone the repository**
+1. **Clone the repository**
 
-```bash
-git clone https://github.com/your-org/upm-drrm-irs.git
-cd upm-drrm-irs
-```
+   ```bash
+   git clone https://github.com/bruhhhyannnn/drrm-irs.git
+   cd drrm-irs
+   ```
 
-2 **Install dependencies**
+2. **Install dependencies** (this also generates the Prisma client)
 
-```bash
-npm install
-```
+   ```bash
+   npm install
+   ```
 
-3 **Set up environment variables**
+3. **Set up environment variables**
 
-```bash
-cp .env.local.example .env.local
-```
+   ```bash
+   cp .env.local.example .env
+   ```
 
-Fill in your credentials in `.env.local`:
+   Use `.env` rather than `.env.local`: the Prisma CLI loads variables through `dotenv` (see `prisma.config.ts`), and `dotenv` only reads `.env`. Next.js reads `.env` as well.
 
-```env
-# Supabase — used for auth and the client-side SDK
-NEXT_PUBLIC_SUPABASE_URL=https://yourproject.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+   ```env
+   # Supabase: auth and the client-side SDK
+   NEXT_PUBLIC_SUPABASE_URL=https://yourproject.supabase.co
+   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=your-publishable-key
 
-# Prisma — direct database connection for server actions
-DATABASE_URL=postgresql://postgres:[password]@db.[ref].supabase.co:5432/postgres
+   # Supabase: server-only service role key (creating/deleting users from the Users page)
+   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-# Site URL — used for OAuth redirect callbacks
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
-```
+   # Prisma: direct database connection for server actions
+   DATABASE_URL=postgresql://postgres:[password]@db.[ref].supabase.co:5432/postgres
+   SHADOW_DATABASE_URL=postgresql://...
 
-4 **Generate the Prisma client**
+   # Site URL: used for the Google OAuth redirect
+   NEXT_PUBLIC_SITE_URL=http://localhost:3000
+   ```
 
-```bash
-npx prisma generate
-```
+4. **Database schema**
 
-5 **Push the schema to the database** _(skip if the schema is already applied)_
+   The schema lives in the Supabase project, and `prisma/schema.prisma` mirrors it. Do **not** run `npx prisma db push`, `npx prisma migrate dev`, or `npx prisma migrate reset` against the shared database. The files in `prisma/migrations` are out of date and do not rebuild the current schema. After a schema change, regenerate the client with `npx prisma generate`.
 
-```bash
-npx prisma db push
-```
+5. **Seed lookup data** _(optional: populates default clusters, positions, etc.)_
 
-6 **Seed lookup data** _(optional — populates default clusters, positions, etc.)_
+   ```bash
+   npm run seed
+   ```
 
-```bash
-npx prisma db seed
-```
+6. **Configure Google sign-in** _(one-time, in the dashboards)_
+   - Supabase → Authentication → Providers → Google: enable it and add the Client ID and Secret
+   - Supabase → Authentication → URL Configuration → Redirect URLs: add `http://localhost:3000/auth/callback` and your production `/auth/callback` URL
+   - Google Cloud Console → OAuth 2.0 Client → Authorized redirect URIs: add the Supabase callback URL shown in the Supabase dashboard
 
-7 **Start the development server**
+7. **Start the development server**
 
-```bash
-npm run dev
-```
+   ```bash
+   npm run dev
+   ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+   Open [http://localhost:3000](http://localhost:3000) in your browser. The PWA service worker is disabled in development. Use `npm run build && npm run start` to test offline behavior.
 
 ---
 
 ## Roles & Access
 
-| Role                 | Access                                                             |
-| -------------------- | ------------------------------------------------------------------ |
-| **Super Admin**      | Full access — all pages including users and settings               |
-| **Administrator**    | Dashboard, events, reports, calendar, news, activity logs          |
-| **ERT Member**       | Public `/report` page — submit incident reports via web or QR code |
-| **Public/Bystander** | `/bystander-report` — anonymous incident reporting via QR code     |
+| Role                 | Access                                                                                                            |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **Super Admin**      | All admin pages across all campuses, including Campus management. Picks the campus when creating events and users |
+| **Administrator**    | Admin pages (dashboard, events, reports, bystander reports, users, settings) for their campus                     |
+| **ERT Member**       | Signed-in `/report` page: submit one status report per ongoing event, then add missing persons/casualties         |
+| **Public/Bystander** | `/bystander-report`: anonymous incident reporting via QR code, no sign-in                                         |
+
+**How accounts are created and signed in:**
+
+- **Google sign-in:** restricted to `@up.edu.ph` accounts. A first-time Google user is created automatically as an **ERT Member**.
+- **Email and password:** for accounts that admins create on the Users page. Includes a forgot-password flow.
+- **Completing the profile:** non-admin users must set their campus, cluster, unit, and position before they can submit reports.
+- **Where users land after sign-in:** admins go to `/dashboard`, and everyone else goes to `/report`.
 
 ---
 
@@ -165,13 +184,15 @@ graph LR
     irs[<b>IRS Web Dashboard</b><br/><small>Next.js web platform for managing and monitoring DRRM-H incidents and drills</small>]
   end
 
-  supabase[(<i><small>external_system</small></i><br/>Supabase<br/>PostgreSQL + Auth + Realtime)]
+  supabase[(<i><small>external_system</small></i><br/>Supabase<br/>PostgreSQL + Auth)]
   vercel[<i><small>external_system</small></i><br/>Vercel]
+  nominatim[<i><small>external_system</small></i><br/>Nominatim<br/>Place-name lookup]
 
   admin -->|HTTPS| irs
   ertMember -->|HTTPS| irs
 
   irs -->|Reads/writes data, authenticates users| supabase
+  irs -->|Looks up pinned locations| nominatim
   irs -->|Deployment| vercel
 ```
 
@@ -192,6 +213,7 @@ graph LR
     webApp[<b>Web Application</b><br/><small>Next.js 16 App Router — renders the admin dashboard and public/ERT report forms</small>]
     serverActions[<b>Server Actions</b><br/><small>Next.js Server Actions + Prisma — business logic and all DB reads/writes</small>]
     authClient[<b>Auth Client</b><br/><small>Supabase JS SDK — sign-in/out and session state</small>]
+    offlineQueue[<b>Offline Queue</b><br/><small>Service worker + IndexedDB — stores reports offline and syncs them later</small>]
   end
 
   db[(<i><small>external_system</small></i><br/>Database<br/>Supabase PostgreSQL)]
@@ -204,6 +226,8 @@ graph LR
 
   webApp -->|Invokes| serverActions
   webApp -->|Uses| authClient
+  webApp -->|Queues reports when offline| offlineQueue
+  offlineQueue -->|Replays when online| serverActions
 
   serverActions -->|Reads/writes via Prisma| db
   authClient -->|Authenticates| supaAuth
@@ -222,18 +246,19 @@ config:
   theme: default
 ---
 flowchart TD
-  A([Field User opens web app]) --> B[Selects active event]
-  B --> C[Fills in incident report form]
+  A([ERT Member signs in and opens /report]) --> B{Already reported<br/>for ongoing event?}
+  B -- Yes --> V[View submission<br/>add missing persons / casualties]
+  V --> M([End])
+  B -- No --> C[Selects ongoing event, pins location,<br/>fills headcount and damage]
   C --> D{Form valid?}
   D -- No --> C
-  D -- Yes --> E[Submits report]
-  E --> F[(Supabase — reports table)]
-  F --> G[Real-time subscription triggers]
-  G --> H[Web dashboard updates]
-  H --> I[Admin views reports page]
+  D -- Yes --> E{Online?}
+  E -- Yes --> F[(Supabase — reports table)]
+  E -- No --> Q[Saved on device<br/>offline queue]
+  Q -->|Connection restored| F
+  F --> I[Admin views Reports page]
   I --> K[Admin opens event details page]
-  I --> L[Admin reviews headcount and casualties]
-  K --> M([End])
+  K --> L[Admin reviews headcount, casualties, and damage]
   L --> M
 ```
 
@@ -339,7 +364,7 @@ config:
   theme: default
 ---
 flowchart TB
-    Actor(["ERT"]) --- UC_CreateReport(("create report")) & UC_SignIn(("sign-in/-sign-up")) & UC_SignOut(("sign-out"))
+    Actor(["ERT"]) --- UC_CreateReport(("create report")) & UC_SignIn(("sign-in / sign-up")) & UC_SignOut(("sign-out"))
     UC_CreateReport -. extend .-> UC_ViewReport(("view created<br>report"))
     UC_AddMissing(("add missing<br>person")) -. extend .-> UC_ViewReport
     UC_AddCasualty(("add casualty")) -. extend .-> UC_ViewReport
@@ -370,7 +395,7 @@ flowchart TB
 
 Simplified sequence diagrams for each role. "Server" means the Next.js Server Actions. "Database" means Supabase PostgreSQL, accessed through Prisma.
 
-### All Signed-in Roles — Sign In with Google
+### All Signed-in Roles — Sign In
 
 ```mermaid
 sequenceDiagram
@@ -381,17 +406,25 @@ sequenceDiagram
     participant S as Server
     participant DB as Database
 
-    U->>App: Click "Continue with Google"
-    App->>Auth: Sign in with Google (@up.edu.ph only)
-    Auth-->>App: Session
-    App->>S: Provision user account
-    alt Not a @up.edu.ph email
-        S-->>App: Rejected
-        App-->>U: "Only UP accounts are allowed"
-    else First sign-in
-        S->>DB: Create user as ERT Member
-    else Returning user
-        S->>DB: Find existing user
+    alt Google sign-in
+        U->>App: Click "Continue with Google"
+        App->>Auth: Sign in with Google (@up.edu.ph only)
+        Auth-->>App: Session
+        App->>S: Provision user account
+        alt Not a @up.edu.ph email
+            S-->>App: Rejected
+            App-->>U: "Only UP accounts are allowed"
+        else First sign-in
+            S->>DB: Create user as ERT Member
+        else Returning user
+            S->>DB: Find existing user
+        end
+    else Email and password (admin-created account)
+        U->>App: Enter email and password
+        App->>Auth: Sign in with password
+        Auth-->>App: Session
+        App->>S: Load user profile
+        S->>DB: Find user
     end
     S-->>App: User role
     alt Super Admin / Administrator
@@ -698,6 +731,8 @@ sequenceDiagram
 
 ## Entity Relationship Diagram
 
+Headcounts are stored per category in `report_population_counts`, and each campus chooses its categories in `campus_population_categories`. The fixed count columns on `reports` (`faculty_members`, `students`, …) are legacy columns that are still filled in for backward compatibility.
+
 ```mermaid
 ---
 config:
@@ -872,7 +907,38 @@ erDiagram
     timestamptz created_at
   }
 
+  population_categories {
+    uuid id PK
+    string code UK
+    string name
+    string description
+    bool is_active
+    timestamptz created_at
+  }
+
+  campus_population_categories {
+    uuid id PK
+    uuid campus_id FK
+    uuid category_id FK
+    int sort_order
+    bool is_required
+    bool is_active
+    timestamptz created_at
+  }
+
+  report_population_counts {
+    uuid id PK
+    uuid report_id FK
+    uuid category_id FK
+    int count
+    timestamptz created_at
+  }
+
   campus ||--o{ clusters : "contains"
+  campus ||--o{ campus_population_categories : "configures"
+  population_categories ||--o{ campus_population_categories : "enabled_for"
+  population_categories ||--o{ report_population_counts : "counted_as"
+  reports ||--o{ report_population_counts : "has"
   campus ||--o{ events : "hosts"
   campus ||--o{ users : "scopes"
   clusters ||--o{ units : "contains"
@@ -904,12 +970,37 @@ erDiagram
 ## Scripts
 
 ```bash
-npm run dev        # Start development server
-npm run build      # Build for production
-npm run start      # Start production server
-npm run lint       # Run ESLint
-npm run lint:fix   # Auto-fix ESLint issues
-npm run seed       # Seed lookup data (clusters, positions, event types, etc.)
+npm run dev          # Start development server (PWA disabled)
+npm run build        # Build for production (uses webpack, required by next-pwa)
+npm run start        # Start production server
+npm run lint         # Run ESLint
+npm run lint:fix     # Auto-fix ESLint issues
+npm run type-check   # TypeScript check (tsc --noEmit)
+npm run seed         # Seed lookup data (clusters, positions, statuses, etc.)
+npx prisma generate  # Regenerate the Prisma client (also runs on npm install)
+```
+
+There is no automated test suite yet. CI (`.github/workflows/ci.yml`) runs on pushes and pull requests to `main` and does the following: install, `prisma generate`, `npm audit`, lint, type-check, and build. A Husky pre-commit hook runs ESLint and Prettier on staged files.
+
+---
+
+## Project Structure
+
+```text
+src/
+├── actions/        # Server Actions — all database reads/writes (Prisma)
+├── app/
+│   ├── (admin)/    # Protected admin pages (dashboard, campus, events, reports, users, settings)
+│   ├── (auth)/     # Sign-in, forgot password, update password
+│   ├── (ert)/      # /report — ERT member status report
+│   ├── (public)/   # Landing page and /bystander-report
+│   ├── auth/       # Google OAuth callback
+│   └── ~offline/   # PWA offline fallback page
+├── components/     # UI, layout, auth, PWA, and TanStack Query hooks (components/hooks)
+├── lib/            # Prisma/Supabase clients, Zod schemas, offline queue, utilities
+└── store/          # Zustand stores (auth, offline queue, sidebar, theme)
+prisma/             # schema.prisma and seed.ts
+docs/               # Plans, reviews, bug reports, and feature specs
 ```
 
 ---
