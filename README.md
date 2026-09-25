@@ -210,6 +210,8 @@ graph LR
   webApp -->|Deployment| vercel
 ```
 
+---
+
 ## Flowchart — Report Submission
 
 ```mermaid
@@ -234,6 +236,8 @@ flowchart TD
   K --> M([End])
   L --> M
 ```
+
+---
 
 ## Use-Case Diagram — Super Admin
 
@@ -342,6 +346,355 @@ flowchart TB
     UC_SignIn -. include .-> UC_NewProfile(("new user<br>create profile"))
     UC_EditProfile(("edit profile")) -. extend .-> UC_NewProfile
 ```
+
+## Use-Case Diagram — Bystander
+
+```mermaid
+---
+config:
+  layout: elk
+  look: handDrawn
+  theme: default
+---
+flowchart TB
+    Actor(["Bystander"]) --- UC_ScanQR(("scan QR code")) & UC_Submit(("submit bystander<br>report"))
+    UC_Submit -. include .-> UC_Location(("pin incident<br>location")) & UC_Type(("select incident<br>type"))
+    UC_AddMissing(("add missing<br>person")) -. extend .-> UC_Submit
+    UC_AddCasualty(("add casualty")) -. extend .-> UC_Submit
+    UC_Offline(("save offline and<br>sync later")) -. extend .-> UC_Submit
+```
+
+---
+
+## Sequence Diagrams
+
+Simplified sequence diagrams for each role. "Server" means the Next.js Server Actions. "Database" means Supabase PostgreSQL, accessed through Prisma.
+
+### All Signed-in Roles — Sign In with Google
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant App as Web App
+    participant Auth as Supabase Auth
+    participant S as Server
+    participant DB as Database
+
+    U->>App: Click "Continue with Google"
+    App->>Auth: Sign in with Google (@up.edu.ph only)
+    Auth-->>App: Session
+    App->>S: Provision user account
+    alt Not a @up.edu.ph email
+        S-->>App: Rejected
+        App-->>U: "Only UP accounts are allowed"
+    else First sign-in
+        S->>DB: Create user as ERT Member
+    else Returning user
+        S->>DB: Find existing user
+    end
+    S-->>App: User role
+    alt Super Admin / Administrator
+        App-->>U: Open Dashboard
+    else ERT Member
+        App-->>U: Open Report page
+    end
+```
+
+### All Signed-in Roles — Sign Out
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant App as Web App
+    participant Auth as Supabase Auth
+
+    U->>App: Click "Sign out"
+    App->>Auth: Sign out
+    Auth-->>App: Session cleared
+    App-->>U: Redirect to Sign-in page
+```
+
+### Bystander — Submit a Bystander Report
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor B as Bystander
+    participant App as Web App
+    participant Q as Device Storage (Offline Queue)
+    participant S as Server
+    participant DB as Database
+
+    B->>App: Scan QR code and open the report form
+    B->>App: Pin location, choose incident type, add details
+    opt Missing persons or casualties
+        B->>App: Add missing persons / casualties
+    end
+    B->>App: Submit
+    alt Online
+        App->>S: Create bystander report
+        S->>DB: Save report (status: pending)
+        App-->>B: "Report submitted"
+    else Offline
+        App->>Q: Save report on device
+        App-->>B: "Saved — will send when back online"
+    end
+```
+
+### ERT Member — Complete Profile (First Sign-in)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor E as ERT Member
+    participant App as Web App
+    participant S as Server
+    participant DB as Database
+
+    App-->>E: Show "Complete your profile" form
+    E->>App: Select campus, cluster, unit, and position
+    App->>S: Save profile
+    S->>DB: Update user (profile complete)
+    S-->>App: Updated profile
+    App-->>E: Show Report form
+```
+
+### ERT Member — Submit a Field Report
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor E as ERT Member
+    participant App as Web App
+    participant Q as Device Storage (Offline Queue)
+    participant S as Server
+    participant DB as Database
+
+    E->>App: Open Report page
+    App->>S: Load ongoing events for my campus
+    S->>DB: Query ongoing events
+    S-->>App: Events
+    E->>App: Select event, pin location, enter headcount and damage
+    opt Missing persons or casualties
+        E->>App: Add missing persons / casualties
+    end
+    E->>App: Submit
+    App->>App: Validate form
+    alt Online
+        App->>S: Create report
+        S->>DB: Save report with headcount, casualties, missing persons
+        App-->>E: "Report submitted"
+    else Offline
+        App->>Q: Save report on device
+        App-->>E: "Saved — will send when back online"
+    end
+```
+
+### ERT Member / Bystander — Sync Offline Reports
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant App as Web App
+    participant Q as Device Storage (Offline Queue)
+    participant S as Server
+    participant DB as Database
+    actor U as ERT Member / Bystander
+
+    App->>App: Connection restored
+    App->>Q: Get pending reports
+    Q-->>App: Pending reports
+    loop Each pending report
+        App->>S: Create report
+        alt Saved
+            S->>DB: Save report
+            App->>Q: Remove from device
+        else Rejected by server
+            App->>Q: Mark as failed
+        end
+    end
+    App-->>U: "N offline reports submitted"
+```
+
+### ERT Member — View Submitted Report
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor E as ERT Member
+    participant App as Web App
+    participant S as Server
+    participant DB as Database
+
+    E->>App: Click "View Submission"
+    App->>S: Get my report
+    S->>DB: Query report details
+    S-->>App: Report
+    App-->>E: Show report details
+    opt Update missing persons or casualties
+        E->>App: Edit list and save
+        App->>S: Replace missing persons / casualties
+        S->>DB: Delete old entries, save new entries
+        App-->>E: "Updated"
+    end
+```
+
+### Administrator — Create and Manage an Event
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor A as Administrator
+    participant App as Web App
+    participant S as Server
+    participant DB as Database
+
+    A->>App: Open Events page and click "Create"
+    A->>App: Enter name, quarter, status, and dates
+    App->>S: Create event (for my campus)
+    S->>DB: Save event
+    S-->>App: New event
+    App-->>A: Event listed
+    opt Start or end the drill
+        A->>App: Change status (e.g. Ongoing / Done)
+        App->>S: Update event
+        S->>DB: Save status
+    end
+```
+
+### Administrator — Review Field Reports and Headcount
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor A as Administrator
+    participant App as Web App
+    participant S as Server
+    participant DB as Database
+
+    A->>App: Open Reports page
+    App->>S: Get reports (filtered by campus)
+    S->>DB: Query reports
+    S-->>App: Reports
+    App-->>A: Show reports list
+    A->>App: Open event details
+    App->>S: Get headcount, casualties, and damages for the event
+    S->>DB: Query summary data
+    S-->>App: Event summary
+    App-->>A: Show event summary
+    opt Fix a report
+        A->>App: Edit or delete report
+        App->>S: Update / delete report
+        S->>DB: Save changes
+    end
+```
+
+### Administrator — Verify a Bystander Report
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor A as Administrator
+    participant App as Web App
+    participant S as Server
+    participant DB as Database
+
+    A->>App: Open Emergency Reports page
+    App->>S: Get bystander reports
+    S->>DB: Query bystander reports
+    S-->>App: Reports
+    A->>App: Open a report
+    alt Verify / Review / Dismiss
+        A->>App: Choose new status
+        App->>S: Update report status
+        S->>DB: Save status
+    else Delete
+        A->>App: Delete report
+        App->>S: Delete report
+        S->>DB: Remove report
+    end
+    App-->>A: List updated
+```
+
+### Administrator — Manage Users
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor A as Administrator
+    participant App as Web App
+    participant S as Server
+    participant Auth as Supabase Auth
+    participant DB as Database
+
+    A->>App: Open Users page and click "Create"
+    A->>App: Enter user details and role
+    App->>S: Create user
+    S->>Auth: Create login account
+    Auth-->>S: Auth ID
+    S->>DB: Save user profile
+    S-->>App: New user
+    App-->>A: User listed
+    opt Edit, deactivate, or delete
+        A->>App: Choose action
+        App->>S: Update / toggle status / delete user
+        S->>DB: Save changes
+    end
+```
+
+### Super Admin — Manage Campuses
+
+Super Admins can do everything Administrators can, across all campuses. When they create an event they pick its campus.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor SA as Super Admin
+    participant App as Web App
+    participant S as Server
+    participant DB as Database
+
+    SA->>App: Open Campus page
+    App->>S: Get all campuses
+    S->>DB: Query campuses
+    S-->>App: Campuses
+    alt Create / Edit / Delete campus
+        SA->>App: Submit campus form
+        App->>S: Save campus
+        S->>DB: Insert / update / delete campus
+    else View campus details
+        SA->>App: Open a campus
+        App->>S: Get campus clusters and events
+        S->>DB: Query campus data
+        S-->>App: Campus details
+    end
+    App-->>SA: Page updated
+```
+
+### Administrator / Super Admin — Manage Settings (Lookup Tables)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor A as Administrator / Super Admin
+    participant App as Web App
+    participant S as Server
+    participant DB as Database
+
+    A->>App: Open Settings (clusters, units, positions, conditions, etc.)
+    App->>S: Get items for the selected table
+    S->>DB: Query table
+    S-->>App: Items
+    A->>App: Create, edit, or delete an item
+    App->>S: Save item
+    S->>DB: Insert / update / delete
+    S-->>App: Updated list
+    App-->>A: Table updated
+```
+
+---
 
 ## Entity Relationship Diagram
 
