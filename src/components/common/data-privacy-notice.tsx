@@ -36,7 +36,7 @@ export function DataPrivacyNotice({ summary }: DataPrivacyNoticeProps) {
   );
 }
 
-function DataPrivacyContent() {
+export function DataPrivacyContent() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
