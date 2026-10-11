@@ -4,7 +4,6 @@ export { UpdatePasswordForm } from '../../app/(auth)/update-password/update-pass
 export { AuthProvider } from './auth-provider';
 export { AuthShell } from './auth-shell';
 export { GoogleSignInButton } from './google-sign-in-button';
-export { ProfileModal } from './profile-modal';
+export { ProfileDrawer } from './profile-drawer';
 export { ProfileSetup, ProfileSetupGate } from './profile-setup';
 export { ProtectedRoute } from './protected-route';
-export { SignOutButton } from './sign-out-button';

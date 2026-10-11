@@ -3,7 +3,6 @@
 import { AuthProvider } from '@/components/auth';
 import { InstallPrompt } from '@/components/pwa/install-prompt';
 import { OfflineQueueProvider } from '@/components/pwa/offline-queue-provider';
-import { ThemeProvider } from '@/components/theme-provider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
@@ -31,14 +30,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <AuthProvider>
-          {children}
-          <Toaster position="top-right" />
-          <InstallPrompt />
-          <OfflineQueueProvider />
-        </AuthProvider>
-      </ThemeProvider>
+      <AuthProvider>
+        {children}
+        <Toaster position="top-right" />
+        <InstallPrompt />
+        <OfflineQueueProvider />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

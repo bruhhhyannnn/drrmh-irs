@@ -1,6 +1,6 @@
 'use client';
 
-import { ProfileModal } from '@/components/auth';
+import { ProfileDrawer } from '@/components/auth';
 import { FOCUS_RING } from '@/components/ds';
 import { cn, supabase } from '@/lib';
 import { useAuthStore } from '@/store';
@@ -130,7 +130,7 @@ function AccountMenu() {
         </>
       )}
 
-      <ProfileModal isOpen={profileOpen} onClose={() => setProfileOpen(false)} />
+      <ProfileDrawer open={profileOpen} onClose={() => setProfileOpen(false)} />
     </>
   );
 }
