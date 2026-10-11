@@ -21,7 +21,7 @@ export function eventTone(name?: string | null): Tone {
   return 'grey';
 }
 
-export type BystanderStatusName = 'pending' | 'reviewed' | 'verified' | 'dismissed';
+type BystanderStatusName = 'pending' | 'reviewed' | 'verified' | 'dismissed';
 
 /** A report without a status is still waiting, so it reads as pending. */
 export function bystanderStatusKey(name?: string | null): BystanderStatusName {

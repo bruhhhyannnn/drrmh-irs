@@ -46,16 +46,6 @@ export async function getEvent(id: string) {
   });
 }
 
-export async function createEvent(data: Prisma.EventCreateInput) {
-  try {
-    const event = await prisma.event.create({ data });
-    revalidateEvents();
-    return event;
-  } catch (err) {
-    throw toFriendlyError(err, 'event');
-  }
-}
-
 /** Add event with several campuses ticked: the same event once per campus, all or nothing. */
 export async function createEvents(
   data: Omit<Prisma.EventUncheckedCreateInput, 'campus_id'>,

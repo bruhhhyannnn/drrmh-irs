@@ -34,11 +34,3 @@ export function Spinner({ size = 'md', center = false, className }: SpinnerProps
     </div>
   );
 }
-
-export function PageError({ message }: { message: string }) {
-  return (
-    <div className="flex h-[50vh] items-center justify-center">
-      <p className="text-error-500 text-sm">{message}</p>
-    </div>
-  );
-}

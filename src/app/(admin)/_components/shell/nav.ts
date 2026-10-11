@@ -22,7 +22,7 @@ export interface NavItem {
   tab?: boolean;
 }
 
-export const NAV: NavItem[] = [
+const NAV: NavItem[] = [
   {
     key: 'home',
     label: 'Dashboard',

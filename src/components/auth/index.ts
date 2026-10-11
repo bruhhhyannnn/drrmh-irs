@@ -3,7 +3,6 @@ export { SignInForm } from '../../app/(auth)/signin/sign-in-form';
 export { UpdatePasswordForm } from '../../app/(auth)/update-password/update-password-form';
 export { AuthProvider } from './auth-provider';
 export { AuthShell } from './auth-shell';
-export { GoogleSignInButton } from './google-sign-in-button';
 export { ProfileDrawer } from './profile-drawer';
 export { ProfileSetup, ProfileSetupGate } from './profile-setup';
 export { ProtectedRoute } from './protected-route';

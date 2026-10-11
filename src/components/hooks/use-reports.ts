@@ -1,5 +1,4 @@
 import {
-  createReport,
   createReportCasualty,
   createReportMissingPerson,
   deleteReport,
@@ -11,14 +10,11 @@ import {
   getReportCasualties,
   getReportMissingPersons,
   getReports,
-  getReportsByEvent,
   saveReportEdits,
-  updateReport,
   type ReportEditData,
   type ReportListFilters,
 } from '@/actions/reports';
-import { CasualtyFormData, MissingPersonFormData, ReportFormData } from '@/lib';
-import type { Prisma } from '@prisma/client';
+import { CasualtyFormData, MissingPersonFormData } from '@/lib';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export function useReports(
@@ -39,33 +35,6 @@ export function useReport(id?: string) {
     queryKey: ['report', id],
     queryFn: () => getReport(id!),
     enabled: !!id,
-  });
-}
-
-export function useCreateReport() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (data: ReportFormData & { user_id?: string }) => createReport(data),
-    onSuccess: (_data, variables) => {
-      for (const key of ['reports', 'event-summary', 'dashboard', 'events']) {
-        queryClient.invalidateQueries({ queryKey: [key] });
-      }
-      if (variables.user_id) {
-        queryClient.invalidateQueries({ queryKey: ['my-report', variables.user_id] });
-      }
-    },
-  });
-}
-
-export function useUpdateReport() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Prisma.ReportUpdateInput }) =>
-      updateReport(id, data),
-    onSuccess: (_data, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ['reports'] });
-      queryClient.invalidateQueries({ queryKey: ['report', id] });
-    },
   });
 }
 
@@ -93,14 +62,6 @@ export function useDeleteReport() {
         queryClient.invalidateQueries({ queryKey: [key] });
       }
     },
-  });
-}
-
-export function useEventReports(eventId?: string) {
-  return useQuery({
-    queryKey: ['event-reports', eventId],
-    queryFn: () => getReportsByEvent(eventId!),
-    enabled: !!eventId,
   });
 }
 

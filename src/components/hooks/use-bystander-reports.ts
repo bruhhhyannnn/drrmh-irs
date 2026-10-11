@@ -1,5 +1,4 @@
 import {
-  createBystanderReport,
   deleteBystanderReport,
   getBystanderIncidentTypes,
   getBystanderPhotoUrls,
@@ -7,9 +6,7 @@ import {
   getPendingBystanderCount,
   updateBystanderReportStatus,
 } from '@/actions/emergency-reports';
-import { BystanderReportFormData } from '@/lib';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
 
 export type BystanderStatus = 'reviewed' | 'verified' | 'dismissed';
 
@@ -17,18 +14,6 @@ function invalidateBystanderViews(queryClient: QueryClient) {
   for (const key of ['bystander-reports', 'bystander-pending', 'dashboard']) {
     queryClient.invalidateQueries({ queryKey: [key] });
   }
-}
-
-export function useCreateBystanderReport() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (data: BystanderReportFormData) => createBystanderReport(data),
-    onSuccess: () => {
-      invalidateBystanderViews(queryClient);
-      toast.success('Report submitted successfully');
-    },
-    onError: (err: Error) => toast.error(err.message),
-  });
 }
 
 export function useBystanderReports(campusId?: string, options?: { enabled?: boolean }) {

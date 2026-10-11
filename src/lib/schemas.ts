@@ -28,7 +28,7 @@ export const updatePasswordSchema = z
   });
 
 /* ─── User ─── */
-export const userBaseSchema = z.object({
+const userBaseSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: passwordSchema,
   confirmPassword: z.string().min(1, 'Please confirm your password'),
@@ -93,7 +93,7 @@ export const casualtySchema = z.object({
   diagnosis: z.string().optional().nullable(),
 });
 
-export const populationCountEntrySchema = z.object({
+const populationCountEntrySchema = z.object({
   category_id: z.string().uuid(),
   code: z.string(),
   count: z.coerce.number().int().min(0).default(0),
@@ -214,19 +214,8 @@ export const unitSchema = z.object({
   is_active: z.boolean().default(true),
 });
 
-export const locationSchema = z.object({
-  name: z.string().min(1, 'Location name is required'),
-  cluster_id: z.string().uuid('Cluster is required'),
-  is_active: z.boolean().default(true),
-});
-
 export const positionSchema = z.object({
   name: z.string().trim().min(1, 'Enter a position name.'),
-  is_active: z.boolean().default(true),
-});
-
-export const userTypeSchema = z.object({
-  name: z.string().min(1, 'Type name is required'),
   is_active: z.boolean().default(true),
 });
 
@@ -260,12 +249,10 @@ export type SignInFormData = z.infer<typeof signInSchema>;
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 export type UpdatePasswordFormData = z.infer<typeof updatePasswordSchema>;
 export type UserCreateFormData = z.infer<typeof userCreateSchema>;
-export type UserEditFormData = z.infer<typeof userEditSchema>;
 export type CampusFormData = z.infer<typeof campusSchema>;
 export type PopulationCategoryFormData = z.infer<typeof populationCategorySchema>;
 export type EventFormData = z.infer<typeof eventSchema>;
 export type ReportFormData = z.infer<typeof reportSchema>;
-export type PopulationCountEntry = z.infer<typeof populationCountEntrySchema>;
 export type MissingPersonFormData = z.infer<typeof missingPersonSchema>;
 export type CasualtyFormData = z.infer<typeof casualtySchema>;
 export type BystanderReportFormData = z.infer<typeof bystanderReportSchema>;

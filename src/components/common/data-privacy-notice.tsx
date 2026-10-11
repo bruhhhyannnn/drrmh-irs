@@ -1,45 +1,11 @@
 'use client';
 
-import { Modal } from '@/components/ui';
 import { ShieldCheck } from 'lucide-react';
-import { useState } from 'react';
-
-interface DataPrivacyNoticeProps {
-  /** Short inline summary shown next to the "Read full notice" trigger. */
-  summary: string;
-}
-
-export function DataPrivacyNotice({ summary }: DataPrivacyNoticeProps) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="space-y-1 border-t border-gray-100 pt-3 dark:border-white/5">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-          Data Privacy Notice:
-        </p>
-        <button
-          type="button"
-          onClick={() => setIsOpen(true)}
-          className="text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 flex shrink-0 items-center gap-1 text-xs font-medium underline-offset-2 hover:underline"
-        >
-          <ShieldCheck size={13} />
-          Read full notice
-        </button>
-      </div>
-      <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-500">{summary}</p>
-
-      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} className="sm:max-w-lg">
-        <DataPrivacyContent />
-      </Modal>
-    </div>
-  );
-}
 
 export const PRIVACY_NOTICE_TITLE = 'Data Privacy Notice & Consent';
 export const PRIVACY_NOTICE_SUBTITLE = 'UP Manila DRRM-H — Incident Reporting System';
 
-/** The notice text, shared by this modal and the bystander form's drawer. */
+/** The notice text, shared by the landing page's modal and the bystander form's drawer. */
 export const PRIVACY_NOTICE_SECTIONS: { title: string; body: React.ReactNode }[] = [
   {
     title: 'Purpose of Collection',

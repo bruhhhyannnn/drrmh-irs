@@ -1,6 +1,5 @@
 import {
   completeEvents,
-  createEvent,
   createEvents,
   deleteEvent,
   getCampusEventOptions,
@@ -43,14 +42,6 @@ export function useEvent(id?: string) {
     queryKey: ['event', id],
     queryFn: () => getEvent(id!),
     enabled: !!id,
-  });
-}
-
-export function useCreateEvent() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (data: Prisma.EventCreateInput) => createEvent(data),
-    onSuccess: () => invalidateEventViews(queryClient),
   });
 }
 

@@ -34,7 +34,6 @@ export interface QueuedEntry<TPayload> {
   errorMessage?: string;
 }
 
-export type QueuedBystanderReport = QueuedEntry<BystanderReportFormData>;
 export type QueuedFieldReport = QueuedEntry<ReportFormData & { user_id?: string }>;
 
 function isSupported() {

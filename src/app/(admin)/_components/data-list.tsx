@@ -453,7 +453,7 @@ const META_TONES = {
   grey: 'text-gray-600',
 };
 
-export interface CardAction {
+interface CardAction {
   label: string;
   icon: React.ReactNode;
   onClick?: () => void;

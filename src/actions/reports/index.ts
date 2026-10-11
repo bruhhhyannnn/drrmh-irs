@@ -162,16 +162,6 @@ export async function createReport(data: ReportFormData & { user_id?: string }) 
   }
 }
 
-export async function updateReport(id: string, data: Prisma.ReportUpdateInput) {
-  try {
-    const report = await prisma.report.update({ where: { id }, data });
-    revalidatePath('/reports');
-    return serializeReport(report);
-  } catch (err) {
-    throw toFriendlyError(err, 'report');
-  }
-}
-
 const reportEditSchema = reportSchema.omit({ event_id: true });
 export type ReportEditData = z.input<typeof reportEditSchema>;
 

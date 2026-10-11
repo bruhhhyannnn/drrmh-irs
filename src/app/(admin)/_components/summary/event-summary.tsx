@@ -29,7 +29,7 @@ import {
 } from './sections';
 
 /** Active casualty and damage condition names from Settings, for the analytics legends. */
-export function useConditionLists() {
+function useConditionLists() {
   const { data: casualtyConditions = [] } = useCasualtyConditions();
   const { data: damageConditions = [] } = useDamageConditions();
   return useMemo(

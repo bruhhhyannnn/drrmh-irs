@@ -24,10 +24,8 @@ export { LocationPicker, type PickedLocation } from './location-picker';
 export {
   UNKNOWN_PERSON,
   casualtiesMeta,
-  conditionSummary,
   missingPersonsMeta,
   personMeta,
-  plural,
   type CasualtyEntry,
   type PersonEntry,
   type PersonSex,

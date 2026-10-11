@@ -8,7 +8,7 @@ import type { Tone } from './status';
 // function from an event's reports to everything the page prints. Nothing here fetches.
 
 export type SummarySource = NonNullable<Awaited<ReturnType<typeof getEventSummarySource>>>;
-export type SummaryReport = SummarySource['reports'][number];
+type SummaryReport = SummarySource['reports'][number];
 
 const MINUTE = 60_000;
 
@@ -31,7 +31,7 @@ const CASUALTY_LEVELS: (Level & { test: RegExp })[] = [
 ];
 const OTHER_CASUALTY: Level = { rank: 5, tone: 'neutral', color: '#98a2b3' };
 
-export function casualtyLevel(condition: string): Level {
+function casualtyLevel(condition: string): Level {
   return CASUALTY_LEVELS.find((l) => l.test.test(condition)) ?? OTHER_CASUALTY;
 }
 
@@ -45,11 +45,11 @@ const DAMAGE_LEVELS: (Level & { test: RegExp })[] = [
 ];
 const OTHER_DAMAGE: Level = { rank: 2, tone: 'amber', color: '#98a2b3' };
 
-export function damageLevel(condition: string): Level {
+function damageLevel(condition: string): Level {
   return DAMAGE_LEVELS.find((l) => l.test.test(condition)) ?? OTHER_DAMAGE;
 }
 
-export const isNoDamage = (condition: string) => damageLevel(condition).rank === 0;
+const isNoDamage = (condition: string) => damageLevel(condition).rank === 0;
 
 /* ─── Rows ───────────────────────────────────────────────────────────────────────────── */
 

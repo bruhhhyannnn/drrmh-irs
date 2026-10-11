@@ -20,7 +20,7 @@ const SIGNED_URL_TTL_SECONDS = 60 * 60;
  * already re-encodes photos through a canvas, which removes them; this is the server-side
  * backstop for a client that skips that step. Returns null when the bytes aren't a JPEG.
  */
-export function stripJpegMetadata(input: Uint8Array): Uint8Array | null {
+function stripJpegMetadata(input: Uint8Array): Uint8Array | null {
   if (input.length < 4 || input[0] !== 0xff || input[1] !== 0xd8) return null;
 
   const kept: Uint8Array[] = [input.subarray(0, 2)];

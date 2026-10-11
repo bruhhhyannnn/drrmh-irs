@@ -5,7 +5,7 @@ import type { CasualtyEntry, PersonEntry } from '@/components/ds';
 // is dropped if that event is no longer ongoing. Removed once the report submits or is saved
 // offline.
 
-export interface ReportDraft {
+interface ReportDraft {
   version: 1;
   eventId: string;
   location: { lat: number; lng: number; name: string | null } | null;

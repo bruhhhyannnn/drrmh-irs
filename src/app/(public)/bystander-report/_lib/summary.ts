@@ -3,23 +3,14 @@ import {
   casualtiesMeta,
   conditionSummary,
   missingPersonsMeta,
-  personMeta,
   plural,
-  UNKNOWN_PERSON,
 } from '@/components/ds/people';
 import type { BystanderCasualty, BystanderMissingPerson } from '@/lib';
 
 // Short text summaries shared by step 2 and the review step. The per-person helpers live in
 // the design system, since the ERT form uses them too.
 
-export {
-  casualtiesMeta,
-  formatCoordinates,
-  missingPersonsMeta,
-  personMeta,
-  plural,
-  UNKNOWN_PERSON,
-};
+export { casualtiesMeta, formatCoordinates, missingPersonsMeta };
 
 /** "No missing persons · 1 casualty (Minor)", or null when neither was added. */
 export function peopleSummary(

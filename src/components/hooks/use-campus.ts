@@ -1,7 +1,6 @@
 import {
   createCampus,
   deleteCampus,
-  getCampus,
   getCampusClusters,
   getCampuses,
   getCampusesOverview,
@@ -21,14 +20,6 @@ export function useCampuses(query?: string) {
   return useQuery({
     queryKey: ['campuses', query],
     queryFn: () => getCampuses(),
-  });
-}
-
-export function useCampus(id?: string) {
-  return useQuery({
-    queryKey: ['campus', id],
-    queryFn: () => getCampus(id!),
-    enabled: !!id,
   });
 }
 

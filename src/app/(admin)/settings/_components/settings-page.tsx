@@ -10,7 +10,7 @@ import { PageHeader } from '../../_components/page-header';
 import { LookupTable } from './lookup-table';
 import { PopulationFields } from './population-fields';
 
-export type SettingsTab =
+type SettingsTab =
   | 'clusters'
   | 'units'
   | 'positions'
@@ -22,7 +22,7 @@ export type SettingsTab =
  * The lookup tables behind the report, event and user forms. Every table shares one
  * implementation (LookupTable + actions/settings); a new lookup table is one more entry here.
  */
-export const LOOKUPS: Record<
+const LOOKUPS: Record<
   Exclude<SettingsTab, 'population-fields'>,
   { table: SettingsTable; label: string; singular: string; noun: string }
 > = {

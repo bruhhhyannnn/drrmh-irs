@@ -23,12 +23,6 @@ export async function getCampuses() {
   });
 }
 
-export async function getCampus(id: string) {
-  return prisma.campus.findUnique({
-    where: { id: id },
-  });
-}
-
 /** The Campus page: every campus with what is linked to it. */
 export async function getCampusesOverview() {
   return prisma.campus.findMany({ include: CAMPUS_COUNTS, orderBy: { name: 'asc' } });
