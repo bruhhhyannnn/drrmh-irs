@@ -57,6 +57,7 @@ export function useOngoingEvents(campusId: string, options?: { refetchInterval?:
   return useQuery({
     queryKey: ['events', 'ongoing-all', campusId],
     queryFn: () => getOngoingEvents(campusId),
+    enabled: !!campusId,
     staleTime: 1000 * 60 * 2,
     refetchInterval: options?.refetchInterval,
   });

@@ -1,0 +1,314 @@
+'use client';
+
+import {
+  FOCUS_RING,
+  PeopleDrawer,
+  type CasualtyEntry,
+  type PersonEntry,
+  type PersonSex,
+} from '@/components/ds';
+import { useCampusPopulationCategories } from '@/components/hooks/use-population-categories';
+import {
+  useCreateReportCasualty,
+  useCreateReportMissingPerson,
+  useDeleteReportCasualty,
+  useDeleteReportMissingPerson,
+  useReport,
+  useReportCasualties,
+  useReportMissingPersons,
+} from '@/components/hooks/use-reports';
+import { useCasualtyConditions } from '@/components/hooks/use-settings';
+import { cn, totalPopulationCount } from '@/lib';
+import { ArrowLeft, Check, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
+import { formatDateTime } from '../_lib/format';
+import { Card, GUTTER, Hero, Mono, Pill } from './chrome';
+import { PeopleList, PeopleRow } from './people-rows';
+
+const toSex = (sex: string | null): PersonSex =>
+  sex === 'male' || sex === 'female' ? sex : 'unknown';
+
+/**
+ * The member's report after submitting: totals first, then the headcount breakdown, people and
+ * details. Missing persons and casualties stay editable while the event is ongoing; changes
+ * save straight to the report. `onBack` shows a Back link (used for a past report).
+ */
+export function SubmittedReport({
+  reportId,
+  campusName,
+  editable,
+  onBack,
+}: {
+  reportId: string;
+  campusName: string;
+  editable: boolean;
+  onBack?: () => void;
+}) {
+  const { data: report, isLoading } = useReport(reportId);
+  const { data: missingRows = [] } = useReportMissingPersons(reportId);
+  const { data: casualtyRows = [] } = useReportCasualties(reportId);
+  const { data: casualtyConditions = [] } = useCasualtyConditions();
+  const { data: campusCategories = [] } = useCampusPopulationCategories(
+    report?.cluster?.campus_id ?? undefined
+  );
+
+  const createMissing = useCreateReportMissingPerson();
+  const deleteMissing = useDeleteReportMissingPerson();
+  const createCasualty = useCreateReportCasualty();
+  const deleteCasualty = useDeleteReportCasualty();
+  const [drawer, setDrawer] = useState<'missing' | 'casualty' | null>(null);
+  const [drawerKey, setDrawerKey] = useState(0);
+  const [saving, setSaving] = useState(false);
+
+  if (isLoading || !report) {
+    return (
+      <div role="status" className="flex flex-1 items-center justify-center py-20">
+        {isLoading ? (
+          <Loader2 size={28} aria-hidden className="text-brand-500 animate-spin" />
+        ) : (
+          <p className="text-[15px] text-gray-600">This report couldn&apos;t be loaded.</p>
+        )}
+        <span className="sr-only">{isLoading ? 'Loading your report…' : ''}</span>
+      </div>
+    );
+  }
+
+  const missingPersons: (PersonEntry & { id: string })[] = missingRows.map((p) => ({
+    id: p.id,
+    name: p.name,
+    age: p.age,
+    sex: toSex(p.sex),
+  }));
+  const casualties: (CasualtyEntry & { id: string; condition: string })[] = casualtyRows.map(
+    (c) => ({
+      id: c.id,
+      name: c.name,
+      age: c.age,
+      sex: toSex(c.sex),
+      condition_id: c.condition_id,
+      condition: c.condition?.name ?? '',
+      diagnosis: c.diagnosis,
+    })
+  );
+
+  // Headcount in the campus's field order; fields added later go last.
+  const order = new Map(campusCategories.map((cc, i) => [cc.category_id, i]));
+  const headcount = [...report.population_counts].sort(
+    (a, b) => (order.get(a.category_id) ?? 999) - (order.get(b.category_id) ?? 999)
+  );
+  const total = totalPopulationCount(report.population_counts);
+
+  const openDrawer = (name: 'missing' | 'casualty') => {
+    setDrawerKey((k) => k + 1);
+    setDrawer(name);
+  };
+
+  // Replaces the list on the report: removes the old rows, then adds the current ones.
+  const saveMissing = async (people: PersonEntry[]) => {
+    setSaving(true);
+    try {
+      await Promise.all(missingRows.map((p) => deleteMissing.mutateAsync({ id: p.id, reportId })));
+      await Promise.all(
+        people.map((p) =>
+          createMissing.mutateAsync({ report_id: reportId, name: p.name, age: p.age, sex: p.sex })
+        )
+      );
+      toast.success('Missing persons saved');
+    } catch {
+      toast.error('Couldn’t save missing persons. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveCasualties = async (people: CasualtyEntry[]) => {
+    setSaving(true);
+    try {
+      await Promise.all(
+        casualtyRows.map((c) => deleteCasualty.mutateAsync({ id: c.id, reportId }))
+      );
+      await Promise.all(
+        people.map((c) =>
+          createCasualty.mutateAsync({
+            report_id: reportId,
+            condition_id: c.condition_id,
+            name: c.name,
+            age: c.age,
+            sex: c.sex,
+            diagnosis: c.diagnosis ?? null,
+          })
+        )
+      );
+      toast.success('Casualties saved');
+    } catch {
+      toast.error('Couldn’t save casualties. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const reporter = [report.user?.first_name, report.user?.last_name].filter(Boolean).join(' ');
+  const stats = [
+    { label: 'Headcount', value: total },
+    { label: 'Missing persons', value: missingRows.length },
+    { label: 'Casualties', value: casualtyRows.length },
+  ];
+
+  return (
+    <>
+      <Hero eyebrow={`Status report · ${campusName}`} title={report.event.name}>
+        <Pill tone="success" icon={<Check size={12} strokeWidth={3} aria-hidden />}>
+          Submitted
+        </Pill>
+        <Mono className="text-[13px] text-[#fde8e8]">{formatDateTime(report.submitted_at)}</Mono>
+      </Hero>
+
+      <div className={cn(GUTTER, 'pt-6 pb-10')}>
+        <div className="mx-auto flex max-w-190 flex-col gap-4">
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className={cn(
+                'flex h-10 items-center gap-1.5 self-start text-[14px] font-bold text-gray-600 hover:text-gray-900',
+                FOCUS_RING
+              )}
+            >
+              <ArrowLeft size={16} aria-hidden />
+              Back
+            </button>
+          )}
+
+          <Card className="flex flex-col gap-4.5 p-5 md:p-6">
+            <div className="flex items-center gap-3.5">
+              <span className="bg-success-50 grid size-11 shrink-0 place-items-center rounded-full text-[#027a48]">
+                <Check size={22} strokeWidth={2.5} aria-hidden />
+              </span>
+              <div className="flex flex-col gap-0.5">
+                <h2 className="text-[20px] leading-tight font-extrabold">Report submitted</h2>
+                <span className="text-[14px] leading-[1.45] text-gray-600">
+                  {editable
+                    ? 'You have already submitted a report for this event.'
+                    : 'Your report for an event that has ended.'}
+                </span>
+              </div>
+            </div>
+            <dl className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
+              {stats.map((stat) => (
+                <StatTile key={stat.label} label={stat.label}>
+                  <Mono className="text-[28px] leading-[1.1] font-extrabold">{stat.value}</Mono>
+                </StatTile>
+              ))}
+              <StatTile label="Structural damage">
+                <span className="text-[17px] leading-[1.3] font-extrabold text-balance">
+                  {report.damage_conditions?.name ?? 'Not given'}
+                </span>
+              </StatTile>
+            </dl>
+          </Card>
+
+          <Card className="flex flex-col gap-1.5 p-5 md:p-6">
+            <div className="flex items-baseline justify-between gap-3">
+              <h2 className="text-[17px] leading-[1.3] font-bold">Headcount</h2>
+              <span className="text-[13px] font-medium text-gray-500">
+                Total <Mono className="text-[15px] font-bold text-gray-900">{total}</Mono>
+              </span>
+            </div>
+            {headcount.length ? (
+              <dl className="grid md:grid-cols-2 md:gap-x-6">
+                {headcount.map((pc) => (
+                  <div
+                    key={pc.category_id}
+                    className="flex min-h-11 items-center justify-between gap-3 border-b border-[#eaecf0]"
+                  >
+                    <dt className="text-[14px] leading-[1.3] text-gray-700">{pc.category.name}</dt>
+                    <dd>
+                      <Mono className="text-[14px] font-semibold">{pc.count}</Mono>
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            ) : (
+              <p className="text-[14px] text-gray-500">No headcount on this report.</p>
+            )}
+          </Card>
+
+          <Card className="flex flex-col gap-1.5 p-5 md:p-6">
+            <h2 className="mb-1 text-[17px] leading-[1.3] font-bold">People affected</h2>
+            <PeopleRow
+              kind="missing"
+              meta={missingPersons.length ? `${missingPersons.length} reported` : 'None reported'}
+              hasPeople={missingPersons.length > 0}
+              onManage={editable && !saving ? () => openDrawer('missing') : undefined}
+            />
+            <PeopleList people={missingPersons} />
+            <div className="h-px bg-[#eaecf0]" />
+            <PeopleRow
+              kind="casualty"
+              meta={casualties.length ? `${casualties.length} reported` : 'None reported'}
+              hasPeople={casualties.length > 0}
+              onManage={editable && !saving ? () => openDrawer('casualty') : undefined}
+            />
+            <PeopleList people={casualties} />
+          </Card>
+
+          <Card className="flex flex-col px-5 py-1 text-[14px] leading-[1.45] md:px-6">
+            <dl className="flex flex-col">
+              <DetailRow label="Location">{report.location_name ?? 'Pinned on the map'}</DetailRow>
+              <DetailRow label="Cluster / Unit">
+                {[report.cluster?.name, report.unit?.name].filter(Boolean).join(' / ') || '—'}
+              </DetailRow>
+              <DetailRow label="Reported by">
+                {[reporter, report.user?.position?.name].filter(Boolean).join(' · ') || '—'}
+              </DetailRow>
+            </dl>
+          </Card>
+        </div>
+      </div>
+
+      <PeopleDrawer
+        key={`missing-${drawerKey}`}
+        audience="ert"
+        kind="missing"
+        open={drawer === 'missing'}
+        onClose={() => setDrawer(null)}
+        people={missingPersons}
+        onSave={(people) => void saveMissing(people)}
+        conditions={[]}
+        subtitle="Changes save straight to your submitted report."
+        doneLabel="Save changes"
+      />
+      <PeopleDrawer
+        key={`casualty-${drawerKey}`}
+        audience="ert"
+        kind="casualty"
+        open={drawer === 'casualty'}
+        onClose={() => setDrawer(null)}
+        people={casualties}
+        onSave={(people) => void saveCasualties(people)}
+        conditions={casualtyConditions.filter((c) => c.is_active)}
+        subtitle="Changes save straight to your submitted report."
+        doneLabel="Save changes"
+      />
+    </>
+  );
+}
+
+function StatTile({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1 rounded-2xl border border-[#eaecf0] bg-gray-50 px-4 py-3.5">
+      <dt className="text-[12px] font-semibold text-gray-500">{label}</dt>
+      <dd>{children}</dd>
+    </div>
+  );
+}
+
+function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-wrap gap-x-4 gap-y-1 border-b border-[#eaecf0] py-3.5 last:border-b-0">
+      <dt className="flex-[0_0_140px] text-gray-500">{label}</dt>
+      <dd className="min-w-0 flex-[1_1_220px]">{children}</dd>
+    </div>
+  );
+}
