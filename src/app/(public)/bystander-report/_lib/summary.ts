@@ -1,3 +1,4 @@
+import { formatCoordinates } from '@/components/ds/format';
 import {
   casualtiesMeta,
   conditionSummary,
@@ -11,7 +12,14 @@ import type { BystanderCasualty, BystanderMissingPerson } from '@/lib';
 // Short text summaries shared by step 2 and the review step. The per-person helpers live in
 // the design system, since the ERT form uses them too.
 
-export { casualtiesMeta, missingPersonsMeta, personMeta, plural, UNKNOWN_PERSON };
+export {
+  casualtiesMeta,
+  formatCoordinates,
+  missingPersonsMeta,
+  personMeta,
+  plural,
+  UNKNOWN_PERSON,
+};
 
 /** "No missing persons · 1 casualty (Minor)", or null when neither was added. */
 export function peopleSummary(
@@ -35,13 +43,6 @@ export function headcountSummary(entries: { name: string; count: number }[]) {
   const total = filled.reduce((sum, e) => sum + e.count, 0);
   if (!total) return null;
   return `${plural(total, 'person', 'people')} · ${filled.map((e) => `${e.name} ${e.count}`).join(', ')}`;
-}
-
-/** "14.5779° N, 120.9846° E" */
-export function formatCoordinates(lat: number, lng: number) {
-  const ns = lat >= 0 ? 'N' : 'S';
-  const ew = lng >= 0 ? 'E' : 'W';
-  return `${Math.abs(lat).toFixed(4)}° ${ns}, ${Math.abs(lng).toFixed(4)}° ${ew}`;
 }
 
 export function photosLabel(count: number) {

@@ -49,36 +49,8 @@ export function AuthHeading({
   );
 }
 
-const BANNER_TONES = {
-  error: { box: 'border-[#fecdca] bg-error-50 text-[#b42318]', icon: 'text-error-600' },
-  warning: { box: 'border-[#fedf89] bg-warning-50 text-[#93370d]', icon: 'text-[#b54708]' },
-};
-
 /** The one place errors show: a banner above the fields. */
-export function AuthBanner({
-  tone = 'error',
-  children,
-}: {
-  tone?: keyof typeof BANNER_TONES;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      role="alert"
-      className={cn(
-        'flex items-start gap-2.5 rounded-2xl border px-3.5 py-3 text-[14px] leading-normal font-medium',
-        BANNER_TONES[tone].box
-      )}
-    >
-      <AlertTriangle
-        size={18}
-        aria-hidden
-        className={cn('mt-px shrink-0', BANNER_TONES[tone].icon)}
-      />
-      <span>{children}</span>
-    </div>
-  );
-}
+export { Banner as AuthBanner } from '@/components/ds';
 
 /** 56px round icon heading a result screen: a green check or an amber warning. */
 export function StatusIcon({ tone }: { tone: 'success' | 'warning' }) {
