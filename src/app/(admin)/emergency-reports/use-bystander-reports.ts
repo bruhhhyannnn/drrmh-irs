@@ -2,6 +2,7 @@ import {
   createBystanderReport,
   deleteBystanderReport,
   getBystanderIncidentTypes,
+  getBystanderPhotoUrls,
   getBystanderReports,
   updateBystanderReportStatus,
 } from '@/actions/emergency-reports';
@@ -51,6 +52,16 @@ export function useDeleteBystanderReport() {
       toast.success('Report deleted');
     },
     onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+// Signed URLs last an hour; refetch a little before they expire.
+export function useBystanderPhotoUrls(reportId: string | undefined, hasPhotos: boolean) {
+  return useQuery({
+    queryKey: ['bystander-photo-urls', reportId],
+    queryFn: () => getBystanderPhotoUrls(reportId!),
+    enabled: !!reportId && hasPhotos,
+    staleTime: 1000 * 60 * 50,
   });
 }
 

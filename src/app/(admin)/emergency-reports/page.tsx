@@ -18,6 +18,7 @@ import { format } from 'date-fns';
 import { BookOpen, CheckCircle, Search, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
+  useBystanderPhotoUrls,
   useBystanderReports,
   useDeleteBystanderReport,
   useUpdateBystanderReportStatus,
@@ -379,6 +380,7 @@ function BystanderReportDetail({ report: r }: { report: BystanderRow; onClose: (
           Location & Assignment
         </p>
         <div className="grid grid-cols-2 gap-3">
+          <DetailItem label="Campus" value={r.clusters?.campus?.name} />
           <DetailItem label="Cluster" value={r.clusters?.name} />
           <DetailItem label="Unit" value={r.units?.name} />
           {r.location_description && (
@@ -397,6 +399,40 @@ function BystanderReportDetail({ report: r }: { report: BystanderRow; onClose: (
           </p>
           <p className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm leading-relaxed text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             {r.description}
+          </p>
+        </div>
+      )}
+
+      {/* ── Photos ───────────────────────────────────────────────────────── */}
+      {r.photo_paths.length > 0 && <BystanderPhotos reportId={r.id} count={r.photo_paths.length} />}
+
+      {/* ── Headcount ────────────────────────────────────────────────────── */}
+      {r.population_counts.length > 0 && (
+        <div>
+          <div className="mb-2.5 flex items-baseline justify-between">
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+              Headcount
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Total{' '}
+              <span className="font-semibold text-gray-900 dark:text-white">
+                {r.population_counts.reduce((sum, c) => sum + c.count, 0)}
+              </span>
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {r.population_counts.map((c) => (
+              <div
+                key={c.id}
+                className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-900"
+              >
+                <p className="text-xs text-gray-500 dark:text-gray-400">{c.category.name}</p>
+                <p className="mt-0.5 text-lg font-bold text-gray-900 dark:text-white">{c.count}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
+            Fields left at 0 are not listed.
           </p>
         </div>
       )}
@@ -447,7 +483,7 @@ function BystanderReportDetail({ report: r }: { report: BystanderRow; onClose: (
                 className="flex items-center justify-between rounded-xl border border-warning-100 bg-warning-50 px-4 py-2.5 dark:border-warning-900/40 dark:bg-warning-950/30"
               >
                 <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                  {p.name ?? `Person ${i + 1}`}
+                  {p.name || 'Unknown person'}
                 </span>
                 {(p.age || p.sex) && (
                   <span className="text-xs text-gray-400 dark:text-gray-500">
@@ -472,19 +508,87 @@ function BystanderReportDetail({ report: r }: { report: BystanderRow; onClose: (
                 key={i}
                 className="flex items-center justify-between rounded-xl border border-error-100 bg-error-50 px-4 py-2.5 dark:border-error-900/40 dark:bg-error-950/30"
               >
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                  {c.name || `Casualty ${i + 1}`}
-                </span>
-                {(c.age || c.sex) && (
-                  <span className="text-xs text-gray-400 dark:text-gray-500">
-                    {[c.age && `Age ${c.age}`, c.sex].filter(Boolean).join(' · ')}
+                <div className="min-w-0">
+                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                    {c.name || 'Unknown person'}
                   </span>
-                )}
+                  {c.diagnosis && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{c.diagnosis}</p>
+                  )}
+                </div>
+                <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500">
+                  {[c.condition?.name, c.age != null && `Age ${c.age}`, c.sex]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </span>
               </div>
             ))}
           </div>
         </div>
       )}
+
+      {/* ── Contact ──────────────────────────────────────────────────────── */}
+      {r.contact_number && (
+        <div>
+          <p className="mb-2.5 text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+            Contact
+          </p>
+          <a
+            href={`tel:${r.contact_number}`}
+            className="font-medium text-brand-600 hover:underline dark:text-brand-400"
+          >
+            {r.contact_number}
+          </a>
+          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+            Optional. Added by the reporter so responders can follow up.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Thumbnails behind short-lived signed URLs, fetched when the report is opened. */
+function BystanderPhotos({ reportId, count }: { reportId: string; count: number }) {
+  const { data: urls = [], isPending, isError } = useBystanderPhotoUrls(reportId, count > 0);
+
+  return (
+    <div>
+      <p className="mb-2.5 text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+        Photos · {count}
+      </p>
+      {isError ? (
+        <p className="text-sm text-error-500">The photos could not be loaded.</p>
+      ) : (
+        <div className="grid grid-cols-3 gap-2">
+          {isPending
+            ? Array.from({ length: count }, (_, i) => (
+                <div
+                  key={i}
+                  className="aspect-4/3 animate-pulse rounded-xl bg-gray-100 dark:bg-gray-800"
+                />
+              ))
+            : urls.map((url, i) => (
+                <a
+                  key={url}
+                  href={url}
+                  target="_blank"
+                  rel="noreferrer"
+                  title="Open full size"
+                  className="block aspect-4/3 overflow-hidden rounded-xl border border-gray-100 bg-gray-100 dark:border-gray-800 dark:bg-gray-800"
+                >
+                  <img
+                    src={url}
+                    alt={`Photo ${i + 1} of the damage`}
+                    className="size-full object-cover"
+                  />
+                </a>
+              ))}
+        </div>
+      )}
+      <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
+        Location data was removed when the photos were sent. Select a photo to open it full size.
+      </p>
     </div>
   );
 }
