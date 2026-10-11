@@ -1,248 +1,307 @@
 'use client';
 
-import type { getUsers } from '@/actions/users';
-import { PageBreadcrumb } from '@/components/common';
-import { useCampuses } from '@/components/hooks/use-campus';
-import { useDeleteUser, useToggleUserStatus, useUsers } from '@/components/hooks/use-users';
-import {
-  Badge,
-  Button,
-  ConfirmDialog,
-  DataTable,
-  DeleteAction,
-  EditAction,
-  Input,
-  Modal,
-  PageError,
-  Select,
-  TableActions,
-} from '@/components/ui';
-import type { ColumnDef } from '@tanstack/react-table';
-import { Plus, Search } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Button, Switch } from '@/components/ds';
+import { useUserTypes } from '@/components/hooks/use-settings';
+import { useDeleteUser, useSetUserActive, useUsers } from '@/components/hooks/use-users';
+import { useAuthStore } from '@/store';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { UserForm } from './user-form';
+import { ConfirmDialog } from '../_components/confirm-dialog';
+import {
+  DataTable,
+  FilterSelect,
+  IconAction,
+  ListCard,
+  ListCount,
+  ListToolbar,
+  MobileCard,
+  NameCell,
+  RowActions,
+  SearchField,
+  TextCell,
+  type Column,
+} from '../_components/data-list';
+import { PageHeader } from '../_components/page-header';
+import { useScopedCampusId } from '../_components/shell/campus-switcher';
+import { Avatar, Card, Chip } from '../_components/ui';
+import { personName, plural } from '../_lib/format';
+import { userTypeLabel, userTypeTone } from '../_lib/status';
+import { useDebounced } from '../_lib/use-debounced';
+import { UserDrawer } from './_components/user-drawer';
 
-// TODO: revalidate
-type UserRow = Awaited<ReturnType<typeof getUsers>>[number];
+type UserRow = NonNullable<ReturnType<typeof useUsers>['data']>[number];
+
+const fullName = (u: UserRow) => personName(u) || u.username;
+const clusterOf = (u: UserRow) => u.cluster?.name ?? u.unit?.cluster?.name;
 
 export default function UsersPage() {
+  const campusId = useScopedCampusId();
+  const myId = useAuthStore((s) => s.userProfile?.id);
   const [query, setQuery] = useState('');
-  const [debounceQuery, setDebounceQuery] = useState('');
-  const [campusId, setCampusId] = useState('');
-  const { data: campuses = [] } = useCampuses();
-  const {
-    data: users = [],
-    isPending,
-    isFetching,
-    error,
-  } = useUsers(debounceQuery, campusId || undefined);
-  const toggleStatus = useToggleUserStatus();
-  const deleteUserMutation = useDeleteUser();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editId, setEditId] = useState('');
-  const [deleteId, setDeleteId] = useState('');
-  const [deleteName, setDeleteName] = useState('');
+  const debounced = useDebounced(query);
+  const { data: users = [], isPending, error } = useUsers(debounced, campusId || undefined);
+  const { data: userTypes = [] } = useUserTypes();
+  const setActive = useSetUserActive();
+  const deleteUser = useDeleteUser();
+  const [typeId, setTypeId] = useState('');
+  const [status, setStatus] = useState('');
+  const [drawer, setDrawer] = useState<{ open: boolean; user?: UserRow }>({ open: false });
+  const [deleting, setDeleting] = useState<UserRow | null>(null);
 
-  const handleClose = () => {
-    setIsModalOpen(false);
-    setEditId('');
-  };
+  const allCampuses = !campusId;
+  const rows = users.filter(
+    (u) =>
+      (!typeId || u.user_type_id === typeId) && (!status || (status === 'active') === u.is_active)
+  );
 
-  const handleToggleStatus = (id: string, current: boolean) => {
-    if (!confirm(`${current ? 'Deactivate' : 'Activate'} this user?`)) return;
-    toggleStatus.mutate(
-      { id, current },
+  // The switch acts at once; the toast offers Undo instead of asking first.
+  const toggleActive = (u: UserRow, isActive: boolean, undo = false) =>
+    setActive.mutate(
+      { id: u.id, isActive },
       {
-        onSuccess: () => toast.success(current ? 'User deactivated' : 'User activated'),
+        onSuccess: () => {
+          if (undo) return;
+          toast(
+            (t) => (
+              <span className="flex items-center gap-3 text-[14px]">
+                {fullName(u)} is now {isActive ? 'active' : 'inactive'}.
+                <button
+                  type="button"
+                  className="text-brand-500 font-bold"
+                  onClick={() => {
+                    toast.dismiss(t.id);
+                    toggleActive(u, !isActive, true);
+                  }}
+                >
+                  Undo
+                </button>
+              </span>
+            ),
+            { duration: 6000 }
+          );
+        },
         onError: (err) => toast.error(err.message),
       }
     );
-  };
 
-  const columns: ColumnDef<UserRow, unknown>[] = [
+  const assignment = (u: UserRow) => ({
+    unit: u.unit?.name ?? 'No unit',
+    sub: [clusterOf(u), u.position?.name].filter(Boolean).join(' · ') || '—',
+  });
+
+  const columns: Column<UserRow>[] = [
     {
-      id: 'name',
-      header: 'Name',
-      accessorFn: (r) => `${r.first_name ?? ''} ${r.last_name ?? ''}`,
-      cell: ({ row: { original: r } }) => (
-        <span className="font-medium text-gray-900 dark:text-white">
-          {[r.first_name, r.middle_name, r.last_name, r.suffix].filter(Boolean).join(' ')}
-        </span>
+      key: 'user',
+      header: 'User',
+      width: 'minmax(0,1.8fr)',
+      cell: (u) => (
+        <NameCell
+          avatar={<Avatar name={fullName(u)} highlight={u.id === myId} />}
+          primary={fullName(u)}
+          secondary={u.email}
+          flag={u.is_profile_complete ? undefined : 'Profile incomplete'}
+        />
       ),
     },
+    ...(allCampuses
+      ? [
+          {
+            key: 'campus',
+            header: 'Campus',
+            width: 'minmax(0,0.9fr)',
+            hideOnTablet: true,
+            cell: (u: UserRow) => <TextCell>{u.campus?.name ?? '—'}</TextCell>,
+          },
+        ]
+      : []),
     {
-      accessorKey: 'email',
-      header: 'Email',
+      key: 'assignment',
+      header: 'Unit and position',
+      width: 'minmax(0,1.4fr)',
+      cell: (u) => <NameCell muted primary={assignment(u).unit} secondary={assignment(u).sub} />,
     },
     {
-      id: 'cluster',
-      header: 'Cluster',
-      accessorFn: (r) => r.unit?.cluster?.name ?? '',
-      cell: ({ row: { original: r } }) => r.unit?.cluster?.name ?? '—',
-    },
-    {
-      id: 'unit',
-      header: 'Unit',
-      accessorFn: (r) => r.unit?.name ?? '',
-      cell: ({ row: { original: r } }) => r.unit?.name ?? '—',
-    },
-    {
-      id: 'position',
-      header: 'Position',
-      accessorFn: (r) => r.position?.name ?? '',
-      cell: ({ row: { original: r } }) => r.position?.name ?? '—',
-    },
-    {
-      id: 'campus',
-      header: 'Campus',
-      accessorFn: (r) => r.campus?.name ?? '',
-      cell: ({ row: { original: r } }) => r.campus?.name ?? '—',
-    },
-    {
-      id: 'reports',
-      header: 'Reports',
-      accessorFn: (r) => r._count.reports,
-      cell: ({ row: { original: r } }) => (
-        <span className="font-medium text-gray-900 dark:text-white">{r._count.reports}</span>
-      ),
-    },
-    {
-      id: 'profile',
-      header: 'Profile',
-      accessorFn: (r) => (r.is_profile_complete ? 'Complete' : 'Incomplete'),
-      cell: ({ row: { original: r } }) => (
-        <Badge color={r.is_profile_complete ? 'success' : 'warning'} size="sm">
-          {r.is_profile_complete ? 'Complete' : 'Incomplete'}
-        </Badge>
-      ),
-      enableSorting: false,
-    },
-    {
-      id: 'type',
+      key: 'type',
       header: 'Type',
-      accessorFn: (r) => r.user_type.name,
-      cell: ({ row: { original: r } }) => (
-        <Badge color="primary" size="sm">
-          {r.user_type.name}
-        </Badge>
+      width: '104px',
+      cell: (u) => (
+        <Chip tone={userTypeTone(u.user_type.name)}>{userTypeLabel(u.user_type.name)}</Chip>
       ),
-      enableSorting: false,
     },
     {
-      id: 'status',
-      header: 'Status',
-      accessorFn: (r) => (r.is_active ? 'Active' : 'Inactive'),
-      cell: ({ row: { original: r } }) => (
-        <button
-          onClick={() => handleToggleStatus(r.id, r.is_active)}
-          disabled={toggleStatus.isPending}
-          className="cursor-pointer"
-        >
-          <Badge color={r.is_active ? 'success' : 'error'} size="sm">
-            {r.is_active ? 'Active' : 'Inactive'}
-          </Badge>
-        </button>
+      key: 'active',
+      header: 'Active',
+      width: '56px',
+      cell: (u) => (
+        <Switch
+          checked={u.is_active}
+          label={`${fullName(u)} active`}
+          // You can't switch yourself off.
+          disabled={u.id === myId}
+          onChange={(checked) => toggleActive(u, checked)}
+        />
       ),
-      enableSorting: false,
     },
     {
-      id: 'actions',
-      header: 'Actions',
-      cell: ({ row: { original: r } }) => (
-        <TableActions>
-          <EditAction
-            onClick={() => {
-              setIsModalOpen(true);
-              setEditId(r.id);
-            }}
+      key: 'actions',
+      header: '',
+      width: '72px',
+      align: 'right',
+      cell: (u) => (
+        <RowActions>
+          <IconAction
+            label="Edit"
+            icon={<Pencil size={18} aria-hidden />}
+            onClick={() => setDrawer({ open: true, user: u })}
           />
-          <DeleteAction
-            onClick={() => {
-              setDeleteId(r.id);
-              setDeleteName([r.first_name, r.last_name].filter(Boolean).join(' '));
-            }}
+          <IconAction
+            label="Delete"
+            icon={<Trash2 size={18} aria-hidden />}
+            disabled={u.id === myId}
+            onClick={() => setDeleting(u)}
           />
-        </TableActions>
+        </RowActions>
       ),
-      enableSorting: false,
     },
   ];
 
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounceQuery(query), 400);
-    return () => clearTimeout(timer);
-  }, [query]);
-
-  const campusOptions = campuses.map((c) => ({ value: c.id, label: c.name }));
-
-  if (error) return <PageError message={error.message} />;
-
   return (
     <>
-      <div className="space-y-6">
-        <PageBreadcrumb pageTitle="Users" />
-
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-1 flex-wrap items-center gap-3">
-            <div className="relative max-w-sm min-w-2xs flex-1">
-              <Search
-                size={16}
-                className="absolute top-1/2 z-1 left-3 -translate-y-1/2 text-gray-400 dark:text-gray-500"
-              />
-              <Input
-                placeholder="Search users..."
-                className="pl-9"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-            </div>
-            <Select
-              placeholder="All campuses"
-              className="w-full max-w-2xs"
-              options={campusOptions}
-              value={campusId}
-              allowClear
-              onChange={setCampusId}
-            />
-            <p className="text-sm text-gray-500 dark:text-gray-400">{users.length} total</p>
-          </div>
-          <Button onClick={() => setIsModalOpen(true)} startIcon={<Plus size={16} />}>
-            Add User
+      <PageHeader
+        title="Users"
+        subtitle="ERT members and administrators."
+        actions={
+          <Button size="sm" onClick={() => setDrawer({ open: true })}>
+            <Plus size={16} aria-hidden />
+            Add user
           </Button>
-        </div>
+        }
+      />
 
-        <DataTable
-          columns={columns}
-          data={users ?? []}
-          loading={isPending || isFetching}
-          emptyMessage="No users found"
-        />
-      </div>
+      {error ? (
+        <Card className="p-6 text-[15px] text-[#b42318]">
+          The users couldn&apos;t be loaded: {error.message}
+        </Card>
+      ) : (
+        <ListCard>
+          <ListToolbar>
+            <SearchField
+              label="Search users"
+              placeholder="Search users…"
+              value={query}
+              onChange={setQuery}
+            />
+            <FilterSelect
+              label="User type"
+              allLabel="All types"
+              value={typeId}
+              onChange={setTypeId}
+              options={userTypes.map((t) => ({ value: t.id, label: userTypeLabel(t.name) }))}
+            />
+            <FilterSelect
+              label="Status"
+              allLabel="All statuses"
+              value={status}
+              onChange={setStatus}
+              options={[
+                { value: 'active', label: 'Active' },
+                { value: 'inactive', label: 'Inactive' },
+              ]}
+            />
+            <ListCount>{plural(rows.length, 'user', 'users')}</ListCount>
+          </ListToolbar>
+          <DataTable
+            label="Users"
+            columns={columns}
+            rows={rows}
+            rowKey={(u) => u.id}
+            loading={isPending}
+            rowClassName={(u) => (u.is_active ? undefined : 'bg-gray-25')}
+            empty={
+              debounced || typeId || status ? 'No users match these filters.' : 'No users yet.'
+            }
+            card={(u) => (
+              <MobileCard
+                avatar={<Avatar name={fullName(u)} size={40} highlight={u.id === myId} />}
+                title={fullName(u)}
+                subtitle={u.email}
+                chip={
+                  <Chip tone={userTypeTone(u.user_type.name)}>
+                    {userTypeLabel(u.user_type.name)}
+                  </Chip>
+                }
+                meta={[
+                  {
+                    label: 'Unit',
+                    value: u.unit
+                      ? [clusterOf(u), u.unit.name].filter(Boolean).join(' · ')
+                      : 'None',
+                  },
+                  ...(u.position ? [{ label: 'Position', value: u.position.name }] : []),
+                  {
+                    label: 'Status',
+                    value: u.is_active ? 'Active' : 'Inactive',
+                    tone: u.is_active ? ('green' as const) : ('grey' as const),
+                  },
+                  ...(u.is_profile_complete
+                    ? []
+                    : [{ label: 'Profile', value: 'Incomplete', tone: 'amber' as const }]),
+                ]}
+                actions={[
+                  {
+                    label: 'Edit',
+                    icon: <Pencil size={16} aria-hidden />,
+                    onClick: () => setDrawer({ open: true, user: u }),
+                  },
+                  ...(u.id === myId
+                    ? []
+                    : [
+                        {
+                          label: 'Delete',
+                          icon: <Trash2 size={16} aria-hidden />,
+                          onClick: () => setDeleting(u),
+                          variant: 'danger' as const,
+                        },
+                      ]),
+                ]}
+              />
+            )}
+          />
+        </ListCard>
+      )}
 
-      <Modal isOpen={isModalOpen} onClose={handleClose}>
-        <UserForm editId={editId} onSuccess={handleClose} onCancel={handleClose} />
-      </Modal>
-
+      <UserDrawer
+        open={drawer.open}
+        onClose={() => setDrawer((d) => ({ ...d, open: false }))}
+        userId={drawer.user?.id}
+        reports={drawer.user?._count.reports}
+      />
       <ConfirmDialog
-        isOpen={!!deleteId}
-        onClose={() => setDeleteId('')}
-        onConfirm={() => {
-          const toastId = toast.loading('Deleting user...');
-          deleteUserMutation.mutate(deleteId, {
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        onConfirm={() =>
+          deleting &&
+          deleteUser.mutate(deleting.id, {
             onSuccess: () => {
-              setDeleteId('');
-              toast.success(`"${deleteName}" has been deleted.`, { id: toastId });
+              toast.success(`${fullName(deleting)} deleted`);
+              setDeleting(null);
             },
-            onError: () => {
-              toast.error('Failed to delete user. Please try again.', { id: toastId });
-            },
-          });
-        }}
-        title="Delete user"
-        message={`"${deleteName}" will be permanently deleted and removed from authentication. This cannot be undone.`}
-        confirmLabel="Delete"
-        isLoading={deleteUserMutation.isPending}
+            onError: (err) => toast.error(err.message),
+          })
+        }
+        loading={deleteUser.isPending}
+        tone="danger"
+        icon={<Trash2 size={20} aria-hidden />}
+        title="Delete this user?"
+        name={deleting ? fullName(deleting) : ''}
+        body="will be permanently deleted and removed from sign-in. This cannot be undone."
+        warning={
+          deleting && deleting._count.reports > 0
+            ? `${plural(deleting._count.reports, 'report is', 'reports are')} linked to this user. They stay, without a reporter.`
+            : undefined
+        }
+        confirmLabel="Delete user"
       />
     </>
   );
