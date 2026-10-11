@@ -75,7 +75,7 @@ No schema changes.
 
 - [x] `npm run lint`: no new findings (one pre-existing warning in `users/user-form.tsx`).
 - [x] `npm run type-check`: clean.
-- [ ] `npm run build`: compiles and passes TypeScript, but prerendering stopped with `ENOSPC` (the dev machine's disk was full). Re-run once there is space.
+- [x] `npm run build`: passes; `/signin`, `/forgot-password` and `/update-password` prerender as static. (The first run stopped with `ENOSPC` on a full disk; re-run once space was freed.)
 - [x] Headless Chrome walk-through at 1140 / 768 / 390 / 320 with Supabase auth calls stubbed (no real sign-ins or reset emails): sign in, timeout banner, email validation, wrong password, forgot password (email carried over), check your email, link expired. Update password (A4) and profile setup (29) were checked through a temporary preview route, since they need a recovery link or a signed-in user. No horizontal overflow at any width.
 - [ ] Not run: a real Google sign-in, a real reset email, and saving a profile against the database.
 
