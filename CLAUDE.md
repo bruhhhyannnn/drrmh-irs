@@ -33,7 +33,7 @@ CI (`.github/workflows/ci.yml`) runs on PRs/pushes to `main`: `npm ci` → `pris
 
 **Data access is server-actions-only.** Every DB read/write goes through a `'use server'` function in `src/actions/<domain>/index.ts` using the Prisma client from `src/lib/prisma.ts`. Components never call Prisma directly. Mutations that change data call `revalidatePath(...)` for the affected route(s).
 
-**Client data flow:** `src/components/hooks/use-<domain>.ts` wraps each domain's server actions in TanStack Query (`useQuery`/`useMutation`), one hook file per domain (events, users, reports, settings, campus). Mutations invalidate the relevant query keys on success — follow this pattern (see `use-events.ts`) rather than manual refetching.
+**Client data flow:** `src/components/hooks/use-<domain>.ts` wraps each domain's server actions in TanStack Query (`useQuery`/`useMutation`), one hook file per domain (events, users, reports, settings, campus, dashboard, bystander-reports, population-categories). Mutations invalidate the relevant query keys on success — follow this pattern (see `use-events.ts`) rather than manual refetching.
 
 **Two Prisma/Postgres access paths + one Supabase path, don't mix them up:**
 
@@ -43,17 +43,18 @@ CI (`.github/workflows/ci.yml`) runs on PRs/pushes to `main`: `npm ci` → `pris
 
 **Auth flow:** Supabase Auth (Google OAuth restricted to `@up.edu.ph` emails) is the identity provider; `users` table (Prisma) holds the app profile, linked via `auth_id`. `AuthProvider` (`src/components/auth/auth-provider.tsx`) listens to `supabase.auth.onAuthStateChange`, then loads the profile via `getUserByAuthId` server action into `useAuthStore` (Zustand). New Google sign-ins are provisioned into `users` by `provisionGoogleUser` (`src/actions/auth`), defaulting to the "ERT Member" user type. `ProtectedRoute` gates admin pages by role. Admin vs. non-admin is decided by `isAdminUserType()` (`src/lib/constants.ts`) — "Administrator"/"Super Admin" land on `/dashboard`, everyone else on `/report`. Non-admin profiles start with `is_profile_complete = false`; `ProfileSetupGate` / `ProfileSetup` (`src/components/auth/profile-setup.tsx`) show a full-page setup in place of the app until the user sets campus/cluster/unit/position via `completeUserProfile` (`src/actions/users`), and new field reports auto-fill cluster/unit from that profile. The auth pages (`(auth)/`, profile setup) share the `AuthShell` frame and the design-system controls in `src/components/ds/`.
 
-**Offline / PWA:** the app is a PWA (`@ducanh2912/next-pwa` in `next.config.ts`, disabled in dev, offline fallback page `/~offline`). New reports submitted with no connection (or on a network-shaped failure — see `isNetworkError`) are persisted to IndexedDB via `src/lib/offline-queue.ts`, which has two separate stores: field reports (`ReportForm` and the ERT `ErtReportForm` → `createReport`) and bystander reports (`createBystanderReport`). `OfflineQueueProvider` (`src/components/pwa/`, mounted in `src/components/providers.tsx`) replays them on the `online` event, on mount, and every 45s; network errors stop the flush and leave entries queued, server-side rejections mark the entry `failed` (never auto-retried). Connectivity and pending count live in `useOfflineQueueStore`. Editing an existing report is online-only. Because the queue replays a single create payload, `createReport` takes casualties/missing persons/population counts nested in one call — keep new-report data bundled that way.
+**Offline / PWA:** the app is a PWA (`@ducanh2912/next-pwa` in `next.config.ts`, disabled in dev, offline fallback page `/~offline`). New reports submitted with no connection (or on a network-shaped failure — see `isNetworkError`) are persisted to IndexedDB via `src/lib/offline-queue.ts`, which has two separate stores: field reports (the admin Add report drawer `ReportDrawer` and the ERT `ErtReportForm` → `createReport`) and bystander reports (`createBystanderReport`). `OfflineQueueProvider` (`src/components/pwa/`, mounted in `src/components/providers.tsx`) replays them on the `online` event, on mount, and every 45s; network errors stop the flush and leave entries queued, server-side rejections mark the entry `failed` (never auto-retried). Connectivity and pending count live in `useOfflineQueueStore`. Editing an existing report is online-only. Because the queue replays a single create payload, `createReport` takes casualties/missing persons/population counts nested in one call — keep new-report data bundled that way.
 
 **Route groups** under `src/app/`:
 
-- `(admin)/` — protected dashboard pages (dashboard, events, reports, emergency-reports, users, calendar, settings, campus)
+- `(admin)/` — protected dashboard pages (dashboard, events, reports, emergency-reports, users, settings, campus) in one shell (`_components/shell`: sidebar on web, icon rail on tablet, bottom tabs on phone). The top-bar campus switcher (`useCampusScopeStore`, read through `useScopedCampusId`) scopes every list and the dashboard — pass its campus id to queries instead of adding per-page campus filters. Shared pieces live in `(admin)/_components` (list table that turns into cards on phone, drawer parts, confirm dialog) and `_lib` (status colours, formatting, the event summary model used by campus details, event details and the report PDF).
+- `(print)/` — `/events/report`, the event report laid out for A4 and saved as PDF from the print dialog (signed-in admins, no shell)
 - `(auth)/` — sign-in
 - `(ert)/` — `/report`, the signed-in ERT member's status-report page (redirects to `/signin` if logged out, admins to `/dashboard`); one report per user per ongoing event (`getMyReportForOngoingEvent`), after which only missing persons/casualties can be edited
 - `(public)/` — landing page and the anonymous QR-accessible bystander report form (no auth)
 - `auth/` — OAuth callback route
 
-**Settings pages are generic/table-driven.** The many lookup tables (clusters, units, locations, positions, user types, event statuses, casualty/damage conditions) share one implementation: `src/components/settings/settings-table-page.tsx` + `src/actions/settings`. When adding a new lookup table, extend this generic pattern instead of writing a bespoke CRUD page.
+**Settings pages are generic/table-driven.** The many lookup tables (clusters, units, locations, positions, user types, event statuses, casualty/damage conditions) share one implementation: the `LOOKUPS` map and `LookupTable` in `src/app/(admin)/settings/_components/` + `src/actions/settings`, shown as tabs on one Settings page. When adding a new lookup table, extend this generic pattern instead of writing a bespoke CRUD page.
 
 **Multi-campus/cluster scoping:** most domain models (`users`, `reports`, `bystander_reports`, `clusters`) are scoped by `campus_id`/`cluster_id`. Check existing action functions (e.g. `getOngoingEvents(campusId)` in `src/actions/events`) for the expected filtering pattern before adding new queries.
 
@@ -88,3 +89,13 @@ docs/
 - Use standardized headers: `- **Status:** [Draft | In Review | Approved | In Progress | Done]`.
 - Map git branches 1:1 to their plan file (e.g. branch `bugfix/DRRM-003-...` ↔ `docs/plan/fix/DRRM-003-...`).
 - Templates for new docs are available at `docs/plan/{review,bugs,fix,feature}/TEMPLATE.md`.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
