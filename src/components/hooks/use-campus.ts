@@ -4,13 +4,18 @@ import {
   getCampus,
   getCampusClusters,
   getCampuses,
-  getCampusEvents,
-  getCampusHeadcountPerEvent,
-  getEventDamages,
+  getCampusesOverview,
+  getCampusOverview,
   updateCampus,
 } from '@/actions/campus-table';
 import type { Prisma } from '@prisma/client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+
+function invalidateCampusViews(queryClient: QueryClient) {
+  for (const key of ['campuses', 'campus', 'campuses-overview', 'campus-overview']) {
+    queryClient.invalidateQueries({ queryKey: [key] });
+  }
+}
 
 export function useCampuses(query?: string) {
   return useQuery({
@@ -27,11 +32,26 @@ export function useCampus(id?: string) {
   });
 }
 
+export function useCampusesOverview() {
+  return useQuery({
+    queryKey: ['campuses-overview'],
+    queryFn: getCampusesOverview,
+  });
+}
+
+export function useCampusOverview(id?: string) {
+  return useQuery({
+    queryKey: ['campus-overview', id],
+    queryFn: () => getCampusOverview(id!),
+    enabled: !!id,
+  });
+}
+
 export function useCreateCampus() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Prisma.campusCreateInput) => createCampus(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['campuses'] }),
+    onSuccess: () => invalidateCampusViews(queryClient),
   });
 }
 
@@ -40,10 +60,7 @@ export function useUpdateCampus() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Prisma.campusUpdateInput }) =>
       updateCampus(id, data),
-    onSuccess: (_data, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ['campus', id] });
-      queryClient.invalidateQueries({ queryKey: ['campuses'] });
-    },
+    onSuccess: () => invalidateCampusViews(queryClient),
   });
 }
 
@@ -51,14 +68,7 @@ export function useDeleteCampus() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteCampus(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['campuses'] }),
-  });
-}
-
-export function useCampusEvents(query?: string) {
-  return useQuery({
-    queryKey: ['campus-events', query],
-    queryFn: () => getCampusEvents(query),
+    onSuccess: () => invalidateCampusViews(queryClient),
   });
 }
 
@@ -67,21 +77,5 @@ export function useCampusClusters(campusId: string) {
     queryKey: ['cluster', campusId],
     queryFn: () => getCampusClusters(campusId),
     enabled: !!campusId,
-  });
-}
-
-export function useCampusHeadcountPerEvent(eventId: string, campusId: string) {
-  return useQuery({
-    queryKey: ['campusHeadcount', eventId, campusId],
-    queryFn: () => getCampusHeadcountPerEvent(eventId, campusId),
-    enabled: !!eventId && !!campusId,
-  });
-}
-
-export function useEventDamages(eventId: string, campusId: string) {
-  return useQuery({
-    queryKey: ['eventDamages', eventId, campusId],
-    queryFn: () => getEventDamages(eventId, campusId),
-    enabled: !!eventId && !!campusId,
   });
 }

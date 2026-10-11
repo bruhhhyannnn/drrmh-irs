@@ -9,21 +9,28 @@ import {
   getMyReportForOngoingEvent,
   getReport,
   getReportCasualties,
-  getReportClusterSummary,
   getReportMissingPersons,
   getReports,
   getReportsByEvent,
-  getReportTotals,
+  saveReportEdits,
   updateReport,
+  type ReportEditData,
+  type ReportListFilters,
 } from '@/actions/reports';
 import { CasualtyFormData, MissingPersonFormData, ReportFormData } from '@/lib';
 import type { Prisma } from '@prisma/client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-export function useReports(page: number, query: string, campusId?: string) {
+export function useReports(
+  page: number,
+  query: string,
+  campusId?: string,
+  filters: ReportListFilters = {}
+) {
   return useQuery({
-    queryKey: ['reports', page, query, campusId],
-    queryFn: () => getReports(page, query, campusId),
+    queryKey: ['reports', page, query, campusId, filters.eventId, filters.clusterId],
+    queryFn: () => getReports(page, query, campusId, filters),
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -40,7 +47,9 @@ export function useCreateReport() {
   return useMutation({
     mutationFn: (data: ReportFormData & { user_id?: string }) => createReport(data),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['reports'] });
+      for (const key of ['reports', 'event-summary', 'dashboard', 'events']) {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      }
       if (variables.user_id) {
         queryClient.invalidateQueries({ queryKey: ['my-report', variables.user_id] });
       }
@@ -60,11 +69,30 @@ export function useUpdateReport() {
   });
 }
 
+export function useSaveReportEdits() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: ReportEditData }) => saveReportEdits(id, data),
+    onSuccess: (_data, { id }) => {
+      for (const key of ['reports', 'event-summary', 'dashboard']) {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['report', id] });
+      queryClient.invalidateQueries({ queryKey: ['report-casualties', id] });
+      queryClient.invalidateQueries({ queryKey: ['report-missing-persons', id] });
+    },
+  });
+}
+
 export function useDeleteReport() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteReport(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reports'] }),
+    onSuccess: () => {
+      for (const key of ['reports', 'event-summary', 'dashboard', 'events']) {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      }
+    },
   });
 }
 
@@ -89,20 +117,6 @@ export function useMyLatestReport(userId?: string, options?: { enabled?: boolean
     queryKey: ['my-latest-report', userId],
     queryFn: () => getMyLatestReport(userId!),
     enabled: !!userId && (options?.enabled ?? true),
-  });
-}
-
-export function useReportClusterSummary(campusId?: string) {
-  return useQuery({
-    queryKey: ['report-cluster-summary', campusId],
-    queryFn: () => getReportClusterSummary(campusId),
-  });
-}
-
-export function useReportTotals(campusId?: string) {
-  return useQuery({
-    queryKey: ['report-totals', campusId],
-    queryFn: () => getReportTotals(campusId),
   });
 }
 

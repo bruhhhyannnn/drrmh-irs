@@ -56,16 +56,16 @@ export const userCreateSchema = userBaseSchema.refine(
 export const userEditSchema = userBaseSchema.omit({ password: true, confirmPassword: true });
 
 /* ─── Main Tables ─── */
+/** Add / Edit event. Add can tick several campuses: one event is created per campus. */
 export const eventSchema = z
   .object({
-    name: z.string().min(1, 'Event name is required'),
+    name: z.string().trim().min(1, 'Enter an event name.'),
     description: z.string().optional(),
     quarter: z.string().optional(),
-    campus_id: z.string().uuid('Campus is required'),
+    campus_ids: z.array(z.string().uuid()).min(1, 'Pick at least one campus.'),
     started_at: z.string().optional().nullable(),
     ended_at: z.string().optional().nullable(),
-    location_id: z.string().optional().nullable(),
-    status_id: z.string().uuid('Status is required'),
+    status_id: z.string().uuid('Pick a status.'),
   })
   .refine(
     (data) => {
@@ -73,7 +73,7 @@ export const eventSchema = z
       return new Date(data.ended_at) > new Date(data.started_at);
     },
     {
-      message: 'End date must be after start date',
+      message: 'The end must be after the start.',
       path: ['ended_at'],
     }
   );
@@ -203,14 +203,14 @@ export const bystanderFormSchema = z.object({
 
 /* ─── Lookup tables ─── */
 export const clusterSchema = z.object({
-  name: z.string().min(1, 'Cluster name is required'),
+  name: z.string().trim().min(1, 'Enter a cluster name.'),
   is_active: z.boolean().default(true),
-  campus_id: z.string().uuid('Campus is required'),
+  campus_id: z.string().uuid('Pick a campus.'),
 });
 
 export const unitSchema = z.object({
-  name: z.string().min(1, 'Unit name is required'),
-  cluster_id: z.string().uuid('Cluster is required'),
+  name: z.string().trim().min(1, 'Enter a unit name.'),
+  cluster_id: z.string().uuid('Pick a cluster.'),
   is_active: z.boolean().default(true),
 });
 
@@ -221,7 +221,7 @@ export const locationSchema = z.object({
 });
 
 export const positionSchema = z.object({
-  name: z.string().min(1, 'Position name is required'),
+  name: z.string().trim().min(1, 'Enter a position name.'),
   is_active: z.boolean().default(true),
 });
 
@@ -231,17 +231,17 @@ export const userTypeSchema = z.object({
 });
 
 export const campusSchema = z.object({
-  name: z.string().min(1, 'Campus name is required'),
+  name: z.string().trim().min(1, 'Enter a campus name.'),
   is_active: z.boolean().default(true),
 });
 
 export const casualtyConditionSchema = z.object({
-  name: z.string().min(1, 'Condition name is required'),
+  name: z.string().trim().min(1, 'Enter a condition name.'),
   is_active: z.boolean().default(true),
 });
 
 export const damageConditionSchema = z.object({
-  name: z.string().min(1, 'Condition name is required'),
+  name: z.string().trim().min(1, 'Enter a condition name.'),
   is_active: z.boolean().default(true),
 });
 
@@ -250,7 +250,7 @@ export const populationCategorySchema = z.object({
     .string()
     .min(1, 'Code is required')
     .regex(/^[a-z0-9_]+$/, 'Code must be lowercase letters, numbers, and underscores only'),
-  name: z.string().min(1, 'Name is required'),
+  name: z.string().trim().min(1, 'Enter a field name.'),
   description: z.string().optional(),
   is_active: z.boolean().default(true),
 });

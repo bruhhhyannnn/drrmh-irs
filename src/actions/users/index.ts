@@ -121,11 +121,12 @@ export async function updateUser(id: string, data: UpdateUserInput) {
   }
 }
 
-export async function toggleUserStatus(id: string, current: boolean) {
+/** The Active switch on the Users list (and its Undo). */
+export async function setUserActive(id: string, isActive: boolean) {
   try {
     const user = await prisma.user.update({
       where: { id },
-      data: { is_active: !current },
+      data: { is_active: isActive },
     });
     revalidatePath('/users');
     return user;

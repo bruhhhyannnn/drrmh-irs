@@ -112,13 +112,27 @@ export function useDeleteCampusPopulationCategory(campusId: string) {
   });
 }
 
+/** Saves a dropped row's new position; the list moves straight away and rolls back on error. */
 export function useReorderCampusPopulationCategories(campusId: string) {
   const queryClient = useQueryClient();
+  const key = ['campus-population-category-assignments', campusId];
   return useMutation({
     mutationFn: (orderedIds: string[]) => reorderCampusPopulationCategories(orderedIds),
-    onSuccess: () =>
-      queryClient.invalidateQueries({
-        queryKey: ['campus-population-category-assignments', campusId],
-      }),
+    onMutate: async (orderedIds) => {
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<{ id: string }[]>(key);
+      if (previous) {
+        const byId = new Map(previous.map((a) => [a.id, a]));
+        queryClient.setQueryData(key, orderedIds.map((id) => byId.get(id)).filter(Boolean));
+      }
+      return { previous };
+    },
+    onError: (_err, _ids, context) => {
+      if (context?.previous) queryClient.setQueryData(key, context.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key });
+      queryClient.invalidateQueries({ queryKey: ['campus-population-categories', campusId] });
+    },
   });
 }

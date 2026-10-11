@@ -1,8 +1,8 @@
 'use client';
 
 import { createBystanderReport } from '@/actions/emergency-reports';
-import { useGetBystanderIncidentTypes } from '@/app/(admin)/emergency-reports/use-bystander-reports';
 import { PeopleDrawer, PrivacyDrawer } from '@/components/ds';
+import { useGetBystanderIncidentTypes } from '@/components/hooks/use-bystander-reports';
 import { useCampuses } from '@/components/hooks/use-campus';
 import { useCampusPopulationCategories } from '@/components/hooks/use-population-categories';
 import {

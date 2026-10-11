@@ -76,13 +76,15 @@ export async function createBystanderReport(data: BystanderReportFormData, photo
   }
 }
 
-export async function getBystanderReports() {
+export async function getBystanderReports(campusId?: string) {
   const reports = await prisma.bystander_reports.findMany({
+    where: campusId ? { clusters: { campus_id: campusId } } : undefined,
     include: {
       clusters: { include: { campus: { select: { name: true } } } },
       units: true,
       bystander_incident_types: true,
       bystander_report_statuses: true,
+      damage_conditions: { select: { name: true } },
       report_missing_persons: true,
       report_casualties: { include: { condition: { select: { name: true } } } },
       population_counts: {
@@ -116,7 +118,7 @@ export async function updateBystanderReportStatus(
       data: { status_id: status?.id },
     });
 
-    revalidatePath('/bystander-reports');
+    revalidatePath('/emergency-reports');
     return {
       ...report,
       latitude: report.latitude.toNumber(),
@@ -125,6 +127,16 @@ export async function updateBystanderReportStatus(
   } catch (err) {
     throw toFriendlyError(err, 'bystander report');
   }
+}
+
+/** The sidebar badge and dashboard tile: reports nobody has looked at yet. */
+export async function getPendingBystanderCount(campusId?: string) {
+  return prisma.bystander_reports.count({
+    where: {
+      ...(campusId && { clusters: { campus_id: campusId } }),
+      OR: [{ status_id: null }, { bystander_report_statuses: { name: 'pending' } }],
+    },
+  });
 }
 
 export async function deleteBystanderReport(id: string) {
