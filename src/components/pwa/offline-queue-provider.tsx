@@ -87,6 +87,7 @@ export function OfflineQueueProvider() {
     if (flushingRef.current) return;
     flushingRef.current = true;
     setSyncing(true);
+    useOfflineQueueStore.setState({ lastAttemptAt: Date.now() });
 
     try {
       const [bystanderResult, fieldResult] = await Promise.all([
@@ -112,7 +113,10 @@ export function OfflineQueueProvider() {
           queryClient.invalidateQueries({ queryKey: ['bystander-reports'] });
         }
         if (fieldResult.synced > 0) {
+          useOfflineQueueStore.setState({ lastFieldSyncAt: Date.now() });
           queryClient.invalidateQueries({ queryKey: ['reports'] });
+          queryClient.invalidateQueries({ queryKey: ['my-report'] });
+          queryClient.invalidateQueries({ queryKey: ['my-latest-report'] });
         }
       }
       if (failed > 0) {
@@ -129,7 +133,12 @@ export function OfflineQueueProvider() {
     }
   };
 
+  // Lets a "Try sending now" button skip the wait for the next retry.
+  const flushRef = useRef(flushQueue);
+  flushRef.current = flushQueue;
+
   useEffect(() => {
+    useOfflineQueueStore.setState({ flushNow: () => void flushRef.current() });
     setOnline(navigator.onLine);
     refreshCount();
 

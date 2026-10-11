@@ -5,6 +5,7 @@ import {
   deleteReport,
   deleteReportCasualty,
   deleteReportMissingPerson,
+  getMyLatestReport,
   getMyReportForOngoingEvent,
   getReport,
   getReportCasualties,
@@ -80,6 +81,14 @@ export function useMyReport(userId?: string) {
     queryKey: ['my-report', userId],
     queryFn: () => getMyReportForOngoingEvent(userId!),
     enabled: !!userId,
+  });
+}
+
+export function useMyLatestReport(userId?: string, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ['my-latest-report', userId],
+    queryFn: () => getMyLatestReport(userId!),
+    enabled: !!userId && (options?.enabled ?? true),
   });
 }
 

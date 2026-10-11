@@ -3,7 +3,7 @@
 import { CasualtyFormData, MissingPersonFormData, ReportFormData } from '@/lib';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
-import { mapPopulationCountsToLegacyColumns } from '@/lib/utils';
+import { mapPopulationCountsToLegacyColumns, totalPopulationCount } from '@/lib/utils';
 import type { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
@@ -238,6 +238,27 @@ export async function getMyReportForOngoingEvent(userId: string) {
 
   if (!report) return null;
   return serializeReport(report);
+}
+
+/** The member's most recent report on any event — shown when no event is ongoing. */
+export async function getMyLatestReport(userId: string) {
+  const report = await prisma.report.findFirst({
+    where: { user_id: userId },
+    orderBy: { submitted_at: 'desc' },
+    select: {
+      id: true,
+      submitted_at: true,
+      event: { select: { name: true } },
+      population_counts: { select: { count: true } },
+    },
+  });
+  if (!report) return null;
+  return {
+    id: report.id,
+    eventName: report.event.name,
+    submittedAt: report.submitted_at,
+    headcount: totalPopulationCount(report.population_counts),
+  };
 }
 
 // Report Casualties

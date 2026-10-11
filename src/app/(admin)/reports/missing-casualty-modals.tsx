@@ -83,7 +83,7 @@ export function PersonModal({ isOpen, onClose, persons, onSave }: PersonModalPro
             min={0}
             placeholder="0"
             className="placeholder:text-gray-800 dark:placeholder:text-gray-200"
-            value={draft.age === 0 ? '' : draft.age}
+            value={draft.age || ''}
             onKeyDown={(e) => {
               if (e.key === '-') e.preventDefault();
             }}
@@ -233,7 +233,7 @@ export function CasualtyModal({
             min={0}
             placeholder="0"
             className="placeholder:text-gray-800 dark:placeholder:text-gray-200"
-            value={draft.age === 0 ? '' : draft.age}
+            value={draft.age || ''}
             onKeyDown={(e) => {
               if (e.key === '-') e.preventDefault();
             }}

@@ -80,14 +80,15 @@ export const eventSchema = z
 
 export const missingPersonSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  age: z.coerce.number().min(0),
+  // Null when unknown, so it shows as unknown rather than "0 yrs".
+  age: z.coerce.number().min(0).nullable(),
   sex: z.enum(['male', 'female', 'unknown']),
 });
 
 export const casualtySchema = z.object({
   condition_id: z.string().uuid('Condition is required'),
   name: z.string().min(1, 'Name is required'),
-  age: z.coerce.number().min(0),
+  age: z.coerce.number().min(0).nullable(),
   sex: z.enum(['male', 'female', 'unknown']),
   diagnosis: z.string().optional().nullable(),
 });

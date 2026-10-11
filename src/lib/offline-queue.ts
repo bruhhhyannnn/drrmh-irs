@@ -16,12 +16,20 @@ const DB_VERSION = 2;
 const BYSTANDER_STORE = 'bystander-reports';
 const FIELD_REPORT_STORE = 'reports';
 
+/** What a "waiting to send" list shows for an entry, e.g. the event name and cluster. */
+export interface QueuedSummary {
+  title: string;
+  subtitle?: string;
+}
+
 export interface QueuedEntry<TPayload> {
   id: string;
   createdAt: number;
   payload: TPayload;
   /** Files sent alongside the payload (bystander damage photos). Absent on older entries. */
   attachments?: Blob[];
+  /** Display text for the entry. Absent on older entries. */
+  summary?: QueuedSummary;
   status: 'pending' | 'failed';
   errorMessage?: string;
 }
@@ -71,13 +79,18 @@ function makeId() {
 }
 
 function makeQueue<TPayload>(storeName: string) {
-  async function add(payload: TPayload, attachments?: Blob[]): Promise<string> {
+  async function add(
+    payload: TPayload,
+    attachments?: Blob[],
+    summary?: QueuedSummary
+  ): Promise<string> {
     const db = await openDb();
     const entry: QueuedEntry<TPayload> = {
       id: makeId(),
       createdAt: Date.now(),
       payload,
       ...(attachments?.length && { attachments }),
+      ...(summary && { summary }),
       status: 'pending',
     };
     return new Promise((resolve, reject) => {

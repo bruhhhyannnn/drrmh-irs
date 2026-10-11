@@ -52,10 +52,12 @@ export function useDeleteEvent() {
   });
 }
 
-export function useOngoingEvents(campusId: string) {
+/** `refetchInterval` lets a page that is waiting for an event to start check again on its own. */
+export function useOngoingEvents(campusId: string, options?: { refetchInterval?: number | false }) {
   return useQuery({
     queryKey: ['events', 'ongoing-all', campusId],
     queryFn: () => getOngoingEvents(campusId),
     staleTime: 1000 * 60 * 2,
+    refetchInterval: options?.refetchInterval,
   });
 }
