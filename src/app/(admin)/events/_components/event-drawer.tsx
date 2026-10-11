@@ -26,6 +26,7 @@ import {
   FormField,
   FormGrid,
 } from '../../_components/drawer-parts';
+import { useIsSuperAdmin } from '../../_components/shell/campus-switcher';
 import { Skeleton } from '../../_components/ui';
 import { capitalize, eventStatusKey } from '../../_lib/status';
 
@@ -123,7 +124,7 @@ function EventForm({
   onDone: () => void;
 }) {
   const { userProfile } = useAuthStore();
-  const isSuperAdmin = userProfile?.user_type?.name === 'Super Admin';
+  const isSuperAdmin = useIsSuperAdmin();
   const { data: campuses = [] } = useCampuses();
   const { data: statuses = [] } = useEventStatuses();
 
@@ -138,7 +139,7 @@ function EventForm({
   const completedId = statuses.find((s) => eventStatusKey(s.name) === 'completed')?.id;
   const activeCampuses = campuses.filter((c) => c.is_active || c.id === event?.campus_id);
 
-  // Administrators create events for their own campus only.
+  // Administrators create events for their own campus only, so they get no Campus field.
   const fixedCampusId = !isSuperAdmin ? (userProfile?.campus_id ?? '') : '';
   const initialCampuses = event
     ? [event.campus_id]
@@ -258,13 +259,12 @@ function EventForm({
             />
           </FormField>
 
-          {event || !isSuperAdmin ? (
+          {!isSuperAdmin ? null : event ? (
             <FormField
               id="event-campus"
               label="Campus"
               hint="Required"
               error={errors.campus_ids?.message}
-              help={!isSuperAdmin ? 'Events are created for your campus.' : undefined}
             >
               <Controller
                 control={control}
@@ -277,7 +277,6 @@ function EventForm({
                     options={activeCampuses.map((c) => ({ value: c.id, label: c.name }))}
                     placeholder="Select campus"
                     required
-                    disabled={!isSuperAdmin}
                     invalid={!!errors.campus_ids}
                   />
                 )}

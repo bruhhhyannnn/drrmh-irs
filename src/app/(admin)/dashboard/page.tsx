@@ -24,7 +24,11 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { PageHeader } from '../_components/page-header';
-import { useScopedCampusId } from '../_components/shell/campus-switcher';
+import {
+  useEventTitle,
+  useIsSuperAdmin,
+  useScopedCampusId,
+} from '../_components/shell/campus-switcher';
 import {
   Bar,
   Card,
@@ -94,6 +98,8 @@ function DashboardSkeleton() {
 /* ─── Ongoing now ────────────────────────────────────────────────────────────────────── */
 
 function OngoingNow({ data }: { data: Dashboard }) {
+  // Administrators see one campus, so its ongoing events stack full width.
+  const isSuperAdmin = useIsSuperAdmin();
   return (
     <section className="flex flex-col gap-3" aria-labelledby="ongoing-now">
       <div className="flex items-baseline justify-between gap-3">
@@ -108,7 +114,12 @@ function OngoingNow({ data }: { data: Dashboard }) {
         </Link>
       </div>
       {data.ongoing.length ? (
-        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div
+          className={cn(
+            'grid grid-cols-1 items-start gap-4',
+            isSuperAdmin && 'md:grid-cols-2 lg:grid-cols-3'
+          )}
+        >
           {data.ongoing.map((e) => (
             <OngoingCard key={e.id} event={e} />
           ))}
@@ -121,6 +132,7 @@ function OngoingNow({ data }: { data: Dashboard }) {
 }
 
 function OngoingCard({ event }: { event: Dashboard['ongoing'][number] }) {
+  const eventTitle = useEventTitle();
   const stats = [
     { label: 'Reports', value: event.reports, tone: 'text-gray-900' },
     { label: 'Casualties', value: event.casualties, tone: 'text-[#b42318]' },
@@ -135,7 +147,7 @@ function OngoingCard({ event }: { event: Dashboard['ongoing'][number] }) {
       </div>
       <div className="flex flex-col gap-1">
         <h3 className="text-[18px] leading-[1.3] font-bold text-balance">
-          {event.name} — {event.campus}
+          {eventTitle(event.name, event.campus)}
         </h3>
         <span className="text-[13px] text-gray-500">
           {event.startedAt
@@ -182,6 +194,7 @@ function nextLabel(date: Date | null) {
 }
 
 function NothingOngoing({ next }: { next: Dashboard['nextEvent'] }) {
+  const isSuperAdmin = useIsSuperAdmin();
   const startedAt = next?.startedAt ? new Date(next.startedAt) : null;
   return (
     <Card className="flex flex-wrap items-center gap-x-6 gap-y-4 p-4.5 md:p-6">
@@ -217,9 +230,18 @@ function NothingOngoing({ next }: { next: Dashboard['nextEvent'] }) {
               {nextLabel(startedAt)}
             </span>
             <span className="text-[15px] leading-[1.3] font-semibold">{next.name}</span>
-            <span className="text-[13px] leading-[1.4] text-gray-500">
-              {next.campuses.join(', ')}
-            </span>
+            {/* Super admins see which campuses run it; administrators, what it is. */}
+            {isSuperAdmin ? (
+              <span className="text-[13px] leading-[1.4] text-gray-500">
+                {next.campuses.join(', ')}
+              </span>
+            ) : (
+              next.description && (
+                <span className="truncate text-[13px] leading-[1.4] text-gray-500">
+                  {next.description}
+                </span>
+              )
+            )}
           </div>
           <ChevronRight size={18} aria-hidden className="shrink-0 text-gray-400" />
         </Link>
@@ -375,6 +397,7 @@ function EventsByStatus({ data }: { data: Dashboard }) {
 const DOT = { ongoing: 'bg-success-500', upcoming: 'bg-warning-500', completed: 'bg-[#2e90fa]' };
 
 function MonthCard({ data }: { data: Dashboard }) {
+  const eventTitle = useEventTitle();
   const today = new Date();
   const days = eachDayOfInterval({ start: startOfMonth(today), end: endOfMonth(today) });
   const leading = getDay(days[0]);
@@ -438,7 +461,7 @@ function MonthCard({ data }: { data: Dashboard }) {
                   <DateBlock date={e.startedAt} />
                   <div className="flex min-w-0 flex-1 flex-col gap-0.75">
                     <span className="text-[15px] leading-[1.3] font-semibold">
-                      {e.name} — {e.campus}
+                      {eventTitle(e.name, e.campus)}
                     </span>
                     <span className="text-[13px] text-gray-500">
                       {formatEventWindow(e.startedAt, e.endedAt).split(' · ')[1] ??

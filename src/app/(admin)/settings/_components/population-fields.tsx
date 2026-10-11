@@ -48,7 +48,7 @@ import {
   FormField,
   FormGrid,
 } from '../../_components/drawer-parts';
-import { useScopedCampusId } from '../../_components/shell/campus-switcher';
+import { useIsSuperAdmin, useScopedCampusId } from '../../_components/shell/campus-switcher';
 import { Chip, Mono, Skeleton } from '../../_components/ui';
 import { plural } from '../../_lib/format';
 
@@ -66,11 +66,13 @@ function slugify(name: string) {
 }
 
 /**
- * One campus at a time, picked from tabs with field counts. Rows are dragged by their handle
- * (mouse, pen or touch) or moved with the arrow keys; the order is the order of the headcount
- * fields in the ERT and bystander forms, and it is saved on drop.
+ * One campus at a time, picked from tabs with field counts; administrators get their own campus
+ * without tabs. Rows are dragged by their handle (mouse, pen or touch) or moved with the arrow
+ * keys; the order is the order of the headcount fields in the ERT and bystander forms, and it
+ * is saved on drop.
  */
 export function PopulationFields() {
+  const isSuperAdmin = useIsSuperAdmin();
   const scopedId = useScopedCampusId();
   const { data: campuses = [], isPending } = useCampuses();
   const { data: counts = [] } = useCampusPopulationCategoryCounts();
@@ -86,6 +88,17 @@ export function PopulationFields() {
     '';
 
   if (isPending) return <Skeleton className="h-96" />;
+  if (!isSuperAdmin) {
+    return (
+      <ListCard>
+        <CampusFields
+          key={scopedId}
+          campusId={scopedId}
+          campusName={campuses.find((c) => c.id === scopedId)?.name ?? 'this campus'}
+        />
+      </ListCard>
+    );
+  }
   if (!active.length) {
     return (
       <ListCard>

@@ -8,16 +8,17 @@ import { useAuthStore } from '@/store';
 import { ChevronDown, Menu } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import packageJson from '../../../../../package.json';
-import { CampusSwitcher, useScopedCampusId } from './campus-switcher';
-import { isActivePath, NAV, type NavItem } from './nav';
+import { CampusLabel, CampusSwitcher, useIsSuperAdmin, useScopedCampusId } from './campus-switcher';
+import { isActivePath, navFor, SUPER_ADMIN_HREFS, type NavItem } from './nav';
 
 const { version } = packageJson;
 
 // One shell for every admin page: sidebar on web (≥1024px), an 88px icon rail on tablet
-// (≥768px), bottom tabs on phone. The top bar holds the campus switcher and the account button.
+// (≥768px), bottom tabs on phone. The top bar holds the campus switcher (super admins) or the
+// assigned campus (administrators) and the account button.
 
 function usePendingBadge() {
   const campusId = useScopedCampusId();
@@ -39,12 +40,42 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-dvh min-w-0 flex-col md:pl-22 lg:pl-60">
         <TopBar />
         <main className="mx-auto flex w-full max-w-320 min-w-0 flex-1 flex-col gap-6 px-4 pt-4 pb-26 md:px-6 md:pt-6 md:pb-10 lg:px-8 lg:pt-8">
-          {children}
+          <CampusScopeGate>{children}</CampusScopeGate>
         </main>
       </div>
       <BottomTabs />
     </div>
   );
+}
+
+/**
+ * Keeps administrators on their own campus: the Campus pages send them to the dashboard, and
+ * without an assigned campus there is nothing to scope the pages to.
+ */
+function CampusScopeGate({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const isSuperAdmin = useIsSuperAdmin();
+  const hasCampus = useAuthStore((s) => !!s.userProfile?.campus_id);
+  const blocked = !isSuperAdmin && SUPER_ADMIN_HREFS.some((href) => isActivePath(pathname, href));
+
+  useEffect(() => {
+    if (blocked) router.replace('/dashboard');
+  }, [blocked, router]);
+
+  if (blocked) return null;
+  if (!isSuperAdmin && !hasCampus) {
+    return (
+      <div className="flex flex-col gap-1.5 rounded-[22px] border border-gray-200 bg-white p-6">
+        <h1 className="text-[18px] font-bold">No campus assigned</h1>
+        <p className="text-[15px] leading-normal text-pretty text-gray-600">
+          Your account isn&apos;t linked to a campus yet, so there is nothing to show. Ask a super
+          admin to set your campus in Users.
+        </p>
+      </div>
+    );
+  }
+  return children;
 }
 
 function roleLabel(type?: string) {
@@ -55,6 +86,7 @@ function Sidebar() {
   const pathname = usePathname();
   const pending = usePendingBadge();
   const userType = useAuthStore((s) => s.userProfile?.user_type?.name);
+  const nav = navFor(useIsSuperAdmin());
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-[#eaecf0] bg-white lg:flex">
       <Link
@@ -78,7 +110,7 @@ function Sidebar() {
         </span>
       </Link>
       <nav aria-label="Main" className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-3">
-        {NAV.map((item) => {
+        {nav.map((item) => {
           const on = isActivePath(pathname, item.href);
           return (
             <div key={item.key} className="flex flex-col">
@@ -131,6 +163,7 @@ function BadgeDot({ className }: { className: string }) {
 function Rail() {
   const pathname = usePathname();
   const pending = usePendingBadge();
+  const nav = navFor(useIsSuperAdmin());
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-22 flex-col items-center gap-1 overflow-y-auto border-r border-[#eaecf0] bg-white px-2 py-3.5 md:flex lg:hidden">
       <Link
@@ -147,7 +180,7 @@ function Rail() {
         />
       </Link>
       <nav aria-label="Main" className="flex flex-col items-center gap-1">
-        {NAV.map((item) => {
+        {nav.map((item) => {
           const on = isActivePath(pathname, item.href);
           return (
             <Link
@@ -182,8 +215,9 @@ function BottomTabs() {
   const pathname = usePathname();
   const pending = usePendingBadge();
   const [moreOpen, setMoreOpen] = useState(false);
-  const tabs = NAV.filter((n) => n.tab);
-  const more = NAV.filter((n) => !n.tab);
+  const nav = navFor(useIsSuperAdmin());
+  const tabs = nav.filter((n) => n.tab);
+  const more = nav.filter((n) => !n.tab);
   const moreActive = more.some((n) => isActivePath(pathname, n.href));
 
   useEffect(() => setMoreOpen(false), [pathname]);
@@ -241,7 +275,7 @@ function BottomTabs() {
   );
 }
 
-/** Campus, Users and Settings on phone, above the bottom tabs. */
+/** Campus (super admins), Users and Settings on phone, above the bottom tabs. */
 function MoreSheet({
   items,
   pathname,
@@ -291,6 +325,7 @@ function MoreSheet({
 
 function TopBar() {
   const { userProfile, user } = useAuthStore();
+  const isSuperAdmin = useIsSuperAdmin();
   const [profileOpen, setProfileOpen] = useState(false);
   const name =
     [userProfile?.first_name, userProfile?.last_name].filter(Boolean).join(' ') ||
@@ -308,7 +343,7 @@ function TopBar() {
             height={28}
             className="size-7 shrink-0 object-contain md:hidden"
           />
-          <CampusSwitcher />
+          {isSuperAdmin ? <CampusSwitcher /> : <CampusLabel />}
           <div className="flex-1" />
           <button
             type="button"

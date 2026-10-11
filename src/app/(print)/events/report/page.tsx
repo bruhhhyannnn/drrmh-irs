@@ -71,7 +71,13 @@ function EventReport() {
   const [generatedAt] = useState(() => new Date());
   const printed = useRef(false);
 
-  const ready = !!summary && !optionsPending && (!previous || (!previousPending && !!compare));
+  // Administrators only get reports for events at their own campus.
+  const outOfScope =
+    !!source &&
+    userProfile?.user_type?.name !== 'Super Admin' &&
+    source.event.campus_id !== userProfile?.campus_id;
+  const ready =
+    !!summary && !outOfScope && !optionsPending && (!previous || (!previousPending && !!compare));
 
   useEffect(() => {
     if (!ready || !summary || printed.current) return;
@@ -81,7 +87,7 @@ function EventReport() {
     void document.fonts.ready.then(() => setTimeout(() => window.print(), 400));
   }, [ready, summary]);
 
-  if (error || (!isPending && !source)) {
+  if (error || outOfScope || (!isPending && !source)) {
     return (
       <Shell>
         <p className="mx-auto max-w-200 p-10 text-[15px] text-[#b42318]">

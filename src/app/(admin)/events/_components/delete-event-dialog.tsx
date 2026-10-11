@@ -4,6 +4,7 @@ import { useDeleteEvent } from '@/components/hooks/use-events';
 import { Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ConfirmDialog } from '../../_components/confirm-dialog';
+import { useEventTitle } from '../../_components/shell/campus-switcher';
 import { plural } from '../../_lib/format';
 
 export interface DeletableEvent {
@@ -24,6 +25,7 @@ export function DeleteEventDialog({
   onDeleted?: () => void;
 }) {
   const deleteEvent = useDeleteEvent();
+  const eventTitle = useEventTitle();
   return (
     <ConfirmDialog
       open={!!event}
@@ -43,7 +45,7 @@ export function DeleteEventDialog({
       tone="danger"
       icon={<Trash2 size={20} aria-hidden />}
       title="Delete this event?"
-      name={event ? `${event.name} — ${event.campus}` : ''}
+      name={event ? eventTitle(event.name, event.campus) : ''}
       body="will be permanently deleted. This cannot be undone."
       warning={
         event && event.reports > 0

@@ -23,7 +23,7 @@ import {
   type Column,
 } from '../_components/data-list';
 import { PageHeader } from '../_components/page-header';
-import { useScopedCampusId } from '../_components/shell/campus-switcher';
+import { useIsSuperAdmin, useScopedCampusId } from '../_components/shell/campus-switcher';
 import { Avatar, Card, Chip } from '../_components/ui';
 import { personName, plural } from '../_lib/format';
 import { userTypeLabel, userTypeTone } from '../_lib/status';
@@ -38,6 +38,8 @@ const clusterOf = (u: UserRow) => u.cluster?.name ?? u.unit?.cluster?.name;
 export default function UsersPage() {
   const campusId = useScopedCampusId();
   const myId = useAuthStore((s) => s.userProfile?.id);
+  const isSuperAdmin = useIsSuperAdmin();
+  const ownCampus = useAuthStore((s) => s.userProfile?.campus?.name);
   const [query, setQuery] = useState('');
   const debounced = useDebounced(query);
   const { data: users = [], isPending, error } = useUsers(debounced, campusId || undefined);
@@ -170,7 +172,11 @@ export default function UsersPage() {
     <>
       <PageHeader
         title="Users"
-        subtitle="ERT members and administrators."
+        subtitle={
+          !isSuperAdmin && ownCampus
+            ? `ERT members and administrators at ${ownCampus}.`
+            : 'ERT members and administrators.'
+        }
         actions={
           <Button size="sm" onClick={() => setDrawer({ open: true })}>
             <Plus size={16} aria-hidden />

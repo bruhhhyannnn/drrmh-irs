@@ -13,6 +13,7 @@ import {
   type Summary,
   type SummarySource,
 } from '../../_lib/summary';
+import { useEventTitle } from '../shell/campus-switcher';
 import { Mono, Skeleton } from '../ui';
 import {
   AnalyticsGrid,
@@ -45,8 +46,6 @@ export function useSummary(source: SummarySource | null | undefined): Summary | 
   return useMemo(() => (source ? buildSummary(source, lists) : null), [source, lists]);
 }
 
-export const eventTitle = (s: Summary) => `${s.source.event.name} — ${s.source.event.campus.name}`;
-
 /**
  * The summary shared by campus details and event details: totals, clusters reported and not
  * yet, headcount, casualties, missing persons and analytics — with Compare with last drill
@@ -60,6 +59,7 @@ export function EventSummary({ eventId, before }: { eventId: string; before?: Re
   const { data: options = [] } = useCampusEventOptions(source?.event.campus_id);
   const { data: compareSource } = useEventSummarySource(compareId ?? undefined);
   const compareSummary = useSummary(compareId ? compareSource : null);
+  const eventTitle = useEventTitle();
 
   const others = options.filter((o) => o.id !== eventId);
   const startedAt = source?.event.started_at ? new Date(source.event.started_at) : null;
@@ -91,6 +91,7 @@ export function EventSummary({ eventId, before }: { eventId: string; before?: Re
   }
 
   const comparing = compareId && compareSummary;
+  const title = eventTitle(summary.source.event.name, summary.source.event.campus.name);
   const picked = others.find((o) => o.id === compareId);
 
   return (
@@ -102,7 +103,7 @@ export function EventSummary({ eventId, before }: { eventId: string; before?: Re
         <div className="flex min-w-0 flex-col gap-0.5">
           <h2 className="text-[20px] leading-[1.3] font-extrabold">Overview</h2>
           <span className="text-[14px] leading-[1.45] text-gray-500">
-            {eventTitle(summary)} · {summary.completed ? 'Completed' : 'As of'}{' '}
+            {title} · {summary.completed ? 'Completed' : 'As of'}{' '}
             <Mono className="text-[13px] font-semibold text-gray-700">
               {formatDateTime(summary.asOf)}
             </Mono>
@@ -198,8 +199,7 @@ export function EventSummary({ eventId, before }: { eventId: string; before?: Re
       <div className="flex flex-col gap-1 pt-3">
         <h2 className="text-[20px] leading-[1.3] font-extrabold">Analytics</h2>
         <span className="text-[14px] leading-[1.45] text-pretty text-gray-500">
-          {eventTitle(summary)} · {summary.completed ? 'completed' : 'as of'}{' '}
-          {formatDateTime(summary.asOf)}
+          {title} · {summary.completed ? 'completed' : 'as of'} {formatDateTime(summary.asOf)}
         </span>
       </div>
       <AnalyticsGrid summary={summary} />

@@ -266,7 +266,9 @@ export default function BystanderReportsPage() {
               return (
                 <MobileCard
                   title={r.bystander_incident_types?.name ?? 'Incident'}
-                  subtitle={[r.clusters?.campus?.name, placeOf(r)].filter(Boolean).join(' · ')}
+                  subtitle={[allCampuses && r.clusters?.campus?.name, placeOf(r)]
+                    .filter(Boolean)
+                    .join(' · ')}
                   chip={
                     <Chip tone={bystanderTone(statusOf(r))} dot>
                       {capitalize(statusOf(r))}

@@ -16,7 +16,6 @@ import {
   positionSchema,
   unitSchema,
 } from '@/lib';
-import { useAuthStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Pencil, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -45,7 +44,7 @@ import {
   FormField,
   FormGrid,
 } from '../../_components/drawer-parts';
-import { useScopedCampusId } from '../../_components/shell/campus-switcher';
+import { useIsSuperAdmin, useScopedCampusId } from '../../_components/shell/campus-switcher';
 import { Card } from '../../_components/ui';
 import { formatDate, plural } from '../../_lib/format';
 import { capitalize } from '../../_lib/status';
@@ -425,8 +424,8 @@ function LookupFormBody({
   clusters: LookupRow[];
   onSave: (data: LookupForm) => Promise<void>;
 }) {
-  const { userProfile } = useAuthStore();
-  const isSuperAdmin = userProfile?.user_type?.name === 'Super Admin';
+  const isSuperAdmin = useIsSuperAdmin();
+  // The top-bar campus for super admins; an administrator's own campus.
   const campusId = useScopedCampusId();
   const { data: campuses = [] } = useCampus();
   const needsCampus = table === 'clusters';
@@ -443,7 +442,7 @@ function LookupFormBody({
       name: row?.name ?? '',
       is_active: row?.is_active ?? true,
       ...(needsCampus && {
-        campus_id: row?.campus_id ?? (isSuperAdmin ? campusId : (userProfile?.campus_id ?? '')),
+        campus_id: row?.campus_id ?? campusId,
       }),
       ...(needsCluster && { cluster_id: row?.cluster_id ?? '' }),
     },
@@ -463,13 +462,13 @@ function LookupFormBody({
               {...register('name')}
             />
           </FormField>
-          {needsCampus && (
+          {/* Administrators add clusters to their own campus. */}
+          {needsCampus && isSuperAdmin && (
             <FormField
               id="lookup-campus"
               label="Campus"
               hint="Required"
               error={errors.campus_id?.message}
-              help={!isSuperAdmin ? 'Clusters are added to your campus.' : undefined}
             >
               <Controller
                 control={control}
@@ -484,7 +483,6 @@ function LookupFormBody({
                       .map((c) => ({ value: c.id, label: c.name }))}
                     placeholder="Select campus"
                     required
-                    disabled={!isSuperAdmin}
                     invalid={!!errors.campus_id}
                     describedBy={errors.campus_id ? 'lookup-campus-error' : undefined}
                   />

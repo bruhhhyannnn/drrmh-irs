@@ -15,6 +15,11 @@ import { Suspense, useState } from 'react';
 import toast from 'react-hot-toast';
 import { ConfirmDialog } from '../../_components/confirm-dialog';
 import { PageHeader } from '../../_components/page-header';
+import {
+  useEventTitle,
+  useIsSuperAdmin,
+  useScopedCampusId,
+} from '../../_components/shell/campus-switcher';
 import { EventSummary, useSummary } from '../../_components/summary/event-summary';
 import { Card, Chip, Skeleton } from '../../_components/ui';
 import { formatEventWindow } from '../../_lib/format';
@@ -43,6 +48,9 @@ function EventDetails() {
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState<DeletableEvent | null>(null);
   const [completing, setCompleting] = useState(false);
+  const eventTitle = useEventTitle();
+  const isSuperAdmin = useIsSuperAdmin();
+  const campusId = useScopedCampusId();
 
   if (isPending) {
     return (
@@ -52,7 +60,8 @@ function EventDetails() {
       </div>
     );
   }
-  if (!event || !eventId) {
+  // Administrators only see events at their own campus.
+  if (!event || !eventId || (!isSuperAdmin && event.campus_id !== campusId)) {
     return (
       <>
         <PageHeader title="Event not found" back={{ href: '/events', label: 'Events' }} />
@@ -64,7 +73,7 @@ function EventDetails() {
   }
 
   const status = eventStatusKey(event.status.name);
-  const title = `${event.name} — ${event.campus.name}`;
+  const title = eventTitle(event.name, event.campus.name);
   const exportPdf = () => window.open(`/events/report?id=${event.id}`, '_blank', 'noopener');
 
   return (
@@ -144,7 +153,8 @@ function EventDetails() {
 
 /**
  * Complete event: status Completed and end time now, in one step. Names clusters with no report
- * so nobody completes too early, and can complete the same event at other campuses.
+ * so nobody completes too early. Super admins can complete the same event at other campuses too;
+ * administrators only see their own.
  */
 function CompleteEventDialog({
   open,
@@ -162,14 +172,17 @@ function CompleteEventDialog({
   const userId = useAuthStore((s) => s.userProfile?.id ?? null);
   const { data: source } = useEventSummarySource(eventId);
   const summary = useSummary(source);
-  const { data: siblings = [] } = useSiblingOngoingEvents(eventId, { enabled: open });
+  const isSuperAdmin = useIsSuperAdmin();
+  const { data: siblings = [] } = useSiblingOngoingEvents(eventId, {
+    enabled: open && isSuperAdmin,
+  });
   const completeEvents = useCompleteEvents();
   const [alsoOthers, setAlsoOthers] = useState(false);
 
   const pending = summary?.clusters.pending.map((c) => c.name) ?? [];
   const locked =
     'Once the event is completed, ERT members can no longer send or edit reports for it.';
-  const ids = [eventId, ...(alsoOthers ? siblings.map((s) => s.id) : [])];
+  const ids = [eventId, ...(isSuperAdmin && alsoOthers ? siblings.map((s) => s.id) : [])];
   const otherCampuses = listNames(siblings.map((s) => s.campus.name));
 
   const confirm = () =>
@@ -202,7 +215,7 @@ function CompleteEventDialog({
           : locked
       }
       checkbox={
-        siblings.length
+        isSuperAdmin && siblings.length
           ? {
               label: `Also complete it at ${otherCampuses}`,
               description:

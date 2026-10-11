@@ -68,6 +68,17 @@ export const NAV: NavItem[] = [
   { key: 'settings', label: 'Settings', short: 'Settings', href: '/settings', icon: Settings },
 ];
 
+/** Pages only super admins can open; administrators run one campus. */
+export const SUPER_ADMIN_HREFS = ['/campus'];
+
+/** The nav for the signed-in role. Without Campus, the Manage group starts at Users. */
+export function navFor(isSuperAdmin: boolean): NavItem[] {
+  if (isSuperAdmin) return NAV;
+  return NAV.filter((n) => !SUPER_ADMIN_HREFS.includes(n.href)).map((n) =>
+    n.key === 'users' ? { ...n, group: 'Manage' } : n
+  );
+}
+
 export function isActivePath(pathname: string, href: string) {
   if (href === '/dashboard') return pathname === '/dashboard';
   return pathname === href || pathname.startsWith(`${href}/`);

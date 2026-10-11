@@ -18,6 +18,7 @@ export async function getDashboard(campusId: string | undefined, monthStart: Dat
       select: {
         id: true,
         name: true,
+        description: true,
         campus_id: true,
         started_at: true,
         ended_at: true,
@@ -98,6 +99,7 @@ export async function getDashboard(campusId: string | undefined, monthStart: Dat
     ? {
         id: next.id,
         name: next.name,
+        description: next.description,
         startedAt: next.started_at,
         campuses: upcoming
           .filter(

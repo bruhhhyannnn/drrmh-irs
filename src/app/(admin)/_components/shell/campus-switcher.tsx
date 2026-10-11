@@ -3,17 +3,50 @@
 import { FOCUS_RING } from '@/components/ds';
 import { useCampuses } from '@/components/hooks/use-campus';
 import { cn } from '@/lib';
-import { useCampusScopeStore } from '@/store';
+import { useAuthStore, useCampusScopeStore } from '@/store';
 import { Check, ChevronDown, University } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 
-/** The campus every admin page shows; '' while All campuses is picked. */
+/** Super admins see every campus; administrators run the one campus they're assigned to. */
+export function useIsSuperAdmin() {
+  return useAuthStore((s) => s.userProfile?.user_type?.name === 'Super Admin');
+}
+
+/**
+ * The campus every admin page shows: the administrator's own campus, or for super admins the
+ * one picked in the switcher ('' while All campuses is picked).
+ */
 export function useScopedCampusId() {
+  const isSuperAdmin = useIsSuperAdmin();
+  const ownCampusId = useAuthStore((s) => s.userProfile?.campus_id ?? '');
   const campusId = useCampusScopeStore((s) => s.campusId);
   const { data: campuses } = useCampuses();
+  if (!isSuperAdmin) return ownCampusId;
   // A remembered campus that was deleted since falls back to All campuses.
   if (campusId && campuses && !campuses.some((c) => c.id === campusId)) return '';
   return campusId;
+}
+
+/**
+ * "Name — Campus" for super admins, who see events from every campus. Administrators get just
+ * the name, since all their events are at the same campus.
+ */
+export function useEventTitle() {
+  const isSuperAdmin = useIsSuperAdmin();
+  return (name: string, campus?: string | null) =>
+    isSuperAdmin && campus ? `${name} — ${campus}` : name;
+}
+
+/** The administrator's campus, shown in the top bar where super admins have the switcher. */
+export function CampusLabel() {
+  const name = useAuthStore((s) => s.userProfile?.campus?.name);
+  return (
+    <span className="flex h-10 max-w-full min-w-0 items-center gap-2 rounded-full border border-[#eaecf0] bg-gray-50 pr-3.5 pl-3 text-[14px] font-semibold whitespace-nowrap text-gray-900">
+      <University size={16} aria-hidden className="text-brand-500 shrink-0" />
+      <span className="sr-only">Campus: </span>
+      <span className="min-w-0 truncate">{name ?? 'No campus'}</span>
+    </span>
+  );
 }
 
 /**

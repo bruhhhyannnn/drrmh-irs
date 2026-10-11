@@ -23,7 +23,7 @@ import {
   type Column,
 } from '../_components/data-list';
 import { PageHeader } from '../_components/page-header';
-import { useScopedCampusId } from '../_components/shell/campus-switcher';
+import { useEventTitle, useScopedCampusId } from '../_components/shell/campus-switcher';
 import { Card, Chip } from '../_components/ui';
 import { formatDate, formatTime, plural } from '../_lib/format';
 import { capitalize, eventStatusKey, eventTone, type EventStatus } from '../_lib/status';
@@ -47,6 +47,7 @@ function Events() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const campusId = useScopedCampusId();
+  const eventTitle = useEventTitle();
   const { data: campuses = [] } = useCampuses();
   const [query, setQuery] = useState('');
   const debounced = useDebounced(query);
@@ -236,7 +237,7 @@ function Events() {
             }
             card={(e) => (
               <MobileCard
-                title={`${e.name} — ${e.campus.name}`}
+                title={eventTitle(e.name, e.campus.name)}
                 subtitle={
                   e.started_at
                     ? `${formatDate(e.started_at)} · ${formatTime(e.started_at)}`

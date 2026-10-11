@@ -27,6 +27,7 @@ import {
   FormGrid,
   KvList,
 } from '../../_components/drawer-parts';
+import { useIsSuperAdmin } from '../../_components/shell/campus-switcher';
 import { Skeleton } from '../../_components/ui';
 import { formatDate } from '../../_lib/format';
 
@@ -120,7 +121,7 @@ function UserForm({
   onDone: () => void;
 }) {
   const { userProfile } = useAuthStore();
-  const isSuperAdmin = userProfile?.user_type?.name === 'Super Admin';
+  const isSuperAdmin = useIsSuperAdmin();
   const { data: campuses = [] } = useCampus();
   const { data: positions = [] } = usePositions();
   const { data: userTypes = [] } = useUserTypes();
@@ -379,38 +380,39 @@ function UserForm({
 
         <DrawerSection title="Assignment">
           <FormGrid>
-            <FormField
-              id="user-campus"
-              label="Campus"
-              hint="Required"
-              half
-              error={errors.campus_id?.message}
-              help={!isSuperAdmin ? 'Users are added to your campus.' : undefined}
-            >
-              <Controller
-                control={control}
-                name="campus_id"
-                render={({ field }) => (
-                  <SelectField
-                    id="user-campus"
-                    value={field.value ?? ''}
-                    onChange={(value) => {
-                      field.onChange(value);
-                      setValue('cluster_id', null);
-                      setValue('unit_id', null);
-                    }}
-                    options={campuses
-                      .filter((c) => c.is_active || c.id === field.value)
-                      .map((c) => ({ value: c.id, label: c.name }))}
-                    placeholder="Select campus"
-                    required
-                    disabled={!isSuperAdmin}
-                    invalid={!!errors.campus_id}
-                    describedBy={describedBy('user-campus', errors.campus_id)}
-                  />
-                )}
-              />
-            </FormField>
+            {/* Administrators add users to their own campus. */}
+            {isSuperAdmin && (
+              <FormField
+                id="user-campus"
+                label="Campus"
+                hint="Required"
+                half
+                error={errors.campus_id?.message}
+              >
+                <Controller
+                  control={control}
+                  name="campus_id"
+                  render={({ field }) => (
+                    <SelectField
+                      id="user-campus"
+                      value={field.value ?? ''}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        setValue('cluster_id', null);
+                        setValue('unit_id', null);
+                      }}
+                      options={campuses
+                        .filter((c) => c.is_active || c.id === field.value)
+                        .map((c) => ({ value: c.id, label: c.name }))}
+                      placeholder="Select campus"
+                      required
+                      invalid={!!errors.campus_id}
+                      describedBy={describedBy('user-campus', errors.campus_id)}
+                    />
+                  )}
+                />
+              </FormField>
+            )}
             <FormField
               id="user-cluster"
               label="Cluster"
@@ -466,7 +468,7 @@ function UserForm({
                 )}
               />
             </FormField>
-            <FormField id="user-position" label="Position" hint="Optional" half>
+            <FormField id="user-position" label="Position" hint="Optional" half={isSuperAdmin}>
               <Controller
                 control={control}
                 name="position_id"

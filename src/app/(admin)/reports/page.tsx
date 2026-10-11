@@ -25,7 +25,11 @@ import {
   type Column,
 } from '../_components/data-list';
 import { PageHeader } from '../_components/page-header';
-import { useScopedCampusId } from '../_components/shell/campus-switcher';
+import {
+  useEventTitle,
+  useIsSuperAdmin,
+  useScopedCampusId,
+} from '../_components/shell/campus-switcher';
 import { Card, Chip } from '../_components/ui';
 import { formatDate, formatTime, personName, plural } from '../_lib/format';
 import { useDebounced } from '../_lib/use-debounced';
@@ -48,6 +52,8 @@ const placeOf = (r: ReportRow) => [r.cluster.name, r.unit?.name].filter(Boolean)
 
 export default function ReportsPage() {
   const campusId = useScopedCampusId();
+  const isSuperAdmin = useIsSuperAdmin();
+  const eventTitle = useEventTitle();
   const [query, setQuery] = useState('');
   const debounced = useDebounced(query);
   const [eventId, setEventId] = useState('');
@@ -109,7 +115,13 @@ export default function ReportsPage() {
       header: 'Event',
       width: 'minmax(0,1.4fr)',
       hideOnTablet: true,
-      cell: (r) => <NameCell muted primary={r.event.name} secondary={r.event.campus.name} />,
+      cell: (r) => (
+        <NameCell
+          muted
+          primary={r.event.name}
+          secondary={isSuperAdmin ? r.event.campus.name : undefined}
+        />
+      ),
     },
     {
       key: 'affected',
@@ -216,7 +228,7 @@ export default function ReportsPage() {
                 subtitle={placeOf(r)}
                 aside={`${formatDate(r.submitted_at).replace(/, \d{4}$/, '')} · ${formatTime(r.submitted_at)}`}
                 meta={[
-                  { label: 'Event', value: `${r.event.name} — ${r.event.campus.name}` },
+                  { label: 'Event', value: eventTitle(r.event.name, r.event.campus.name) },
                   {
                     label: 'Affected',
                     value: totalPopulationCount(r.population_counts).toLocaleString(),
@@ -278,7 +290,7 @@ export default function ReportsPage() {
         name={deleting ? `${personName(deleting.user) || 'Unknown reporter'}'s report` : ''}
         body={
           deleting
-            ? `for ${deleting.event.name} — ${deleting.event.campus.name} will be permanently deleted. This cannot be undone.`
+            ? `for ${eventTitle(deleting.event.name, deleting.event.campus.name)} will be permanently deleted. This cannot be undone.`
             : ''
         }
         warning={

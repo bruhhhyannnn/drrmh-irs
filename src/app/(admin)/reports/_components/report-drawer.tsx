@@ -47,6 +47,7 @@ import {
   FormGrid,
   PersonHeader,
 } from '../../_components/drawer-parts';
+import { useEventTitle } from '../../_components/shell/campus-switcher';
 import { Avatar, Skeleton } from '../../_components/ui';
 import { formatDateTime, personName } from '../../_lib/format';
 
@@ -73,6 +74,7 @@ export function ReportDrawer({
   campusId?: string;
 }) {
   const { data: report, isPending } = useReport(reportId);
+  const eventTitle = useEventTitle();
   const [saving, setSaving] = useState(false);
   const isEdit = !!reportId;
 
@@ -85,7 +87,7 @@ export function ReportDrawer({
       subtitle={
         isEdit
           ? report
-            ? `${report.event.name} — ${report.event.campus.name} · submitted ${formatDateTime(report.submitted_at)}`
+            ? `${eventTitle(report.event.name, report.event.campus.name)} · submitted ${formatDateTime(report.submitted_at)}`
             : undefined
           : 'For an ongoing event. You are recorded as the reporter.'
       }
@@ -134,6 +136,7 @@ function ReportForm({
   const setPendingCount = useOfflineQueueStore((s) => s.setPendingCount);
   const saveEdits = useSaveReportEdits();
   const { data: events = [] } = useOngoingEventOptions(scopedCampusId, { enabled: !report });
+  const eventTitle = useEventTitle();
 
   const [eventId, setEventId] = useState(report?.event_id ?? '');
   const event = events.find((e) => e.id === eventId);
@@ -289,7 +292,7 @@ function ReportForm({
                   }}
                   options={events.map((e) => ({
                     value: e.id,
-                    label: `${e.name} — ${e.campus.name}`,
+                    label: eventTitle(e.name, e.campus.name),
                   }))}
                   placeholder={events.length ? 'Select an ongoing event' : 'No event is ongoing'}
                   required
