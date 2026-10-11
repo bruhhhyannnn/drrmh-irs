@@ -2,6 +2,7 @@
 
 import { createBystanderReport } from '@/actions/emergency-reports';
 import { useGetBystanderIncidentTypes } from '@/app/(admin)/emergency-reports/use-bystander-reports';
+import { PeopleDrawer, PrivacyDrawer } from '@/components/ds';
 import { useCampuses } from '@/components/hooks/use-campus';
 import { useCampusPopulationCategories } from '@/components/hooks/use-population-categories';
 import {
@@ -28,9 +29,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm, type FieldErrors } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { HeroBand, PageCard } from './_components/chrome';
-import { PeopleDrawer } from './_components/people-drawer';
 import type { PhotoItem } from './_components/photo-field';
-import { PrivacyDrawer } from './_components/privacy-drawer';
 import { ResultScreen, type ReportResult } from './_components/result-screen';
 import { StepPeopleDamage } from './_components/step-people-damage';
 import { StepReview } from './_components/step-review';
@@ -401,7 +400,11 @@ export function BystanderReportForm() {
         </form>
       </PageCard>
 
-      <PrivacyDrawer open={drawer === 'privacy'} onClose={() => setDrawer(null)} />
+      <PrivacyDrawer
+        open={drawer === 'privacy'}
+        onClose={() => setDrawer(null)}
+        note="Bystander reports are anonymous. A contact number is optional and only shared if you add one."
+      />
       <PeopleDrawer
         key={`missing-${drawerKey}`}
         kind="missing"

@@ -5,11 +5,23 @@ import {
   PRIVACY_NOTICE_SUBTITLE,
   PRIVACY_NOTICE_TITLE,
 } from '@/components/common';
-import { Button, Drawer } from '@/components/ds';
 import { ShieldCheck } from 'lucide-react';
+import { Drawer } from './drawer';
+import { Button } from './fields';
 
-/** The full privacy notice, over the current step so nothing typed is lost. */
-export function PrivacyDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+/**
+ * The full privacy notice, over the current form so nothing typed is lost. `note` is a short
+ * line for this audience shown above the notice.
+ */
+export function PrivacyDrawer({
+  open,
+  onClose,
+  note,
+}: {
+  open: boolean;
+  onClose: () => void;
+  note?: React.ReactNode;
+}) {
   return (
     <Drawer
       open={open}
@@ -22,13 +34,12 @@ export function PrivacyDrawer({ open, onClose }: { open: boolean; onClose: () =>
         </Button>
       }
     >
-      <div className="flex items-start gap-2.5 rounded-2xl bg-gray-100 px-4 py-3.5 text-[14px] leading-[1.6] text-gray-700">
-        <ShieldCheck size={18} aria-hidden className="mt-0.5 shrink-0" />
-        <span>
-          Bystander reports are anonymous. A contact number is optional and only shared if you add
-          one.
-        </span>
-      </div>
+      {note && (
+        <div className="flex items-start gap-2.5 rounded-2xl bg-gray-100 px-4 py-3.5 text-[14px] leading-[1.6] text-gray-700">
+          <ShieldCheck size={18} aria-hidden className="mt-0.5 shrink-0" />
+          <span>{note}</span>
+        </div>
+      )}
       {PRIVACY_NOTICE_SECTIONS.map((section) => (
         <section key={section.title} className="flex flex-col gap-1">
           <h3 className="text-[15px] font-bold text-gray-900">{section.title}</h3>

@@ -1,21 +1,18 @@
 'use client';
 
-import {
-  Button,
-  Drawer,
-  FieldError,
-  FieldLabel,
-  FOCUS_RING,
-  OptionTile,
-  SegmentedControl,
-  TextInput,
-} from '@/components/ds';
-import { cn, type BystanderCasualty, type BystanderMissingPerson } from '@/lib';
+import { cn } from '@/lib';
 import { User, X } from 'lucide-react';
 import { useState } from 'react';
-import { personMeta, UNKNOWN_PERSON } from '../_lib/summary';
-
-type Person = BystanderMissingPerson | BystanderCasualty;
+import { Drawer } from './drawer';
+import { Button, FieldError, FieldLabel, OptionTile, SegmentedControl, TextInput } from './fields';
+import { FOCUS_RING } from './focus';
+import {
+  personMeta,
+  UNKNOWN_PERSON,
+  type CasualtyEntry,
+  type PersonEntry,
+  type PersonSex,
+} from './people';
 
 const SEX_OPTIONS = [
   { value: 'male', label: 'Male' },
@@ -23,57 +20,74 @@ const SEX_OPTIONS = [
   { value: 'unknown', label: 'Unknown' },
 ];
 
+/**
+ * Bystanders can only say what they see, so a name is optional and the diagnosis field asks
+ * "What you can see". ERT members report on people they know: the name is required and the
+ * field keeps its Diagnosis label.
+ */
 const COPY = {
-  missing: {
-    title: 'Missing persons',
-    subtitle: 'People who cannot be found since the incident.',
-    first: 'Add a person',
-    another: 'Add another person',
+  bystander: {
+    missing: 'People who cannot be found since the incident.',
+    casualty: 'People hurt or killed in the incident.',
+    nameHint: 'If known',
+    diagnosisLabel: 'What you can see',
+    diagnosisPlaceholder: 'e.g. Cut on the left arm, awake and talking',
   },
-  casualty: {
-    title: 'Casualties',
-    subtitle: 'People hurt or killed in the incident.',
-    first: 'Add a casualty',
-    another: 'Add another casualty',
+  ert: {
+    missing: 'People from your area who are not accounted for.',
+    casualty: 'People hurt or killed during the event.',
+    nameHint: 'Required',
+    diagnosisLabel: 'Diagnosis',
+    diagnosisPlaceholder: 'e.g. Sprained ankle',
   },
+};
+
+const KIND_COPY = {
+  missing: { title: 'Missing persons', first: 'Add a person', another: 'Add another person' },
+  casualty: { title: 'Casualties', first: 'Add a casualty', another: 'Add another casualty' },
 };
 
 interface Draft {
   name: string;
   age: string;
-  sex: BystanderMissingPerson['sex'];
+  sex: PersonSex;
   condition_id: string;
   diagnosis: string;
 }
 
 const EMPTY_DRAFT: Draft = { name: '', age: '', sex: 'unknown', condition_id: '', diagnosis: '' };
 
+type Person = PersonEntry | CasualtyEntry;
+
 type PeopleDrawerProps = {
   open: boolean;
   onClose: () => void;
   conditions: { id: string; name: string }[];
+  audience?: keyof typeof COPY;
+  /** Replaces the default line under the title. */
+  subtitle?: string;
+  /** Replaces "Done (n)", e.g. "Save changes" when edits go straight to the server. */
+  doneLabel?: string;
 } & (
-  | {
-      kind: 'missing';
-      people: BystanderMissingPerson[];
-      onSave: (people: BystanderMissingPerson[]) => void;
-    }
-  | { kind: 'casualty'; people: BystanderCasualty[]; onSave: (people: BystanderCasualty[]) => void }
+  | { kind: 'missing'; people: PersonEntry[]; onSave: (people: PersonEntry[]) => void }
+  | { kind: 'casualty'; people: CasualtyEntry[]; onSave: (people: CasualtyEntry[]) => void }
 );
 
 /**
- * Lists the people added so far and takes one more. Asks only what a bystander can know: a
- * name if known, an age or an estimate, sex in one tap — plus condition and what they can see
- * for casualties. Cancel discards this visit's changes; Done keeps them, including a filled
- * draft that wasn't added to the list yet. Mount with a fresh `key` per open.
+ * Lists the people added so far and takes one more: a name, an age or an estimate, sex in one
+ * tap — plus condition and diagnosis for casualties. Cancel discards this visit's changes;
+ * Done keeps them, including a filled draft that wasn't added to the list yet. Mount with a
+ * fresh `key` per open.
  */
 export function PeopleDrawer(props: PeopleDrawerProps) {
-  const { kind, open, onClose, conditions } = props;
+  const { kind, open, onClose, conditions, audience = 'bystander' } = props;
   const isCasualty = kind === 'casualty';
-  const copy = COPY[kind];
+  const copy = COPY[audience];
+  const kindCopy = KIND_COPY[kind];
+  const nameRequired = audience === 'ert';
   const [people, setPeople] = useState<Person[]>(props.people);
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
-  const [errors, setErrors] = useState<{ age?: string; condition?: string }>({});
+  const [errors, setErrors] = useState<{ name?: string; age?: string; condition?: string }>({});
 
   const conditionName = (id: string) => conditions.find((c) => c.id === id)?.name ?? '';
   const isDraftFilled =
@@ -85,6 +99,7 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
   const draftToPerson = (): Person | null => {
     const age = draft.age.trim() === '' ? null : Number(draft.age);
     const nextErrors = {
+      name: nameRequired && !draft.name.trim() ? 'Enter a name.' : undefined,
       age:
         age !== null && (!Number.isInteger(age) || age < 0 || age > 130)
           ? 'Enter an age from 0 to 130.'
@@ -92,7 +107,7 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
       condition: isCasualty && !draft.condition_id ? 'Pick a condition.' : undefined,
     };
     setErrors(nextErrors);
-    if (nextErrors.age || nextErrors.condition) return null;
+    if (nextErrors.name || nextErrors.age || nextErrors.condition) return null;
 
     const person = { name: draft.name.trim(), age, sex: draft.sex };
     return isCasualty
@@ -114,8 +129,8 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
       if (!person) return;
       list = [...people, person];
     }
-    if (props.kind === 'casualty') props.onSave(list as BystanderCasualty[]);
-    else props.onSave(list as BystanderMissingPerson[]);
+    if (props.kind === 'casualty') props.onSave(list as CasualtyEntry[]);
+    else props.onSave(list as PersonEntry[]);
     onClose();
   };
 
@@ -123,8 +138,8 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
     <Drawer
       open={open}
       onClose={onClose}
-      title={copy.title}
-      subtitle={copy.subtitle}
+      title={kindCopy.title}
+      subtitle={props.subtitle ?? copy[kind]}
       footer={
         <div className="flex flex-wrap-reverse gap-3">
           <div className="flex flex-[1_1_120px] flex-col">
@@ -134,7 +149,7 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
           </div>
           <div className="flex flex-[1_1_120px] flex-col">
             <Button fullWidth onClick={done}>
-              Done{people.length > 0 && ` (${people.length})`}
+              {props.doneLabel ?? `Done${people.length > 0 ? ` (${people.length})` : ''}`}
             </Button>
           </div>
         </div>
@@ -161,7 +176,7 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
                       <span className="text-[15px] font-semibold">{name}</span>
                       {condition && (
-                        <span className="flex h-5.5 items-center rounded-full bg-warning-50 px-2 text-[12px] font-semibold text-[#b54708]">
+                        <span className="bg-warning-50 flex min-h-5.5 items-center rounded-full px-2 text-[12px] font-semibold text-[#b54708]">
                           {condition}
                         </span>
                       )}
@@ -175,7 +190,7 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
                     aria-label={`Remove ${name}`}
                     onClick={() => setPeople((list) => list.filter((_, idx) => idx !== i))}
                     className={cn(
-                      'grid size-10 shrink-0 place-items-center rounded-full text-gray-500 transition-colors hover:bg-error-50 hover:text-[#b42318]',
+                      'hover:bg-error-50 grid size-10 shrink-0 place-items-center rounded-full text-gray-500 transition-colors hover:text-[#b42318]',
                       FOCUS_RING
                     )}
                   >
@@ -189,7 +204,9 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
       )}
 
       <div className="flex flex-col gap-4 rounded-2xl border border-[#eaecf0] bg-gray-50 p-5">
-        <span className="text-[15px] font-bold">{people.length ? copy.another : copy.first}</span>
+        <span className="text-[15px] font-bold">
+          {people.length ? kindCopy.another : kindCopy.first}
+        </span>
 
         {isCasualty && (
           <div className="flex flex-col gap-2">
@@ -212,7 +229,7 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
                     setDraft((d) => ({ ...d, condition_id: value }));
                     setErrors((e) => ({ ...e, condition: undefined }));
                   }}
-                  className="h-12 text-[14px]"
+                  className="min-h-12 py-2 text-[14px]"
                 >
                   {condition.name}
                 </OptionTile>
@@ -223,16 +240,22 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
         )}
 
         <div className="flex flex-col gap-1.5">
-          <FieldLabel htmlFor="person-name" hint="If known">
+          <FieldLabel htmlFor="person-name" hint={copy.nameHint}>
             Name
           </FieldLabel>
           <TextInput
             id="person-name"
             placeholder="Full name"
             autoComplete="off"
+            invalid={!!errors.name}
+            aria-describedby={errors.name ? 'person-name-error' : undefined}
             value={draft.name}
-            onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
+            onChange={(e) => {
+              setDraft((d) => ({ ...d, name: e.target.value }));
+              setErrors((er) => ({ ...er, name: undefined }));
+            }}
           />
+          <FieldError id="person-name-error">{errors.name}</FieldError>
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -272,20 +295,18 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
             labelledBy="person-sex-label"
             options={SEX_OPTIONS}
             value={draft.sex}
-            onChange={(value) =>
-              setDraft((d) => ({ ...d, sex: value as BystanderMissingPerson['sex'] }))
-            }
+            onChange={(value) => setDraft((d) => ({ ...d, sex: value as PersonSex }))}
           />
         </div>
 
         {isCasualty && (
           <div className="flex flex-col gap-1.5">
             <FieldLabel htmlFor="person-diagnosis" hint="Optional">
-              What you can see
+              {copy.diagnosisLabel}
             </FieldLabel>
             <TextInput
               id="person-diagnosis"
-              placeholder="e.g. Cut on the left arm, awake and talking"
+              placeholder={copy.diagnosisPlaceholder}
               autoComplete="off"
               value={draft.diagnosis}
               onChange={(e) => setDraft((d) => ({ ...d, diagnosis: e.target.value }))}
