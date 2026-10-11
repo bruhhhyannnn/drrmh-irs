@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { HEADCOUNT_FIELDS } from './constants';
+import { BYSTANDER_PHOTO_FIELD, HEADCOUNT_FIELDS } from './constants';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -65,4 +65,12 @@ export function getInitials(name: string): string {
     .filter(Boolean)
     .map((word) => word[0].toUpperCase())
     .join('');
+}
+
+/** Packs bystander photos for `createBystanderReport`; undefined when there are none. */
+export function toBystanderPhotoFormData(photos: Blob[] | undefined): FormData | undefined {
+  if (!photos?.length) return undefined;
+  const formData = new FormData();
+  photos.forEach((photo, i) => formData.append(BYSTANDER_PHOTO_FIELD, photo, `photo-${i + 1}.jpg`));
+  return formData;
 }

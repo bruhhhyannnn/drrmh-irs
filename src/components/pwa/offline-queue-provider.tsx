@@ -2,6 +2,7 @@
 
 import { createBystanderReport } from '@/actions/emergency-reports';
 import { createReport } from '@/actions/reports';
+import { toBystanderPhotoFormData } from '@/lib';
 import {
   getQueuedFieldReportCount,
   getQueuedFieldReports,
@@ -35,7 +36,7 @@ async function flushOne<TPayload>(
   getAll: () => Promise<QueuedEntry<TPayload>[]>,
   remove: (id: string) => Promise<void>,
   markFailed: (id: string, message: string) => Promise<void>,
-  submit: (payload: TPayload) => Promise<unknown>
+  submit: (payload: TPayload, attachments?: Blob[]) => Promise<unknown>
 ): Promise<FlushResult> {
   const pending = (await getAll()).filter((e) => e.status === 'pending');
   let synced = 0;
@@ -43,7 +44,7 @@ async function flushOne<TPayload>(
 
   for (const entry of pending) {
     try {
-      await submit(entry.payload);
+      await submit(entry.payload, entry.attachments);
       await remove(entry.id);
       synced += 1;
     } catch (err) {
@@ -89,17 +90,14 @@ export function OfflineQueueProvider() {
 
     try {
       const [bystanderResult, fieldResult] = await Promise.all([
-        flushOne(
-          getQueuedReports,
-          removeQueuedReport,
-          markQueuedReportFailed,
-          createBystanderReport
+        flushOne(getQueuedReports, removeQueuedReport, markQueuedReportFailed, (payload, photos) =>
+          createBystanderReport(payload, toBystanderPhotoFormData(photos))
         ),
         flushOne(
           getQueuedFieldReports,
           removeQueuedFieldReport,
           markQueuedFieldReportFailed,
-          createReport
+          (payload) => createReport(payload)
         ),
       ]);
 

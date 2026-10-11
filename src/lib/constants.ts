@@ -204,3 +204,11 @@ export type AdminUserType = (typeof ADMIN_USER_TYPES)[number];
 export function isAdminUserType(type?: string | null): type is AdminUserType {
   return (ADMIN_USER_TYPES as readonly string[]).includes(type ?? '');
 }
+
+/* ─── Bystander report photos ─── */
+
+/** Most damage photos a bystander can attach to one report (also a DB CHECK constraint). */
+export const BYSTANDER_MAX_PHOTOS = 3;
+
+/** FormData field the photos travel in to `createBystanderReport`. */
+export const BYSTANDER_PHOTO_FIELD = 'photos';

@@ -4,7 +4,7 @@ import type { BystanderReportFormData, ReportFormData } from '@/lib';
 // the network, so they simply can't run without connectivity — the only way to let someone
 // "submit" a report offline is to persist it locally and replay it once the network is back.
 // IndexedDB (not localStorage) is used because entries carry nested missing-person/casualty
-// arrays and there's no hard size ceiling to worry about.
+// arrays and photo Blobs, and there's no hard size ceiling to worry about.
 //
 // Two independent stores share one database: bystander reports (public, anonymous) and field
 // reports (logged-in ERT members via ReportForm). Kept separate because they replay through
@@ -20,6 +20,8 @@ export interface QueuedEntry<TPayload> {
   id: string;
   createdAt: number;
   payload: TPayload;
+  /** Files sent alongside the payload (bystander damage photos). Absent on older entries. */
+  attachments?: Blob[];
   status: 'pending' | 'failed';
   errorMessage?: string;
 }
@@ -69,12 +71,13 @@ function makeId() {
 }
 
 function makeQueue<TPayload>(storeName: string) {
-  async function add(payload: TPayload): Promise<string> {
+  async function add(payload: TPayload, attachments?: Blob[]): Promise<string> {
     const db = await openDb();
     const entry: QueuedEntry<TPayload> = {
       id: makeId(),
       createdAt: Date.now(),
       payload,
+      ...(attachments?.length && { attachments }),
       status: 'pending',
     };
     return new Promise((resolve, reject) => {

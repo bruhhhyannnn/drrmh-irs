@@ -114,17 +114,90 @@ export const reportSchema = z.object({
   report_casualties: z.array(casualtySchema).default([]),
 });
 
+/* ─── Bystander report ─── */
+
+const PH_CONTACT_NUMBER = /^\+63[2-9]\d{8,9}$/;
+const PH_CONTACT_NUMBER_MESSAGE = 'Enter a Philippine number, e.g. 917 123 4567';
+
+/**
+ * Normalises what a reporter types after the fixed +63 ("917 123 4567", "0917-123-4567",
+ * "+63 917 123 4567") to "+639171234567". Returns null when it isn't a Philippine mobile or
+ * landline number. Mirrors the CHECK constraint on bystander_reports.contact_number.
+ */
+export function toPhContactNumber(value: string): string | null {
+  let digits = value.replace(/\D/g, '');
+  if (digits.length >= 11 && digits.startsWith('63')) digits = digits.slice(2);
+  else if (digits.startsWith('0')) digits = digits.slice(1);
+  const normalised = `+63${digits}`;
+  return PH_CONTACT_NUMBER.test(normalised) ? normalised : null;
+}
+
+const emptyToNull = (value: unknown) => (value === '' ? null : value);
+
+// Bystanders often can't know a name or an exact age, so both are optional here — unlike the
+// ERT schemas above. A blank name is shown as "Unknown person".
+export const bystanderMissingPersonSchema = z.object({
+  name: z.string().trim().max(120).default(''),
+  age: z.preprocess(
+    (value) => (value === '' || value === undefined ? null : value),
+    z.coerce.number().int().min(0).max(130).nullable()
+  ),
+  sex: z.enum(['male', 'female', 'unknown']).default('unknown'),
+});
+
+export const bystanderCasualtySchema = bystanderMissingPersonSchema.extend({
+  condition_id: z.string().uuid('Pick a condition'),
+  diagnosis: z.string().trim().max(500).optional().nullable(),
+});
+
+/** What `createBystanderReport` accepts — also the payload stored in the offline queue. */
 export const bystanderReportSchema = z.object({
   incident_type_id: z.string().uuid('Please select an incident type'),
   cluster_id: z.string().uuid('Please select a cluster'),
-  unit_id: z.string().uuid().optional().nullable(),
-  latitude: z.number({ required_error: 'Please capture your location' }),
-  longitude: z.number({ required_error: 'Please capture your location' }),
-  description: z.string().optional(),
-  location_description: z.string().optional(),
-  damage_condition_id: z.string().uuid().optional().nullable(),
-  report_missing_persons: z.array(missingPersonSchema).default([]),
-  report_casualties: z.array(casualtySchema).default([]),
+  unit_id: z.preprocess(emptyToNull, z.string().uuid().nullable().optional()),
+  latitude: z.number({ required_error: 'Please capture your location' }).min(-90).max(90),
+  longitude: z.number({ required_error: 'Please capture your location' }).min(-180).max(180),
+  description: z.string().trim().max(2000).optional(),
+  location_description: z.string().trim().max(500).optional(),
+  damage_condition_id: z.preprocess(emptyToNull, z.string().uuid().nullable().optional()),
+  contact_number: z.preprocess(
+    (value) =>
+      typeof value === 'string' && value.trim() ? (toPhContactNumber(value) ?? value) : null,
+    z.string().regex(PH_CONTACT_NUMBER, PH_CONTACT_NUMBER_MESSAGE).nullable().optional()
+  ),
+  population_counts: z
+    .array(
+      z.object({ category_id: z.string().uuid(), count: z.number().int().min(0).max(100_000) })
+    )
+    .max(50)
+    .default([]),
+  report_missing_persons: z.array(bystanderMissingPersonSchema).max(50).default([]),
+  report_casualties: z.array(bystanderCasualtySchema).max(50).default([]),
+});
+
+/**
+ * The bystander form's own fields. Missing persons, casualties, headcount and photos are kept
+ * in component state. Step 1's required fields carry the messages shown under each field.
+ */
+export const bystanderFormSchema = z.object({
+  incident_type_id: z.string().min(1, 'Choose the type of incident'),
+  campus_id: z.string().min(1, 'Choose a campus'),
+  latitude: z
+    .number()
+    .nullable()
+    .refine((value) => value !== null, 'Pin the location on the map, or use your location'),
+  longitude: z.number().nullable(),
+  cluster_id: z.string().min(1, 'Choose a cluster'),
+  unit_id: z.string(),
+  damage_condition_id: z.string(),
+  location_description: z.string().max(500, 'Keep it under 500 characters'),
+  description: z.string().max(2000, 'Keep it under 2,000 characters'),
+  contact_number: z
+    .string()
+    .refine(
+      (value) => !value.trim() || toPhContactNumber(value) !== null,
+      PH_CONTACT_NUMBER_MESSAGE
+    ),
 });
 
 /* ─── Lookup tables ─── */
@@ -195,3 +268,7 @@ export type PopulationCountEntry = z.infer<typeof populationCountEntrySchema>;
 export type MissingPersonFormData = z.infer<typeof missingPersonSchema>;
 export type CasualtyFormData = z.infer<typeof casualtySchema>;
 export type BystanderReportFormData = z.infer<typeof bystanderReportSchema>;
+// Input type: latitude stays `number | null` while the form is being filled in.
+export type BystanderFormValues = z.input<typeof bystanderFormSchema>;
+export type BystanderMissingPerson = z.infer<typeof bystanderMissingPersonSchema>;
+export type BystanderCasualty = z.infer<typeof bystanderCasualtySchema>;

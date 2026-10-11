@@ -1,56 +1,77 @@
 'use server';
 
-import { BystanderReportFormData } from '@/lib';
+import { BYSTANDER_PHOTO_FIELD, bystanderReportSchema, type BystanderReportFormData } from '@/lib';
+import {
+  removeBystanderPhotos,
+  signBystanderPhotos,
+  uploadBystanderPhotos,
+} from '@/lib/bystander-photos';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
+import { randomUUID } from 'crypto';
 import { revalidatePath } from 'next/cache';
 
-export async function createBystanderReport(data: BystanderReportFormData) {
-  const { report_missing_persons, report_casualties, ...reportData } = data;
+/**
+ * Creates an anonymous bystander report. `photos` carries up to 3 JPEGs under the `photos`
+ * field (see `toBystanderPhotoFormData`). Photos are uploaded first so the report row can
+ * hold their paths; if the row then fails to save, the uploads are removed again.
+ */
+export async function createBystanderReport(data: BystanderReportFormData, photos?: FormData) {
+  const parsed = bystanderReportSchema.safeParse(data);
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message ?? 'This report is incomplete.');
+  }
+  const { report_missing_persons, report_casualties, population_counts, ...reportData } =
+    parsed.data;
 
-  const pendingStatus = await prisma.bystander_report_statuses.findFirst({
-    where: { name: 'pending' },
+  const [cluster, pendingStatus] = await Promise.all([
+    prisma.cluster.findUnique({
+      where: { id: reportData.cluster_id },
+      select: { campus_id: true },
+    }),
+    prisma.bystander_report_statuses.findFirst({ where: { name: 'pending' } }),
+  ]);
+  if (!cluster) throw new Error('The selected cluster no longer exists. Please choose another.');
+
+  // Headcount fields follow the cluster's campus; zeros mean "not counted" and aren't stored.
+  const campusCategories = await prisma.campusPopulationCategory.findMany({
+    where: { campus_id: cluster.campus_id, is_active: true },
+    select: { category_id: true },
   });
+  const allowedCategories = new Set(campusCategories.map((c) => c.category_id));
+  const counts = population_counts.filter(
+    (c) => c.count > 0 && allowedCategories.has(c.category_id)
+  );
+
+  const id = randomUUID();
+  const photoBlobs = (photos?.getAll(BYSTANDER_PHOTO_FIELD) ?? []).filter(
+    (entry): entry is File => typeof entry !== 'string'
+  );
+  const photoPaths = await uploadBystanderPhotos(id, photoBlobs);
 
   try {
     const report = await prisma.bystander_reports.create({
       data: {
         ...reportData,
-        unit_id: reportData.unit_id || null,
-        damage_condition_id: reportData.damage_condition_id || null,
+        id,
         status_id: pendingStatus?.id,
-        ...(report_missing_persons?.length && {
-          report_missing_persons: {
-            create: report_missing_persons.map((p) => ({
-              ...p,
-              age: p.age ? Number(p.age) : null,
-            })),
-          },
+        photo_paths: photoPaths,
+        ...(counts.length && { population_counts: { create: counts } }),
+        ...(report_missing_persons.length && {
+          report_missing_persons: { create: report_missing_persons },
         }),
-        ...(report_casualties?.length && {
-          report_casualties: {
-            create: report_casualties.map((c) => ({
-              ...c,
-              age: c.age ? Number(c.age) : null,
-            })),
-          },
-        }),
+        ...(report_casualties.length && { report_casualties: { create: report_casualties } }),
       },
-      include: {
-        report_missing_persons: true,
-        report_casualties: { include: { condition: true } },
-        damage_conditions: true,
-        bystander_incident_types: true,
-        bystander_report_statuses: true,
-      },
+      select: { id: true, submitted_at: true },
     });
 
     return {
-      ...report,
-      latitude: report.latitude.toNumber(),
-      longitude: report.longitude.toNumber(),
+      id: report.id,
+      submittedAt: report.submitted_at.toISOString(),
+      photoCount: photoPaths.length,
     };
   } catch (err) {
+    await removeBystanderPhotos(photoPaths);
     throw toFriendlyError(err, 'bystander report');
   }
 }
@@ -58,12 +79,16 @@ export async function createBystanderReport(data: BystanderReportFormData) {
 export async function getBystanderReports() {
   const reports = await prisma.bystander_reports.findMany({
     include: {
-      clusters: true,
+      clusters: { include: { campus: { select: { name: true } } } },
       units: true,
       bystander_incident_types: true,
       bystander_report_statuses: true,
       report_missing_persons: true,
-      report_casualties: true,
+      report_casualties: { include: { condition: { select: { name: true } } } },
+      population_counts: {
+        include: { category: { select: { name: true } } },
+        orderBy: { count: 'desc' },
+      },
     },
     orderBy: {
       submitted_at: 'desc',
@@ -109,6 +134,15 @@ export async function deleteBystanderReport(id: string) {
   } catch (err) {
     throw toFriendlyError(err, 'bystander report');
   }
+}
+
+/** Short-lived signed URLs for a report's photos, fetched when an admin opens the report. */
+export async function getBystanderPhotoUrls(id: string) {
+  const report = await prisma.bystander_reports.findUnique({
+    where: { id },
+    select: { photo_paths: true },
+  });
+  return signBystanderPhotos(report?.photo_paths ?? []);
 }
 
 export async function getBystanderIncidentTypes() {
