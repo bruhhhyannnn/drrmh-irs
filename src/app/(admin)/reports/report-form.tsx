@@ -3,6 +3,7 @@
 import { createReport } from '@/actions/reports';
 import { upsertDamageCondition } from '@/actions/settings';
 import { DataPrivacyNotice, PageBreadcrumb } from '@/components/common';
+import { MapClickHandler, MapFlyTo } from '@/components/common/map-pick';
 import { useCampus } from '@/components/hooks/use-campus';
 import { useOngoingEvents } from '@/components/hooks/use-events';
 import { useCampusPopulationCategories } from '@/components/hooks/use-population-categories';
@@ -31,7 +32,6 @@ import {
   MarkerContent,
   Select,
   Spinner,
-  useMap,
 } from '@/components/ui';
 import { reportSchema, type ReportFormData } from '@/lib';
 import { getQueuedFieldReportCount, isNetworkError, queueFieldReport } from '@/lib/offline-queue';
@@ -763,37 +763,6 @@ export function ReportForm({
       />
     </div>
   );
-}
-
-// ─── Map fly-to ───────────────────────────────────────────────────────────────
-function MapFlyTo({ lat, lng }: { lat: number; lng: number }) {
-  const { map, isLoaded } = useMap();
-  useEffect(() => {
-    if (!map || !isLoaded) return;
-    map.flyTo({ center: [lng, lat], zoom: 16, duration: 1200 });
-  }, [map, isLoaded, lat, lng]);
-  return null;
-}
-
-// ─── Map click handler ────────────────────────────────────────────────────────
-function MapClickHandler({ onPick }: { onPick: (lng: number, lat: number) => void }) {
-  const { map, isLoaded } = useMap();
-  const cbRef = useRef(onPick);
-  cbRef.current = onPick;
-
-  useEffect(() => {
-    if (!map || !isLoaded) return;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handler = (e: any) => cbRef.current(e.lngLat.lng, e.lngLat.lat);
-    map.on('click', handler);
-    map.getCanvas().style.cursor = 'crosshair';
-    return () => {
-      map.off('click', handler);
-      map.getCanvas().style.cursor = '';
-    };
-  }, [map, isLoaded]);
-
-  return null;
 }
 
 // ─── Location picker sub-component ───────────────────────────────────────────
