@@ -12,12 +12,21 @@ const CAMPUS_LOGOS = new Set([
   'visayas',
 ]);
 
-export function campusLogo(campusName: string): string {
-  const slug = campusName
+function campusSlug(campusName: string) {
+  return campusName
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
     .replace(/^up\s+/, '')
     .replace(/[^a-z]/g, '');
-  return CAMPUS_LOGOS.has(slug) ? `/up-${slug}-logo.png` : '/up-logo.png';
+}
+
+export function campusLogo(campusName: string): string {
+  return ownCampusLogo(campusName) ?? '/up-logo.png';
+}
+
+/** The campus's own logo, or null when it has none (the admin pages show its initials). */
+export function ownCampusLogo(campusName: string): string | null {
+  const slug = campusSlug(campusName);
+  return CAMPUS_LOGOS.has(slug) ? `/up-${slug}-logo.png` : null;
 }

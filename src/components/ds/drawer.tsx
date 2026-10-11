@@ -28,6 +28,12 @@ interface DrawerProps {
   onClose: () => void;
   title: string;
   subtitle?: string;
+  /** Small uppercase line above the title, e.g. "Bystander report". */
+  eyebrow?: string;
+  /** Sits next to the title, e.g. a status chip. */
+  titleAside?: React.ReactNode;
+  /** `wide` is the admin drawer: 520px on tablet, 560px on web. */
+  size?: 'default' | 'wide';
   footer: React.ReactNode;
   children: React.ReactNode;
 }
@@ -45,7 +51,16 @@ export function Drawer({ open, ...props }: DrawerProps) {
   );
 }
 
-function DrawerPanel({ onClose, title, subtitle, footer, children }: Omit<DrawerProps, 'open'>) {
+function DrawerPanel({
+  onClose,
+  title,
+  subtitle,
+  eyebrow,
+  titleAside,
+  size = 'default',
+  footer,
+  children,
+}: Omit<DrawerProps, 'open'>) {
   const isTabletUp = useIsTabletUp();
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -104,7 +119,10 @@ function DrawerPanel({ onClose, title, subtitle, footer, children }: Omit<Drawer
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="absolute inset-x-0 top-14 bottom-0 flex flex-col overflow-hidden rounded-t-[28px] bg-white shadow-[0_18px_40px_rgba(16,24,40,.22)] md:top-0 md:left-auto md:w-120 md:rounded-none lg:w-130"
+        className={cn(
+          'absolute inset-x-0 top-14 bottom-0 flex flex-col overflow-hidden rounded-t-[28px] bg-white shadow-[0_18px_40px_rgba(16,24,40,.22)] md:top-0 md:left-auto md:rounded-none',
+          size === 'wide' ? 'md:w-130 lg:w-140' : 'md:w-120 lg:w-130'
+        )}
         initial={offscreen}
         animate={{ x: 0, y: 0 }}
         exit={offscreen}
@@ -112,9 +130,17 @@ function DrawerPanel({ onClose, title, subtitle, footer, children }: Omit<Drawer
       >
         <div className="flex shrink-0 items-start gap-4 border-b border-[#eaecf0] p-5 md:px-7 md:py-6">
           <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <h2 id={titleId} className="text-[20px] leading-tight font-extrabold">
-              {title}
-            </h2>
+            {eyebrow && (
+              <span className="text-[11px] font-bold tracking-[.08em] text-gray-500 uppercase">
+                {eyebrow}
+              </span>
+            )}
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
+              <h2 id={titleId} className="text-[20px] leading-tight font-extrabold">
+                {title}
+              </h2>
+              {titleAside}
+            </div>
             {subtitle && (
               <p className="text-[13px] leading-[1.45] text-pretty text-gray-500">{subtitle}</p>
             )}

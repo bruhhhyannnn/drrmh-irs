@@ -10,9 +10,9 @@ import {
   SelectField,
 } from '@/components/ds';
 import type { BystanderFormValues } from '@/lib';
+import { campusLogo } from '@/lib/campus-logo';
 import { ShieldCheck } from 'lucide-react';
 import Image from 'next/image';
-import { campusLogo } from '../_lib/campus-logo';
 import { FooterSlot, StepFooter, StepHeader, StepTitle } from './chrome';
 import { LocationField } from './location-field';
 

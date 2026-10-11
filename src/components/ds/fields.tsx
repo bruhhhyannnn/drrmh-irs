@@ -198,6 +198,10 @@ const BUTTON_VARIANTS = {
   primary: 'bg-brand-500 text-white hover:brightness-92',
   outline: 'border-[1.5px] border-gray-300 bg-white text-gray-900 hover:brightness-97',
   ghost: 'text-gray-700 hover:bg-gray-100',
+  /** Delete next to other actions: red outline. */
+  danger: 'border-[1.5px] border-[#fda29b] bg-white text-[#b42318] hover:bg-error-50',
+  /** The confirm button of a delete dialog. */
+  destructive: 'bg-error-600 text-white hover:brightness-92',
 };
 
 type ButtonStyle = {
