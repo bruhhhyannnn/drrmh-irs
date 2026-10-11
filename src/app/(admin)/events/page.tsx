@@ -1,210 +1,294 @@
 'use client';
 
-import { PageBreadcrumb } from '@/components/common';
+import { Button } from '@/components/ds';
 import { useCampuses } from '@/components/hooks/use-campus';
-import { useDeleteEvent, useEvents } from '@/components/hooks/use-events';
-import {
-  Badge,
-  Button,
-  ConfirmDialog,
-  DeleteAction,
-  EditAction,
-  Input,
-  Modal,
-  PageError,
-  Select,
-  Spinner,
-  Table,
-  TableActions,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  ViewAction,
-} from '@/components/ui';
-import { format } from 'date-fns';
-import { FileSpreadsheet, Plus, Search } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEvents } from '@/components/hooks/use-events';
+import { Download, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { EventForm } from './event-form';
+import {
+  DataTable,
+  IconAction,
+  ListCard,
+  ListCount,
+  ListTabs,
+  ListToolbar,
+  MobileCard,
+  NameCell,
+  NumberCell,
+  RowActions,
+  SearchField,
+  TextCell,
+  type Column,
+} from '../_components/data-list';
+import { PageHeader } from '../_components/page-header';
+import { useScopedCampusId } from '../_components/shell/campus-switcher';
+import { Card, Chip } from '../_components/ui';
+import { formatDate, formatTime, plural } from '../_lib/format';
+import { capitalize, eventStatusKey, eventTone, type EventStatus } from '../_lib/status';
+import { useDebounced } from '../_lib/use-debounced';
+import { DeleteEventDialog, type DeletableEvent } from './_components/delete-event-dialog';
+import { EventDrawer } from './_components/event-drawer';
 import { exportEventToExcel } from './export-event';
 
+type EventRow = NonNullable<ReturnType<typeof useEvents>['data']>[number];
+type Tab = 'all' | EventStatus;
+
 export default function EventsPage() {
-  const [query, setQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
-  const [campusId, setCampusId] = useState('');
+  return (
+    <Suspense>
+      <Events />
+    </Suspense>
+  );
+}
+
+function Events() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const campusId = useScopedCampusId();
   const { data: campuses = [] } = useCampuses();
-  const { data: events, isPending, isFetching, error } = useEvents(debouncedQuery, campusId);
-  const deleteEventMutation = useDeleteEvent();
-  const [editId, setEditId] = useState('');
-  const [deleteId, setDeleteId] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const debounced = useDebounced(query);
+  const { data: events = [], isPending, error } = useEvents(debounced, campusId || undefined);
+  const [tab, setTab] = useState<Tab>('all');
+  const [drawer, setDrawer] = useState<{ open: boolean; eventId?: string }>({ open: false });
+  const [deleting, setDeleting] = useState<DeletableEvent | null>(null);
   const [exportingId, setExportingId] = useState('');
 
-  const handleExport = async (id: string) => {
-    setExportingId(id);
-    const toastId = toast.loading('Generating Excel file...');
+  // The dashboard's Add event lands here with ?add=1.
+  useEffect(() => {
+    if (searchParams.get('add') === '1') {
+      setDrawer({ open: true });
+      router.replace('/events');
+    }
+  }, [searchParams, router]);
+
+  const allCampuses = !campusId;
+  const campusName = campuses.find((c) => c.id === campusId)?.name;
+  const counts = { all: events.length, ongoing: 0, upcoming: 0, completed: 0 };
+  for (const e of events) {
+    const key = eventStatusKey(e.status.name);
+    if (key !== 'other') counts[key]++;
+  }
+  const rows = tab === 'all' ? events : events.filter((e) => eventStatusKey(e.status.name) === tab);
+
+  const exportExcel = async (event: EventRow) => {
+    setExportingId(event.id);
+    const toastId = toast.loading('Preparing the Excel file…');
     try {
-      await exportEventToExcel(id);
-      toast.success('Export ready.', { id: toastId });
+      await exportEventToExcel(event.id);
+      toast.success('Excel file downloaded', { id: toastId });
     } catch {
-      toast.error('Failed to export event. Please try again.', { id: toastId });
+      toast.error('The event could not be exported. Please try again.', { id: toastId });
     } finally {
       setExportingId('');
     }
   };
 
-  const handleClose = () => {
-    setIsModalOpen(false);
-    setEditId('');
-  };
+  const askDelete = (e: EventRow) =>
+    setDeleting({ id: e.id, name: e.name, campus: e.campus.name, reports: e._count.reports });
 
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedQuery(query), 400);
-    return () => clearTimeout(timer);
-  }, [query]);
-
-  if (error) return <PageError message={error.message} />;
+  const columns: Column<EventRow>[] = [
+    {
+      key: 'name',
+      header: 'Event',
+      width: 'minmax(0,2fr)',
+      cell: (e) => (
+        <NameCell
+          primary={e.name}
+          // Tablet hides the Campus column, so the campus sits under the name.
+          secondary={allCampuses ? <span className="lg:hidden">{e.campus.name}</span> : undefined}
+          href={`/events/details?id=${e.id}`}
+        />
+      ),
+    },
+    ...(allCampuses
+      ? [
+          {
+            key: 'campus',
+            header: 'Campus',
+            width: 'minmax(0,1fr)',
+            hideOnTablet: true,
+            cell: (e: EventRow) => <TextCell>{e.campus.name}</TextCell>,
+          },
+        ]
+      : []),
+    {
+      key: 'starts',
+      header: 'Starts',
+      width: 'minmax(0,1.1fr)',
+      cell: (e) =>
+        e.started_at ? (
+          <NameCell muted primary={formatDate(e.started_at)} secondary={formatTime(e.started_at)} />
+        ) : (
+          <TextCell>Not set</TextCell>
+        ),
+    },
+    {
+      key: 'reports',
+      header: 'Reports',
+      width: '64px',
+      align: 'right',
+      cell: (e) => <NumberCell value={e._count.reports} />,
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      width: '112px',
+      cell: (e) => (
+        <Chip tone={eventTone(e.status.name)} dot>
+          {capitalize(e.status.name)}
+        </Chip>
+      ),
+    },
+    {
+      key: 'actions',
+      header: '',
+      width: '144px',
+      // View leaves the row on tablet; the name opens the details.
+      tabletWidth: '108px',
+      align: 'right',
+      cell: (e) => (
+        <RowActions>
+          <IconAction
+            label="View"
+            icon={<Eye size={18} aria-hidden />}
+            href={`/events/details?id=${e.id}`}
+            className="md:hidden lg:inline-flex"
+          />
+          <IconAction
+            label="Export to Excel"
+            icon={<Download size={18} aria-hidden />}
+            disabled={exportingId === e.id}
+            onClick={() => exportExcel(e)}
+          />
+          <IconAction
+            label="Edit"
+            icon={<Pencil size={18} aria-hidden />}
+            onClick={() => setDrawer({ open: true, eventId: e.id })}
+          />
+          <IconAction
+            label="Delete"
+            icon={<Trash2 size={18} aria-hidden />}
+            onClick={() => askDelete(e)}
+          />
+        </RowActions>
+      ),
+    },
+  ];
 
   return (
     <>
-      <div className="space-y-6">
-        <PageBreadcrumb pageTitle="Events" />
-
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-1 flex-wrap items-center gap-3">
-            <div className="relative max-w-sm min-w-2xs flex-1">
-              <Search
-                size={16}
-                className="absolute top-1/2 z-1 left-3 -translate-y-1/2 text-gray-400 dark:text-gray-500"
-              />
-              <Input
-                placeholder="Search events..."
-                className="pl-9"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-            </div>
-            <Select
-              placeholder="All campuses"
-              className="w-full max-w-2xs"
-              options={campuses.map((c) => ({ value: c.id, label: c.name }))}
-              value={campusId}
-              allowClear
-              onChange={setCampusId}
-            />
-            <p className="text-sm text-gray-500 dark:text-gray-400">{events?.length ?? 0} total</p>
-          </div>
-          <Button onClick={() => setIsModalOpen(true)} startIcon={<Plus size={16} />}>
-            Add Event
-          </Button>
-        </div>
-
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Event Name</TableHead>
-              <TableHead>Campus</TableHead>
-              <TableHead>Date & Time</TableHead>
-              <TableHead>Reports Submitted</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {events?.map((event) => (
-              <TableRow key={event.id}>
-                <TableCell className="font-medium text-gray-900 dark:text-white">
-                  {event.name}
-                </TableCell>
-                <TableCell className="font-medium text-gray-900 dark:text-white">
-                  {event.campus.name}
-                </TableCell>
-                <TableCell>
-                  {event.started_at
-                    ? format(new Date(event.started_at), 'MMM d, yyyy | h:mm a')
-                    : '—'}
-                </TableCell>
-                <TableCell className="font-medium text-gray-900 dark:text-white">
-                  {event._count.reports}
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    color={
-                      event.status.name.toLocaleLowerCase() === 'ongoing'
-                        ? 'success'
-                        : event.status.name.toLocaleLowerCase() === 'completed'
-                          ? 'primary'
-                          : 'warning'
-                    }
-                    size="sm"
-                  >
-                    {event.status.name}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <TableActions>
-                    <ViewAction href={`/events/details?id=${event.id}`} title="View" />
-                    <EditAction
-                      onClick={() => {
-                        setEditId(event.id);
-                        setIsModalOpen(true);
-                      }}
-                    />
-                    <button
-                      onClick={() => handleExport(event.id)}
-                      disabled={exportingId === event.id}
-                      className="hover:text-brand-600 dark:hover:text-brand-400 inline-flex items-center gap-1.5 text-sm text-gray-400 transition-all duration-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-500"
-                      title="Export to Excel"
-                    >
-                      <FileSpreadsheet size={15} />
-                      Export
-                    </button>
-                    <DeleteAction onClick={() => setDeleteId(event.id)} />
-                  </TableActions>
-                </TableCell>
-              </TableRow>
-            ))}
-            {(isPending || isFetching) && (
-              <TableRow>
-                <TableCell className="py-10" colSpan={5}>
-                  <Spinner center />
-                </TableCell>
-              </TableRow>
-            )}
-            {!events?.length && !isPending && !isFetching && (
-              <TableRow>
-                <TableCell className="py-10 text-center text-gray-400" colSpan={5}>
-                  No events found
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      <Modal isOpen={isModalOpen} onClose={handleClose}>
-        <EventForm editId={editId} onSuccess={handleClose} onCancel={handleClose} />
-      </Modal>
-
-      <ConfirmDialog
-        isOpen={!!deleteId}
-        onClose={() => setDeleteId('')}
-        onConfirm={() =>
-          deleteEventMutation.mutate(deleteId, {
-            onSuccess: () => {
-              setDeleteId('');
-              toast.success('Event deleted');
-            },
-            onError: (err) => toast.error(err.message),
-          })
+      <PageHeader
+        title="Events"
+        subtitle={
+          campusName
+            ? `Drills and incidents at ${campusName}.`
+            : 'Drills and incidents across all campuses.'
         }
-        title="Delete event"
-        message="This event will be permanently deleted. This cannot be undone."
-        confirmLabel="Delete"
-        isLoading={deleteEventMutation.isPending}
+        actions={
+          <Button size="sm" onClick={() => setDrawer({ open: true })}>
+            <Plus size={16} aria-hidden />
+            Add event
+          </Button>
+        }
       />
+
+      {error ? (
+        <Card className="p-6 text-[15px] text-[#b42318]">
+          The events couldn&apos;t be loaded: {error.message}
+        </Card>
+      ) : (
+        <ListCard>
+          <ListTabs
+            label="Event status"
+            value={tab}
+            onChange={setTab}
+            tabs={[
+              { key: 'all', label: 'All', count: counts.all },
+              { key: 'ongoing', label: 'Ongoing', count: counts.ongoing },
+              { key: 'upcoming', label: 'Upcoming', count: counts.upcoming },
+              { key: 'completed', label: 'Completed', count: counts.completed },
+            ]}
+          />
+          <ListToolbar>
+            <SearchField
+              label="Search events"
+              placeholder="Search events…"
+              value={query}
+              onChange={setQuery}
+            />
+            <ListCount>{plural(rows.length, 'event', 'events')}</ListCount>
+          </ListToolbar>
+          <DataTable
+            label="Events"
+            columns={columns}
+            rows={rows}
+            rowKey={(e) => e.id}
+            loading={isPending}
+            empty={
+              debounced
+                ? `No events match “${debounced}”.`
+                : tab === 'all'
+                  ? 'No events yet. Add one to start a drill.'
+                  : `No ${tab} events.`
+            }
+            card={(e) => (
+              <MobileCard
+                title={`${e.name} — ${e.campus.name}`}
+                subtitle={
+                  e.started_at
+                    ? `${formatDate(e.started_at)} · ${formatTime(e.started_at)}`
+                    : 'No start time'
+                }
+                chip={
+                  <Chip tone={eventTone(e.status.name)} dot>
+                    {capitalize(e.status.name)}
+                  </Chip>
+                }
+                meta={[
+                  {
+                    label: 'Reports',
+                    value: e._count.reports,
+                    tone: e._count.reports ? 'default' : 'muted',
+                  },
+                  ...(e.quarter ? [{ label: 'Quarter', value: e.quarter }] : []),
+                ]}
+                actions={[
+                  {
+                    label: 'View',
+                    icon: <Eye size={16} aria-hidden />,
+                    href: `/events/details?id=${e.id}`,
+                  },
+                  {
+                    label: 'Export',
+                    icon: <Download size={16} aria-hidden />,
+                    onClick: () => exportExcel(e),
+                  },
+                  {
+                    label: 'Edit',
+                    icon: <Pencil size={16} aria-hidden />,
+                    onClick: () => setDrawer({ open: true, eventId: e.id }),
+                  },
+                ]}
+              />
+            )}
+          />
+        </ListCard>
+      )}
+
+      <EventDrawer
+        open={drawer.open}
+        // Keeps the event while the drawer slides out.
+        onClose={() => setDrawer((d) => ({ ...d, open: false }))}
+        mode={
+          drawer.eventId
+            ? { kind: 'edit', eventId: drawer.eventId }
+            : { kind: 'add', defaultCampusId: campusId || undefined }
+        }
+      />
+      <DeleteEventDialog event={deleting} onClose={() => setDeleting(null)} />
     </>
   );
 }
