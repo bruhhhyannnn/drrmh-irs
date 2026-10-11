@@ -7,7 +7,7 @@ import {
   PersonModal,
 } from '@/app/(admin)/reports/missing-casualty-modals';
 import { ReportForm } from '@/app/(admin)/reports/report-form';
-import { CompleteProfileModal } from '@/components/auth';
+import { ProfileSetup } from '@/components/auth';
 import {
   useCreateReportCasualty,
   useCreateReportMissingPerson,
@@ -108,12 +108,13 @@ export default function ErtReportPage() {
 
   const profile = userProfile!;
 
+  if (!profile.is_profile_complete) return <ProfileSetup />;
+
   // ── Already submitted — status card ─────────────────────────
   if (myReport) {
     return (
       <div className="flex min-h-screen flex-col">
         {Background}
-        <CompleteProfileModal />
         <ReportHeader userProfile={profile} onSignOut={handleSignOut} />
         <div className="flex flex-1 items-center justify-center p-6">
           <div className="w-full max-w-md">
@@ -195,7 +196,6 @@ export default function ErtReportPage() {
   return (
     <div className="min-h-screen flex flex-col">
       {Background}
-      <CompleteProfileModal />
       <ReportHeader userProfile={profile} onSignOut={handleSignOut} />
       <div className="flex justify-center p-6 py-8">
         <ReportForm standalone onSuccess={() => {}} />

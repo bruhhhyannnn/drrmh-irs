@@ -1,10 +1,10 @@
 export { ForgotPasswordForm } from '../../app/(auth)/forgot-password/forgot-password-form';
 export { SignInForm } from '../../app/(auth)/signin/sign-in-form';
 export { UpdatePasswordForm } from '../../app/(auth)/update-password/update-password-form';
-export { AuthHeader } from './auth-header';
 export { AuthProvider } from './auth-provider';
-export { CompleteProfileModal } from './complete-profile-modal';
-export { GoogleSignInForm } from './google-sign-in-form';
+export { AuthShell } from './auth-shell';
+export { GoogleSignInButton } from './google-sign-in-button';
 export { ProfileModal } from './profile-modal';
+export { ProfileSetup, ProfileSetupGate } from './profile-setup';
 export { ProtectedRoute } from './protected-route';
 export { SignOutButton } from './sign-out-button';

@@ -25,15 +25,18 @@ import { provisionGoogleUser } from '@/actions/auth';
 import { Spinner } from '@/components/ui';
 import { supabase } from '@/lib';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
+// Failures go back to sign-in, which shows them as a banner over the same Google button.
 export default function AuthCallbackPage() {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let handled = false;
-    const timeout = setTimeout(() => setError('Sign-in timed out. Please try again.'), 10_000);
+    const timeout = setTimeout(() => {
+      handled = true;
+      router.replace('/signin?error=timeout');
+    }, 10_000);
 
     async function handleSession(
       userId: string,
@@ -59,7 +62,8 @@ export default function AuthCallbackPage() {
           return;
         }
         console.error('Provisioning error:', err);
-        setError('Failed to set up your account. Please contact support.');
+        await supabase.auth.signOut();
+        router.replace('/signin?error=setup');
       }
     }
 
@@ -86,20 +90,10 @@ export default function AuthCallbackPage() {
     };
   }, [router]);
 
-  if (error) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-        <p className="text-error-500 text-sm">{error}</p>
-        <a href="/signin" className="text-brand-500 text-sm underline">
-          Try again
-        </a>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex min-h-screen items-center justify-center">
+    <div role="status" className="flex min-h-screen items-center justify-center">
       <Spinner size="lg" />
+      <span className="sr-only">Signing you in…</span>
     </div>
   );
 }
