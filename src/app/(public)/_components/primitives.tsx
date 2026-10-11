@@ -1,10 +1,9 @@
+import { FOCUS_RING } from '@/components/ds/focus';
 import { cn } from '@/lib';
 import { ArrowRight, Check } from 'lucide-react';
 import Link from 'next/link';
 
-/** Keyboard focus ring used by every interactive element on the landing page. */
-export const FOCUS_RING =
-  'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#5a9ef2]';
+export { FOCUS_RING };
 
 /** Brand link colour — maroon, darkening and underlining on hover. */
 const LINK = 'text-brand-500 hover:text-[#7a1515] hover:underline';

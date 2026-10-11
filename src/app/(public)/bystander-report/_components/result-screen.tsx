@@ -1,13 +1,13 @@
 'use client';
 
 import { ButtonLink, TextLink } from '@/app/(public)/_components/primitives';
+import { Button } from '@/components/ds';
 import { cn } from '@/lib';
 import { format } from 'date-fns';
 import { Check, Phone, WifiOff } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { photosLabel } from '../_lib/summary';
 import { HeroBand, PageCard } from './chrome';
-import { Button } from './fields';
 
 export interface ReportResult {
   kind: 'sent' | 'offline';

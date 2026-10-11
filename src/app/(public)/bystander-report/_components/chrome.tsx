@@ -1,4 +1,4 @@
-import { FOCUS_RING } from '@/app/(public)/_components/primitives';
+import { FOCUS_RING } from '@/components/ds';
 import { cn } from '@/lib';
 import { Phone } from 'lucide-react';
 import Image from 'next/image';

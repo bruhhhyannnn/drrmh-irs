@@ -1,12 +1,19 @@
 'use client';
 
 import { TEXT_BUTTON } from '@/app/(public)/_components/primitives';
+import {
+  Button,
+  FieldError,
+  FieldHelp,
+  FieldLabel,
+  OptionTile,
+  SelectField,
+} from '@/components/ds';
 import type { BystanderFormValues } from '@/lib';
 import { ShieldCheck } from 'lucide-react';
 import Image from 'next/image';
 import { campusLogo } from '../_lib/campus-logo';
 import { FooterSlot, StepFooter, StepHeader, StepTitle } from './chrome';
-import { Button, FieldError, FieldHelp, FieldLabel, OptionTile, SelectField } from './fields';
 import { LocationField } from './location-field';
 
 type Option = { id: string; name: string };

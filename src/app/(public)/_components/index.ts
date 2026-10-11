@@ -1,6 +1,6 @@
+export { figtree, splineSansMono } from '@/components/ds/fonts';
 export { AccessCta } from './access-cta';
 export { AudienceSection } from './audience-section';
-export { figtree, splineSansMono } from './fonts';
 export { Hero } from './hero';
 export { HotlinesSection } from './hotlines-section';
 export { HowItWorks } from './how-it-works';

@@ -1,13 +1,12 @@
 'use client';
 
-import { FOCUS_RING } from '@/app/(public)/_components/primitives';
 import { MapClickHandler, MapFlyTo } from '@/components/common/map-pick';
+import { FieldError, FieldLabel, FOCUS_RING } from '@/components/ds';
 import { Map, MapControls, MapMarker, MarkerContent } from '@/components/ui';
 import { cn } from '@/lib';
 import { LocateFixed, MapPin } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { formatCoordinates } from '../_lib/summary';
-import { FieldError, FieldLabel } from './fields';
 
 const MANILA: [number, number] = [120.9842, 14.5995];
 

@@ -1,11 +1,10 @@
 'use client';
 
-import { FOCUS_RING } from '@/app/(public)/_components/primitives';
+import { FieldError, FieldLabel, FOCUS_RING } from '@/components/ds';
 import { BYSTANDER_MAX_PHOTOS, cn } from '@/lib';
 import { Camera, Loader2, ShieldCheck, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { preparePhoto } from '../_lib/prepare-photo';
-import { FieldError, FieldLabel } from './fields';
 
 export interface PhotoItem {
   id: string;

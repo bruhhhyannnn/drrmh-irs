@@ -1,10 +1,10 @@
 'use client';
 
-import { FOCUS_RING } from '@/app/(public)/_components/primitives';
 import { cn } from '@/lib';
 import { AnimatePresence, motion, MotionConfig } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useEffect, useId, useRef, useSyncExternalStore } from 'react';
+import { FOCUS_RING } from './focus';
 
 const TABLET_UP = '(min-width: 768px)';
 

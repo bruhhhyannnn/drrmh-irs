@@ -5,9 +5,8 @@ import {
   PRIVACY_NOTICE_SUBTITLE,
   PRIVACY_NOTICE_TITLE,
 } from '@/components/common';
+import { Button, Drawer } from '@/components/ds';
 import { ShieldCheck } from 'lucide-react';
-import { Drawer } from './drawer';
-import { Button } from './fields';
 
 /** The full privacy notice, over the current step so nothing typed is lost. */
 export function PrivacyDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {

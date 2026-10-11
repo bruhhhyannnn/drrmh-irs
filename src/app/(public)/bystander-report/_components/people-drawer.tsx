@@ -1,12 +1,19 @@
 'use client';
 
-import { FOCUS_RING } from '@/app/(public)/_components/primitives';
+import {
+  Button,
+  Drawer,
+  FieldError,
+  FieldLabel,
+  FOCUS_RING,
+  OptionTile,
+  SegmentedControl,
+  TextInput,
+} from '@/components/ds';
 import { cn, type BystanderCasualty, type BystanderMissingPerson } from '@/lib';
 import { User, X } from 'lucide-react';
 import { useState } from 'react';
 import { personMeta, UNKNOWN_PERSON } from '../_lib/summary';
-import { Drawer } from './drawer';
-import { Button, FieldError, FieldLabel, OptionTile, SegmentedControl, TextInput } from './fields';
 
 type Person = BystanderMissingPerson | BystanderCasualty;
 

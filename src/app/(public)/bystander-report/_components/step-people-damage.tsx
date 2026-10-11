@@ -1,10 +1,6 @@
 'use client';
 
 import { TEXT_BUTTON } from '@/app/(public)/_components/primitives';
-import { cn, type BystanderFormValues } from '@/lib';
-import { User, Users, type LucideIcon } from 'lucide-react';
-import type { UseFormRegister } from 'react-hook-form';
-import { FooterSlot, StepFooter, StepHeader, StepTitle } from './chrome';
 import {
   Button,
   FieldError,
@@ -13,7 +9,11 @@ import {
   Stepper,
   TextArea,
   TextInput,
-} from './fields';
+} from '@/components/ds';
+import { cn, type BystanderFormValues } from '@/lib';
+import { User, Users, type LucideIcon } from 'lucide-react';
+import type { UseFormRegister } from 'react-hook-form';
+import { FooterSlot, StepFooter, StepHeader, StepTitle } from './chrome';
 import { PhotoField, type PhotoItem } from './photo-field';
 
 interface StepPeopleDamageProps {

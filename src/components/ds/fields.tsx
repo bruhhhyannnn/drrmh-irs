@@ -1,23 +1,29 @@
 'use client';
 
-import { FOCUS_RING } from '@/app/(public)/_components/primitives';
 import { cn } from '@/lib';
 import { Check, ChevronDown, Loader2 } from 'lucide-react';
-import { forwardRef } from 'react';
+import Link from 'next/link';
+import { forwardRef, useState } from 'react';
+import { FOCUS_RING } from './focus';
 
-// Form controls for the bystander report, following the design system: 48px fields with a
-// 16px radius, 52px pill buttons, neutral grey "Required" marks and red only for errors.
+// Form controls from the design system: 48px fields with a 16px radius, 52px pill buttons,
+// neutral grey "Required" marks and red only for errors.
 
-/** Label row: the field name on the left, a grey Required / Optional hint on the right. */
+/**
+ * Label row: the field name on the left, then either a grey Required / Optional `hint` or an
+ * `action` such as a "Forgot password?" link on the right.
+ */
 export function FieldLabel({
   id,
   htmlFor,
   hint,
+  action,
   children,
 }: {
   id?: string;
   htmlFor?: string;
   hint?: React.ReactNode;
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const Label = htmlFor ? 'label' : 'span';
@@ -27,6 +33,7 @@ export function FieldLabel({
         {children}
       </Label>
       {hint && <span className="text-[12px] font-medium text-gray-500">{hint}</span>}
+      {action}
     </div>
   );
 }
@@ -64,6 +71,36 @@ export const TextInput = forwardRef<
       className={cn(CONTROL, 'h-12 px-4', controlBorder(invalid), FOCUS_RING, className)}
       {...props}
     />
+  );
+});
+
+/** Password field with a Show / Hide text button inside it. */
+export const PasswordInput = forwardRef<
+  HTMLInputElement,
+  Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> & { invalid?: boolean }
+>(function PasswordInput({ className, ...props }, ref) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="relative">
+      <TextInput
+        ref={ref}
+        type={visible ? 'text' : 'password'}
+        className={cn('pr-20', className)}
+        {...props}
+      />
+      <button
+        type="button"
+        aria-pressed={visible}
+        aria-label={visible ? 'Hide password' : 'Show password'}
+        onClick={() => setVisible((v) => !v)}
+        className={cn(
+          'absolute top-1/2 right-2.5 h-8 -translate-y-1/2 rounded-lg px-1.5 text-[14px] font-bold text-gray-600 hover:text-gray-900',
+          FOCUS_RING
+        )}
+      >
+        {visible ? 'Hide' : 'Show'}
+      </button>
+    </div>
   );
 });
 
@@ -160,7 +197,25 @@ export function SelectField({
 const BUTTON_VARIANTS = {
   primary: 'bg-brand-500 text-white hover:brightness-92',
   outline: 'border-[1.5px] border-gray-300 bg-white text-gray-900 hover:brightness-97',
+  ghost: 'text-gray-700 hover:bg-gray-100',
 };
+
+type ButtonStyle = {
+  variant?: keyof typeof BUTTON_VARIANTS;
+  size?: 'md' | 'sm';
+  fullWidth?: boolean;
+};
+
+function buttonClass({ variant = 'primary', size = 'md', fullWidth }: ButtonStyle) {
+  return cn(
+    'items-center justify-center gap-2 rounded-full leading-none font-bold whitespace-nowrap transition-[filter,scale,background-color] duration-120 ease-[cubic-bezier(.2,.7,.3,1)] active:scale-98',
+    size === 'md' ? 'h-13 px-6 text-[15px]' : 'h-10 px-4.5 text-[14px]',
+    fullWidth ? 'flex w-full' : 'inline-flex',
+    BUTTON_VARIANTS[variant],
+    'disabled:cursor-not-allowed disabled:border-transparent disabled:bg-gray-100 disabled:text-gray-400 disabled:brightness-100 disabled:active:scale-100',
+    FOCUS_RING
+  );
+}
 
 /** The design system's pill button: 52px (md) or 40px (sm). */
 export function Button({
@@ -172,23 +227,17 @@ export function Button({
   children,
   type = 'button',
   ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: keyof typeof BUTTON_VARIANTS;
-  size?: 'md' | 'sm';
-  fullWidth?: boolean;
-  loading?: boolean;
-}) {
+}: React.ButtonHTMLAttributes<HTMLButtonElement> &
+  ButtonStyle & {
+    loading?: boolean;
+  }) {
   return (
     <button
       type={type}
       aria-busy={loading || undefined}
       className={cn(
-        'items-center justify-center gap-2 rounded-full leading-none font-bold whitespace-nowrap transition-[filter,scale] duration-120 ease-[cubic-bezier(.2,.7,.3,1)] active:scale-98',
-        size === 'md' ? 'h-13 px-6 text-[15px]' : 'h-10 px-4.5 text-[14px]',
-        fullWidth ? 'flex w-full' : 'inline-flex',
-        BUTTON_VARIANTS[variant],
+        buttonClass({ variant, size, fullWidth }),
         loading && 'pointer-events-none',
-        FOCUS_RING,
         className
       )}
       {...props}
@@ -196,6 +245,22 @@ export function Button({
       {loading && <Loader2 size={16} aria-hidden className="animate-spin" />}
       {children}
     </button>
+  );
+}
+
+/** The pill button as an in-app link. */
+export function ButtonLink({
+  href,
+  variant,
+  size,
+  fullWidth,
+  className,
+  children,
+}: ButtonStyle & { href: string; className?: string; children: React.ReactNode }) {
+  return (
+    <Link href={href} className={cn(buttonClass({ variant, size, fullWidth }), className)}>
+      {children}
+    </Link>
   );
 }
 
