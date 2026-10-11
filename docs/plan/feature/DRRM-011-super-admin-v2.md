@@ -101,7 +101,7 @@ Deviations from the design:
 
 - **Appearance (Light / Dark / Auto) is not in My profile, and the old dark-mode toggle is removed.** Every redesigned page is light only.
 - **Export PDF opens the report page and the browser's print dialog** (Save as PDF) instead of downloading a file: there is no PDF library, and the design's own code note suggests a print page. The running header and "Page x of y" use `@page` margin boxes (Chrome / Edge 131+); other browsers print without them. The page count follows the data, since every row is printed.
-- **Administrators get this shell too, with the campus switcher.** The Admin design (AD1–AD20: campus locked, no Campus page) is a follow-up. Already in: administrators create events, users and clusters for their own campus and can't create super admins.
+- **Administrators get this shell too, with the campus switcher.** The Admin design (AD1–AD20: campus locked, no Campus page) is a follow-up, done in DRRM-012. Already in: administrators create events, users and clusters for their own campus and can't create super admins.
 - Edit report: the headcount steppers are one column; two columns squeezed long field names in the drawer.
 - Add report stays (same drawer, an ongoing-event picker, the admin is the reporter, offline queueing kept).
 - Bystander Review opens the details drawer; Mark reviewed is in its footer without a confirm; Verify and Dismiss confirm.
