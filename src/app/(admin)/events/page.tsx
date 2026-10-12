@@ -197,12 +197,13 @@ function Events() {
       />
 
       {error ? (
-        <Card className="p-6 text-[15px] text-[#b42318]">
+        <Card className="p-6 text-[17px] text-[#b42318]">
           The events couldn&apos;t be loaded: {error.message}
         </Card>
       ) : (
         <ListCard>
           <ListTabs
+            loading={isPending}
             label="Event status"
             value={tab}
             onChange={setTab}
@@ -220,7 +221,7 @@ function Events() {
               value={query}
               onChange={setQuery}
             />
-            <ListCount>{plural(rows.length, 'event', 'events')}</ListCount>
+            <ListCount loading={isPending}>{plural(rows.length, 'event', 'events')}</ListCount>
           </ListToolbar>
           <DataTable
             label="Events"

@@ -59,7 +59,7 @@ function CampusDetails() {
     return (
       <>
         <PageHeader title="Campus not found" back={{ href: '/campus', label: 'Campus' }} />
-        <Card className="p-8 text-[15px] text-gray-600">
+        <Card className="p-8 text-[17px] text-gray-600">
           This campus doesn&apos;t exist anymore. It may have been deleted.
         </Card>
       </>
@@ -112,7 +112,7 @@ function CampusDetails() {
       {eventsPending ? (
         <Skeleton className="h-80" />
       ) : !selected ? (
-        <Card className="p-8 text-center text-[15px] text-gray-600">
+        <Card className="p-8 text-center text-[17px] text-gray-600">
           No events at this campus yet. Add one from Events to see its reports here.
         </Card>
       ) : (
@@ -121,7 +121,7 @@ function CampusDetails() {
           eventId={selected.id}
           before={
             <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2.5 rounded-[18px] border border-gray-200 bg-white px-4 py-3 md:px-5">
-              <label htmlFor="campus-event" className="text-[14px] font-semibold text-gray-600">
+              <label htmlFor="campus-event" className="text-[16px] font-semibold text-gray-600">
                 Showing
               </label>
               <div className="relative max-w-110 min-w-0 flex-[1_1_240px]">
@@ -130,7 +130,7 @@ function CampusDetails() {
                   value={selected.id}
                   onChange={(e) => setPickedId(e.target.value)}
                   className={cn(
-                    'h-11 w-full appearance-none truncate rounded-[14px] border border-gray-300 bg-white pr-10 pl-3.5 text-[14px] font-semibold text-gray-900',
+                    'h-11 w-full appearance-none truncate rounded-[14px] border border-gray-300 bg-white pr-10 pl-3.5 text-[16px] font-semibold text-gray-900',
                     FOCUS_RING
                   )}
                 >
@@ -149,7 +149,7 @@ function CampusDetails() {
               <Chip tone={eventTone(selected.status.name)} dot>
                 {capitalize(selected.status.name)}
               </Chip>
-              <span className="text-[13px] leading-[1.4] text-gray-500">
+              <span className="text-[14px] leading-[1.4] text-gray-500">
                 {formatEventWindow(selected.started_at, selected.ended_at)} ·{' '}
                 {plural(events.length, 'event', 'events')} at this campus
               </span>

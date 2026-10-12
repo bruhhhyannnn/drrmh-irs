@@ -57,7 +57,7 @@ export default function DashboardPage() {
         subtitle={`${campusName ?? 'All campuses'} · ${format(new Date(), 'EEEE, MMMM d, yyyy')}`}
       />
       {error ? (
-        <Card className="p-6 text-[15px] text-[#b42318]">
+        <Card className="p-6 text-[17px] text-[#b42318]">
           The dashboard couldn&apos;t be loaded: {error.message}
         </Card>
       ) : isPending || !data ? (
@@ -103,12 +103,12 @@ function OngoingNow({ data }: { data: Dashboard }) {
   return (
     <section className="flex flex-col gap-3" aria-labelledby="ongoing-now">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 id="ongoing-now" className="text-[17px] leading-[1.3] font-bold">
+        <h2 id="ongoing-now" className="text-[19px] leading-[1.3] font-bold">
           Ongoing now
         </h2>
         <Link
           href="/events"
-          className={cn('text-brand-500 rounded text-[14px] font-bold hover:underline', FOCUS_RING)}
+          className={cn('text-brand-500 rounded text-[16px] font-bold hover:underline', FOCUS_RING)}
         >
           All events
         </Link>
@@ -146,10 +146,10 @@ function OngoingCard({ event }: { event: Dashboard['ongoing'][number] }) {
         </Chip>
       </div>
       <div className="flex flex-col gap-1">
-        <h3 className="text-[18px] leading-[1.3] font-bold text-balance">
+        <h3 className="text-[20px] leading-[1.3] font-bold text-balance">
           {eventTitle(event.name, event.campus)}
         </h3>
-        <span className="text-[13px] text-gray-500">
+        <span className="text-[14px] text-gray-500">
           {event.startedAt
             ? `Started ${formatDate(event.startedAt)} · ${formatTime(event.startedAt)}`
             : 'No start time set'}
@@ -157,8 +157,8 @@ function OngoingCard({ event }: { event: Dashboard['ongoing'][number] }) {
       </div>
       <div className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="text-[13px] font-semibold text-gray-700">Clusters reported</span>
-          <Mono className="text-[14px] font-bold">
+          <span className="text-[14px] font-semibold text-gray-700">Clusters reported</span>
+          <Mono className="text-[16px] font-bold">
             {event.clustersReported} of {event.clustersTotal}
           </Mono>
         </div>
@@ -167,10 +167,10 @@ function OngoingCard({ event }: { event: Dashboard['ongoing'][number] }) {
       <dl className="grid grid-cols-3 gap-2 border-t border-[#eaecf0] pt-3.5">
         {stats.map((s) => (
           <div key={s.label} className="flex min-w-0 flex-col gap-0.5">
-            <dt className="text-[12px] font-medium text-gray-500">{s.label}</dt>
+            <dt className="text-[13px] font-medium text-gray-500">{s.label}</dt>
             <dd
               className={cn(
-                'font-landing-mono text-[20px] leading-[1.2] font-bold',
+                'font-landing-mono text-[22px] leading-[1.2] font-bold',
                 s.value ? s.tone : 'text-gray-400'
               )}
             >
@@ -203,8 +203,8 @@ function NothingOngoing({ next }: { next: Dashboard['nextEvent'] }) {
           <CalendarDays size={20} aria-hidden />
         </span>
         <div className="flex min-w-0 flex-col gap-1">
-          <span className="text-[17px] leading-[1.3] font-bold">No event is ongoing</span>
-          <span className="text-[14px] leading-normal text-pretty text-gray-600">
+          <span className="text-[19px] leading-[1.3] font-bold">No event is ongoing</span>
+          <span className="text-[16px] leading-normal text-pretty text-gray-600">
             ERT members can send status reports only while an event is ongoing. Set the event to
             Ongoing when the drill starts.
           </span>
@@ -226,18 +226,18 @@ function NothingOngoing({ next }: { next: Dashboard['nextEvent'] }) {
             </span>
           )}
           <div className="flex min-w-0 flex-1 flex-col gap-0.75">
-            <span className="text-[11px] font-bold tracking-[.08em] text-gray-500 uppercase">
+            <span className="text-[12px] font-bold tracking-[.08em] text-gray-500 uppercase">
               {nextLabel(startedAt)}
             </span>
-            <span className="text-[15px] leading-[1.3] font-semibold">{next.name}</span>
+            <span className="text-[17px] leading-[1.3] font-semibold">{next.name}</span>
             {/* Super admins see which campuses run it; administrators, what it is. */}
             {isSuperAdmin ? (
-              <span className="text-[13px] leading-[1.4] text-gray-500">
+              <span className="text-[14px] leading-[1.4] text-gray-500">
                 {next.campuses.join(', ')}
               </span>
             ) : (
               next.description && (
-                <span className="truncate text-[13px] leading-[1.4] text-gray-500">
+                <span className="truncate text-[14px] leading-[1.4] text-gray-500">
                   {next.description}
                 </span>
               )
@@ -307,7 +307,7 @@ function StatTiles({ data }: { data: Dashboard }) {
           )}
         >
           <div className="flex items-start justify-between gap-2">
-            <span className="text-[13px] leading-[1.3] font-semibold text-gray-600">{t.label}</span>
+            <span className="text-[14px] leading-[1.3] font-semibold text-gray-600">{t.label}</span>
             <span
               className={cn(
                 'grid size-8 shrink-0 place-items-center rounded-[10px]',
@@ -317,11 +317,11 @@ function StatTiles({ data }: { data: Dashboard }) {
               {t.icon}
             </span>
           </div>
-          <Mono className="text-[28px] leading-[1.1] font-extrabold">
+          <Mono className="text-[30px] leading-[1.1] font-extrabold">
             {t.value.toLocaleString()}
           </Mono>
           <span
-            className={cn('text-[13px] font-medium', t.accent ? 'text-brand-500' : 'text-gray-500')}
+            className={cn('text-[14px] font-medium', t.accent ? 'text-brand-500' : 'text-gray-500')}
           >
             {t.sub}
           </span>
@@ -342,11 +342,11 @@ function ReportsByCluster({ data }: { data: Dashboard }) {
         <ul className="flex flex-col gap-2.5">
           {data.clusters.map((c) => (
             <li key={c.id} className="grid grid-cols-[96px_minmax(0,1fr)_36px] items-center gap-3">
-              <span className="truncate text-[13px] font-semibold text-gray-700" title={c.name}>
+              <span className="truncate text-[14px] font-semibold text-gray-700" title={c.name}>
                 {c.name}
               </span>
               <Bar value={c.reports} max={max} />
-              <Mono className="text-right text-[13px] font-semibold">{c.reports}</Mono>
+              <Mono className="text-right text-[14px] font-semibold">{c.reports}</Mono>
             </li>
           ))}
         </ul>
@@ -383,8 +383,8 @@ function EventsByStatus({ data }: { data: Dashboard }) {
               className="size-2.5 shrink-0 rounded-full"
               style={{ background: r.color }}
             />
-            <span className="flex-1 text-[14px] font-medium text-gray-700">{r.label}</span>
-            <Mono className="text-[14px] font-semibold">{r.count}</Mono>
+            <span className="flex-1 text-[16px] font-medium text-gray-700">{r.label}</span>
+            <Mono className="text-[16px] font-semibold">{r.count}</Mono>
           </li>
         ))}
       </ul>
@@ -414,7 +414,7 @@ function MonthCard({ data }: { data: Dashboard }) {
           {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
             <span
               key={i}
-              className="grid h-6 place-items-center text-[11px] font-semibold text-gray-500"
+              className="grid h-6 place-items-center text-[12px] font-semibold text-gray-500"
             >
               {d}
             </span>
@@ -430,7 +430,7 @@ function MonthCard({ data }: { data: Dashboard }) {
               <span
                 key={day.toISOString()}
                 className={cn(
-                  'font-landing-mono relative grid h-9 place-items-center rounded-[10px] text-[13px]',
+                  'font-landing-mono relative grid h-9 place-items-center rounded-[10px] text-[14px]',
                   on ? 'bg-brand-500 font-bold text-white' : 'font-medium text-gray-700'
                 )}
               >
@@ -460,10 +460,10 @@ function MonthCard({ data }: { data: Dashboard }) {
                 >
                   <DateBlock date={e.startedAt} />
                   <div className="flex min-w-0 flex-1 flex-col gap-0.75">
-                    <span className="text-[15px] leading-[1.3] font-semibold">
+                    <span className="text-[17px] leading-[1.3] font-semibold">
                       {eventTitle(e.name, e.campus)}
                     </span>
-                    <span className="text-[13px] text-gray-500">
+                    <span className="text-[14px] text-gray-500">
                       {formatEventWindow(e.startedAt, e.endedAt).split(' · ')[1] ??
                         formatTime(e.startedAt)}
                     </span>
@@ -476,7 +476,7 @@ function MonthCard({ data }: { data: Dashboard }) {
             ))}
           </ul>
         ) : (
-          <p className="text-[14px] text-gray-500">
+          <p className="text-[16px] text-gray-500">
             No events this month. The next one is{' '}
             {data.nextEvent?.startedAt
               ? `on ${formatDate(data.nextEvent.startedAt)}`

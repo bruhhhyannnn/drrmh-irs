@@ -109,7 +109,8 @@ export function BystanderReportForm() {
   ) as Partial<Record<keyof BystanderFormValues, string>>;
 
   // ── Lookups ──────────────────────────────────────────────────────
-  const { data: incidentTypes = [] } = useGetBystanderIncidentTypes();
+  const { data: incidentTypes = [], isPending: incidentTypesPending } =
+    useGetBystanderIncidentTypes();
   const { data: campuses = [] } = useCampuses();
   const { data: clusters = [] } = useClusters();
   const { data: casualtyConditions = [] } = useCasualtyConditions();
@@ -117,9 +118,8 @@ export function BystanderReportForm() {
   const { data: units = [] } = useUnits(values.cluster_id || undefined, {
     enabled: !!values.cluster_id,
   });
-  const { data: campusCategories = [] } = useCampusPopulationCategories(
-    values.campus_id || undefined
-  );
+  const { data: campusCategories = [], isLoading: categoriesLoading } =
+    useCampusPopulationCategories(values.campus_id || undefined);
 
   // "Other" goes last; the rest keep the server's alphabetical order.
   const types = [...incidentTypes].sort(
@@ -330,6 +330,7 @@ export function BystanderReportForm() {
               values={values}
               errors={errors}
               incidentTypes={types}
+              incidentTypesLoading={incidentTypesPending}
               campuses={activeCampuses}
               clusters={campusClusters}
               units={clusterUnits}
@@ -351,6 +352,7 @@ export function BystanderReportForm() {
               damageConditions={damageConditions.filter((d) => d.is_active)}
               campusName={campusName}
               categories={categories}
+              categoriesLoading={categoriesLoading}
               counts={counts}
               onCountChange={(id, count) => setCounts((prev) => ({ ...prev, [id]: count }))}
               missingMeta={missingPersonsMeta(missingPersons)}

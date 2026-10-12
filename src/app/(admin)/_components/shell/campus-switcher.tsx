@@ -2,6 +2,7 @@
 
 import { FOCUS_RING } from '@/components/ds';
 import { useCampuses } from '@/components/hooks/use-campus';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib';
 import { useAuthStore, useCampusScopeStore } from '@/store';
 import { Check, ChevronDown, University } from 'lucide-react';
@@ -56,7 +57,7 @@ export function CampusLabel() {
 export function CampusSwitcher() {
   const campusId = useScopedCampusId();
   const setCampusId = useCampusScopeStore((s) => s.setCampusId);
-  const { data: campuses = [] } = useCampuses();
+  const { data: campuses = [], isPending } = useCampuses();
   const [open, setOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -84,6 +85,9 @@ export function CampusSwitcher() {
   };
 
   const options = [{ id: '', name: 'All campuses' }, ...active];
+
+  // Until the list loads, a remembered campus would read as All campuses.
+  if (isPending) return <Skeleton className="h-10 w-44 max-w-full rounded-full" />;
 
   return (
     <div className="relative min-w-0">

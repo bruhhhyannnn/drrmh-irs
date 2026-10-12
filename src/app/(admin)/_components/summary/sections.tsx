@@ -35,12 +35,12 @@ export function CompletedBanner({ summary }: { summary: Summary }) {
         <Check size={16} aria-hidden />
       </span>
       <div className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-[15px] leading-[1.4] font-bold">
+        <span className="text-[17px] leading-[1.4] font-bold">
           Completed
           {event.ended_at && ` on ${format(new Date(event.ended_at), "MMM d, yyyy 'at' h:mm a")}`}
           {by && ` by ${by}`}
         </span>
-        <span className="text-[14px] leading-normal text-pretty text-gray-600">
+        <span className="text-[16px] leading-normal text-pretty text-gray-600">
           Reports are locked.{' '}
           {pending.length > 0 &&
             `${pending.join(', ')} did not report before the event was completed. `}
@@ -99,7 +99,7 @@ export function OverviewTiles({ summary }: { summary: Summary }) {
           className="flex min-w-0 flex-col gap-2 rounded-[18px] border border-gray-200 bg-white px-4.5 py-4 shadow-[0_1px_3px_rgba(16,24,40,.06)]"
         >
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[13px] font-semibold text-gray-600">{t.label}</span>
+            <span className="text-[14px] font-semibold text-gray-600">{t.label}</span>
             <span
               className={cn(
                 'grid size-8 shrink-0 place-items-center rounded-full',
@@ -111,14 +111,14 @@ export function OverviewTiles({ summary }: { summary: Summary }) {
           </div>
           <Mono
             className={cn(
-              'text-[28px] leading-none font-extrabold md:text-[32px]',
+              'text-[30px] leading-none font-extrabold md:text-[34px]',
               t.tone === 'red' && t.value !== '0' && 'text-[#b42318]',
               t.tone === 'amber' && t.value !== '0' && 'text-[#b54708]'
             )}
           >
             {t.value}
           </Mono>
-          <span className="text-[13px] leading-[1.4] text-pretty text-gray-500">{t.sub}</span>
+          <span className="text-[14px] leading-[1.4] text-pretty text-gray-500">{t.sub}</span>
         </div>
       ))}
     </div>
@@ -161,12 +161,12 @@ export function ClustersCard({ summary }: { summary: Summary }) {
   return (
     <Card className="flex flex-col">
       <div className={cn('flex flex-wrap items-center gap-x-4 gap-y-2.5 py-4', PAD_X)}>
-        <h2 className="text-[17px] leading-[1.3] font-bold">Clusters</h2>
+        <h2 className="text-[19px] leading-[1.3] font-bold">Clusters</h2>
         <div className="flex-1" />
         <div className="flex min-w-45 flex-[0_1_260px] items-center gap-3">
           <Bar value={reported} max={total} tone="green" size="sm" className="flex-1" />
-          <span className="shrink-0 text-[13px] font-semibold text-gray-600">
-            <Mono className="text-[14px] font-bold text-gray-900">
+          <span className="shrink-0 text-[14px] font-semibold text-gray-600">
+            <Mono className="text-[16px] font-bold text-gray-900">
               {reported} of {total}
             </Mono>{' '}
             reported
@@ -180,7 +180,7 @@ export function ClustersCard({ summary }: { summary: Summary }) {
           role="row"
           className={cn(
             CLUSTER_GRID,
-            'h-10 border-t border-[#eaecf0] bg-gray-50 text-[12px] font-semibold text-gray-600',
+            'h-10 border-t border-[#eaecf0] bg-gray-50 text-[13px] font-semibold text-gray-600',
             PAD_X
           )}
         >
@@ -202,12 +202,12 @@ export function ClustersCard({ summary }: { summary: Summary }) {
             <div className={CLUSTER_GRID}>
               <div role="cell" className="flex min-w-0 items-center gap-3">
                 <DoneMark />
-                <span className="text-[15px] leading-[1.3] font-bold">{c.name}</span>
+                <span className="text-[17px] leading-[1.3] font-bold">{c.name}</span>
               </div>
-              <Mono className="text-right text-[14px] font-semibold">{c.reports}</Mono>
+              <Mono className="text-right text-[16px] font-semibold">{c.reports}</Mono>
               <Mono
                 className={cn(
-                  'text-right text-[14px] font-semibold',
+                  'text-right text-[16px] font-semibold',
                   c.casualties ? 'text-[#b42318]' : 'text-gray-400'
                 )}
               >
@@ -215,17 +215,17 @@ export function ClustersCard({ summary }: { summary: Summary }) {
               </Mono>
               <div className="flex min-w-0 items-center gap-3">
                 <Bar value={c.people} max={maxPeople} size="sm" className="flex-1" />
-                <Mono className="w-12 shrink-0 text-right text-[14px] font-bold">
+                <Mono className="w-12 shrink-0 text-right text-[16px] font-bold">
                   {c.people.toLocaleString()}
                 </Mono>
               </div>
             </div>
             {c.units.map((u) => (
               <div key={u.name} className={CLUSTER_GRID}>
-                <span className="pl-9 text-[14px] text-gray-600">{u.name}</span>
+                <span className="pl-9 text-[16px] text-gray-600">{u.name}</span>
                 <span />
                 <span />
-                <Mono className="text-right text-[13px] font-medium text-gray-600">
+                <Mono className="text-right text-[14px] font-medium text-gray-600">
                   {u.people.toLocaleString()}
                 </Mono>
               </div>
@@ -240,7 +240,7 @@ export function ClustersCard({ summary }: { summary: Summary }) {
           >
             <div role="cell" className="flex min-w-0 items-center gap-3">
               <PendingMark />
-              <span className="text-[15px] leading-[1.3] font-bold text-gray-600">{p.name}</span>
+              <span className="text-[17px] leading-[1.3] font-bold text-gray-600">{p.name}</span>
             </div>
             <div className="col-span-3 flex justify-end">
               <NoReportChip />
@@ -255,12 +255,12 @@ export function ClustersCard({ summary }: { summary: Summary }) {
             PAD_X
           )}
         >
-          <span className="text-[14px] font-bold">Total</span>
-          <Mono className="text-right text-[15px] font-extrabold">{summary.totals.reports}</Mono>
-          <Mono className="text-right text-[15px] font-extrabold text-[#b42318]">
+          <span className="text-[16px] font-bold">Total</span>
+          <Mono className="text-right text-[17px] font-extrabold">{summary.totals.reports}</Mono>
+          <Mono className="text-right text-[17px] font-extrabold text-[#b42318]">
             {summary.totals.casualties}
           </Mono>
-          <Mono className="text-right text-[15px] font-extrabold">
+          <Mono className="text-right text-[17px] font-extrabold">
             {summary.totals.people.toLocaleString()}
           </Mono>
         </div>
@@ -276,21 +276,21 @@ export function ClustersCard({ summary }: { summary: Summary }) {
             <div className="flex items-center gap-3">
               <DoneMark />
               <div className="flex min-w-0 flex-1 flex-col gap-px">
-                <span className="text-[15px] leading-[1.3] font-bold">{c.name}</span>
-                <span className="text-[13px] text-gray-500">
+                <span className="text-[17px] leading-[1.3] font-bold">{c.name}</span>
+                <span className="text-[14px] text-gray-500">
                   {plural(c.reports, 'report', 'reports')}
                   {c.casualties > 0 && ` · ${plural(c.casualties, 'casualty', 'casualties')}`}
                 </span>
               </div>
-              <Mono className="text-[15px] font-bold">{c.people.toLocaleString()}</Mono>
+              <Mono className="text-[17px] font-bold">{c.people.toLocaleString()}</Mono>
             </div>
             {c.units.map((u) => (
               <div
                 key={u.name}
-                className="flex items-center justify-between gap-3 pl-9 text-[14px] text-gray-600"
+                className="flex items-center justify-between gap-3 pl-9 text-[16px] text-gray-600"
               >
                 <span>{u.name}</span>
-                <Mono className="text-[13px] font-medium">{u.people.toLocaleString()}</Mono>
+                <Mono className="text-[14px] font-medium">{u.people.toLocaleString()}</Mono>
               </div>
             ))}
           </li>
@@ -301,7 +301,7 @@ export function ClustersCard({ summary }: { summary: Summary }) {
             className={cn('flex items-center gap-3 border-t border-[#eaecf0] py-3', PAD_X)}
           >
             <PendingMark />
-            <span className="min-w-0 flex-1 text-[15px] leading-[1.3] font-bold text-gray-600">
+            <span className="min-w-0 flex-1 text-[17px] leading-[1.3] font-bold text-gray-600">
               {p.name}
             </span>
             <NoReportChip />
@@ -314,13 +314,13 @@ export function ClustersCard({ summary }: { summary: Summary }) {
           )}
         >
           <div className="flex min-w-0 flex-1 flex-col gap-px">
-            <span className="text-[14px] font-bold">Total</span>
-            <span className="text-[13px] text-gray-500">
+            <span className="text-[16px] font-bold">Total</span>
+            <span className="text-[14px] text-gray-500">
               {plural(summary.totals.reports, 'report', 'reports')} ·{' '}
               {plural(summary.totals.casualties, 'casualty', 'casualties')}
             </span>
           </div>
-          <Mono className="text-[15px] font-extrabold">
+          <Mono className="text-[17px] font-extrabold">
             {summary.totals.people.toLocaleString()}
           </Mono>
         </li>
@@ -342,9 +342,9 @@ export function HeadcountCard({ summary }: { summary: Summary }) {
   return (
     <Card className="flex flex-col gap-4 p-4.5 md:p-6">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <h2 className="text-[17px] leading-[1.3] font-bold">Headcount</h2>
-        <span className="text-[13px] font-semibold text-gray-600">
-          <Mono className="text-[14px] font-bold text-gray-900">{total.toLocaleString()}</Mono>{' '}
+        <h2 className="text-[19px] leading-[1.3] font-bold">Headcount</h2>
+        <span className="text-[14px] font-semibold text-gray-600">
+          <Mono className="text-[16px] font-bold text-gray-900">{total.toLocaleString()}</Mono>{' '}
           people
         </span>
         <div className="flex-1" />
@@ -366,21 +366,21 @@ export function HeadcountCard({ summary }: { summary: Summary }) {
               key={r.id}
               className="grid min-w-0 grid-cols-[112px_minmax(0,1fr)_32px_36px] items-center gap-3 md:grid-cols-[200px_minmax(0,1fr)_40px_44px] lg:grid-cols-[150px_minmax(0,1fr)_36px_40px]"
             >
-              <span className="text-[13px] leading-[1.3] font-semibold text-pretty text-gray-700">
+              <span className="text-[14px] leading-[1.3] font-semibold text-pretty text-gray-700">
                 {r.name}
               </span>
               <Bar value={r.count} max={max} />
-              <Mono className="text-right text-[13px] font-bold">{r.count.toLocaleString()}</Mono>
-              <Mono className="text-right text-[12px] font-medium text-gray-500">
+              <Mono className="text-right text-[14px] font-bold">{r.count.toLocaleString()}</Mono>
+              <Mono className="text-right text-[13px] font-medium text-gray-500">
                 {total ? `${Math.round((r.count / total) * 100)}%` : '0%'}
               </Mono>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-[14px] text-gray-500">No people counted yet.</p>
+        <p className="text-[16px] text-gray-500">No people counted yet.</p>
       )}
-      <span className="border-t border-[#eaecf0] pt-3 text-[13px] text-gray-500">
+      <span className="border-t border-[#eaecf0] pt-3 text-[14px] text-gray-500">
         {clusterId
           ? `${rows.length} of ${summary.headcount.fieldsTotal} fields have people counted in this cluster. Fields at 0 are not listed.`
           : `${rows.length} of ${summary.headcount.fieldsTotal} fields have people counted. Fields at 0 are not listed.`}
@@ -414,14 +414,14 @@ function ShowAllFooter({
         PAD_X
       )}
     >
-      <span className="text-[13px] font-medium text-gray-500">
+      <span className="text-[14px] font-medium text-gray-500">
         {open ? `Showing all ${total}${order}` : `Showing ${showing} of ${total}${order}`}
       </span>
       <button
         type="button"
         aria-expanded={open}
         onClick={onToggle}
-        className={cn('text-brand-500 h-10 rounded-lg px-1 text-[14px] font-bold', FOCUS_RING)}
+        className={cn('text-brand-500 h-10 rounded-lg px-1 text-[16px] font-bold', FOCUS_RING)}
       >
         {open ? 'Show fewer' : `Show all ${total}`}
       </button>
@@ -442,8 +442,8 @@ export function CasualtiesCard({ summary }: { summary: Summary }) {
   return (
     <Card className="flex flex-col">
       <div className={cn('flex flex-wrap items-center gap-x-3 gap-y-2 py-4', PAD_X)}>
-        <h2 className="text-[17px] leading-[1.3] font-bold">Casualties</h2>
-        <Chip tone="red" className="font-landing-mono text-[13px] font-bold">
+        <h2 className="text-[19px] leading-[1.3] font-bold">Casualties</h2>
+        <Chip tone="red" className="font-landing-mono text-[14px] font-bold">
           {summary.totals.casualties}
         </Chip>
         <div className="flex-1" />
@@ -458,7 +458,7 @@ export function CasualtiesCard({ summary }: { summary: Summary }) {
         )}
       </div>
       {rows.length === 0 ? (
-        <p className={cn('border-t border-[#eaecf0] py-6 text-[14px] text-gray-500', PAD_X)}>
+        <p className={cn('border-t border-[#eaecf0] py-6 text-[16px] text-gray-500', PAD_X)}>
           No casualties reported.
         </p>
       ) : (
@@ -468,7 +468,7 @@ export function CasualtiesCard({ summary }: { summary: Summary }) {
               role="row"
               className={cn(
                 CAS_GRID,
-                'h-10 items-center border-t border-[#eaecf0] bg-gray-50 text-[12px] font-semibold text-gray-600',
+                'h-10 items-center border-t border-[#eaecf0] bg-gray-50 text-[13px] font-semibold text-gray-600',
                 PAD_X
               )}
             >
@@ -487,25 +487,25 @@ export function CasualtiesCard({ summary }: { summary: Summary }) {
                 className={cn(CAS_GRID, 'border-t border-[#eaecf0] py-3', PAD_X)}
               >
                 <div role="cell" className="flex min-w-0 flex-col gap-0.5">
-                  <span className="text-[14px] leading-[1.35] font-semibold">{c.name}</span>
-                  <span className="text-[13px] text-gray-500">{c.who}</span>
+                  <span className="text-[16px] leading-[1.35] font-semibold">{c.name}</span>
+                  <span className="text-[14px] text-gray-500">{c.who}</span>
                 </div>
                 <div role="cell" className="flex">
                   <Chip tone={c.level.tone}>{c.condition}</Chip>
                 </div>
                 <span
                   role="cell"
-                  className="min-w-0 text-[14px] leading-[1.45] text-pretty text-gray-700"
+                  className="min-w-0 text-[16px] leading-[1.45] text-pretty text-gray-700"
                 >
                   {c.diagnosis ?? '—'}
                 </span>
                 <div role="cell" className="flex min-w-0 flex-col gap-0.5">
-                  <span className="text-[14px] leading-[1.35] font-semibold text-gray-700">
+                  <span className="text-[16px] leading-[1.35] font-semibold text-gray-700">
                     {c.cluster}
                   </span>
-                  <span className="text-[13px] text-gray-500">{c.unit}</span>
+                  <span className="text-[14px] text-gray-500">{c.unit}</span>
                 </div>
-                <Mono className="hidden text-right text-[13px] leading-[1.6] font-medium text-gray-600 lg:block">
+                <Mono className="hidden text-right text-[14px] leading-[1.6] font-medium text-gray-600 lg:block">
                   {formatTime(c.at)}
                 </Mono>
               </div>
@@ -519,17 +519,17 @@ export function CasualtiesCard({ summary }: { summary: Summary }) {
               >
                 <div className="flex items-start justify-between gap-2.5">
                   <div className="flex min-w-0 flex-col gap-0.5">
-                    <span className="text-[15px] leading-[1.35] font-semibold">{c.name}</span>
-                    <span className="text-[13px] text-gray-500">{c.who}</span>
+                    <span className="text-[17px] leading-[1.35] font-semibold">{c.name}</span>
+                    <span className="text-[14px] text-gray-500">{c.who}</span>
                   </div>
                   <Chip tone={c.level.tone}>{c.condition}</Chip>
                 </div>
                 {c.diagnosis && (
-                  <span className="text-[14px] leading-[1.45] text-pretty text-gray-700">
+                  <span className="text-[16px] leading-[1.45] text-pretty text-gray-700">
                     {c.diagnosis}
                   </span>
                 )}
-                <span className="text-[13px] leading-[1.4] text-gray-500">
+                <span className="text-[14px] leading-[1.4] text-gray-500">
                   {c.cluster} · {c.unit} · {formatTime(c.at)}
                 </span>
               </li>
@@ -563,8 +563,8 @@ export function MissingCard({ summary }: { summary: Summary }) {
   return (
     <Card className="flex flex-col">
       <div className={cn('flex flex-wrap items-center gap-x-3 gap-y-2 py-4', PAD_X)}>
-        <h2 className="text-[17px] leading-[1.3] font-bold">Missing persons</h2>
-        <Chip tone="amber" className="font-landing-mono text-[13px] font-bold">
+        <h2 className="text-[19px] leading-[1.3] font-bold">Missing persons</h2>
+        <Chip tone="amber" className="font-landing-mono text-[14px] font-bold">
           {summary.totals.missing}
         </Chip>
         <div className="flex-1" />
@@ -579,7 +579,7 @@ export function MissingCard({ summary }: { summary: Summary }) {
         )}
       </div>
       {rows.length === 0 ? (
-        <p className={cn('border-t border-[#eaecf0] py-6 text-[14px] text-gray-500', PAD_X)}>
+        <p className={cn('border-t border-[#eaecf0] py-6 text-[16px] text-gray-500', PAD_X)}>
           No missing persons reported.
         </p>
       ) : (
@@ -589,7 +589,7 @@ export function MissingCard({ summary }: { summary: Summary }) {
               role="row"
               className={cn(
                 MIS_GRID,
-                'h-10 items-center border-t border-[#eaecf0] bg-gray-50 text-[12px] font-semibold text-gray-600',
+                'h-10 items-center border-t border-[#eaecf0] bg-gray-50 text-[13px] font-semibold text-gray-600',
                 PAD_X
               )}
             >
@@ -607,19 +607,19 @@ export function MissingCard({ summary }: { summary: Summary }) {
                 className={cn(MIS_GRID, 'border-t border-[#eaecf0] py-3', PAD_X)}
               >
                 <div role="cell" className="flex min-w-0 flex-col gap-0.5">
-                  <span className="text-[14px] leading-[1.35] font-semibold">{m.name}</span>
-                  <span className="text-[13px] text-gray-500">{m.who}</span>
+                  <span className="text-[16px] leading-[1.35] font-semibold">{m.name}</span>
+                  <span className="text-[14px] text-gray-500">{m.who}</span>
                 </div>
                 <div role="cell" className="flex min-w-0 flex-col gap-0.5">
-                  <span className="text-[14px] leading-[1.35] font-semibold text-gray-700">
+                  <span className="text-[16px] leading-[1.35] font-semibold text-gray-700">
                     {m.cluster}
                   </span>
-                  <span className="text-[13px] text-gray-500">{m.unit}</span>
+                  <span className="text-[14px] text-gray-500">{m.unit}</span>
                 </div>
-                <span role="cell" className="min-w-0 text-[14px] leading-[1.45] text-gray-700">
+                <span role="cell" className="min-w-0 text-[16px] leading-[1.45] text-gray-700">
                   {m.reportedBy}
                 </span>
-                <Mono className="hidden text-right text-[13px] leading-[1.6] font-medium text-gray-600 lg:block">
+                <Mono className="hidden text-right text-[14px] leading-[1.6] font-medium text-gray-600 lg:block">
                   {formatTime(m.at)}
                 </Mono>
               </div>
@@ -632,13 +632,13 @@ export function MissingCard({ summary }: { summary: Summary }) {
                 className={cn('flex flex-col gap-1.5 border-t border-[#eaecf0] py-3.5', PAD_X)}
               >
                 <div className="flex min-w-0 flex-col gap-0.5">
-                  <span className="text-[15px] leading-[1.35] font-semibold">{m.name}</span>
-                  <span className="text-[13px] text-gray-500">{m.who}</span>
+                  <span className="text-[17px] leading-[1.35] font-semibold">{m.name}</span>
+                  <span className="text-[14px] text-gray-500">{m.who}</span>
                 </div>
-                <span className="text-[14px] leading-[1.4] font-semibold text-gray-700">
+                <span className="text-[16px] leading-[1.4] font-semibold text-gray-700">
                   {m.cluster} · {m.unit}
                 </span>
-                <span className="text-[13px] leading-[1.4] text-gray-500">
+                <span className="text-[14px] leading-[1.4] text-gray-500">
                   Reported by {m.reportedBy} · {formatTime(m.at)}
                 </span>
               </li>
@@ -674,8 +674,8 @@ function ChartCard({
     <Card className="flex flex-col gap-4.5 p-4.5 md:p-6">
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
         <div className="flex min-w-0 flex-col gap-0.5">
-          <h3 className="text-[16px] leading-[1.3] font-bold">{title}</h3>
-          <span className="text-[13px] leading-[1.4] text-gray-500">{subtitle}</span>
+          <h3 className="text-[18px] leading-[1.3] font-bold">{title}</h3>
+          <span className="text-[14px] leading-[1.4] text-gray-500">{subtitle}</span>
         </div>
         {legend}
       </div>
@@ -730,8 +730,8 @@ export function ReportsReceivedChart({
             ['Last report', milestones.last],
           ].map(([label, value]) => (
             <div key={label} className="flex min-w-0 flex-col gap-0.5">
-              <dt className="text-[12px] leading-[1.3] font-medium text-gray-500">{label}</dt>
-              <dd className="font-landing-mono text-[15px] font-bold">{value}</dd>
+              <dt className="text-[13px] leading-[1.3] font-medium text-gray-500">{label}</dt>
+              <dd className="font-landing-mono text-[17px] font-bold">{value}</dd>
             </div>
           ))}
         </dl>
@@ -783,7 +783,7 @@ export function FirstReportChart({ summary, compare }: { summary: Summary; compa
           }))}
         />
       ) : (
-        <p className="text-[14px] text-gray-500">No clusters at this campus yet.</p>
+        <p className="text-[16px] text-gray-500">No clusters at this campus yet.</p>
       )}
     </ChartCard>
   );
@@ -828,7 +828,7 @@ function ChangeChip({ row }: { row: CompareRow }) {
   return (
     <span
       className={cn(
-        'inline-flex h-6 items-center rounded-full px-2.5 text-[12px] font-semibold whitespace-nowrap',
+        'inline-flex h-6 items-center rounded-full px-2.5 text-[13px] font-semibold whitespace-nowrap',
         CHANGE_TONES[row.tone]
       )}
     >
@@ -855,10 +855,10 @@ export function CompareCard({
   return (
     <Card className="flex flex-col">
       <div className={cn('flex flex-col gap-0.5 py-4', PAD_X)}>
-        <h2 className="text-[17px] leading-[1.3] font-bold">
+        <h2 className="text-[19px] leading-[1.3] font-bold">
           Compared with {compare.source.event.name}
         </h2>
-        <span className="text-[13px] leading-[1.4] text-gray-500">{description}</span>
+        <span className="text-[14px] leading-[1.4] text-gray-500">{description}</span>
       </div>
       <div
         role="table"
@@ -869,7 +869,7 @@ export function CompareCard({
           role="row"
           className={cn(
             CMP_GRID,
-            'h-10 border-t border-[#eaecf0] bg-gray-50 text-[12px] font-semibold text-gray-600',
+            'h-10 border-t border-[#eaecf0] bg-gray-50 text-[13px] font-semibold text-gray-600',
             PAD_X
           )}
         >
@@ -888,11 +888,11 @@ export function CompareCard({
             role="row"
             className={cn(CMP_GRID, 'min-h-12 border-t border-[#eaecf0] py-2', PAD_X)}
           >
-            <span role="cell" className="text-[14px] leading-[1.35] font-semibold">
+            <span role="cell" className="text-[16px] leading-[1.35] font-semibold">
               {row.measure}
             </span>
-            <Mono className="text-right text-[14px] font-bold">{row.a}</Mono>
-            <Mono className="text-right text-[14px] font-medium text-gray-600">{row.b}</Mono>
+            <Mono className="text-right text-[16px] font-bold">{row.a}</Mono>
+            <Mono className="text-right text-[16px] font-medium text-gray-600">{row.b}</Mono>
             <div role="cell" className="flex min-w-0">
               <ChangeChip row={row} />
             </div>
@@ -906,15 +906,15 @@ export function CompareCard({
             className={cn('flex flex-col gap-1.5 border-t border-[#eaecf0] py-3', PAD_X)}
           >
             <div className="flex items-center justify-between gap-2.5">
-              <span className="text-[15px] leading-[1.35] font-semibold">{row.measure}</span>
+              <span className="text-[17px] leading-[1.35] font-semibold">{row.measure}</span>
               <ChangeChip row={row} />
             </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-gray-500">
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[14px] text-gray-500">
               <span>
-                {a} <Mono className="text-[14px] font-bold text-gray-900">{row.a}</Mono>
+                {a} <Mono className="text-[16px] font-bold text-gray-900">{row.a}</Mono>
               </span>
               <span>
-                {b} <Mono className="text-[14px] font-semibold text-gray-600">{row.b}</Mono>
+                {b} <Mono className="text-[16px] font-semibold text-gray-600">{row.b}</Mono>
               </span>
             </div>
           </li>

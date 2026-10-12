@@ -28,7 +28,7 @@ export function PageHeader({
         <Link
           href={back.href}
           className={cn(
-            '-ml-1 flex h-8 items-center gap-1.5 self-start rounded-lg px-1 text-[14px] font-bold text-gray-600 hover:text-gray-900',
+            '-ml-1 flex h-8 items-center gap-1.5 self-start rounded-lg px-1 text-[16px] font-bold text-gray-600 hover:text-gray-900',
             FOCUS_RING
           )}
         >
@@ -41,13 +41,13 @@ export function PageHeader({
           {logo}
           <div className="flex min-w-0 flex-col gap-1.5">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-              <h1 className="text-[24px] leading-[1.2] font-extrabold text-balance md:text-[26px] lg:text-[28px]">
+              <h1 className="text-[26px] leading-[1.2] font-extrabold text-balance md:text-[28px] lg:text-[30px]">
                 {title}
               </h1>
               {chip}
             </div>
             {subtitle && (
-              <p className="text-[14px] leading-normal text-pretty text-gray-600">{subtitle}</p>
+              <p className="text-[16px] leading-normal text-pretty text-gray-600">{subtitle}</p>
             )}
           </div>
         </div>

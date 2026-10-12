@@ -10,6 +10,7 @@ import {
   TextArea,
   TextInput,
 } from '@/components/ds';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn, type BystanderFormValues } from '@/lib';
 import { User, Users, type LucideIcon } from 'lucide-react';
 import type { UseFormRegister } from 'react-hook-form';
@@ -25,6 +26,7 @@ interface StepPeopleDamageProps {
   damageConditions: { id: string; name: string }[];
   campusName: string;
   categories: { id: string; name: string }[];
+  categoriesLoading: boolean;
   counts: Record<string, number>;
   onCountChange: (categoryId: string, count: number) => void;
   missingMeta: string;
@@ -60,6 +62,25 @@ export function StepPeopleDamage(props: StepPeopleDamageProps) {
         }
       />
       <StepTitle ref={titleRef}>Who is affected and what is damaged</StepTitle>
+
+      {props.categoriesLoading && (
+        <div aria-busy="true" className="flex flex-col gap-2">
+          <span className="sr-only">Loading the headcount fields…</span>
+          <Skeleton className="h-4 w-24 rounded-md" />
+          <Skeleton className="h-3.5 w-full max-w-100 rounded-md" />
+          <div className="grid grid-cols-1 md:grid-cols-2 md:gap-x-6">
+            {Array.from({ length: 4 }, (_, i) => (
+              <div
+                key={i}
+                className="flex min-h-15 items-center gap-3 border-b border-[#eaecf0] py-1.25"
+              >
+                <Skeleton className="h-4 w-2/5 rounded-md" />
+                <Skeleton className="ml-auto h-12.5 w-36 rounded-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {categories.length > 0 && (
         <section aria-labelledby="headcount-label" className="flex flex-col gap-1">

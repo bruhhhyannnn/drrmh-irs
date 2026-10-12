@@ -285,6 +285,7 @@ function EventReport() {
 function Shell({ toolbar, children }: { toolbar?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div
+      data-print-report
       className={cn(
         figtree.variable,
         splineSansMono.variable,

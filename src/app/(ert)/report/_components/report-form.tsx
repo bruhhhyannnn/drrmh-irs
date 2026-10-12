@@ -18,6 +18,7 @@ import {
 } from '@/components/ds';
 import { useCampusPopulationCategories } from '@/components/hooks/use-population-categories';
 import { useCasualtyConditions, useDamageConditions } from '@/components/hooks/use-settings';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn, type ReportFormData } from '@/lib';
 import {
   getQueuedFieldReportCount,
@@ -59,8 +60,10 @@ export function ErtReportForm({
   const isOnline = useOfflineQueueStore((s) => s.isOnline);
   const setPendingCount = useOfflineQueueStore((s) => s.setPendingCount);
 
-  const { data: categories = [] } = useCampusPopulationCategories(profile.campus_id ?? undefined);
-  const { data: damageConditions = [] } = useDamageConditions();
+  const { data: categories = [], isPending: categoriesPending } = useCampusPopulationCategories(
+    profile.campus_id ?? undefined
+  );
+  const { data: damageConditions = [], isPending: damagePending } = useDamageConditions();
   const { data: casualtyConditions = [] } = useCasualtyConditions();
   const activeDamage = damageConditions.filter((d) => d.is_active);
   const activeConditions = casualtyConditions.filter((c) => c.is_active);
@@ -341,7 +344,20 @@ export function ErtReportForm({
             }
           >
             {() =>
-              categories.length ? (
+              categoriesPending ? (
+                <div aria-busy="true" className="mt-1.5 grid md:grid-cols-2 md:gap-x-6">
+                  <span className="sr-only">Loading the headcount fields…</span>
+                  {Array.from({ length: 6 }, (_, i) => (
+                    <div
+                      key={i}
+                      className="flex min-h-15 items-center gap-3 border-b border-[#eaecf0] py-1.5"
+                    >
+                      <Skeleton className="h-4 w-2/5 rounded-md" />
+                      <Skeleton className="ml-auto h-12.5 w-36 rounded-full" />
+                    </div>
+                  ))}
+                </div>
+              ) : categories.length ? (
                 <div className="mt-1.5 grid md:grid-cols-2 md:gap-x-6">
                   {categories.map((cc) => (
                     <div
@@ -364,7 +380,9 @@ export function ErtReportForm({
                   ))}
                 </div>
               ) : (
-                <p className="mt-3 text-[14px] text-gray-500">Loading the headcount fields…</p>
+                <p className="mt-3 text-[14px] text-gray-500">
+                  No headcount fields are set up for your campus yet.
+                </p>
               )
             }
           </SectionCard>
@@ -396,8 +414,13 @@ export function ErtReportForm({
                   role="radiogroup"
                   aria-labelledby={titleId}
                   aria-describedby={showErrors && missing.damage ? 'damage-error' : undefined}
+                  aria-busy={damagePending || undefined}
                   className="grid grid-cols-2 gap-2 md:grid-cols-4"
                 >
+                  {damagePending &&
+                    Array.from({ length: 4 }, (_, i) => (
+                      <Skeleton key={i} className="h-14 rounded-2xl" />
+                    ))}
                   {activeDamage.map((damage) => (
                     <OptionTile
                       key={damage.id}

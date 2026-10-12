@@ -235,7 +235,7 @@ export function LookupTable({
 
   if (error) {
     return (
-      <Card className="p-6 text-[15px] text-[#b42318]">
+      <Card className="p-6 text-[17px] text-[#b42318]">
         The {noun} couldn&apos;t be loaded: {error.message}
       </Card>
     );
@@ -260,7 +260,9 @@ export function LookupTable({
               options={scopedClusters.map((c) => ({ value: c.id, label: c.name }))}
             />
           )}
-          <ListCount>{plural(rows.length, singular, noun.split(' ').pop()!)}</ListCount>
+          <ListCount loading={isPending}>
+            {plural(rows.length, singular, noun.split(' ').pop()!)}
+          </ListCount>
         </ListToolbar>
         <DataTable
           label={label}

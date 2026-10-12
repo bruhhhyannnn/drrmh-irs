@@ -180,7 +180,7 @@ export default function ReportsPage() {
       />
 
       {error ? (
-        <Card className="p-6 text-[15px] text-[#b42318]">
+        <Card className="p-6 text-[17px] text-[#b42318]">
           The reports couldn&apos;t be loaded: {error.message}
         </Card>
       ) : (
@@ -209,7 +209,7 @@ export default function ReportsPage() {
               onChange={resetPage(setClusterId)}
               options={clusterOptions}
             />
-            <ListCount>{plural(total, 'report', 'reports')}</ListCount>
+            <ListCount loading={isPending}>{plural(total, 'report', 'reports')}</ListCount>
           </ListToolbar>
           <DataTable
             label="Reports"

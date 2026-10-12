@@ -70,7 +70,7 @@ export function EventSummary({ eventId, before }: { eventId: string; before?: Re
 
   if (error) {
     return (
-      <p className="text-[15px] text-[#b42318]">
+      <p className="text-[17px] text-[#b42318]">
         The summary couldn&apos;t be loaded: {error.message}
       </p>
     );
@@ -101,10 +101,10 @@ export function EventSummary({ eventId, before }: { eventId: string; before?: Re
 
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2.5 pt-1">
         <div className="flex min-w-0 flex-col gap-0.5">
-          <h2 className="text-[20px] leading-[1.3] font-extrabold">Overview</h2>
-          <span className="text-[14px] leading-[1.45] text-gray-500">
+          <h2 className="text-[22px] leading-[1.3] font-extrabold">Overview</h2>
+          <span className="text-[16px] leading-[1.45] text-gray-500">
             {title} · {summary.completed ? 'Completed' : 'As of'}{' '}
-            <Mono className="text-[13px] font-semibold text-gray-700">
+            <Mono className="text-[14px] font-semibold text-gray-700">
               {formatDateTime(summary.asOf)}
             </Mono>
           </span>
@@ -112,14 +112,14 @@ export function EventSummary({ eventId, before }: { eventId: string; before?: Re
         {others.length > 0 &&
           (compareId ? (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[13px] font-semibold text-gray-600">Compared with</span>
+              <span className="text-[14px] font-semibold text-gray-600">Compared with</span>
               <div className="relative">
                 <select
                   aria-label="Compare with event"
                   value={compareId}
                   onChange={(e) => setCompareId(e.target.value)}
                   className={cn(
-                    'h-10 max-w-64 appearance-none truncate rounded-xl border border-gray-300 bg-white pr-9 pl-3.5 text-[14px] font-semibold text-gray-900',
+                    'h-10 max-w-64 appearance-none truncate rounded-xl border border-gray-300 bg-white pr-9 pl-3.5 text-[16px] font-semibold text-gray-900',
                     FOCUS_RING
                   )}
                 >
@@ -154,7 +154,7 @@ export function EventSummary({ eventId, before }: { eventId: string; before?: Re
               type="button"
               onClick={() => setCompareId(previous?.id ?? null)}
               className={cn(
-                'flex h-10 items-center gap-2 rounded-full border-[1.5px] border-gray-300 bg-white px-4 text-[14px] font-bold whitespace-nowrap text-gray-700 hover:bg-gray-50',
+                'flex h-10 items-center gap-2 rounded-full border-[1.5px] border-gray-300 bg-white px-4 text-[16px] font-bold whitespace-nowrap text-gray-700 hover:bg-gray-50',
                 FOCUS_RING
               )}
             >
@@ -197,8 +197,8 @@ export function EventSummary({ eventId, before }: { eventId: string; before?: Re
       <MissingCard summary={summary} />
 
       <div className="flex flex-col gap-1 pt-3">
-        <h2 className="text-[20px] leading-[1.3] font-extrabold">Analytics</h2>
-        <span className="text-[14px] leading-[1.45] text-pretty text-gray-500">
+        <h2 className="text-[22px] leading-[1.3] font-extrabold">Analytics</h2>
+        <span className="text-[16px] leading-[1.45] text-pretty text-gray-500">
           {title} · {summary.completed ? 'completed' : 'as of'} {formatDateTime(summary.asOf)}
         </span>
       </div>

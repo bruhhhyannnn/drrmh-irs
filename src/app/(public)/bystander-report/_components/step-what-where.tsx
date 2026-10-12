@@ -9,6 +9,7 @@ import {
   OptionTile,
   SelectField,
 } from '@/components/ds';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { BystanderFormValues } from '@/lib';
 import { campusLogo } from '@/lib/campus-logo';
 import { ShieldCheck } from 'lucide-react';
@@ -24,6 +25,7 @@ interface StepWhatWhereProps {
   values: BystanderFormValues;
   errors: Partial<Record<keyof BystanderFormValues, string>>;
   incidentTypes: Option[];
+  incidentTypesLoading: boolean;
   campuses: Option[];
   clusters: Option[];
   units: Option[];
@@ -40,6 +42,7 @@ export function StepWhatWhere({
   values,
   errors,
   incidentTypes,
+  incidentTypesLoading,
   campuses,
   clusters,
   units,
@@ -66,8 +69,11 @@ export function StepWhatWhere({
           role="radiogroup"
           aria-labelledby="incident-type-label"
           aria-describedby={errors.incident_type_id ? 'incident-type-error' : undefined}
+          aria-busy={incidentTypesLoading || undefined}
           className="grid grid-cols-2 gap-2 md:grid-cols-5"
         >
+          {incidentTypesLoading &&
+            Array.from({ length: 10 }, (_, i) => <Skeleton key={i} className="h-15 rounded-2xl" />)}
           {incidentTypes.map((type) => (
             <OptionTile
               key={type.id}

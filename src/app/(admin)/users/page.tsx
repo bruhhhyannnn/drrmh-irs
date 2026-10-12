@@ -66,7 +66,7 @@ export default function UsersPage() {
           if (undo) return;
           toast(
             (t) => (
-              <span className="flex items-center gap-3 text-[14px]">
+              <span className="flex items-center gap-3 text-[16px]">
                 {fullName(u)} is now {isActive ? 'active' : 'inactive'}.
                 <button
                   type="button"
@@ -186,7 +186,7 @@ export default function UsersPage() {
       />
 
       {error ? (
-        <Card className="p-6 text-[15px] text-[#b42318]">
+        <Card className="p-6 text-[17px] text-[#b42318]">
           The users couldn&apos;t be loaded: {error.message}
         </Card>
       ) : (
@@ -215,7 +215,7 @@ export default function UsersPage() {
                 { value: 'inactive', label: 'Inactive' },
               ]}
             />
-            <ListCount>{plural(rows.length, 'user', 'users')}</ListCount>
+            <ListCount loading={isPending}>{plural(rows.length, 'user', 'users')}</ListCount>
           </ListToolbar>
           <DataTable
             label="Users"

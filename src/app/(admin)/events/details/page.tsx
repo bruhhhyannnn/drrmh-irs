@@ -65,7 +65,7 @@ function EventDetails() {
     return (
       <>
         <PageHeader title="Event not found" back={{ href: '/events', label: 'Events' }} />
-        <Card className="p-8 text-[15px] text-gray-600">
+        <Card className="p-8 text-[17px] text-gray-600">
           This event doesn&apos;t exist anymore. It may have been deleted.
         </Card>
       </>

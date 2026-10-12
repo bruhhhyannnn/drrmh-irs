@@ -2,6 +2,8 @@ import { cn, getInitials } from '@/lib';
 import { ownCampusLogo } from '@/lib/campus-logo';
 import type { Tone } from '../_lib/status';
 
+export { Skeleton } from '@/components/ui/skeleton';
+
 // Small building blocks shared by the admin pages. Light theme only, Figtree + Spline Sans Mono.
 
 export function Card({
@@ -47,7 +49,7 @@ export function Chip({
   return (
     <span
       className={cn(
-        'inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[12px] font-semibold whitespace-nowrap',
+        'inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[13px] font-semibold whitespace-nowrap',
         CHIP_TONES[tone].box,
         className
       )}
@@ -79,10 +81,10 @@ export function Avatar({
       className={cn(
         'grid shrink-0 place-items-center rounded-full font-bold uppercase',
         highlight ? 'bg-brand-500 text-white' : 'bg-gray-100 text-gray-700',
-        size === 32 && 'size-8 text-[13px]',
-        size === 36 && 'size-9 text-[13px]',
-        size === 40 && 'size-10 text-[14px]',
-        size === 48 && 'size-12 text-[16px]'
+        size === 32 && 'size-8 text-[14px]',
+        size === 36 && 'size-9 text-[14px]',
+        size === 40 && 'size-10 text-[16px]',
+        size === 48 && 'size-12 text-[18px]'
       )}
     >
       {getInitials(name || '?').slice(0, 2)}
@@ -110,7 +112,7 @@ export function CampusMark({ name, size = 56 }: { name: string; size?: 40 | 56 }
       className={cn(
         box,
         'bg-brand-25 text-brand-500 grid shrink-0 place-items-center rounded-full border-[1.5px] border-[#fbd5d5] font-extrabold',
-        size === 56 ? 'text-[15px]' : 'text-[12px]'
+        size === 56 ? 'text-[17px]' : 'text-[13px]'
       )}
     >
       {name.replace(/^UP\s+/i, '').slice(0, 4)}
@@ -155,19 +157,9 @@ export function Bar({
   );
 }
 
-/** Grey placeholder block while data loads. */
-export function Skeleton({ className }: { className?: string }) {
-  return (
-    <div
-      aria-hidden
-      className={cn('rounded-xl bg-gray-100 motion-safe:animate-pulse', className)}
-    />
-  );
-}
-
 /** One centred line in a card body when a list or chart has nothing to show. */
 export function EmptyNote({ children }: { children: React.ReactNode }) {
-  return <p className="px-5 py-10 text-center text-[14px] text-pretty text-gray-500">{children}</p>;
+  return <p className="px-5 py-10 text-center text-[16px] text-pretty text-gray-500">{children}</p>;
 }
 
 /** Card heading row: title on the left, a note or control on the right. */
@@ -184,12 +176,12 @@ export function CardHeading({
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
       <Heading
-        className={cn('leading-[1.3] font-bold', level === 2 ? 'text-[17px]' : 'text-[16px]')}
+        className={cn('leading-[1.3] font-bold', level === 2 ? 'text-[19px]' : 'text-[18px]')}
       >
         {title}
       </Heading>
       {typeof aside === 'string' ? (
-        <span className="text-[13px] font-medium text-gray-500">{aside}</span>
+        <span className="text-[14px] font-medium text-gray-500">{aside}</span>
       ) : (
         aside
       )}
@@ -206,10 +198,10 @@ export function DateBlock({ date, tone = 'grey' }: { date: Date; tone?: 'grey' |
         tone === 'grey' ? 'bg-gray-50' : 'bg-white'
       )}
     >
-      <span className="text-brand-500 text-[10px] font-bold tracking-[.08em] uppercase">
+      <span className="text-brand-500 text-[11px] font-bold tracking-[.08em] uppercase">
         {date.toLocaleString('en-US', { month: 'short' })}
       </span>
-      <span className="font-landing-mono text-[18px] leading-none font-bold">{date.getDate()}</span>
+      <span className="font-landing-mono text-[20px] leading-none font-bold">{date.getDate()}</span>
     </span>
   );
 }

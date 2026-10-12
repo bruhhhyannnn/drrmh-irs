@@ -3,6 +3,9 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Inside the A4 event report: the admin summary charts are reused there at their print sizes. */
+@custom-variant print-report (&:where([data-print-report] *));
+
 @theme {
   --font-sans:
     var(--font-inter), ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',

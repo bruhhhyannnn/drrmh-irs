@@ -2,6 +2,7 @@
 
 import { completeUserProfile } from '@/actions/users';
 import { Button, FieldLabel, SelectField, TextInput } from '@/components/ds';
+import { Skeleton } from '@/components/ui/skeleton';
 import { getInitials, supabase } from '@/lib';
 import { useAuthStore } from '@/store';
 import { useRouter } from 'next/navigation';
@@ -36,8 +37,8 @@ export function ProfileSetup() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
 
-  const { data: campus = [] } = useCampus();
-  const { data: positions = [] } = usePositions();
+  const { data: campus = [], isPending: campusPending } = useCampus();
+  const { data: positions = [], isPending: positionsPending } = usePositions();
   const { data: campusClusters = [] } = useCampusClusters(campusId);
   const { data: units = [], isPending: unitsPending } = useUnits(clusterId, {
     enabled: !!clusterId,
@@ -124,121 +125,125 @@ export function ProfileSetup() {
       </AuthHeading>
       {saveError && <AuthBanner>{saveError}</AuthBanner>}
 
-      <form
-        noValidate
-        onSubmit={(e) => {
-          e.preventDefault();
-          void handleSave();
-        }}
-        className="flex flex-col gap-5"
-      >
-        <div className="flex flex-col gap-1.5">
-          <FieldLabel htmlFor="profile-campus" hint="Required">
-            Campus
-          </FieldLabel>
-          <SelectField
-            id="profile-campus"
-            value={campusId}
-            onChange={(value) => {
-              setCampusId(value);
-              setClusterId('');
-              setUnitId('');
-            }}
-            options={campusOptions}
-            placeholder="Select your campus"
-            required
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <FieldLabel htmlFor="profile-cluster" hint="Required">
-            Cluster
-          </FieldLabel>
-          <SelectField
-            id="profile-cluster"
-            value={clusterId}
-            onChange={(value) => {
-              setClusterId(value);
-              setUnitId('');
-            }}
-            options={clusterOptions}
-            placeholder={campusId ? 'Select your cluster' : 'Select a campus first'}
-            disabled={!campusId}
-            required
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <FieldLabel htmlFor="profile-unit" hint={clusterHasNoUnits ? 'Not needed' : 'Required'}>
-            Building / Unit
-          </FieldLabel>
-          <SelectField
-            id="profile-unit"
-            value={unitId}
-            onChange={setUnitId}
-            options={unitOptions}
-            placeholder={
-              !clusterId
-                ? 'Select a cluster first'
-                : clusterHasNoUnits
-                  ? 'No buildings or units in this cluster'
-                  : 'Select your building or unit'
-            }
-            disabled={!clusterId || clusterHasNoUnits}
-            required
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <FieldLabel htmlFor="profile-position" hint="Required">
-            Position
-          </FieldLabel>
-          <SelectField
-            id="profile-position"
-            value={positionId}
-            onChange={(value) => {
-              setPositionId(value);
-              setCustomPosition('');
-            }}
-            options={positionOptions}
-            placeholder="Select your position"
-            required
-          />
-        </div>
-
-        {isOther && (
+      {campusPending || positionsPending ? (
+        <ProfileFormSkeleton />
+      ) : (
+        <form
+          noValidate
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleSave();
+          }}
+          className="flex flex-col gap-5"
+        >
           <div className="flex flex-col gap-1.5">
-            <FieldLabel htmlFor="profile-custom-position" hint="Required">
-              Specify position
+            <FieldLabel htmlFor="profile-campus" hint="Required">
+              Campus
             </FieldLabel>
-            <TextInput
-              id="profile-custom-position"
-              autoFocus
-              autoComplete="organization-title"
-              placeholder="e.g. Safety Officer"
-              value={customPosition}
-              onChange={(e) => setCustomPosition(e.target.value)}
+            <SelectField
+              id="profile-campus"
+              value={campusId}
+              onChange={(value) => {
+                setCampusId(value);
+                setClusterId('');
+                setUnitId('');
+              }}
+              options={campusOptions}
+              placeholder="Select your campus"
+              required
             />
           </div>
-        )}
 
-        <div className="flex flex-col gap-2">
-          <Button
-            type="submit"
-            fullWidth
-            disabled={!!missing}
-            loading={saving}
-            aria-describedby={missing ? 'profile-missing' : undefined}
-          >
-            {saving ? 'Saving…' : 'Save and continue'}
-          </Button>
-          {missing && (
-            <span id="profile-missing" className="text-center text-[13px] text-gray-500">
-              {missing}
-            </span>
+          <div className="flex flex-col gap-1.5">
+            <FieldLabel htmlFor="profile-cluster" hint="Required">
+              Cluster
+            </FieldLabel>
+            <SelectField
+              id="profile-cluster"
+              value={clusterId}
+              onChange={(value) => {
+                setClusterId(value);
+                setUnitId('');
+              }}
+              options={clusterOptions}
+              placeholder={campusId ? 'Select your cluster' : 'Select a campus first'}
+              disabled={!campusId}
+              required
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <FieldLabel htmlFor="profile-unit" hint={clusterHasNoUnits ? 'Not needed' : 'Required'}>
+              Building / Unit
+            </FieldLabel>
+            <SelectField
+              id="profile-unit"
+              value={unitId}
+              onChange={setUnitId}
+              options={unitOptions}
+              placeholder={
+                !clusterId
+                  ? 'Select a cluster first'
+                  : clusterHasNoUnits
+                    ? 'No buildings or units in this cluster'
+                    : 'Select your building or unit'
+              }
+              disabled={!clusterId || clusterHasNoUnits}
+              required
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <FieldLabel htmlFor="profile-position" hint="Required">
+              Position
+            </FieldLabel>
+            <SelectField
+              id="profile-position"
+              value={positionId}
+              onChange={(value) => {
+                setPositionId(value);
+                setCustomPosition('');
+              }}
+              options={positionOptions}
+              placeholder="Select your position"
+              required
+            />
+          </div>
+
+          {isOther && (
+            <div className="flex flex-col gap-1.5">
+              <FieldLabel htmlFor="profile-custom-position" hint="Required">
+                Specify position
+              </FieldLabel>
+              <TextInput
+                id="profile-custom-position"
+                autoFocus
+                autoComplete="organization-title"
+                placeholder="e.g. Safety Officer"
+                value={customPosition}
+                onChange={(e) => setCustomPosition(e.target.value)}
+              />
+            </div>
           )}
-        </div>
-      </form>
+
+          <div className="flex flex-col gap-2">
+            <Button
+              type="submit"
+              fullWidth
+              disabled={!!missing}
+              loading={saving}
+              aria-describedby={missing ? 'profile-missing' : undefined}
+            >
+              {saving ? 'Saving…' : 'Save and continue'}
+            </Button>
+            {missing && (
+              <span id="profile-missing" className="text-center text-[13px] text-gray-500">
+                {missing}
+              </span>
+            )}
+          </div>
+        </form>
+      )}
 
       <p className="text-center text-[14px] text-gray-600">
         Not you?{' '}
@@ -247,5 +252,21 @@ export function ProfileSetup() {
         </button>
       </p>
     </AuthShell>
+  );
+}
+
+/** Campus, cluster, unit and position fields in placeholders while their lists load. */
+function ProfileFormSkeleton() {
+  return (
+    <div aria-busy="true" className="flex flex-col gap-5">
+      <span className="sr-only">Loading…</span>
+      {['w-16', 'w-14', 'w-28', 'w-18'].map((label) => (
+        <div key={label} className="flex flex-col gap-2">
+          <Skeleton className={`h-4 rounded-md ${label}`} />
+          <Skeleton className="h-12 rounded-2xl" />
+        </div>
+      ))}
+      <Skeleton className="h-13 rounded-full" />
+    </div>
   );
 }

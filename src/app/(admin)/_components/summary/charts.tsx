@@ -10,7 +10,7 @@ export const SERIES = { a: '#a11d1d', b: '#98a2b3' };
 /** Two-series legend: Q4 2026 ■  Q3 2026 ■ */
 export function SeriesLegend({ a, b }: { a: string; b: string }) {
   return (
-    <div className="flex flex-wrap gap-x-3.5 gap-y-1.5 text-[13px] font-medium text-gray-600">
+    <div className="flex flex-wrap gap-x-3.5 gap-y-1.5 text-[14px] print-report:text-[13px] font-medium text-gray-600">
       {[
         [a, SERIES.a],
         [b, SERIES.b],
@@ -68,7 +68,7 @@ export function ColumnChart({
               >
                 <span
                   className={cn(
-                    'font-landing-mono text-[12px] font-bold',
+                    'font-landing-mono text-[13px] print-report:text-[12px] font-bold',
                     si === 0 ? 'text-gray-900' : 'font-semibold text-gray-500'
                   )}
                 >
@@ -87,7 +87,7 @@ export function ColumnChart({
         {labels.map((bin, i) => (
           <span
             key={bin + i}
-            className="font-landing-mono min-w-0 flex-1 text-center text-[12px] font-medium text-gray-500"
+            className="font-landing-mono min-w-0 flex-1 text-center text-[13px] print-report:text-[12px] font-medium text-gray-500"
           >
             {bin}
           </span>
@@ -102,7 +102,7 @@ export function RankedBars({
   rows,
   max,
   nameWidth = 'w-24',
-  valueWidth = 'w-18',
+  valueWidth = 'w-21 print-report:w-18',
   axis,
   compact = false,
 }: {
@@ -125,7 +125,7 @@ export function RankedBars({
         <div key={row.key} className={cn('flex items-center', compact ? 'gap-2' : 'gap-3')}>
           <span
             className={cn(
-              'shrink-0 text-[13px] leading-[1.3] font-semibold text-pretty text-gray-700',
+              'shrink-0 text-[14px] print-report:text-[13px] leading-[1.3] font-semibold text-pretty text-gray-700',
               nameWidth
             )}
           >
@@ -162,7 +162,9 @@ export function RankedBars({
                 key={i}
                 className={cn(
                   'text-right',
-                  i === 0 ? 'text-[13px] font-semibold' : 'text-[12px] font-medium text-gray-500',
+                  i === 0
+                    ? 'text-[14px] print-report:text-[13px] font-semibold'
+                    : 'text-[13px] print-report:text-[12px] font-medium text-gray-500',
                   i === 0 && (v.muted ? 'text-gray-400' : 'text-gray-900')
                 )}
               >
@@ -175,14 +177,14 @@ export function RankedBars({
       {axis && (
         <div className="-mt-1 flex items-center gap-3" aria-hidden>
           <span className={cn('shrink-0', nameWidth)} />
-          <div className="font-landing-mono flex min-w-0 flex-1 justify-between text-[11px] font-medium text-gray-400">
+          <div className="font-landing-mono flex min-w-0 flex-1 justify-between text-[12px] print-report:text-[11px] font-medium text-gray-400">
             {axis.ticks.map((t) => (
               <span key={t}>{t}</span>
             ))}
           </div>
           <span
             className={cn(
-              'font-landing-mono shrink-0 text-right text-[11px] font-medium text-gray-400',
+              'font-landing-mono shrink-0 text-right text-[12px] print-report:text-[11px] font-medium text-gray-400',
               valueWidth
             )}
           >
@@ -233,11 +235,18 @@ export function Donut({
           )}
         >
           <Mono
-            className={cn('leading-none font-extrabold', compact ? 'text-[24px]' : 'text-[30px]')}
+            className={cn(
+              'leading-none font-extrabold',
+              compact
+                ? 'text-[26px] print-report:text-[24px]'
+                : 'text-[32px] print-report:text-[30px]'
+            )}
           >
             {total}
           </Mono>
-          <span className="text-[12px] font-medium text-gray-500">{unit}</span>
+          <span className="text-[13px] print-report:text-[12px] font-medium text-gray-500">
+            {unit}
+          </span>
         </div>
       </div>
       <ul
@@ -256,16 +265,18 @@ export function Donut({
               className="size-2.5 shrink-0 rounded-[3px]"
               style={{ background: r.color }}
             />
-            <span className="min-w-0 flex-1 text-[14px] font-medium text-gray-700">{r.name}</span>
+            <span className="min-w-0 flex-1 text-[16px] print-report:text-[14px] font-medium text-gray-700">
+              {r.name}
+            </span>
             <Mono
               className={cn(
-                'text-[14px] font-semibold',
+                'text-[16px] print-report:text-[14px] font-semibold',
                 r.count ? 'text-gray-900' : 'text-gray-400'
               )}
             >
               {r.count}
             </Mono>
-            <Mono className="w-10 text-right text-[13px] font-medium text-gray-500">
+            <Mono className="w-10 text-right text-[14px] print-report:text-[13px] font-medium text-gray-500">
               {total ? `${Math.round((r.count / total) * 100)}%` : '0%'}
             </Mono>
           </li>
@@ -300,10 +311,12 @@ export function DamageChart({
                 className="size-2.5 shrink-0 rounded-[3px]"
                 style={{ background: r.color }}
               />
-              <span className="min-w-0 flex-1 text-[13px] font-medium text-gray-700">{r.name}</span>
+              <span className="min-w-0 flex-1 text-[14px] print-report:text-[13px] font-medium text-gray-700">
+                {r.name}
+              </span>
               <Mono
                 className={cn(
-                  'text-[13px] font-semibold',
+                  'text-[14px] print-report:text-[13px] font-semibold',
                   r.count ? 'text-gray-900' : 'text-gray-400'
                 )}
               >
@@ -314,7 +327,7 @@ export function DamageChart({
         </ul>
       </div>
       <div className="flex flex-col">
-        <span className="pb-1 text-[11px] font-bold tracking-[.08em] text-gray-500 uppercase">
+        <span className="pb-1 text-[12px] print-report:text-[11px] font-bold tracking-[.08em] text-gray-500 uppercase">
           Units with damage · {withDamage.length}
         </span>
         {withDamage.length ? (
@@ -322,15 +335,21 @@ export function DamageChart({
             {withDamage.map((d) => (
               <li key={d.id} className="flex items-center gap-3 border-b border-[#eaecf0] py-2.5">
                 <div className="flex min-w-0 flex-1 flex-col gap-px">
-                  <span className="text-[14px] font-semibold">{d.unit}</span>
-                  <span className="text-[13px] text-gray-500">{d.cluster}</span>
+                  <span className="text-[16px] print-report:text-[14px] font-semibold">
+                    {d.unit}
+                  </span>
+                  <span className="text-[14px] print-report:text-[13px] text-gray-500">
+                    {d.cluster}
+                  </span>
                 </div>
                 <Chip tone={d.level.tone}>{d.condition}</Chip>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="py-2.5 text-[13px] text-gray-500">No unit reported damage.</p>
+          <p className="py-2.5 text-[14px] print-report:text-[13px] text-gray-500">
+            No unit reported damage.
+          </p>
         )}
       </div>
     </div>

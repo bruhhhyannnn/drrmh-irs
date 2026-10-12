@@ -42,7 +42,7 @@ function PeopleChips({ report }: { report: BystanderRow }) {
   const casualties = report.report_casualties.length;
   const missing = report.report_missing_persons.length;
   if (!casualties && !missing)
-    return <span className="font-landing-mono text-[14px] text-gray-400">—</span>;
+    return <span className="font-landing-mono text-[16px] text-gray-400">—</span>;
   return (
     <>
       {casualties > 0 && <Chip tone="red">{plural(casualties, 'casualty', 'casualties')}</Chip>}
@@ -223,12 +223,13 @@ export default function BystanderReportsPage() {
       />
 
       {error ? (
-        <Card className="p-6 text-[15px] text-[#b42318]">
+        <Card className="p-6 text-[17px] text-[#b42318]">
           The bystander reports couldn&apos;t be loaded: {error.message}
         </Card>
       ) : (
         <ListCard>
           <ListTabs
+            loading={isPending}
             label="Report status"
             value={tab}
             onChange={setTab}
@@ -246,7 +247,7 @@ export default function BystanderReportsPage() {
               value={query}
               onChange={setQuery}
             />
-            <ListCount>{plural(rows.length, 'report', 'reports')}</ListCount>
+            <ListCount loading={isPending}>{plural(rows.length, 'report', 'reports')}</ListCount>
           </ListToolbar>
           <DataTable
             label="Bystander reports"

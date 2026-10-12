@@ -13,7 +13,7 @@ export function PeopleRow({
   onManage,
 }: {
   kind: 'missing' | 'casualty';
-  meta: string;
+  meta: React.ReactNode;
   hasPeople: boolean;
   onManage?: () => void;
 }) {
@@ -31,7 +31,7 @@ export function PeopleRow({
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="text-[15px] font-semibold">{title}</span>
-        <span className="text-[13px] text-gray-500">{meta}</span>
+        <div className="text-[13px] text-gray-500">{meta}</div>
       </div>
       {onManage && (
         <Button

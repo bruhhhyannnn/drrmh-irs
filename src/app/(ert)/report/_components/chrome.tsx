@@ -1,3 +1,4 @@
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn, getInitials } from '@/lib';
 import Image from 'next/image';
 import { useId } from 'react';
@@ -19,6 +20,31 @@ export function Hero({
   children?: React.ReactNode;
 }) {
   return (
+    <HeroFrame>
+      <span className="text-[11px] font-bold tracking-[.08em] text-[#fbd5d5] uppercase">
+        {eyebrow}
+      </span>
+      <h1 className="text-[24px] leading-[1.2] font-extrabold text-balance text-white md:text-[28px]">
+        {title}
+      </h1>
+      {children && <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2">{children}</div>}
+    </HeroFrame>
+  );
+}
+
+/** The hero's photo and wash with placeholder lines, while the page's title loads. */
+export function HeroSkeleton() {
+  return (
+    <HeroFrame>
+      <Skeleton onDark className="h-3 w-44 rounded-md" />
+      <Skeleton onDark className="my-1 h-7 w-full max-w-90 rounded-lg md:h-8" />
+      <Skeleton onDark className="h-6 w-28 rounded-full" />
+    </HeroFrame>
+  );
+}
+
+function HeroFrame({ children }: { children: React.ReactNode }) {
+  return (
     <div className="relative isolate overflow-hidden">
       <Image
         src="/upm-drrmh-background-2.jpg"
@@ -29,17 +55,7 @@ export function Hero({
         className="-z-2 object-cover"
       />
       <div aria-hidden className="absolute inset-0 -z-1 bg-[rgba(77,14,14,.8)]" />
-      <div className={cn(GUTTER, 'flex flex-col gap-2 py-6 md:py-7 lg:py-8')}>
-        <span className="text-[11px] font-bold tracking-[.08em] text-[#fbd5d5] uppercase">
-          {eyebrow}
-        </span>
-        <h1 className="text-[24px] leading-[1.2] font-extrabold text-balance text-white md:text-[28px]">
-          {title}
-        </h1>
-        {children && (
-          <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2">{children}</div>
-        )}
-      </div>
+      <div className={cn(GUTTER, 'flex flex-col gap-2 py-6 md:py-7 lg:py-8')}>{children}</div>
     </div>
   );
 }

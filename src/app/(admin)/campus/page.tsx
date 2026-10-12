@@ -33,7 +33,7 @@ export default function CampusPage() {
       />
 
       {error ? (
-        <Card className="p-6 text-[15px] text-[#b42318]">
+        <Card className="p-6 text-[17px] text-[#b42318]">
           The campuses couldn&apos;t be loaded: {error.message}
         </Card>
       ) : isPending ? (
@@ -43,7 +43,7 @@ export default function CampusPage() {
           ))}
         </div>
       ) : campuses.length === 0 ? (
-        <Card className="p-10 text-center text-[15px] text-gray-500">
+        <Card className="p-10 text-center text-[17px] text-gray-500">
           No campuses yet. Add the first one to start creating events.
         </Card>
       ) : (
@@ -66,7 +66,7 @@ export default function CampusPage() {
                   <div className="flex items-center gap-3.5">
                     <CampusMark name={campus.name} />
                     <div className="flex min-w-0 flex-1 flex-col items-start gap-1.5">
-                      <span className="text-[17px] leading-tight font-bold">{campus.name}</span>
+                      <span className="text-[19px] leading-tight font-bold">{campus.name}</span>
                       <Chip tone={campus.is_active ? 'green' : 'grey'} dot>
                         {campus.is_active ? 'Active' : 'Inactive'}
                       </Chip>
@@ -76,10 +76,10 @@ export default function CampusPage() {
                   <dl className="grid grid-cols-3 gap-2 border-t border-[#eaecf0] pt-3.5">
                     {stats.map((s) => (
                       <div key={s.label} className="flex flex-col gap-0.5">
-                        <dt className="text-[12px] font-medium text-gray-500">{s.label}</dt>
+                        <dt className="text-[13px] font-medium text-gray-500">{s.label}</dt>
                         <dd
                           className={cn(
-                            'font-landing-mono text-[17px] font-bold',
+                            'font-landing-mono text-[19px] font-bold',
                             s.value ? 'text-gray-900' : 'text-gray-400'
                           )}
                         >
@@ -89,7 +89,7 @@ export default function CampusPage() {
                     ))}
                   </dl>
                   {campus._count.population_categories === 0 && (
-                    <div className="bg-warning-50 flex items-start gap-2 rounded-[14px] px-3 py-2.5 text-[13px] leading-[1.45] font-medium text-[#93370d]">
+                    <div className="bg-warning-50 flex items-start gap-2 rounded-[14px] px-3 py-2.5 text-[14px] leading-[1.45] font-medium text-[#93370d]">
                       <AlertTriangle
                         size={16}
                         aria-hidden

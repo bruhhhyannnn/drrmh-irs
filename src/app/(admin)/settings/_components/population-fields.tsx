@@ -39,6 +39,7 @@ import {
   RowActions,
   TableCell,
   TableHead,
+  TableSkeleton,
   type Column,
 } from '../../_components/data-list';
 import {
@@ -102,7 +103,7 @@ export function PopulationFields() {
   if (!active.length) {
     return (
       <ListCard>
-        <p className="px-5 py-12 text-center text-[14px] text-gray-500">
+        <p className="px-5 py-12 text-center text-[16px] text-gray-500">
           Add a campus first. Each campus keeps its own headcount fields.
         </p>
       </ListCard>
@@ -235,22 +236,22 @@ function CampusFields({ campusId, campusName }: { campusId: string; campusName: 
   return (
     <>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-4 md:px-5">
-        <span className="text-[13px] font-medium text-pretty text-gray-500">
-          {assignments.length
-            ? `${plural(assignments.length, 'field', 'fields')}, in the order ERT members see them. Drag a row by its handle to move it.`
-            : `${campusName} has no fields yet, so ERT headcount has nothing to fill in. Add the first one below.`}
-        </span>
+        {isPending ? (
+          <Skeleton className="my-1 h-4 w-full max-w-110 rounded-md" />
+        ) : (
+          <span className="text-[14px] font-medium text-pretty text-gray-500">
+            {assignments.length
+              ? `${plural(assignments.length, 'field', 'fields')}, in the order ERT members see them. Drag a row by its handle to move it.`
+              : `${campusName} has no fields yet, so ERT headcount has nothing to fill in. Add the first one below.`}
+          </span>
+        )}
       </div>
       <p aria-live="polite" className="sr-only">
         {announcement}
       </p>
 
       {isPending ? (
-        <div className="flex flex-col gap-2 px-4 pb-4 md:px-5">
-          {Array.from({ length: 4 }, (_, i) => (
-            <Skeleton key={i} className="h-14" />
-          ))}
-        </div>
+        <TableSkeleton columns={columns} rows={5} />
       ) : (
         assignments.length > 0 && (
           <>
@@ -286,7 +287,7 @@ function CampusFields({ campusId, campusName }: { campusId: string; campusName: 
                       >
                         <GripVertical size={18} aria-hidden />
                       </button>
-                      <Mono className="text-[13px] font-semibold text-gray-600">{i + 1}</Mono>
+                      <Mono className="text-[14px] font-semibold text-gray-600">{i + 1}</Mono>
                     </div>
                   </TableCell>
                   <TableCell column={columns[1]}>
@@ -298,7 +299,7 @@ function CampusFields({ campusId, campusName }: { campusId: string; campusName: 
                     />
                   </TableCell>
                   <TableCell column={columns[2]}>
-                    <Mono className="truncate text-[14px] font-semibold text-gray-600">
+                    <Mono className="truncate text-[16px] font-semibold text-gray-600">
                       {a.category.code}
                     </Mono>
                   </TableCell>
@@ -405,7 +406,7 @@ function CampusFields({ campusId, campusName }: { campusId: string; campusName: 
           autoComplete="off"
           value={fieldName}
           onChange={(e) => setFieldName(e.target.value)}
-          className="h-11 min-w-0 flex-[1_1_220px] rounded-[14px] text-[14px]"
+          className="h-11 min-w-0 flex-[1_1_220px] rounded-[14px] text-[16px]"
         />
         <datalist id={`fields-${campusId}`}>
           {suggestions.map((c) => (

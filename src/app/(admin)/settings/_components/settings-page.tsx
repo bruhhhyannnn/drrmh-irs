@@ -76,7 +76,7 @@ export function SettingsPage({ tab }: { tab: SettingsTab }) {
               href={`/settings/${t.key}`}
               aria-current={on ? 'page' : undefined}
               className={cn(
-                'flex h-10 shrink-0 items-center rounded-full border-[1.5px] px-4 text-[14px] whitespace-nowrap',
+                'flex h-10 shrink-0 items-center rounded-full border-[1.5px] px-4 text-[16px] whitespace-nowrap',
                 on
                   ? 'border-brand-500 bg-brand-25 text-brand-500 font-bold'
                   : 'border-gray-200 bg-white font-medium text-gray-700 hover:border-gray-300',

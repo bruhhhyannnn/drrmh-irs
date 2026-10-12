@@ -171,9 +171,11 @@ function ReportForm({
 
   const { data: clusters = [] } = useCampusClusters(campusId ?? '');
   const { data: units = [] } = useUnits(clusterId || undefined, { enabled: !!clusterId });
-  const { data: categories = [] } = useCampusPopulationCategories(campusId ?? undefined);
+  const { data: categories = [], isLoading: categoriesLoading } = useCampusPopulationCategories(
+    campusId ?? undefined
+  );
   const { data: casualtyConditions = [] } = useCasualtyConditions();
-  const { data: damageConditions = [] } = useDamageConditions();
+  const { data: damageConditions = [], isLoading: damageLoading } = useDamageConditions();
 
   const conditions = casualtyConditions
     .filter((c) => c.is_active)
@@ -365,7 +367,20 @@ function ReportForm({
         </DrawerSection>
 
         <DrawerSection title="Headcount" aside={`Total ${total.toLocaleString()}`}>
-          {categories.length ? (
+          {categoriesLoading ? (
+            <div aria-busy="true" className="flex flex-col">
+              <span className="sr-only">Loading the headcount fields…</span>
+              {Array.from({ length: 5 }, (_, i) => (
+                <div
+                  key={i}
+                  className="flex min-h-14.5 items-center gap-2.5 border-b border-[#eaecf0] py-1"
+                >
+                  <Skeleton className="h-4 w-2/5 rounded-md" />
+                  <Skeleton className="ml-auto h-12.5 w-36 rounded-full" />
+                </div>
+              ))}
+            </div>
+          ) : categories.length ? (
             <div className="flex flex-col">
               {categories.map((cc) => (
                 <div
@@ -444,8 +459,13 @@ function ReportForm({
             role="radiogroup"
             aria-label="Structural damage"
             aria-describedby={errors.damage ? 'report-damage-error' : undefined}
+            aria-busy={damageLoading || undefined}
             className="grid grid-cols-2 gap-2 md:grid-cols-3"
           >
+            {damageLoading &&
+              Array.from({ length: 6 }, (_, i) => (
+                <Skeleton key={i} className="h-13 rounded-2xl" />
+              ))}
             {damages.map((d) => (
               <OptionTile
                 key={d.id}

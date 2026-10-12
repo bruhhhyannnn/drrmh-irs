@@ -18,13 +18,13 @@ import {
   useReportMissingPersons,
 } from '@/components/hooks/use-reports';
 import { useCasualtyConditions } from '@/components/hooks/use-settings';
-import { Loader } from '@/components/ui/loader';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn, totalPopulationCount } from '@/lib';
 import { ArrowLeft, Check } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { formatDateTime } from '../_lib/format';
-import { Card, GUTTER, Hero, Mono, Pill } from './chrome';
+import { Card, GUTTER, Hero, HeroSkeleton, Mono, Pill } from './chrome';
 import { PeopleList, PeopleRow } from './people-rows';
 
 const toSex = (sex: string | null): PersonSex =>
@@ -47,8 +47,8 @@ export function SubmittedReport({
   onBack?: () => void;
 }) {
   const { data: report, isLoading } = useReport(reportId);
-  const { data: missingRows = [] } = useReportMissingPersons(reportId);
-  const { data: casualtyRows = [] } = useReportCasualties(reportId);
+  const { data: missingRows = [], isPending: missingPending } = useReportMissingPersons(reportId);
+  const { data: casualtyRows = [], isPending: casualtiesPending } = useReportCasualties(reportId);
   const { data: casualtyConditions = [] } = useCasualtyConditions();
   const { data: campusCategories = [] } = useCampusPopulationCategories(
     report?.cluster?.campus_id ?? undefined
@@ -62,7 +62,7 @@ export function SubmittedReport({
   const [drawerKey, setDrawerKey] = useState(0);
   const [saving, setSaving] = useState(false);
 
-  if (isLoading) return <Loader label="Loading your report…" className="flex-1 py-20" />;
+  if (isLoading) return <SubmittedReportSkeleton />;
   if (!report) {
     return (
       <p
@@ -151,8 +151,8 @@ export function SubmittedReport({
   const reporter = [report.user?.first_name, report.user?.last_name].filter(Boolean).join(' ');
   const stats = [
     { label: 'Headcount', value: total },
-    { label: 'Missing persons', value: missingRows.length },
-    { label: 'Casualties', value: casualtyRows.length },
+    { label: 'Missing persons', value: missingPending ? null : missingRows.length },
+    { label: 'Casualties', value: casualtiesPending ? null : casualtyRows.length },
   ];
 
   return (
@@ -197,7 +197,11 @@ export function SubmittedReport({
             <dl className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
               {stats.map((stat) => (
                 <StatTile key={stat.label} label={stat.label}>
-                  <Mono className="text-[28px] leading-[1.1] font-extrabold">{stat.value}</Mono>
+                  {stat.value === null ? (
+                    <Skeleton className="my-1 h-7 w-10 rounded-lg" />
+                  ) : (
+                    <Mono className="text-[28px] leading-[1.1] font-extrabold">{stat.value}</Mono>
+                  )}
                 </StatTile>
               ))}
               <StatTile label="Structural damage">
@@ -238,17 +242,37 @@ export function SubmittedReport({
             <h2 className="mb-1 text-[17px] leading-[1.3] font-bold">People affected</h2>
             <PeopleRow
               kind="missing"
-              meta={missingPersons.length ? `${missingPersons.length} reported` : 'None reported'}
+              meta={
+                missingPending ? (
+                  <PeopleMetaSkeleton />
+                ) : missingPersons.length ? (
+                  `${missingPersons.length} reported`
+                ) : (
+                  'None reported'
+                )
+              }
               hasPeople={missingPersons.length > 0}
-              onManage={editable && !saving ? () => openDrawer('missing') : undefined}
+              onManage={
+                editable && !saving && !missingPending ? () => openDrawer('missing') : undefined
+              }
             />
             <PeopleList people={missingPersons} />
             <div className="h-px bg-[#eaecf0]" />
             <PeopleRow
               kind="casualty"
-              meta={casualties.length ? `${casualties.length} reported` : 'None reported'}
+              meta={
+                casualtiesPending ? (
+                  <PeopleMetaSkeleton />
+                ) : casualties.length ? (
+                  `${casualties.length} reported`
+                ) : (
+                  'None reported'
+                )
+              }
               hasPeople={casualties.length > 0}
-              onManage={editable && !saving ? () => openDrawer('casualty') : undefined}
+              onManage={
+                editable && !saving && !casualtiesPending ? () => openDrawer('casualty') : undefined
+              }
             />
             <PeopleList people={casualties} />
           </Card>
@@ -292,6 +316,63 @@ export function SubmittedReport({
         doneLabel="Save changes"
       />
     </>
+  );
+}
+
+function PeopleMetaSkeleton() {
+  return (
+    <>
+      <span className="sr-only">Loading…</span>
+      <Skeleton className="mt-1 h-3.5 w-24 rounded-md" />
+    </>
+  );
+}
+
+/** The submitted report's layout in placeholders while it loads. */
+function SubmittedReportSkeleton() {
+  return (
+    <div aria-busy="true" className="flex flex-1 flex-col">
+      <span className="sr-only">Loading your report…</span>
+      <HeroSkeleton />
+      <div className={cn(GUTTER, 'pt-6 pb-10')}>
+        <div className="mx-auto flex max-w-190 flex-col gap-4">
+          <Card className="flex flex-col gap-4.5 p-5 md:p-6">
+            <div className="flex items-center gap-3.5">
+              <Skeleton className="size-11 shrink-0 rounded-full" />
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <Skeleton className="h-5 w-44 rounded-md" />
+                <Skeleton className="h-3.5 w-full max-w-80 rounded-md" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
+              {Array.from({ length: 4 }, (_, i) => (
+                <Skeleton key={i} className="h-21 rounded-2xl" />
+              ))}
+            </div>
+          </Card>
+          <Card className="flex flex-col gap-3 p-5 md:p-6">
+            <Skeleton className="h-5 w-32 rounded-md" />
+            <div className="grid gap-x-6 gap-y-3 md:grid-cols-2">
+              {Array.from({ length: 6 }, (_, i) => (
+                <Skeleton key={i} className="h-8 rounded-lg" />
+              ))}
+            </div>
+          </Card>
+          <Card className="flex flex-col gap-2 p-5 md:p-6">
+            <Skeleton className="mb-1 h-5 w-40 rounded-md" />
+            {[0, 1].map((i) => (
+              <div key={i} className="flex items-center gap-3.5 py-2">
+                <Skeleton className="size-10 shrink-0 rounded-full" />
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
+                  <Skeleton className="h-4 w-36 rounded-md" />
+                  <Skeleton className="h-3 w-24 rounded-md" />
+                </div>
+              </div>
+            ))}
+          </Card>
+        </div>
+      </div>
+    </div>
   );
 }
 
