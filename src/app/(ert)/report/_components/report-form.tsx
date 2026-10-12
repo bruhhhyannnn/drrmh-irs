@@ -491,7 +491,10 @@ export function ErtReportForm({
         </aside>
       </div>
 
-      <div className="sticky bottom-0 z-20 border-t border-[#eaecf0] bg-white shadow-[0_-4px_12px_rgba(16,24,40,.06)] lg:hidden">
+      <div
+        data-bottom-bar
+        className="sticky bottom-0 z-20 border-t border-[#eaecf0] bg-white shadow-[0_-4px_12px_rgba(16,24,40,.06)] lg:hidden"
+      >
         <div className={cn(GUTTER, 'flex items-center gap-4 py-3')}>
           <div className="flex min-w-0 flex-1 flex-col gap-px">
             <span className="text-[12px] font-medium text-gray-500">Headcount total</span>

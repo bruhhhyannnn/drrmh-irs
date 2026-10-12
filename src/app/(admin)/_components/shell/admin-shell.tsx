@@ -229,6 +229,7 @@ function BottomTabs() {
       )}
       <nav
         aria-label="Main"
+        data-bottom-bar
         className="fixed inset-x-0 bottom-0 z-40 grid h-17 grid-cols-5 border-t border-[#eaecf0] bg-white pb-[env(safe-area-inset-bottom)] md:hidden"
       >
         {tabs.map((item) => {
