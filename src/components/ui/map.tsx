@@ -5,15 +5,8 @@ import { Loader2, Locate, Maximize, Minus, Plus, X } from 'lucide-react';
 // maplibre-gl 6 is ESM-only with no default export.
 import * as MapLibreGL from 'maplibre-gl';
 import { type MarkerOptions, type PopupOptions } from 'maplibre-gl';
-
-// maplibre-gl 6 finds its worker next to its own module via import.meta.url, which the bundler
-// rewrites; point it at the worker file the bundler emits instead.
-if (typeof window !== 'undefined') {
-  MapLibreGL.setWorkerUrl(
-    new URL('maplibre-gl/dist/maplibre-gl-worker.mjs', import.meta.url).href
-  );
-}
 import 'maplibre-gl/dist/maplibre-gl.css';
+
 import {
   createContext,
   forwardRef,
@@ -31,6 +24,14 @@ import { createPortal } from 'react-dom';
 
 import { cn } from '@/lib/utils';
 
+// maplibre-gl 6 finds its worker next to its own module via import.meta.url, which the bundler
+// rewrites; point it at the worker file the bundler emits instead.
+if (typeof window !== 'undefined') {
+  MapLibreGL.setWorkerUrl(
+    new URL('maplibre-gl/dist/maplibre-gl-worker.mjs', import.meta.url).href
+  );
+}
+
 const defaultStyles = {
   dark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
   light: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
@@ -41,9 +42,7 @@ type Theme = 'light' | 'dark';
 // Check document class for theme (works with next-themes, etc.)
 function getDocumentTheme(): Theme | null {
   if (typeof document === 'undefined') return null;
-  if (document.documentElement.classList.contains('dark')) return 'dark';
-  if (document.documentElement.classList.contains('light')) return 'light';
-  return null;
+  return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
 }
 
 // Get system preference

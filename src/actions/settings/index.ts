@@ -47,10 +47,21 @@ function revalidateTable(table: SettingsTable) {
   revalidatePath(toSettingsPath(TITLE_MAP[table]));
 }
 
-export async function getSettingsItems(table: SettingsTable) {
+/**
+ * Every row of a lookup table, with what the settings list shows (campus, cluster, linked
+ * record counts). `filterId` narrows clusters to one campus and units to one cluster.
+ */
+export async function getSettingsItems(table: SettingsTable, filterId?: string) {
   const model = MODEL_MAP[table];
+  const where = !filterId
+    ? undefined
+    : table === 'clusters'
+      ? { campus_id: filterId }
+      : table === 'units'
+        ? { cluster_id: filterId }
+        : undefined;
   // @ts-expect-error dynamic model access
-  return prisma[model].findMany({ include: INCLUDE_MAP[table], orderBy: { name: 'asc' } });
+  return prisma[model].findMany({ where, include: INCLUDE_MAP[table], orderBy: { name: 'asc' } });
 }
 
 function singularLabel(table: SettingsTable) {
