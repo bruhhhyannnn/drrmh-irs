@@ -1,9 +1,10 @@
 'use client';
 
 import { cn } from '@/lib';
-import { Check, ChevronDown, Loader2 } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { forwardRef, useState } from 'react';
+import { Spinner } from '../ui/spinner';
 import { FOCUS_RING } from './focus';
 
 // Form controls from the design system: 48px fields with a 16px radius, 52px pill buttons,
@@ -246,7 +247,7 @@ export function Button({
       )}
       {...props}
     >
-      {loading && <Loader2 size={16} aria-hidden className="animate-spin" />}
+      {loading && <Spinner label={null} />}
       {children}
     </button>
   );

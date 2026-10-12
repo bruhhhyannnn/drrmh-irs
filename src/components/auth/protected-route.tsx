@@ -4,7 +4,8 @@ import { supabase } from '@/lib';
 import { useAuthStore } from '@/store';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Button, Spinner } from '../ui';
+import { Button } from '../ui/button';
+import { Loader } from '../ui/loader';
 
 const REDIRECT_USER_TYPES: Record<string, string> = {
   'ERT Member': '/report',
@@ -68,13 +69,9 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Show spinner while auth is resolving or navigation is in flight
+  // Show the loader while auth is resolving or navigation is in flight
   if (loading || isRedirecting || (user && !userProfile)) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Spinner size="lg" />
-      </div>
-    );
+    return <Loader fullScreen label="Checking your access…" />;
   }
 
   if (!user) return null;

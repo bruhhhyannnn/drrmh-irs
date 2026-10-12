@@ -28,11 +28,12 @@ import {
 } from '@/app/(admin)/_lib/summary';
 import { figtree, FOCUS_RING, splineSansMono } from '@/components/ds';
 import { useCampusEventOptions, useEventSummarySource } from '@/components/hooks/use-events';
+import { Loader } from '@/components/ui/loader';
 import { cn } from '@/lib';
 import { ownCampusLogo } from '@/lib/campus-logo';
 import { useAuthStore } from '@/store';
 import { format } from 'date-fns';
-import { ArrowLeft, Loader2, Printer } from 'lucide-react';
+import { ArrowLeft, Printer } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
@@ -101,13 +102,7 @@ function EventReport() {
   if (!ready || !summary) {
     return (
       <Shell>
-        <p
-          role="status"
-          className="flex items-center justify-center gap-2 p-20 text-[15px] text-gray-600"
-        >
-          <Loader2 size={20} aria-hidden className="text-brand-500 animate-spin" />
-          Preparing the report…
-        </p>
+        <Loader label="Preparing the report…" className="py-20" />
       </Shell>
     );
   }

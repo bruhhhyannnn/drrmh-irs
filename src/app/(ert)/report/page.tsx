@@ -3,9 +3,9 @@
 import { ProfileSetup } from '@/components/auth';
 import { useOngoingEvents } from '@/components/hooks/use-events';
 import { useMyReport } from '@/components/hooks/use-reports';
+import { Loader } from '@/components/ui/loader';
 import { isAdminUserType } from '@/lib';
 import { useAuthStore, useOfflineQueueStore } from '@/store';
-import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ErtFrame } from './_components/frame';
@@ -49,14 +49,16 @@ export default function ErtReportPage() {
   }, [loading, userProfile, router]);
 
   if (loading || !user || !userProfile || isAdminUserType(userProfile.user_type?.name)) {
-    return <PageLoading />;
+    return <PageLoading label="Checking your access…" />;
   }
 
   if (!userProfile.is_profile_complete) return <ProfileSetup />;
 
   // With no connection on first load, these queries stay paused with nothing to show.
   const waitingOffline = !isOnline && (myReport.isPending || events.isPending);
-  if (!waitingOffline && (myReport.isLoading || events.isLoading)) return <PageLoading />;
+  if (!waitingOffline && (myReport.isLoading || events.isLoading)) {
+    return <PageLoading label="Loading the ongoing event…" />;
+  }
 
   const queued = queue.find((e) => e.status === 'pending' && e.payload.user_id === userProfile.id);
   const ongoing = events.data ?? [];
@@ -97,13 +99,10 @@ export default function ErtReportPage() {
   return <ErtFrame>{screen}</ErtFrame>;
 }
 
-function PageLoading() {
+function PageLoading({ label }: { label: string }) {
   return (
     <ErtFrame>
-      <div role="status" className="flex flex-1 items-center justify-center py-20">
-        <Loader2 size={28} aria-hidden className="text-brand-500 animate-spin" />
-        <span className="sr-only">Loading…</span>
-      </div>
+      <Loader label={label} className="flex-1 py-20" />
     </ErtFrame>
   );
 }

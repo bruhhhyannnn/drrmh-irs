@@ -157,7 +157,12 @@ export function Bar({
 
 /** Grey placeholder block while data loads. */
 export function Skeleton({ className }: { className?: string }) {
-  return <div aria-hidden className={cn('animate-pulse rounded-xl bg-gray-100', className)} />;
+  return (
+    <div
+      aria-hidden
+      className={cn('rounded-xl bg-gray-100 motion-safe:animate-pulse', className)}
+    />
+  );
 }
 
 /** One centred line in a card body when a list or chart has nothing to show. */

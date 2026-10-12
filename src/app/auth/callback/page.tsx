@@ -22,7 +22,7 @@
  */
 
 import { provisionGoogleUser } from '@/actions/auth';
-import { Spinner } from '@/components/ui';
+import { Loader } from '@/components/ui/loader';
 import { supabase } from '@/lib';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -90,10 +90,5 @@ export default function AuthCallbackPage() {
     };
   }, [router]);
 
-  return (
-    <div role="status" className="flex min-h-screen items-center justify-center">
-      <Spinner size="lg" />
-      <span className="sr-only">Signing you in…</span>
-    </div>
-  );
+  return <Loader fullScreen label="Signing you in…" />;
 }

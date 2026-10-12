@@ -1,8 +1,9 @@
 'use client';
 
 import { FieldError, FieldLabel, FOCUS_RING } from '@/components/ds';
+import { Spinner } from '@/components/ui/spinner';
 import { BYSTANDER_MAX_PHOTOS, cn } from '@/lib';
-import { Camera, Loader2, ShieldCheck, X } from 'lucide-react';
+import { Camera, ShieldCheck, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { preparePhoto } from '../_lib/prepare-photo';
 
@@ -99,11 +100,7 @@ export function PhotoField({ photos, onAdd, onRemove }: PhotoFieldProps) {
               FOCUS_RING
             )}
           >
-            {isPreparing ? (
-              <Loader2 size={20} aria-hidden className="animate-spin" />
-            ) : (
-              <Camera size={20} aria-hidden />
-            )}
+            {isPreparing ? <Spinner size="md" label={null} /> : <Camera size={20} aria-hidden />}
             {isPreparing ? 'Adding…' : 'Add photo'}
           </button>
         )}

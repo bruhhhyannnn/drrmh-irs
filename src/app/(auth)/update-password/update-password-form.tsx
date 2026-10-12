@@ -9,9 +9,10 @@ import {
   PasswordInput,
   TextInput,
 } from '@/components/ds';
+import { Loader } from '@/components/ui/loader';
 import { supabase, UpdatePasswordFormData, updatePasswordSchema } from '@/lib';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Check, Loader2 } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -68,12 +69,7 @@ export function UpdatePasswordForm() {
   };
 
   if (status === 'waiting') {
-    return (
-      <div role="status" className="flex flex-col items-center gap-4 py-6 text-center">
-        <Loader2 size={28} aria-hidden className="text-brand-500 animate-spin" />
-        <p className="text-[15px] text-gray-600">Checking your reset link…</p>
-      </div>
-    );
+    return <Loader label="Checking your reset link…" className="py-6" />;
   }
 
   if (status === 'invalid') {

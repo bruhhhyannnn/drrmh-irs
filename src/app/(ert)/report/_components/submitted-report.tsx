@@ -18,8 +18,9 @@ import {
   useReportMissingPersons,
 } from '@/components/hooks/use-reports';
 import { useCasualtyConditions } from '@/components/hooks/use-settings';
+import { Loader } from '@/components/ui/loader';
 import { cn, totalPopulationCount } from '@/lib';
-import { ArrowLeft, Check, Loader2 } from 'lucide-react';
+import { ArrowLeft, Check } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { formatDateTime } from '../_lib/format';
@@ -61,16 +62,15 @@ export function SubmittedReport({
   const [drawerKey, setDrawerKey] = useState(0);
   const [saving, setSaving] = useState(false);
 
-  if (isLoading || !report) {
+  if (isLoading) return <Loader label="Loading your report…" className="flex-1 py-20" />;
+  if (!report) {
     return (
-      <div role="status" className="flex flex-1 items-center justify-center py-20">
-        {isLoading ? (
-          <Loader2 size={28} aria-hidden className="text-brand-500 animate-spin" />
-        ) : (
-          <p className="text-[15px] text-gray-600">This report couldn&apos;t be loaded.</p>
-        )}
-        <span className="sr-only">{isLoading ? 'Loading your report…' : ''}</span>
-      </div>
+      <p
+        role="alert"
+        className="flex flex-1 items-center justify-center py-20 text-[15px] text-gray-600"
+      >
+        This report couldn&apos;t be loaded.
+      </p>
     );
   }
 

@@ -14,7 +14,7 @@ import {
   KvList,
   StatBoxes,
 } from '../../_components/drawer-parts';
-import { Chip, Mono } from '../../_components/ui';
+import { Chip, Mono, Skeleton } from '../../_components/ui';
 import { plural } from '../../_lib/format';
 import { bystanderStatusKey, bystanderTone, capitalize } from '../../_lib/status';
 
@@ -281,7 +281,7 @@ function Photos({ reportId, count }: { reportId: string; count: number }) {
         <div className="grid grid-cols-3 gap-2">
           {isPending
             ? Array.from({ length: count }, (_, i) => (
-                <div key={i} className="aspect-4/3 animate-pulse rounded-[14px] bg-gray-100" />
+                <Skeleton key={i} className="aspect-4/3 rounded-[14px]" />
               ))
             : urls.map((url, i) => (
                 <a
