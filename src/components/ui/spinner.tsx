@@ -1,9 +1,9 @@
 import { cn } from '@/lib';
 
 const ring = {
-  sm: 'size-4 border-2',
-  md: 'size-5 border-2',
-  lg: 'size-8 border-[3px]',
+  sm: 'size-4.5 border-2',
+  md: 'size-6 border-[2.5px]',
+  lg: 'size-10 border-[3px]',
 };
 
 /**

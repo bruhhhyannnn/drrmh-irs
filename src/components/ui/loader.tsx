@@ -31,51 +31,51 @@ export function Loader({
       role="status"
       aria-live="polite"
       className={cn(
-        'flex flex-col items-center justify-center gap-3 py-10',
+        'flex flex-col items-center justify-center gap-4 py-10',
         fullScreen && 'min-h-dvh',
         !show && 'invisible',
         className
       )}
     >
-      <div className="relative size-16">
+      <div className="relative size-24">
         {/* The 192px PWA icon, served as-is: it is in the service worker's precache, so the logo
             still shows offline (an optimised /_next/image URL wouldn't be). */}
         <Image
           src="/icon-192x192.png"
           alt=""
-          width={64}
-          height={64}
+          width={96}
+          height={96}
           unoptimized
           loading="eager"
-          className="size-full object-contain p-3"
+          className="size-full object-contain p-4.5"
         />
         <svg
-          viewBox="0 0 64 64"
+          viewBox="0 0 96 96"
           aria-hidden
           className="text-brand-500 absolute inset-0 motion-safe:animate-spin"
         >
           <circle
-            cx="32"
-            cy="32"
-            r="30"
+            cx="48"
+            cy="48"
+            r="45"
             fill="none"
             stroke="currentColor"
             strokeOpacity=".15"
-            strokeWidth="3"
+            strokeWidth="4"
           />
           <circle
-            cx="32"
-            cy="32"
-            r="30"
+            cx="48"
+            cy="48"
+            r="45"
             fill="none"
             stroke="currentColor"
-            strokeWidth="3"
+            strokeWidth="4"
             strokeLinecap="round"
-            strokeDasharray="47 142"
+            strokeDasharray="71 212"
           />
         </svg>
       </div>
-      <p className="text-[14px] text-gray-600">{label}</p>
+      <p className="text-[16px] font-medium text-gray-600">{label}</p>
     </div>
   );
 }
