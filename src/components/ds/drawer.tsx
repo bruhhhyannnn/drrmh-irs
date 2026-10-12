@@ -131,18 +131,23 @@ function DrawerPanel({
         <div className="flex shrink-0 items-start gap-4 border-b border-[#eaecf0] p-5 md:px-7 md:py-6">
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             {eyebrow && (
-              <span className="text-[11px] font-bold tracking-[.08em] text-gray-500 uppercase">
+              <span className="text-[11px] large-text:text-[12px] font-bold tracking-[.08em] text-gray-500 uppercase">
                 {eyebrow}
               </span>
             )}
             <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
-              <h2 id={titleId} className="text-[20px] leading-tight font-extrabold">
+              <h2
+                id={titleId}
+                className="text-[20px] large-text:text-[22px] leading-tight font-extrabold"
+              >
                 {title}
               </h2>
               {titleAside}
             </div>
             {subtitle && (
-              <p className="text-[13px] leading-[1.45] text-pretty text-gray-500">{subtitle}</p>
+              <p className="text-[13px] large-text:text-[14px] leading-[1.45] text-pretty text-gray-500">
+                {subtitle}
+              </p>
             )}
           </div>
           <button

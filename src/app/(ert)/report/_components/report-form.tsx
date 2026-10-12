@@ -269,7 +269,7 @@ export function ErtReportForm({
             type="button"
             onClick={() => openDrawer('event')}
             className={cn(
-              'rounded text-[14px] font-bold text-white underline underline-offset-3 hover:text-[#fbd5d5]',
+              'rounded text-[16px] font-bold text-white underline underline-offset-3 hover:text-[#fbd5d5]',
               FOCUS_RING
             )}
           >
@@ -305,15 +305,15 @@ export function ErtReportForm({
           <Card className="flex flex-wrap items-center gap-x-3.5 gap-y-3 px-5 py-4 md:px-6">
             <Avatar name={name} />
             <div className="flex min-w-0 flex-[1_1_160px] flex-col gap-0.5">
-              <span className="text-[15px] font-bold">
+              <span className="text-[17px] font-bold">
                 {name}
                 {profile.position && ` · ${profile.position.name}`}
               </span>
-              <span className="text-[13px] text-gray-600">
+              <span className="text-[14px] text-gray-600">
                 {place || 'No cluster on your profile'}
               </span>
             </div>
-            <span className="flex items-center gap-1.5 text-[12px] font-medium text-gray-500">
+            <span className="flex items-center gap-1.5 text-[13px] font-medium text-gray-500">
               <Shield size={14} aria-hidden />
               From your profile
             </span>
@@ -337,9 +337,9 @@ export function ErtReportForm({
             number={2}
             title="Headcount"
             aside={
-              <span className="flex items-baseline gap-1.5 text-[13px] font-medium text-gray-500">
+              <span className="flex items-baseline gap-1.5 text-[14px] font-medium text-gray-500">
                 Total
-                <Mono className="text-[17px] font-bold text-gray-900">{total}</Mono>
+                <Mono className="text-[19px] font-bold text-gray-900">{total}</Mono>
               </span>
             }
           >
@@ -364,7 +364,7 @@ export function ErtReportForm({
                       key={cc.category_id}
                       className="flex min-h-15 items-center gap-3 border-b border-[#eaecf0] py-1.5"
                     >
-                      <span className="min-w-0 flex-1 text-[14px] leading-[1.3] font-semibold text-pretty text-gray-700">
+                      <span className="min-w-0 flex-1 text-[16px] leading-[1.3] font-semibold text-pretty text-gray-700">
                         {cc.category.name}
                       </span>
                       <Stepper
@@ -380,7 +380,7 @@ export function ErtReportForm({
                   ))}
                 </div>
               ) : (
-                <p className="mt-3 text-[14px] text-gray-500">
+                <p className="mt-3 text-[16px] text-gray-500">
                   No headcount fields are set up for your campus yet.
                 </p>
               )
@@ -431,7 +431,7 @@ export function ErtReportForm({
                         setDamageId(value);
                         touch();
                       }}
-                      className="min-h-14 py-2 text-[14px]"
+                      className="min-h-14 py-2 text-[16px]"
                     >
                       {damage.name}
                     </OptionTile>
@@ -451,7 +451,7 @@ export function ErtReportForm({
           aria-label="Before you submit"
           className="sticky top-6 hidden flex-col gap-4.5 rounded-[22px] border border-gray-200 bg-white p-6 shadow-theme-md lg:flex"
         >
-          <h2 className="text-[17px] leading-[1.3] font-bold">Before you submit</h2>
+          <h2 className="text-[19px] leading-[1.3] font-bold">Before you submit</h2>
           <ul className="flex flex-col gap-3.5">
             <CheckItem
               done={!missing.event}
@@ -473,15 +473,15 @@ export function ErtReportForm({
             />
           </ul>
           <div className="flex items-baseline justify-between gap-3 rounded-2xl border border-[#eaecf0] bg-gray-50 px-4 py-3.5">
-            <span className="text-[14px] font-semibold text-gray-600">Headcount total</span>
-            <Mono className="text-[26px] font-extrabold">{total}</Mono>
+            <span className="text-[16px] font-semibold text-gray-600">Headcount total</span>
+            <Mono className="text-[28px] font-extrabold">{total}</Mono>
           </div>
           <div className="flex flex-col gap-3">
             <Button fullWidth loading={submitting} onClick={submit}>
               {submitLabel}
             </Button>
             {savedAt && (
-              <span className="flex items-center justify-center gap-1.5 text-[13px] font-medium text-gray-500">
+              <span className="flex items-center justify-center gap-1.5 text-[14px] font-medium text-gray-500">
                 <Check size={12} strokeWidth={3} aria-hidden className="text-[#027a48]" />
                 Draft saved on this phone · <Mono>{formatTime(savedAt)}</Mono>
               </span>
@@ -497,11 +497,11 @@ export function ErtReportForm({
       >
         <div className={cn(GUTTER, 'flex items-center gap-4 py-3')}>
           <div className="flex min-w-0 flex-1 flex-col gap-px">
-            <span className="text-[12px] font-medium text-gray-500">Headcount total</span>
+            <span className="text-[13px] font-medium text-gray-500">Headcount total</span>
             <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5">
-              <Mono className="text-[20px] font-bold">{total}</Mono>
+              <Mono className="text-[22px] font-bold">{total}</Mono>
               {savedAt && (
-                <span className="flex items-center gap-1 text-[12px] font-medium whitespace-nowrap text-gray-500">
+                <span className="flex items-center gap-1 text-[13px] font-medium whitespace-nowrap text-gray-500">
                   <Check size={12} strokeWidth={3} aria-hidden className="text-[#027a48]" />
                   Draft saved <Mono>{formatTime(savedAt)}</Mono>
                 </span>
@@ -577,7 +577,7 @@ function DraftRestored({
     >
       <div className="flex min-w-0 flex-[1_1_240px] items-start gap-2.5 py-1.5">
         <RotateCcw size={16} aria-hidden className="mt-0.75 shrink-0 text-gray-600" />
-        <span className="text-[14px] leading-normal text-pretty">
+        <span className="text-[16px] leading-normal text-pretty">
           {confirming ? (
             <>
               <strong className="font-bold">Start over?</strong> This clears the counts, people and
@@ -619,7 +619,7 @@ function GhostAction({
       type="button"
       onClick={onClick}
       className={cn(
-        'h-12 shrink-0 rounded-full px-4 text-[14px] font-bold',
+        'h-12 shrink-0 rounded-full px-4 text-[16px] font-bold',
         tone === 'brand' ? 'text-brand-500 hover:bg-brand-25' : 'text-gray-700 hover:bg-gray-200',
         FOCUS_RING
       )}
@@ -655,11 +655,11 @@ function CheckItem({
         {done && <Check size={14} strokeWidth={2.5} aria-hidden />}
       </span>
       <div className="flex min-w-0 flex-col gap-px">
-        <span className="text-[14px] font-semibold">
+        <span className="text-[16px] font-semibold">
           {label}
           <span className="sr-only">{done ? ': done' : ': not done yet'}</span>
         </span>
-        <span className={cn('truncate text-[13px]', error ? 'text-[#b42318]' : 'text-gray-500')}>
+        <span className={cn('truncate text-[14px]', error ? 'text-[#b42318]' : 'text-gray-500')}>
           {detail}
         </span>
       </div>
@@ -680,7 +680,7 @@ function PrivacyLine({
   return (
     <div
       className={cn(
-        'flex items-start gap-2.5 text-[13px] leading-normal text-gray-600',
+        'flex items-start gap-2.5 text-[14px] leading-normal text-gray-600',
         stacked ? 'border-t border-[#eaecf0] pt-4' : 'px-1',
         className
       )}

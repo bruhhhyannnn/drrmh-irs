@@ -41,7 +41,7 @@ export function NoOngoingEvent({
                 {
                   label: 'Submitted',
                   value: (
-                    <Mono className="text-[13px] font-normal">
+                    <Mono className="text-[14px] font-normal">
                       {formatDateTime(lastReport.submittedAt)}
                     </Mono>
                   ),
@@ -94,7 +94,7 @@ export function SavedOffline({
             {
               label: 'Saved',
               value: (
-                <Mono className="text-[13px] font-normal">{formatDateTime(entry.createdAt)}</Mono>
+                <Mono className="text-[14px] font-normal">{formatDateTime(entry.createdAt)}</Mono>
               ),
             },
             {
@@ -113,7 +113,7 @@ export function SavedOffline({
             },
           ]}
         />
-        <p className="text-[13px] leading-normal text-gray-500">
+        <p className="text-[14px] leading-normal text-gray-500">
           Tries again every 45 s and as soon as signal returns. Keep the app installed until it
           sends.
         </p>

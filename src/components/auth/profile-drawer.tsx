@@ -20,7 +20,7 @@ function Badge({ tone, children }: { tone: keyof typeof BADGE_TONES; children: R
   return (
     <span
       className={cn(
-        'inline-flex h-7 items-center rounded-full px-3 text-[12px] font-semibold whitespace-nowrap',
+        'inline-flex h-7 items-center rounded-full px-3 text-[12px] large-text:text-[13px] font-semibold whitespace-nowrap',
         BADGE_TONES[tone]
       )}
     >
@@ -84,13 +84,17 @@ export function ProfileDrawer({ open, onClose }: { open: boolean; onClose: () =>
           <div className="flex items-center gap-3.5">
             <span
               aria-hidden
-              className="bg-brand-500 grid size-12 shrink-0 place-items-center rounded-full text-[16px] font-bold text-white uppercase"
+              className="bg-brand-500 grid size-12 shrink-0 place-items-center rounded-full text-[16px] large-text:text-[18px] font-bold text-white uppercase"
             >
               {getInitials(fullName).slice(0, 2)}
             </span>
             <div className="flex min-w-0 flex-col gap-0.5">
-              <span className="text-[17px] leading-[1.3] font-bold">{fullName}</span>
-              <span className="truncate text-[13px] text-gray-500">{email}</span>
+              <span className="text-[17px] large-text:text-[19px] leading-[1.3] font-bold">
+                {fullName}
+              </span>
+              <span className="truncate text-[13px] large-text:text-[14px] text-gray-500">
+                {email}
+              </span>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -105,14 +109,14 @@ export function ProfileDrawer({ open, onClose }: { open: boolean; onClose: () =>
         </div>
 
         <section className="flex flex-col gap-3.5">
-          <h3 className="text-[11px] font-bold tracking-[.08em] text-gray-500 uppercase">
+          <h3 className="text-[11px] large-text:text-[12px] font-bold tracking-[.08em] text-gray-500 uppercase">
             Details
           </h3>
           <dl className="flex flex-col rounded-2xl border border-[#eaecf0] bg-white px-4 py-0.5">
             {rows.map((row) => (
               <div
                 key={row.label}
-                className="flex flex-wrap gap-x-4 gap-y-0.5 border-b border-[#eaecf0] py-3 text-[14px] leading-[1.45] last:border-b-0"
+                className="flex flex-wrap gap-x-4 gap-y-0.5 border-b border-[#eaecf0] py-3 text-[14px] large-text:text-[16px] leading-[1.45] last:border-b-0"
               >
                 <dt className="flex-[0_0_130px] text-gray-500">{row.label}</dt>
                 <dd className="min-w-0 flex-[1_1_160px] font-semibold text-gray-900">

@@ -21,10 +21,10 @@ export function Hero({
 }) {
   return (
     <HeroFrame>
-      <span className="text-[11px] font-bold tracking-[.08em] text-[#fbd5d5] uppercase">
+      <span className="text-[12px] font-bold tracking-[.08em] text-[#fbd5d5] uppercase">
         {eyebrow}
       </span>
-      <h1 className="text-[24px] leading-[1.2] font-extrabold text-balance text-white md:text-[28px]">
+      <h1 className="text-[26px] leading-[1.2] font-extrabold text-balance text-white md:text-[30px]">
         {title}
       </h1>
       {children && <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2">{children}</div>}
@@ -80,7 +80,7 @@ export function Pill({
   return (
     <span
       className={cn(
-        'flex h-6.5 items-center gap-1.5 rounded-full px-2.5 text-[12px] font-semibold whitespace-nowrap',
+        'flex h-6.5 items-center gap-1.5 rounded-full px-2.5 text-[13px] font-semibold whitespace-nowrap',
         PILL_TONES[tone]
       )}
     >
@@ -142,15 +142,15 @@ export function SectionCard({
     >
       <div className="flex items-center gap-3">
         {number !== undefined && (
-          <span className="bg-brand-25 text-brand-500 font-landing-mono grid size-7 shrink-0 place-items-center rounded-full text-[13px] font-semibold">
+          <span className="bg-brand-25 text-brand-500 font-landing-mono grid size-7 shrink-0 place-items-center rounded-full text-[14px] font-semibold">
             {number}
           </span>
         )}
-        <h2 id={titleId} className="flex-1 text-[17px] leading-[1.3] font-bold">
+        <h2 id={titleId} className="flex-1 text-[19px] leading-[1.3] font-bold">
           {title}
         </h2>
         {typeof aside === 'string' ? (
-          <span className="text-[12px] font-semibold text-gray-500">{aside}</span>
+          <span className="text-[13px] font-semibold text-gray-500">{aside}</span>
         ) : (
           aside
         )}
@@ -169,9 +169,9 @@ export function DetailList({
   rows: { label: string; value: React.ReactNode }[];
 }) {
   return (
-    <div className="flex flex-col self-stretch rounded-2xl border border-[#eaecf0] bg-gray-50 px-4 py-1 text-left text-[14px]">
+    <div className="flex flex-col self-stretch rounded-2xl border border-[#eaecf0] bg-gray-50 px-4 py-1 text-left text-[16px]">
       {title && (
-        <span className="pt-3 pb-1.5 text-[11px] font-bold tracking-[.08em] text-gray-500 uppercase">
+        <span className="pt-3 pb-1.5 text-[12px] font-bold tracking-[.08em] text-gray-500 uppercase">
           {title}
         </span>
       )}
@@ -202,9 +202,9 @@ export function Avatar({ name, size = 40 }: { name: string; size?: 32 | 40 | 44 
       aria-hidden
       className={cn(
         'bg-brand-500 grid shrink-0 place-items-center rounded-full font-bold text-white uppercase',
-        size === 32 && 'size-8 text-[13px]',
-        size === 40 && 'size-10 text-[14px]',
-        size === 44 && 'size-11 text-[15px]'
+        size === 32 && 'size-8 text-[14px]',
+        size === 40 && 'size-10 text-[16px]',
+        size === 44 && 'size-11 text-[17px]'
       )}
     >
       {getInitials(name).slice(0, 2)}
@@ -241,8 +241,8 @@ export function NoticeCard({
           {icon}
         </span>
         <div className="flex flex-col gap-2">
-          <h2 className="text-[22px] leading-[1.2] font-extrabold md:text-[26px]">{title}</h2>
-          <p className="text-[15px] leading-[1.55] text-pretty text-gray-600">{description}</p>
+          <h2 className="text-[24px] leading-[1.2] font-extrabold md:text-[28px]">{title}</h2>
+          <p className="text-[17px] leading-[1.55] text-pretty text-gray-600">{description}</p>
         </div>
         {children}
       </Card>

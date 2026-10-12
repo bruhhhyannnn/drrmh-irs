@@ -85,15 +85,15 @@ export function StepPeopleDamage(props: StepPeopleDamageProps) {
       {categories.length > 0 && (
         <section aria-labelledby="headcount-label" className="flex flex-col gap-1">
           <div className="flex items-baseline justify-between gap-3">
-            <h3 id="headcount-label" className="text-[14px] font-semibold text-gray-700">
+            <h3 id="headcount-label" className="text-[16px] font-semibold text-gray-700">
               Headcount
             </h3>
-            <span className="flex items-baseline gap-1.5 text-[13px] font-medium text-gray-500">
+            <span className="flex items-baseline gap-1.5 text-[14px] font-medium text-gray-500">
               Total
-              <span className="font-landing-mono text-[17px] font-bold text-gray-900">{total}</span>
+              <span className="font-landing-mono text-[19px] font-bold text-gray-900">{total}</span>
             </span>
           </div>
-          <p className="text-[13px] leading-[1.45] text-pretty text-gray-500">
+          <p className="text-[14px] leading-[1.45] text-pretty text-gray-500">
             People you can see in the area. These are the {props.campusName} fields; leave any you
             are unsure of at 0.
           </p>
@@ -105,7 +105,7 @@ export function StepPeopleDamage(props: StepPeopleDamageProps) {
               >
                 <label
                   htmlFor={`count-${category.id}`}
-                  className="min-w-0 flex-1 text-[14px] leading-[1.3] font-semibold text-pretty text-gray-700"
+                  className="min-w-0 flex-1 text-[16px] leading-[1.3] font-semibold text-pretty text-gray-700"
                 >
                   {category.name}
                 </label>
@@ -219,8 +219,8 @@ function PeopleRow({
         <Icon size={20} aria-hidden />
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="text-[15px] font-semibold">{title}</span>
-        <span className="truncate text-[13px] text-gray-500">{meta}</span>
+        <span className="text-[17px] font-semibold">{title}</span>
+        <span className="truncate text-[14px] text-gray-500">{meta}</span>
       </div>
       <Button
         variant="outline"

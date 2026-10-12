@@ -144,7 +144,7 @@ export function LocationPicker({
           onClick={() => locate(true)}
           disabled={isLocating}
           className={cn(
-            'absolute bottom-3 left-3 z-10 flex h-12 items-center gap-2 rounded-full bg-white px-4.5 text-[14px] font-bold text-gray-900 shadow-[0_4px_8px_-2px_rgba(16,24,40,.16)] transition-[filter] hover:brightness-97 disabled:cursor-wait',
+            'absolute bottom-3 left-3 z-10 flex h-12 items-center gap-2 rounded-full bg-white px-4.5 text-[14px] large-text:text-[16px] font-bold text-gray-900 shadow-[0_4px_8px_-2px_rgba(16,24,40,.16)] transition-[filter] hover:brightness-97 disabled:cursor-wait',
             FOCUS_RING
           )}
         >
@@ -156,12 +156,12 @@ export function LocationPicker({
       {location ? (
         <div className="flex items-start gap-2.5">
           <MapPin size={16} aria-hidden className="mt-0.5 shrink-0 text-[#027a48]" />
-          <span className="min-w-0 flex-1 text-[14px] leading-[1.45] text-gray-700">
+          <span className="min-w-0 flex-1 text-[14px] large-text:text-[16px] leading-[1.45] text-gray-700">
             {location.name ??
               (isGeocoding ? (
                 'Finding the address…'
               ) : (
-                <span className="font-landing-mono text-[13px]">
+                <span className="font-landing-mono text-[13px] large-text:text-[14px]">
                   {formatCoordinates(location.lat, location.lng)}
                 </span>
               ))}
@@ -170,7 +170,7 @@ export function LocationPicker({
             type="button"
             onClick={clear}
             className={cn(
-              'text-brand-500 hover:bg-brand-25 -my-3.5 -mr-3 h-12 shrink-0 rounded-full px-3 text-[14px] font-bold',
+              'text-brand-500 hover:bg-brand-25 -my-3.5 -mr-3 h-12 shrink-0 rounded-full px-3 text-[14px] large-text:text-[16px] font-bold',
               FOCUS_RING
             )}
           >
@@ -178,14 +178,14 @@ export function LocationPicker({
           </button>
         </div>
       ) : (
-        <p className="text-[13px] text-gray-500">
+        <p className="text-[13px] large-text:text-[14px] text-gray-500">
           {isLocating
             ? 'Finding your location…'
             : 'Tap the map to drop a pin, or use your location.'}
         </p>
       )}
       {geoError && !location && (
-        <p className="text-[13px] font-medium text-[#b54708]">{geoError}</p>
+        <p className="text-[13px] large-text:text-[14px] font-medium text-[#b54708]">{geoError}</p>
       )}
       <FieldError id="location-error">{error}</FieldError>
     </div>

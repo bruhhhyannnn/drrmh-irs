@@ -81,7 +81,7 @@ export function StepWhatWhere({
               value={type.id}
               checked={values.incident_type_id === type.id}
               onSelect={(value) => onFieldChange('incident_type_id', value)}
-              className="h-15 text-[13px]"
+              className="h-15 text-[14px]"
             >
               {type.name}
             </OptionTile>
@@ -161,7 +161,7 @@ export function StepWhatWhere({
       </div>
 
       <StepFooter>
-        <p className="flex items-center gap-2 text-[13px] text-gray-600">
+        <p className="flex items-center gap-2 text-[14px] text-gray-600">
           <ShieldCheck size={16} aria-hidden />
           <button type="button" onClick={onOpenPrivacy} className={TEXT_BUTTON}>
             Privacy notice

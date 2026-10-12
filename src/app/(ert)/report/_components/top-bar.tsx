@@ -28,7 +28,7 @@ export function TopBar() {
           height={32}
           className="size-6.5 shrink-0 object-contain md:size-8"
         />
-        <span className="text-[15px] leading-[1.2] font-extrabold whitespace-nowrap">
+        <span className="text-[17px] leading-[1.2] font-extrabold whitespace-nowrap">
           DRRM-H IRS
         </span>
         <div className="flex-1" />
@@ -88,7 +88,7 @@ function AccountMenu() {
         )}
       >
         <Avatar name={name} size={32} />
-        <span className="hidden max-w-50 truncate text-[14px] font-semibold md:inline">{name}</span>
+        <span className="hidden max-w-50 truncate text-[16px] font-semibold md:inline">{name}</span>
         <ChevronDown size={16} aria-hidden className="text-gray-500" />
       </button>
 
@@ -107,8 +107,8 @@ function AccountMenu() {
             <div className="flex items-center gap-3 p-4.5">
               <Avatar name={name} size={44} />
               <div className="flex min-w-0 flex-col gap-0.5">
-                <span className="truncate text-[15px] font-bold">{name}</span>
-                <span className="truncate text-[13px] text-gray-500">{email}</span>
+                <span className="truncate text-[17px] font-bold">{name}</span>
+                <span className="truncate text-[14px] text-gray-500">{email}</span>
               </div>
             </div>
             <div className="flex flex-col border-t border-[#eaecf0] p-1.5">
@@ -149,7 +149,7 @@ function MenuButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'flex h-12 items-center gap-3 rounded-[14px] px-3 text-left text-[15px] font-semibold',
+        'flex h-12 items-center gap-3 rounded-[14px] px-3 text-left text-[17px] font-semibold',
         tone === 'danger' ? 'hover:bg-error-50 text-[#b42318]' : 'text-gray-900 hover:bg-gray-50',
         FOCUS_RING
       )}

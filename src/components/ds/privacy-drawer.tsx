@@ -35,15 +35,19 @@ export function PrivacyDrawer({
       }
     >
       {note && (
-        <div className="flex items-start gap-2.5 rounded-2xl bg-gray-100 px-4 py-3.5 text-[14px] leading-[1.6] text-gray-700">
+        <div className="flex items-start gap-2.5 rounded-2xl bg-gray-100 px-4 py-3.5 text-[14px] large-text:text-[16px] leading-[1.6] text-gray-700">
           <ShieldCheck size={18} aria-hidden className="mt-0.5 shrink-0" />
           <span>{note}</span>
         </div>
       )}
       {PRIVACY_NOTICE_SECTIONS.map((section) => (
         <section key={section.title} className="flex flex-col gap-1">
-          <h3 className="text-[15px] font-bold text-gray-900">{section.title}</h3>
-          <p className="text-[14px] leading-[1.6] text-pretty text-gray-600">{section.body}</p>
+          <h3 className="text-[15px] large-text:text-[17px] font-bold text-gray-900">
+            {section.title}
+          </h3>
+          <p className="text-[14px] large-text:text-[16px] leading-[1.6] text-pretty text-gray-600">
+            {section.body}
+          </p>
         </section>
       ))}
     </Drawer>

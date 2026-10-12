@@ -150,7 +150,7 @@ export function ButtonLink({
     <SmartLink
       href={href}
       className={cn(
-        'h-13 items-center justify-center gap-2 rounded-full px-6 text-[15px] leading-none font-bold whitespace-nowrap transition-[filter,scale] duration-120 ease-[cubic-bezier(.2,.7,.3,1)] active:scale-98',
+        'h-13 items-center justify-center gap-2 rounded-full px-6 text-[15px] leading-none large-text:text-[17px] font-bold whitespace-nowrap transition-[filter,scale] duration-120 ease-[cubic-bezier(.2,.7,.3,1)] active:scale-98',
         fullWidth ? 'flex w-full' : 'inline-flex',
         BUTTON_VARIANTS[variant],
         FOCUS_RING

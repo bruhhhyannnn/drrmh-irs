@@ -157,7 +157,7 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
     >
       {people.length > 0 && (
         <div className="flex flex-col gap-2">
-          <span className="text-[11px] font-bold tracking-[.08em] text-gray-500 uppercase">
+          <span className="text-[11px] large-text:text-[12px] font-bold tracking-[.08em] text-gray-500 uppercase">
             Added · {people.length}
           </span>
           <ul className="flex flex-col gap-2">
@@ -174,14 +174,16 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
                   </span>
                   <div className="flex min-w-0 flex-1 flex-col gap-0.75">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-                      <span className="text-[15px] font-semibold">{name}</span>
+                      <span className="text-[15px] large-text:text-[17px] font-semibold">
+                        {name}
+                      </span>
                       {condition && (
-                        <span className="bg-warning-50 flex min-h-5.5 items-center rounded-full px-2 text-[12px] font-semibold text-[#b54708]">
+                        <span className="bg-warning-50 flex min-h-5.5 items-center rounded-full px-2 text-[12px] large-text:text-[13px] font-semibold text-[#b54708]">
                           {condition}
                         </span>
                       )}
                     </div>
-                    <span className="text-[13px] leading-[1.4] text-gray-500">
+                    <span className="text-[13px] large-text:text-[14px] leading-[1.4] text-gray-500">
                       {personMeta(person)}
                     </span>
                   </div>
@@ -204,7 +206,7 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
       )}
 
       <div className="flex flex-col gap-4 rounded-2xl border border-[#eaecf0] bg-gray-50 p-5">
-        <span className="text-[15px] font-bold">
+        <span className="text-[15px] large-text:text-[17px] font-bold">
           {people.length ? kindCopy.another : kindCopy.first}
         </span>
 
@@ -229,7 +231,7 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
                     setDraft((d) => ({ ...d, condition_id: value }));
                     setErrors((e) => ({ ...e, condition: undefined }));
                   }}
-                  className="min-h-12 py-2 text-[14px]"
+                  className="min-h-12 py-2 text-[14px] large-text:text-[16px]"
                 >
                   {condition.name}
                 </OptionTile>
@@ -280,7 +282,7 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
             />
             <span
               aria-hidden
-              className="font-landing-mono pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-[13px] text-gray-400"
+              className="font-landing-mono pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-[13px] large-text:text-[14px] text-gray-400"
             >
               yrs
             </span>

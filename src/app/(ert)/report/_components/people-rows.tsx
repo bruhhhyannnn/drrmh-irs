@@ -30,8 +30,8 @@ export function PeopleRow({
         <Icon size={20} aria-hidden />
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="text-[15px] font-semibold">{title}</span>
-        <div className="text-[13px] text-gray-500">{meta}</div>
+        <span className="text-[17px] font-semibold">{title}</span>
+        <div className="text-[14px] text-gray-500">{meta}</div>
       </div>
       {onManage && (
         <Button
@@ -62,14 +62,14 @@ export function PeopleList({
           className="flex flex-col gap-0.75 rounded-2xl border-[1.5px] border-gray-200 px-3.5 py-3"
         >
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-            <span className="text-[15px] font-semibold">{person.name || UNKNOWN_PERSON}</span>
+            <span className="text-[17px] font-semibold">{person.name || UNKNOWN_PERSON}</span>
             {person.condition && (
-              <span className="bg-warning-50 flex min-h-5.5 items-center rounded-full px-2 text-[12px] font-semibold text-[#b54708]">
+              <span className="bg-warning-50 flex min-h-5.5 items-center rounded-full px-2 text-[13px] font-semibold text-[#b54708]">
                 {person.condition}
               </span>
             )}
           </div>
-          <span className="text-[13px] leading-[1.4] text-gray-500">{personMeta(person)}</span>
+          <span className="text-[14px] leading-[1.4] text-gray-500">{personMeta(person)}</span>
         </li>
       ))}
     </ul>

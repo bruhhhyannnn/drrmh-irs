@@ -32,19 +32,19 @@ export function TopBar() {
         />
       ))}
       <div className="ml-0.5 flex min-w-0 flex-col gap-px">
-        <span className="text-[15px] leading-[1.2] font-extrabold whitespace-nowrap">
+        <span className="text-[17px] leading-[1.2] font-extrabold whitespace-nowrap">
           DRRM-H · IRS
         </span>
-        <span className="hidden text-[12px] text-gray-500 md:block">Incident Reporting System</span>
+        <span className="hidden text-[13px] text-gray-500 md:block">Incident Reporting System</span>
       </div>
       <div className="flex-1" />
-      <span className="hidden text-[14px] font-medium text-gray-600 md:inline">
+      <span className="hidden text-[16px] font-medium text-gray-600 md:inline">
         Life-threatening?
       </span>
       <a
         href="tel:911"
         className={cn(
-          'border-brand-500 text-brand-500 hover:bg-brand-25 flex h-10 shrink-0 items-center gap-2 rounded-full border-[1.5px] px-3.5 text-[14px] font-bold whitespace-nowrap transition-colors',
+          'border-brand-500 text-brand-500 hover:bg-brand-25 flex h-10 shrink-0 items-center gap-2 rounded-full border-[1.5px] px-3.5 text-[16px] font-bold whitespace-nowrap transition-colors',
           FOCUS_RING
         )}
       >
@@ -106,10 +106,10 @@ export function StepHeader({ step, aside }: { step: number; aside: React.ReactNo
   return (
     <div className="flex flex-col gap-2.5">
       <div className="flex items-baseline justify-between gap-3">
-        <span className="font-landing-mono text-brand-500 text-[13px] font-semibold">
+        <span className="font-landing-mono text-brand-500 text-[14px] font-semibold">
           Step {step} of {STEP_COUNT}
         </span>
-        <span className="text-[13px] text-gray-500">{aside}</span>
+        <span className="text-[14px] text-gray-500">{aside}</span>
       </div>
       <div aria-hidden className="grid grid-cols-3 gap-1.5">
         {Array.from({ length: STEP_COUNT }, (_, i) => (
@@ -130,7 +130,7 @@ export const StepTitle = forwardRef<HTMLHeadingElement, { children: React.ReactN
       <h2
         ref={ref}
         tabIndex={-1}
-        className="text-[20px] leading-tight font-extrabold outline-none md:text-[24px]"
+        className="text-[22px] leading-tight font-extrabold outline-none md:text-[26px]"
       >
         {children}
       </h2>

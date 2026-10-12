@@ -67,7 +67,7 @@ export function SubmittedReport({
     return (
       <p
         role="alert"
-        className="flex flex-1 items-center justify-center py-20 text-[15px] text-gray-600"
+        className="flex flex-1 items-center justify-center py-20 text-[17px] text-gray-600"
       >
         This report couldn&apos;t be loaded.
       </p>
@@ -161,7 +161,7 @@ export function SubmittedReport({
         <Pill tone="success" icon={<Check size={12} strokeWidth={3} aria-hidden />}>
           Submitted
         </Pill>
-        <Mono className="text-[13px] text-[#fde8e8]">{formatDateTime(report.submitted_at)}</Mono>
+        <Mono className="text-[14px] text-[#fde8e8]">{formatDateTime(report.submitted_at)}</Mono>
       </Hero>
 
       <div className={cn(GUTTER, 'pt-6 pb-10')}>
@@ -171,7 +171,7 @@ export function SubmittedReport({
               type="button"
               onClick={onBack}
               className={cn(
-                'flex h-10 items-center gap-1.5 self-start text-[14px] font-bold text-gray-600 hover:text-gray-900',
+                'flex h-10 items-center gap-1.5 self-start text-[16px] font-bold text-gray-600 hover:text-gray-900',
                 FOCUS_RING
               )}
             >
@@ -186,8 +186,8 @@ export function SubmittedReport({
                 <Check size={22} strokeWidth={2.5} aria-hidden />
               </span>
               <div className="flex flex-col gap-0.5">
-                <h2 className="text-[20px] leading-tight font-extrabold">Report submitted</h2>
-                <span className="text-[14px] leading-[1.45] text-gray-600">
+                <h2 className="text-[22px] leading-tight font-extrabold">Report submitted</h2>
+                <span className="text-[16px] leading-[1.45] text-gray-600">
                   {editable
                     ? 'You have already submitted a report for this event.'
                     : 'Your report for an event that has ended.'}
@@ -200,12 +200,12 @@ export function SubmittedReport({
                   {stat.value === null ? (
                     <Skeleton className="my-1 h-7 w-10 rounded-lg" />
                   ) : (
-                    <Mono className="text-[28px] leading-[1.1] font-extrabold">{stat.value}</Mono>
+                    <Mono className="text-[30px] leading-[1.1] font-extrabold">{stat.value}</Mono>
                   )}
                 </StatTile>
               ))}
               <StatTile label="Structural damage">
-                <span className="text-[17px] leading-[1.3] font-extrabold text-balance">
+                <span className="text-[19px] leading-[1.3] font-extrabold text-balance">
                   {report.damage_conditions?.name ?? 'Not given'}
                 </span>
               </StatTile>
@@ -214,9 +214,9 @@ export function SubmittedReport({
 
           <Card className="flex flex-col gap-1.5 p-5 md:p-6">
             <div className="flex items-baseline justify-between gap-3">
-              <h2 className="text-[17px] leading-[1.3] font-bold">Headcount</h2>
-              <span className="text-[13px] font-medium text-gray-500">
-                Total <Mono className="text-[15px] font-bold text-gray-900">{total}</Mono>
+              <h2 className="text-[19px] leading-[1.3] font-bold">Headcount</h2>
+              <span className="text-[14px] font-medium text-gray-500">
+                Total <Mono className="text-[17px] font-bold text-gray-900">{total}</Mono>
               </span>
             </div>
             {headcount.length ? (
@@ -226,20 +226,20 @@ export function SubmittedReport({
                     key={pc.category_id}
                     className="flex min-h-11 items-center justify-between gap-3 border-b border-[#eaecf0]"
                   >
-                    <dt className="text-[14px] leading-[1.3] text-gray-700">{pc.category.name}</dt>
+                    <dt className="text-[16px] leading-[1.3] text-gray-700">{pc.category.name}</dt>
                     <dd>
-                      <Mono className="text-[14px] font-semibold">{pc.count}</Mono>
+                      <Mono className="text-[16px] font-semibold">{pc.count}</Mono>
                     </dd>
                   </div>
                 ))}
               </dl>
             ) : (
-              <p className="text-[14px] text-gray-500">No headcount on this report.</p>
+              <p className="text-[16px] text-gray-500">No headcount on this report.</p>
             )}
           </Card>
 
           <Card className="flex flex-col gap-1.5 p-5 md:p-6">
-            <h2 className="mb-1 text-[17px] leading-[1.3] font-bold">People affected</h2>
+            <h2 className="mb-1 text-[19px] leading-[1.3] font-bold">People affected</h2>
             <PeopleRow
               kind="missing"
               meta={
@@ -277,7 +277,7 @@ export function SubmittedReport({
             <PeopleList people={casualties} />
           </Card>
 
-          <Card className="flex flex-col px-5 py-1 text-[14px] leading-[1.45] md:px-6">
+          <Card className="flex flex-col px-5 py-1 text-[16px] leading-[1.45] md:px-6">
             <dl className="flex flex-col">
               <DetailRow label="Location">{report.location_name ?? 'Pinned on the map'}</DetailRow>
               <DetailRow label="Cluster / Unit">
@@ -379,7 +379,7 @@ function SubmittedReportSkeleton() {
 function StatTile({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1 rounded-2xl border border-[#eaecf0] bg-gray-50 px-4 py-3.5">
-      <dt className="text-[12px] font-semibold text-gray-500">{label}</dt>
+      <dt className="text-[13px] font-semibold text-gray-500">{label}</dt>
       <dd>{children}</dd>
     </div>
   );

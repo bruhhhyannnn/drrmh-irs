@@ -12,6 +12,7 @@ export const metadata: Metadata = {
 export default function BystanderReportPage() {
   return (
     <div
+      data-large-text
       className={cn(
         figtree.variable,
         splineSansMono.variable,

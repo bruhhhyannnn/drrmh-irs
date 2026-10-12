@@ -77,13 +77,13 @@ export function EventDrawer({
               <span className="flex min-w-0 flex-1 flex-col gap-0.75">
                 <span
                   className={cn(
-                    'text-[15px] text-gray-900',
+                    'text-[17px] text-gray-900',
                     checked ? 'font-bold' : 'font-semibold'
                   )}
                 >
                   {event.name}
                 </span>
-                <span className={cn('text-[13px]', checked ? 'text-gray-600' : 'text-gray-500')}>
+                <span className={cn('text-[14px]', checked ? 'text-gray-600' : 'text-gray-500')}>
                   Ongoing
                   {event.started_at && ` · started ${formatShortDateTime(event.started_at)}`}
                 </span>

@@ -74,11 +74,14 @@ export function SwitchField({
   return (
     <div className="flex items-center gap-3.5 rounded-2xl border border-gray-200 bg-white px-4 py-3.5">
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span id={`${id}-label`} className="text-[15px] font-semibold">
+        <span id={`${id}-label`} className="text-[15px] large-text:text-[17px] font-semibold">
           {label}
         </span>
         {description && (
-          <span id={`${id}-desc`} className="text-[13px] leading-[1.45] text-gray-500">
+          <span
+            id={`${id}-desc`}
+            className="text-[13px] large-text:text-[14px] leading-[1.45] text-gray-500"
+          >
             {description}
           </span>
         )}

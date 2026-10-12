@@ -45,7 +45,7 @@ export function WaitingToSend() {
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          'flex h-11 shrink-0 items-center gap-2 rounded-full border pr-3.5 pl-3 text-[13px] font-semibold whitespace-nowrap',
+          'flex h-11 shrink-0 items-center gap-2 rounded-full border pr-3.5 pl-3 text-[14px] font-semibold whitespace-nowrap',
           waiting
             ? 'bg-warning-50 border-[#fedf89] text-[#b54708] hover:bg-warning-100'
             : 'bg-error-50 border-[#fecdca] text-[#b42318] hover:bg-error-100',
@@ -65,7 +65,7 @@ export function WaitingToSend() {
     chip = (
       <span
         role="status"
-        className="bg-success-50 flex h-11 shrink-0 items-center gap-2 rounded-full border border-[#abefc6] pr-3.5 pl-3 text-[13px] font-semibold whitespace-nowrap text-[#027a48]"
+        className="bg-success-50 flex h-11 shrink-0 items-center gap-2 rounded-full border border-[#abefc6] pr-3.5 pl-3 text-[14px] font-semibold whitespace-nowrap text-[#027a48]"
       >
         <Check size={16} strokeWidth={2.5} aria-hidden />
         Sent · <Mono>{formatTime(lastFieldSyncAt)}</Mono>
@@ -121,11 +121,11 @@ function WaitingDrawer({
           >
             <div className="flex flex-wrap items-start gap-x-3 gap-y-2">
               <div className="flex min-w-0 flex-[1_1_160px] flex-col gap-0.5">
-                <span className="text-[15px] font-bold">
+                <span className="text-[17px] font-bold">
                   {entry.summary?.title ?? 'Status report'}
                 </span>
                 {entry.summary?.subtitle && (
-                  <span className="text-[13px] text-gray-500">{entry.summary.subtitle}</span>
+                  <span className="text-[14px] text-gray-500">{entry.summary.subtitle}</span>
                 )}
               </div>
               <QueueStatus entry={entry} isOnline={isOnline} isSyncing={isSyncing} />
@@ -136,7 +136,7 @@ function WaitingDrawer({
                 {
                   label: 'Saved',
                   value: (
-                    <Mono className="text-[13px] font-normal">
+                    <Mono className="text-[14px] font-normal">
                       {formatDateTime(entry.createdAt)}
                     </Mono>
                   ),
@@ -144,7 +144,7 @@ function WaitingDrawer({
                 {
                   label: 'Last try',
                   value: (
-                    <Mono className="text-[13px] font-normal">
+                    <Mono className="text-[14px] font-normal">
                       {lastAttemptAt ? formatTime(lastAttemptAt) : 'Not yet'}
                     </Mono>
                   ),
@@ -152,14 +152,14 @@ function WaitingDrawer({
               ]}
             />
             {entry.status === 'failed' && entry.errorMessage && (
-              <p className="text-[13px] leading-[1.45] font-medium text-[#b42318]">
+              <p className="text-[14px] leading-[1.45] font-medium text-[#b42318]">
                 {entry.errorMessage}
               </p>
             )}
           </li>
         ))}
       </ul>
-      <div className="bg-warning-50 flex items-start gap-2.5 rounded-2xl border border-[#fedf89] px-3.5 py-3 text-[14px] leading-normal font-medium text-[#93370d]">
+      <div className="bg-warning-50 flex items-start gap-2.5 rounded-2xl border border-[#fedf89] px-3.5 py-3 text-[16px] leading-normal font-medium text-[#93370d]">
         <AlertTriangle size={16} aria-hidden className="mt-0.5 shrink-0" />
         <span className="text-pretty">
           Keep this app installed, and don&apos;t clear its data, until this list is empty.

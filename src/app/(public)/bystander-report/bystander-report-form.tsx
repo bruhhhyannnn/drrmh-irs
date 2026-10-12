@@ -300,10 +300,10 @@ export function BystanderReportForm() {
   return (
     <>
       <HeroBand className="h-40 px-4 pt-6 md:px-8 md:pt-9 lg:px-10">
-        <h1 className="text-[24px] leading-[1.2] font-extrabold text-white md:text-[28px]">
+        <h1 className="text-[26px] leading-[1.2] font-extrabold text-white md:text-[30px]">
           Report an emergency
         </h1>
-        <p className="mt-1.5 text-[15px] leading-[1.45] text-[#fde8e8]">
+        <p className="mt-1.5 text-[17px] leading-[1.45] text-[#fde8e8]">
           Anonymous. A contact number is optional.
         </p>
       </HeroBand>
@@ -313,7 +313,7 @@ export function BystanderReportForm() {
           {!isOnline && (
             <div
               role="status"
-              className="flex items-start gap-3 rounded-2xl border border-[#fedf89] bg-warning-50 px-4 py-3.5 text-[14px] leading-normal text-[#93370d]"
+              className="flex items-start gap-3 rounded-2xl border border-[#fedf89] bg-warning-50 px-4 py-3.5 text-[16px] leading-normal text-[#93370d]"
             >
               <WifiOff size={18} aria-hidden className="mt-0.5 shrink-0 text-[#b54708]" />
               <span>

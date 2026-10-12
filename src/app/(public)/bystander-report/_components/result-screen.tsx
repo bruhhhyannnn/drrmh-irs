@@ -62,20 +62,20 @@ export function ResultScreen({
           <h1
             ref={headingRef}
             tabIndex={-1}
-            className="text-[22px] leading-[1.2] font-extrabold outline-none md:text-[26px]"
+            className="text-[24px] leading-[1.2] font-extrabold outline-none md:text-[28px]"
           >
             {isSent ? 'Report received' : 'Report saved offline'}
           </h1>
-          <p className="text-[15px] leading-[1.55] text-pretty text-gray-600">
+          <p className="text-[17px] leading-[1.55] text-pretty text-gray-600">
             {isSent
               ? 'Thank you. Your report has been received and will be reviewed by the DRRM-H Emergency Response Team.'
               : "No internet connection was found, so your report was saved on this device. It will be submitted automatically as soon as you're back online — you don't need to do anything else."}
           </p>
         </div>
 
-        <dl className="flex flex-col self-stretch rounded-2xl border border-[#eaecf0] bg-gray-50 px-4 py-1 text-left text-[14px]">
+        <dl className="flex flex-col self-stretch rounded-2xl border border-[#eaecf0] bg-gray-50 px-4 py-1 text-left text-[16px]">
           <SummaryRow label={isSent ? 'Sent' : 'Saved'}>
-            <span className="font-landing-mono text-[13px]">
+            <span className="font-landing-mono text-[14px]">
               {format(new Date(result.at), 'MMM d, yyyy · h:mm a')}
             </span>
           </SummaryRow>
@@ -90,7 +90,7 @@ export function ResultScreen({
           <SummaryRow label="Status" last>
             <span
               className={cn(
-                'flex h-6.5 items-center gap-1.5 rounded-full px-2.5 text-[12px] font-semibold whitespace-nowrap',
+                'flex h-6.5 items-center gap-1.5 rounded-full px-2.5 text-[13px] font-semibold whitespace-nowrap',
                 isSent ? 'bg-success-50 text-[#027a48]' : 'bg-warning-50 text-[#b54708]'
               )}
             >
@@ -121,7 +121,7 @@ export function ResultScreen({
           </div>
         ) : (
           <>
-            <p className="flex items-center gap-2 text-[14px] text-gray-600">
+            <p className="flex items-center gap-2 text-[16px] text-gray-600">
               <Phone size={16} aria-hidden className="text-brand-500" />
               <span>
                 Need help now? <TextLink href="tel:911">Call 911</TextLink>

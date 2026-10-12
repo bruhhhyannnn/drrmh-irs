@@ -30,10 +30,16 @@ export function FieldLabel({
   const Label = htmlFor ? 'label' : 'span';
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <Label id={id} htmlFor={htmlFor} className="text-[14px] font-semibold text-gray-700">
+      <Label
+        id={id}
+        htmlFor={htmlFor}
+        className="text-[14px] large-text:text-[16px] font-semibold text-gray-700"
+      >
         {children}
       </Label>
-      {hint && <span className="text-[12px] font-medium text-gray-500">{hint}</span>}
+      {hint && (
+        <span className="text-[12px] large-text:text-[13px] font-medium text-gray-500">{hint}</span>
+      )}
       {action}
     </div>
   );
@@ -41,7 +47,10 @@ export function FieldLabel({
 
 export function FieldHelp({ id, children }: { id?: string; children: React.ReactNode }) {
   return (
-    <p id={id} className="text-[13px] leading-[1.45] text-pretty text-gray-500">
+    <p
+      id={id}
+      className="text-[13px] large-text:text-[14px] leading-[1.45] text-pretty text-gray-500"
+    >
       {children}
     </p>
   );
@@ -50,14 +59,18 @@ export function FieldHelp({ id, children }: { id?: string; children: React.React
 export function FieldError({ id, children }: { id?: string; children?: React.ReactNode }) {
   if (!children) return null;
   return (
-    <p id={id} role="alert" className="text-[13px] leading-[1.45] font-semibold text-[#b42318]">
+    <p
+      id={id}
+      role="alert"
+      className="text-[13px] large-text:text-[14px] leading-[1.45] font-semibold text-[#b42318]"
+    >
       {children}
     </p>
   );
 }
 
 const CONTROL =
-  'w-full rounded-2xl border bg-white text-[15px] text-gray-900 placeholder:text-gray-500 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400';
+  'w-full rounded-2xl border bg-white text-[15px] large-text:text-[17px] text-gray-900 placeholder:text-gray-500 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400';
 
 const controlBorder = (invalid?: boolean) => (invalid ? 'border-[#b42318]' : 'border-gray-300');
 
@@ -95,7 +108,7 @@ export const PasswordInput = forwardRef<
         aria-label={visible ? 'Hide password' : 'Show password'}
         onClick={() => setVisible((v) => !v)}
         className={cn(
-          'absolute top-1/2 right-2.5 h-8 -translate-y-1/2 rounded-lg px-1.5 text-[14px] font-bold text-gray-600 hover:text-gray-900',
+          'absolute top-1/2 right-2.5 h-8 -translate-y-1/2 rounded-lg px-1.5 text-[14px] large-text:text-[16px] font-bold text-gray-600 hover:text-gray-900',
           FOCUS_RING
         )}
       >
@@ -214,7 +227,9 @@ type ButtonStyle = {
 function buttonClass({ variant = 'primary', size = 'md', fullWidth }: ButtonStyle) {
   return cn(
     'items-center justify-center gap-2 rounded-full leading-none font-bold whitespace-nowrap transition-[filter,scale,background-color] duration-120 ease-[cubic-bezier(.2,.7,.3,1)] active:scale-98',
-    size === 'md' ? 'h-13 px-6 text-[15px]' : 'h-10 px-4.5 text-[14px]',
+    size === 'md'
+      ? 'h-13 px-6 text-[15px] large-text:text-[17px]'
+      : 'h-10 px-4.5 text-[14px] large-text:text-[16px]',
     fullWidth ? 'flex w-full' : 'inline-flex',
     BUTTON_VARIANTS[variant],
     'disabled:cursor-not-allowed disabled:border-transparent disabled:bg-gray-100 disabled:text-gray-400 disabled:brightness-100 disabled:active:scale-100',
@@ -338,7 +353,7 @@ export function SegmentedControl({
           <label
             key={option.value}
             className={cn(
-              'flex h-10 flex-1 cursor-pointer items-center justify-center rounded-full px-4 text-[14px] transition-colors has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-[#5a9ef2]',
+              'flex h-10 flex-1 cursor-pointer items-center justify-center rounded-full px-4 text-[14px] large-text:text-[16px] transition-colors has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-[#5a9ef2]',
               on
                 ? 'bg-white font-bold text-gray-900 shadow-[0_1px_3px_rgba(16,24,40,.12)]'
                 : 'font-semibold text-gray-600'
@@ -381,7 +396,7 @@ export function Stepper({
         disabled={value === 0}
         onClick={() => set(value - 1)}
         className={cn(
-          'size-12 text-[20px] leading-none font-semibold text-gray-600 max-[359px]:size-11 hover:bg-gray-100 disabled:text-gray-300 disabled:hover:bg-transparent',
+          'size-12 text-[20px] large-text:text-[22px] leading-none font-semibold text-gray-600 max-[359px]:size-11 hover:bg-gray-100 disabled:text-gray-300 disabled:hover:bg-transparent',
           FOCUS_RING,
           'focus-visible:-outline-offset-3'
         )}
@@ -398,7 +413,7 @@ export function Stepper({
         onFocus={(e) => e.target.select()}
         onChange={(e) => set(Number(e.target.value.replace(/\D/g, '')) || 0)}
         className={cn(
-          'font-landing-mono h-full w-14 bg-transparent text-center max-[359px]:w-10 text-[15px] font-semibold text-gray-900',
+          'font-landing-mono h-full w-14 bg-transparent text-center max-[359px]:w-10 text-[15px] large-text:text-[17px] font-semibold text-gray-900',
           FOCUS_RING,
           'focus-visible:-outline-offset-3'
         )}
@@ -408,7 +423,7 @@ export function Stepper({
         aria-label={`${label}: plus one`}
         onClick={() => set(value + 1)}
         className={cn(
-          'text-brand-500 hover:bg-brand-25 size-12 text-[20px] leading-none font-semibold max-[359px]:size-11',
+          'text-brand-500 hover:bg-brand-25 size-12 text-[20px] large-text:text-[22px] leading-none font-semibold max-[359px]:size-11',
           FOCUS_RING,
           'focus-visible:-outline-offset-3'
         )}

@@ -6,6 +6,7 @@ import { TopBar } from './top-bar';
 export function ErtFrame({ children }: { children: React.ReactNode }) {
   return (
     <div
+      data-large-text
       className={cn(
         figtree.variable,
         splineSansMono.variable,

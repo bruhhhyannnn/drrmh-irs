@@ -6,6 +6,10 @@
 /* Inside the A4 event report: the admin summary charts are reused there at their print sizes. */
 @custom-variant print-report (&:where([data-print-report] *));
 
+/* The ERT and bystander pages: the shared ds controls (also used in admin drawers and the
+   sign-in pages) step up to the larger type scale only under these page roots. */
+@custom-variant large-text (&:where([data-large-text] *));
+
 @theme {
   --font-sans:
     var(--font-inter), ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',

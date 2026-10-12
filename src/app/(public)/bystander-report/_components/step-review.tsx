@@ -50,13 +50,13 @@ export function StepReview({
 
       <div className="flex flex-col rounded-2xl border border-gray-200 px-4">
         <ReviewRow label="Incident type" onEdit={() => onEdit(1)}>
-          <span className="text-[15px] font-semibold">{summary.incidentType}</span>
+          <span className="text-[17px] font-semibold">{summary.incidentType}</span>
         </ReviewRow>
         <ReviewRow label="Location" onEdit={() => onEdit(1)}>
-          <span className="font-landing-mono text-[13px]">{summary.coordinates}</span>
-          <span className="text-[15px] font-semibold">{summary.place}</span>
+          <span className="font-landing-mono text-[14px]">{summary.coordinates}</span>
+          <span className="text-[17px] font-semibold">{summary.place}</span>
           {summary.locationDescription && (
-            <span className="text-[14px] text-gray-600">{summary.locationDescription}</span>
+            <span className="text-[16px] text-gray-600">{summary.locationDescription}</span>
           )}
         </ReviewRow>
         <ReviewRow label="Headcount" onEdit={() => onEdit(2)}>
@@ -101,7 +101,7 @@ export function StepReview({
         >
           <span
             aria-hidden
-            className="font-landing-mono flex h-full shrink-0 items-center border-r border-[#eaecf0] bg-gray-50 px-3.5 text-[15px] font-medium text-gray-600"
+            className="font-landing-mono flex h-full shrink-0 items-center border-r border-[#eaecf0] bg-gray-50 px-3.5 text-[17px] font-medium text-gray-600"
           >
             +63
           </span>
@@ -113,7 +113,7 @@ export function StepReview({
             placeholder="917 123 4567"
             aria-invalid={!!contactError || undefined}
             aria-describedby={contactError ? 'contact-help contact-error' : 'contact-help'}
-            className="font-landing-mono h-full min-w-0 flex-1 bg-transparent px-4 text-[15px] text-gray-900 outline-none placeholder:text-gray-500"
+            className="font-landing-mono h-full min-w-0 flex-1 bg-transparent px-4 text-[17px] text-gray-900 outline-none placeholder:text-gray-500"
             {...register('contact_number')}
           />
         </div>
@@ -123,7 +123,7 @@ export function StepReview({
         <FieldError id="contact-error">{contactError}</FieldError>
       </div>
 
-      <div className="flex items-start gap-2.5 rounded-2xl bg-gray-100 px-4 py-3.5 text-[13px] leading-normal text-gray-700">
+      <div className="flex items-start gap-2.5 rounded-2xl bg-gray-100 px-4 py-3.5 text-[14px] leading-normal text-gray-700">
         <ShieldCheck size={16} aria-hidden className="mt-0.5 shrink-0" />
         <span>
           Anonymous unless you add a contact number. Used only for emergency response and internal
@@ -172,7 +172,7 @@ function ReviewRow({
   return (
     <div className={cn('flex items-center gap-4 py-3', !last && 'border-b border-[#eaecf0]')}>
       <div className={cn('flex min-w-0 flex-1 flex-col', gap)}>
-        <span className="text-[13px] font-medium text-gray-500">{label}</span>
+        <span className="text-[14px] font-medium text-gray-500">{label}</span>
         <div className={cn('flex flex-col wrap-break-word', gap)}>{children}</div>
       </div>
       <button
@@ -180,7 +180,7 @@ function ReviewRow({
         onClick={onEdit}
         aria-label={`Edit ${label.toLowerCase()}`}
         className={cn(
-          'text-brand-500 shrink-0 rounded text-[14px] font-bold hover:text-[#7a1515] hover:underline',
+          'text-brand-500 shrink-0 rounded text-[16px] font-bold hover:text-[#7a1515] hover:underline',
           FOCUS_RING
         )}
       >
@@ -193,8 +193,8 @@ function ReviewRow({
 /** The value, or a grey "Not added". */
 function Filled({ value }: { value: string | null }) {
   return value ? (
-    <span className="text-[15px] leading-[1.4] font-semibold text-pretty">{value}</span>
+    <span className="text-[17px] leading-[1.4] font-semibold text-pretty">{value}</span>
   ) : (
-    <span className="text-[15px] text-gray-500">Not added</span>
+    <span className="text-[17px] text-gray-500">Not added</span>
   );
 }

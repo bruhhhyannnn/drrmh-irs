@@ -96,7 +96,7 @@ export function PhotoField({ photos, onAdd, onRemove }: PhotoFieldProps) {
             onClick={() => inputRef.current?.click()}
             disabled={isPreparing}
             className={cn(
-              'hover:border-brand-500 hover:text-brand-500 flex aspect-square min-h-22 flex-col items-center justify-center gap-1.5 rounded-[14px] border-[1.5px] border-dashed border-gray-300 bg-gray-50 text-[13px] font-semibold text-gray-700 transition-colors disabled:cursor-wait',
+              'hover:border-brand-500 hover:text-brand-500 flex aspect-square min-h-22 flex-col items-center justify-center gap-1.5 rounded-[14px] border-[1.5px] border-dashed border-gray-300 bg-gray-50 text-[14px] font-semibold text-gray-700 transition-colors disabled:cursor-wait',
               FOCUS_RING
             )}
           >
@@ -119,7 +119,7 @@ export function PhotoField({ photos, onAdd, onRemove }: PhotoFieldProps) {
           e.target.value = '';
         }}
       />
-      <p className="flex items-start gap-2 text-[13px] leading-[1.45] text-gray-600">
+      <p className="flex items-start gap-2 text-[14px] leading-[1.45] text-gray-600">
         <ShieldCheck size={14} aria-hidden className="mt-0.5 shrink-0" />
         <span className="text-pretty">
           Avoid faces, name tags and IDs. Location data saved in the photo is removed before it is
