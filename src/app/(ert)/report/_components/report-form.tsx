@@ -426,7 +426,7 @@ export function ErtReportForm({
 
         <aside
           aria-label="Before you submit"
-          className="sticky top-6 hidden flex-col gap-4.5 rounded-[22px] border border-gray-200 bg-white p-6 shadow-[0_4px_8px_-2px_rgba(16,24,40,.10),0_2px_4px_-2px_rgba(16,24,40,.06)] lg:flex"
+          className="sticky top-6 hidden flex-col gap-4.5 rounded-[22px] border border-gray-200 bg-white p-6 shadow-theme-md lg:flex"
         >
           <h2 className="text-[17px] leading-[1.3] font-bold">Before you submit</h2>
           <ul className="flex flex-col gap-3.5">

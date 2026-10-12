@@ -125,7 +125,7 @@ export function CampusSwitcher() {
                   aria-checked={on}
                   onClick={() => pick(option.id)}
                   className={cn(
-                    'flex min-h-11 items-center gap-3 rounded-[12px] px-3 text-left text-[14px]',
+                    'flex min-h-11 items-center gap-3 rounded-xl px-3 text-left text-[14px]',
                     on
                       ? 'bg-brand-25 text-brand-500 font-bold'
                       : 'font-medium text-gray-900 hover:bg-gray-50',

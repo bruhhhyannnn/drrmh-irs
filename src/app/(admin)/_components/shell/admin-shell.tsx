@@ -39,7 +39,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <Rail />
       <div className="flex min-h-dvh min-w-0 flex-col md:pl-22 lg:pl-60">
         <TopBar />
-        <main className="mx-auto flex w-full max-w-320 min-w-0 flex-1 flex-col gap-6 px-4 pt-4 pb-26 md:px-6 md:pt-6 md:pb-10 lg:px-8 lg:pt-8">
+        <main className="mx-auto flex w-full max-w-7xl min-w-0 flex-1 flex-col gap-6 px-4 pt-4 pb-26 md:px-6 md:pt-6 md:pb-10 lg:px-8 lg:pt-8">
           <CampusScopeGate>{children}</CampusScopeGate>
         </main>
       </div>
@@ -123,7 +123,7 @@ function Sidebar() {
                 href={item.href}
                 aria-current={on ? 'page' : undefined}
                 className={cn(
-                  'flex h-11 items-center gap-3 rounded-[12px] px-3 text-[14px]',
+                  'flex h-11 items-center gap-3 rounded-xl px-3 text-[14px]',
                   on
                     ? 'bg-brand-25 text-brand-500 font-bold'
                     : 'font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900',
@@ -335,7 +335,7 @@ function TopBar() {
   return (
     <>
       <header className="sticky top-0 z-20 border-b border-[#eaecf0] bg-white">
-        <div className="mx-auto flex h-15 w-full max-w-320 items-center gap-3 px-4 md:h-16 md:px-6 lg:px-8">
+        <div className="mx-auto flex h-15 w-full max-w-7xl items-center gap-3 px-4 md:h-16 md:px-6 lg:px-8">
           <Image
             src="/irs-logo.png"
             alt="IRS logo"

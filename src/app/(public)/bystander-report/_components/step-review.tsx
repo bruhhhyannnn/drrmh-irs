@@ -173,7 +173,7 @@ function ReviewRow({
     <div className={cn('flex items-center gap-4 py-3', !last && 'border-b border-[#eaecf0]')}>
       <div className={cn('flex min-w-0 flex-1 flex-col', gap)}>
         <span className="text-[13px] font-medium text-gray-500">{label}</span>
-        <div className={cn('flex flex-col break-words', gap)}>{children}</div>
+        <div className={cn('flex flex-col wrap-break-word', gap)}>{children}</div>
       </div>
       <button
         type="button"

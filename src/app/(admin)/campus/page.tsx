@@ -66,7 +66,7 @@ export default function CampusPage() {
                   <div className="flex items-center gap-3.5">
                     <CampusMark name={campus.name} />
                     <div className="flex min-w-0 flex-1 flex-col items-start gap-1.5">
-                      <span className="text-[17px] leading-[1.25] font-bold">{campus.name}</span>
+                      <span className="text-[17px] leading-tight font-bold">{campus.name}</span>
                       <Chip tone={campus.is_active ? 'green' : 'grey'} dot>
                         {campus.is_active ? 'Active' : 'Inactive'}
                       </Chip>

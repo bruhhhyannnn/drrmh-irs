@@ -47,8 +47,8 @@ export function WaitingToSend() {
         className={cn(
           'flex h-11 shrink-0 items-center gap-2 rounded-full border pr-3.5 pl-3 text-[13px] font-semibold whitespace-nowrap',
           waiting
-            ? 'bg-warning-50 border-[#fedf89] text-[#b54708] hover:bg-[#fef0c7]'
-            : 'bg-error-50 border-[#fecdca] text-[#b42318] hover:bg-[#fee4e2]',
+            ? 'bg-warning-50 border-[#fedf89] text-[#b54708] hover:bg-warning-100'
+            : 'bg-error-50 border-[#fecdca] text-[#b42318] hover:bg-error-100',
           FOCUS_RING
         )}
       >

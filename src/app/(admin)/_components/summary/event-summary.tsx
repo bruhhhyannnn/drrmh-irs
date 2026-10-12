@@ -119,7 +119,7 @@ export function EventSummary({ eventId, before }: { eventId: string; before?: Re
                   value={compareId}
                   onChange={(e) => setCompareId(e.target.value)}
                   className={cn(
-                    'h-10 max-w-64 appearance-none truncate rounded-[12px] border border-gray-300 bg-white pr-9 pl-3.5 text-[14px] font-semibold text-gray-900',
+                    'h-10 max-w-64 appearance-none truncate rounded-xl border border-gray-300 bg-white pr-9 pl-3.5 text-[14px] font-semibold text-gray-900',
                     FOCUS_RING
                   )}
                 >

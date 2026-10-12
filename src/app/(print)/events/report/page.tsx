@@ -118,7 +118,7 @@ function EventReport() {
   return (
     <Shell
       toolbar={
-        <div className="mx-auto flex w-full max-w-[794px] flex-wrap items-center gap-3 px-4 py-3">
+        <div className="mx-auto flex w-full max-w-198.5 flex-wrap items-center gap-3 px-4 py-3">
           <Link
             href={`/events/details?id=${event.id}`}
             className={cn(
@@ -166,7 +166,7 @@ function EventReport() {
       <Sheet title={title} running={running} generated={generated} first>
         <Letterhead campus={event.campus.name} />
         <div className="flex flex-col gap-1.5">
-          <span className="text-[13px] font-bold tracking-[.1em] text-gray-500 uppercase">
+          <span className="text-[13px] font-bold tracking-widest text-gray-500 uppercase">
             Event report
           </span>
           <h1 className="text-[30px] leading-[1.15] font-extrabold">{title}</h1>
@@ -322,7 +322,7 @@ function Sheet({
   return (
     <article
       className={cn(
-        'flex min-h-[1123px] w-full max-w-[794px] flex-col gap-5.5 bg-white px-14 pt-12 pb-8 shadow-[0_1px_3px_rgba(0,0,0,.08),0_12px_32px_rgba(0,0,0,.08)]',
+        'flex min-h-280.75 w-full max-w-198.5 flex-col gap-5.5 bg-white px-14 pt-12 pb-8 shadow-[0_1px_3px_rgba(0,0,0,.08),0_12px_32px_rgba(0,0,0,.08)]',
         'print:min-h-0 print:max-w-none print:gap-5 print:p-0 print:shadow-none',
         !last && 'print:break-after-page'
       )}
@@ -344,13 +344,13 @@ function Sheet({
 function Letterhead({ campus }: { campus: string }) {
   const logo = ownCampusLogo(campus) ?? '/up-logo.png';
   return (
-    <div className="flex items-center gap-4.5 border-b-[3px] border-[#a11d1d] pb-5">
+    <div className="flex items-center gap-4.5 border-b-[3px] border-brand-500 pb-5">
       <img src={logo} alt={`${campus} logo`} className="size-17 shrink-0 object-contain" />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="text-[13px] font-bold tracking-[.08em] text-[#a11d1d] uppercase">
+        <span className="text-[13px] font-bold tracking-[.08em] text-brand-500 uppercase">
           {campus.replace(/^UP\s+/i, 'University of the Philippines ')}
         </span>
-        <span className="text-[19px] leading-[1.25] font-extrabold">
+        <span className="text-[19px] leading-tight font-extrabold">
           Disaster Risk Reduction &amp; Management in Health Program
         </span>
         <span className="text-[14px] text-gray-600">Incident Reporting System</span>
