@@ -1,3 +1,4 @@
+import { PILLARS, pillarHref } from '@/lib/pillars';
 import {
   CalendarDays,
   ChartNoAxesColumn,
@@ -20,6 +21,8 @@ export interface NavItem {
   group?: string;
   /** Shown as a bottom tab on phone; the rest sit under More. */
   tab?: boolean;
+  /** Opens in a new tab: the DRRM pillars, which will become their own apps. */
+  newTab?: boolean;
 }
 
 const NAV: NavItem[] = [
@@ -66,6 +69,15 @@ const NAV: NavItem[] = [
   },
   { key: 'users', label: 'Users', short: 'Users', href: '/users', icon: Users },
   { key: 'settings', label: 'Settings', short: 'Settings', href: '/settings', icon: Settings },
+  ...PILLARS.map((pillar, i) => ({
+    key: `pillar-${pillar.slug}`,
+    label: pillar.label,
+    short: pillar.short,
+    href: pillarHref(pillar.slug),
+    icon: pillar.icon,
+    newTab: true,
+    ...(i === 0 && { group: 'DRRM pillars' }),
+  })),
 ];
 
 /** Pages only super admins can open; administrators run one campus. */
