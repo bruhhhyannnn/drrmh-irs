@@ -206,7 +206,10 @@ export function Donut({
   rows: CountRow[];
   total: number;
   unit: string;
-  /** Smaller, so it stays beside its legend in a narrow card (the report PDF). */
+  /**
+   * Smaller, with the legend under the donut so long condition names and long lists get the
+   * card's full width (the report PDF's half-width card).
+   */
   compact?: boolean;
 }) {
   let acc = 0;
@@ -219,7 +222,12 @@ export function Donut({
     });
   const background = stops.length ? `conic-gradient(${stops.join(', ')})` : 'var(--gray-100)';
   return (
-    <div className={cn('flex flex-wrap items-center gap-y-5', compact ? 'gap-x-5' : 'gap-x-7')}>
+    <div
+      className={cn(
+        'flex',
+        compact ? 'flex-col items-center gap-4' : 'flex-wrap items-center gap-x-7 gap-y-5'
+      )}
+    >
       <div
         aria-hidden
         className={cn(
@@ -249,23 +257,27 @@ export function Donut({
           </span>
         </div>
       </div>
-      <ul
-        className={cn('flex min-w-0 flex-col', compact ? 'flex-[1_1_140px]' : 'flex-[1_1_180px]')}
-      >
+      <ul className={cn('flex min-w-0 flex-col', compact ? 'w-full' : 'flex-[1_1_180px]')}>
         {rows.map((r) => (
           <li
             key={r.name}
             className={cn(
-              'flex items-center gap-2.5 border-b border-line',
-              compact ? 'py-1.5' : 'py-2.5'
+              'flex gap-2.5 border-b border-line',
+              // A long name wraps; its colour, count and share stay on its first line.
+              compact ? 'items-baseline py-1.5' : 'items-center py-2.5'
             )}
           >
             <span
               aria-hidden
-              className="size-2.5 shrink-0 rounded-[3px]"
+              className={cn('size-2.5 shrink-0 rounded-[3px]', compact && 'self-start mt-1.25')}
               style={{ background: r.color }}
             />
-            <span className="min-w-0 flex-1 text-[16px] print-report:text-[14px] font-medium text-gray-700">
+            <span
+              className={cn(
+                'min-w-0 flex-1 text-[16px] print-report:text-[14px] font-medium text-gray-700',
+                compact && 'leading-[1.35] text-pretty'
+              )}
+            >
               {r.name}
             </span>
             <Mono
