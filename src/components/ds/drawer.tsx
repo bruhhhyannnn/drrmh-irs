@@ -120,7 +120,7 @@ function DrawerPanel({
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          'absolute inset-x-0 top-14 bottom-0 flex flex-col overflow-hidden rounded-t-[28px] bg-white shadow-[0_18px_40px_rgba(16,24,40,.22)] md:top-0 md:left-auto md:rounded-none',
+          'absolute inset-x-0 top-14 bottom-0 flex flex-col overflow-hidden rounded-t-[28px] bg-surface shadow-[0_18px_40px_rgba(16,24,40,.22)] md:top-0 md:left-auto md:rounded-none',
           size === 'wide' ? 'md:w-130 lg:w-140' : 'md:w-120 lg:w-130'
         )}
         initial={offscreen}
@@ -128,7 +128,7 @@ function DrawerPanel({
         exit={offscreen}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       >
-        <div className="flex shrink-0 items-start gap-4 border-b border-[#eaecf0] p-5 md:px-7 md:py-6">
+        <div className="flex shrink-0 items-start gap-4 border-b border-line p-5 md:px-7 md:py-6">
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             {eyebrow && (
               <span className="text-[11px] large-text:text-[12px] font-bold tracking-[.08em] text-gray-500 uppercase">
@@ -156,7 +156,7 @@ function DrawerPanel({
             aria-label="Close"
             onClick={onClose}
             className={cn(
-              'grid size-10 shrink-0 place-items-center rounded-full border border-gray-200 bg-white text-gray-700 transition-colors hover:bg-gray-50',
+              'grid size-10 shrink-0 place-items-center rounded-full border border-gray-200 bg-surface text-gray-700 transition-colors hover:bg-gray-50',
               FOCUS_RING
             )}
           >
@@ -166,7 +166,7 @@ function DrawerPanel({
         <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto overscroll-contain p-5 md:gap-6 md:px-7 md:py-6">
           {children}
         </div>
-        <div className="shrink-0 border-t border-[#eaecf0] px-5 py-4 md:px-7">{footer}</div>
+        <div className="shrink-0 border-t border-line px-5 py-4 md:px-7">{footer}</div>
       </motion.div>
     </div>
   );

@@ -72,10 +72,10 @@ export function LocationField({ lat, lng, pinLabel, error, onChange }: LocationF
         aria-describedby={error ? 'location-error' : undefined}
         className={cn(
           'relative h-50 overflow-hidden rounded-2xl border outline-none md:h-55',
-          error ? 'border-[#b42318]' : 'border-gray-200'
+          error ? 'border-error-700' : 'border-gray-200'
         )}
       >
-        <Map theme="light" center={pin ? [pin.lng, pin.lat] : MANILA} zoom={pin ? 16 : 12}>
+        <Map center={pin ? [pin.lng, pin.lat] : MANILA} zoom={pin ? 16 : 12}>
           <MapControls showZoom position="top-right" />
           <MapClickHandler onPick={(pickedLng, pickedLat) => onChange(pickedLat, pickedLng)} />
           {pin && <MapFlyTo lat={pin.lat} lng={pin.lng} />}
@@ -89,7 +89,7 @@ export function LocationField({ lat, lng, pinLabel, error, onChange }: LocationF
             >
               <MarkerContent>
                 <div className="font-landing flex flex-col items-center">
-                  <span className="rounded-full bg-gray-900 px-2.5 py-1.25 text-[13px] font-semibold whitespace-nowrap text-white">
+                  <span className="rounded-full bg-gray-900 px-2.5 py-1.25 text-[13px] font-semibold whitespace-nowrap text-surface">
                     {pinLabel}
                   </span>
                   <span className="h-2.5 w-0.5 bg-gray-900" />
@@ -104,7 +104,7 @@ export function LocationField({ lat, lng, pinLabel, error, onChange }: LocationF
           onClick={locate}
           disabled={isLocating}
           className={cn(
-            'absolute right-3 bottom-3 z-10 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-[16px] font-bold text-gray-900 shadow-[0_4px_8px_-2px_rgba(16,24,40,.16)] transition-[filter] hover:brightness-97 disabled:cursor-wait',
+            'absolute right-3 bottom-3 z-10 flex h-10 items-center gap-2 rounded-full bg-surface px-4 text-[16px] font-bold text-gray-900 shadow-[0_4px_8px_-2px_rgba(16,24,40,.16)] transition-[filter] hover:brightness-97 disabled:cursor-wait',
             FOCUS_RING
           )}
         >
@@ -115,7 +115,7 @@ export function LocationField({ lat, lng, pinLabel, error, onChange }: LocationF
 
       {pin ? (
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-          <MapPin size={16} aria-hidden className="text-[#027a48]" />
+          <MapPin size={16} aria-hidden className="text-success-700" />
           <span className="text-[16px] font-semibold">Pinned</span>
           <span className="font-landing-mono text-[14px] text-gray-600">
             {formatCoordinates(pin.lat, pin.lng)}
@@ -125,7 +125,7 @@ export function LocationField({ lat, lng, pinLabel, error, onChange }: LocationF
             type="button"
             onClick={() => onChange(null, null)}
             className={cn(
-              'text-brand-500 h-8 rounded px-1 text-[16px] font-bold hover:text-[#7a1515] hover:underline',
+              'text-brand-500 h-8 rounded px-1 text-[16px] font-bold hover:text-brand-600 hover:underline',
               FOCUS_RING
             )}
           >
@@ -139,7 +139,7 @@ export function LocationField({ lat, lng, pinLabel, error, onChange }: LocationF
             : 'Tap the map to drop a pin, or use your location.'}
         </p>
       )}
-      {geoError && !pin && <p className="text-[14px] font-medium text-[#b54708]">{geoError}</p>}
+      {geoError && !pin && <p className="text-[14px] font-medium text-warning-700">{geoError}</p>}
       <FieldError id="location-error">{error}</FieldError>
     </div>
   );

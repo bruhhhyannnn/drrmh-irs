@@ -5,7 +5,7 @@ import { Chip, Mono } from '../ui';
 // Charts print their values, and every colour has a label, so nothing needs a hover and the
 // report still reads in black and white.
 
-export const SERIES = { a: '#a11d1d', b: '#98a2b3' };
+export const SERIES = { a: 'var(--brand-500)', b: 'var(--gray-400)' };
 
 /** Two-series legend: Q4 2026 ■  Q3 2026 ■ */
 export function SeriesLegend({ a, b }: { a: string; b: string }) {
@@ -217,7 +217,7 @@ export function Donut({
       acc += (r.count / Math.max(1, total)) * 100;
       return `${r.color} ${from}% ${acc}%`;
     });
-  const background = stops.length ? `conic-gradient(${stops.join(', ')})` : '#f2f4f7';
+  const background = stops.length ? `conic-gradient(${stops.join(', ')})` : 'var(--gray-100)';
   return (
     <div className={cn('flex flex-wrap items-center gap-y-5', compact ? 'gap-x-5' : 'gap-x-7')}>
       <div
@@ -230,7 +230,7 @@ export function Donut({
       >
         <div
           className={cn(
-            'absolute flex flex-col items-center justify-center gap-0.5 rounded-full bg-white',
+            'absolute flex flex-col items-center justify-center gap-0.5 rounded-full bg-surface',
             compact ? 'inset-4.5' : 'inset-6'
           )}
         >
@@ -256,7 +256,7 @@ export function Donut({
           <li
             key={r.name}
             className={cn(
-              'flex items-center gap-2.5 border-b border-[#eaecf0]',
+              'flex items-center gap-2.5 border-b border-line',
               compact ? 'py-1.5' : 'py-2.5'
             )}
           >
@@ -333,7 +333,7 @@ export function DamageChart({
         {withDamage.length ? (
           <ul>
             {withDamage.map((d) => (
-              <li key={d.id} className="flex items-center gap-3 border-b border-[#eaecf0] py-2.5">
+              <li key={d.id} className="flex items-center gap-3 border-b border-line py-2.5">
                 <div className="flex min-w-0 flex-1 flex-col gap-px">
                   <span className="text-[16px] print-report:text-[14px] font-semibold">
                     {d.unit}

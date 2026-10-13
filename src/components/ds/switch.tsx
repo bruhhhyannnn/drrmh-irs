@@ -35,7 +35,7 @@ export function Switch({
       className={cn(
         'relative shrink-0 rounded-full transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-60',
         size === 'sm' ? 'h-6 w-10' : 'h-6.5 w-11',
-        checked ? 'bg-brand-500' : 'bg-gray-300',
+        checked ? 'bg-brand-solid' : 'bg-gray-300',
         FOCUS_RING
       )}
     >
@@ -72,7 +72,7 @@ export function SwitchField({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <div className="flex items-center gap-3.5 rounded-2xl border border-gray-200 bg-white px-4 py-3.5">
+    <div className="flex items-center gap-3.5 rounded-2xl border border-gray-200 bg-surface px-4 py-3.5">
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span id={`${id}-label`} className="text-[15px] large-text:text-[17px] font-semibold">
           {label}

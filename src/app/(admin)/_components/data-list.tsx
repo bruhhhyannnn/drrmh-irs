@@ -37,7 +37,7 @@ export function ListTabs<K extends string>({
     <div
       role="tablist"
       aria-label={label}
-      className="flex gap-1 overflow-x-auto border-b border-[#eaecf0] px-4 md:px-5"
+      className="flex gap-1 overflow-x-auto border-b border-line px-4 md:px-5"
     >
       {tabs.map((tab) => {
         const on = tab.key === value;
@@ -96,7 +96,7 @@ export function SearchField({
   label: string;
 }) {
   return (
-    <label className="flex h-11 max-w-105 min-w-0 flex-[1_1_220px] items-center gap-2.5 rounded-[14px] border border-gray-300 bg-white px-3.5 has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-[#5a9ef2]">
+    <label className="flex h-11 max-w-105 min-w-0 flex-[1_1_220px] items-center gap-2.5 rounded-[14px] border border-gray-300 bg-surface px-3.5 has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-[#5a9ef2]">
       <Search size={18} aria-hidden className="shrink-0 text-gray-500" />
       <span className="sr-only">{label}</span>
       <input
@@ -133,7 +133,7 @@ export function FilterSelect({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={cn(
-          'h-11 w-full max-w-60 appearance-none truncate rounded-[14px] border border-gray-300 bg-white pr-9 pl-3.5 text-[16px] font-medium text-gray-700',
+          'h-11 w-full max-w-60 appearance-none truncate rounded-[14px] border border-gray-300 bg-surface pr-9 pl-3.5 text-[16px] font-medium text-gray-700',
           FOCUS_RING
         )}
       >
@@ -206,7 +206,7 @@ export function TableHead<T>({ columns }: { columns: Column<T>[] }) {
     <div
       role="row"
       style={gridTracks(columns)}
-      className={cn(GRID_ROW, 'h-11 border-y border-[#eaecf0] bg-gray-50')}
+      className={cn(GRID_ROW, 'h-11 border-y border-line bg-gray-50')}
     >
       {columns.map((c) => (
         <span
@@ -262,7 +262,7 @@ export function TableSkeleton<T>({ columns, rows = 6 }: { columns: Column<T>[]; 
           <div
             key={row}
             style={gridTracks(columns)}
-            className={cn(GRID_ROW, 'min-h-16 border-b border-[#eaecf0] py-2.5 last:border-b-0')}
+            className={cn(GRID_ROW, 'min-h-16 border-b border-line py-2.5 last:border-b-0')}
           >
             {columns.map((c, i) => (
               <div
@@ -307,7 +307,7 @@ export function TableSkeleton<T>({ columns, rows = 6 }: { columns: Column<T>[]; 
         {Array.from({ length: Math.min(rows, 4) }, (_, i) => (
           <li
             key={i}
-            className="flex flex-col gap-3.5 rounded-[18px] border border-gray-200 bg-white p-4"
+            className="flex flex-col gap-3.5 rounded-[18px] border border-gray-200 bg-surface p-4"
           >
             <div className="flex items-start gap-3">
               <div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -355,7 +355,7 @@ export function DataTable<T>({
   if (loading && !rows.length) return <TableSkeleton columns={columns} />;
   if (!rows.length) {
     return (
-      <div className="border-t border-[#eaecf0] px-5 py-12 text-center text-[16px] text-pretty text-gray-500">
+      <div className="border-t border-line px-5 py-12 text-center text-[16px] text-pretty text-gray-500">
         {empty}
       </div>
     );
@@ -371,7 +371,7 @@ export function DataTable<T>({
             style={gridTracks(columns)}
             className={cn(
               GRID_ROW,
-              'min-h-16 border-b border-[#eaecf0] py-2.5 last:border-b-0',
+              'min-h-16 border-b border-line py-2.5 last:border-b-0',
               rowClassName?.(row)
             )}
           >
@@ -434,7 +434,7 @@ export function NameCell({
           <span className="truncate text-[14px] leading-[1.35] text-gray-500">{secondary}</span>
         )}
         {flag && (
-          <span className="text-[13px] leading-[1.35] font-semibold text-[#b54708]">{flag}</span>
+          <span className="text-[13px] leading-[1.35] font-semibold text-warning-700">{flag}</span>
         )}
       </div>
     </div>
@@ -502,7 +502,7 @@ export function IconAction({
       )}
       <span
         aria-hidden
-        className="pointer-events-none absolute right-0 bottom-full z-10 mb-1.5 rounded-lg bg-gray-900 px-2 py-1 text-[13px] font-semibold whitespace-nowrap text-white opacity-0 transition-opacity group-focus-within/tip:opacity-100 group-hover/tip:opacity-100"
+        className="pointer-events-none absolute right-0 bottom-full z-10 mb-1.5 rounded-lg bg-gray-900 px-2 py-1 text-[13px] font-semibold whitespace-nowrap text-surface opacity-0 transition-opacity group-focus-within/tip:opacity-100 group-hover/tip:opacity-100"
       >
         {label}
       </span>
@@ -527,7 +527,7 @@ export function RowButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'flex h-9 items-center gap-1.5 rounded-full border-[1.5px] border-gray-300 bg-white px-3.5 text-[14px] font-bold whitespace-nowrap text-gray-900 hover:bg-gray-50',
+        'flex h-9 items-center gap-1.5 rounded-full border-[1.5px] border-gray-300 bg-surface px-3.5 text-[14px] font-bold whitespace-nowrap text-gray-900 hover:bg-gray-50',
         FOCUS_RING
       )}
     >
@@ -539,9 +539,9 @@ export function RowButton({
 const META_TONES = {
   default: 'text-gray-900',
   muted: 'text-gray-400',
-  red: 'text-[#b42318]',
-  amber: 'text-[#b54708]',
-  green: 'text-[#027a48]',
+  red: 'text-error-700',
+  amber: 'text-warning-700',
+  green: 'text-success-700',
   grey: 'text-gray-600',
 };
 
@@ -578,7 +578,7 @@ export function MobileCard({
   return (
     <div
       className={cn(
-        'flex flex-col gap-3 rounded-[18px] border border-gray-200 bg-white p-4',
+        'flex flex-col gap-3 rounded-[18px] border border-gray-200 bg-surface p-4',
         className
       )}
     >
@@ -611,13 +611,13 @@ export function MobileCard({
         </dl>
       )}
       {actions.length > 0 && (
-        <div className="flex gap-2 border-t border-[#eaecf0] pt-3">
+        <div className="flex gap-2 border-t border-line pt-3">
           {actions.map((a) => {
             const className = cn(
               'flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border-[1.5px] px-2.5 text-[16px] font-bold whitespace-nowrap',
-              a.variant === 'primary' && 'border-brand-500 bg-brand-500 text-white',
-              a.variant === 'danger' && 'border-[#fda29b] bg-white text-[#b42318]',
-              (!a.variant || a.variant === 'outline') && 'border-gray-300 bg-white text-gray-700',
+              a.variant === 'primary' && 'border-brand-solid bg-brand-solid text-white',
+              a.variant === 'danger' && 'border-error-300 bg-surface text-error-700',
+              (!a.variant || a.variant === 'outline') && 'border-gray-300 bg-surface text-gray-700',
               FOCUS_RING
             );
             return a.href ? (
@@ -650,12 +650,12 @@ export function Pager({
   if (totalPages <= 1) return null;
   const button = (disabled: boolean) =>
     cn(
-      'grid size-10 place-items-center rounded-full border bg-white',
+      'grid size-10 place-items-center rounded-full border bg-surface',
       disabled ? 'border-gray-200 text-gray-400' : 'border-gray-300 text-gray-700 hover:bg-gray-50',
       FOCUS_RING
     );
   return (
-    <div className="flex items-center justify-between gap-3 border-t border-[#eaecf0] px-4 py-3 md:px-5">
+    <div className="flex items-center justify-between gap-3 border-t border-line px-4 py-3 md:px-5">
       <span className="text-[14px] font-medium text-gray-500">
         Page {page} of {totalPages}
       </span>

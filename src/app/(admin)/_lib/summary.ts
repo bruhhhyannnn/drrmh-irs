@@ -23,13 +23,13 @@ export interface Level {
 // Casualty and damage conditions are free-text lookup values in Settings, so severity is read
 // from their wording. Lower rank = more severe for casualties; higher = worse for damage.
 const CASUALTY_LEVELS: (Level & { test: RegExp })[] = [
-  { test: /deceas|fatal|dead|died/i, rank: 0, tone: 'grey', color: '#344054' },
-  { test: /critical|unconscious|unrespons/i, rank: 1, tone: 'red', color: '#912018' },
+  { test: /deceas|fatal|dead|died/i, rank: 0, tone: 'grey', color: 'var(--gray-700)' },
+  { test: /critical|unconscious|unrespons/i, rank: 1, tone: 'red', color: 'var(--error-800)' },
   { test: /serious|severe|major/i, rank: 2, tone: 'red', color: '#d92d20' },
   { test: /moderate/i, rank: 3, tone: 'amber', color: '#f79009' },
   { test: /minor|light/i, rank: 4, tone: 'amber', color: '#fdb022' },
 ];
-const OTHER_CASUALTY: Level = { rank: 5, tone: 'neutral', color: '#98a2b3' };
+const OTHER_CASUALTY: Level = { rank: 5, tone: 'neutral', color: 'var(--gray-400)' };
 
 function casualtyLevel(condition: string): Level {
   return CASUALTY_LEVELS.find((l) => l.test.test(condition)) ?? OTHER_CASUALTY;
@@ -37,13 +37,13 @@ function casualtyLevel(condition: string): Level {
 
 const DAMAGE_LEVELS: (Level & { test: RegExp })[] = [
   { test: /^(none|no\b)|no visible/i, rank: 0, tone: 'green', color: '#12b76a' },
-  { test: /total|condemn/i, rank: 5, tone: 'grey', color: '#344054' },
-  { test: /partial/i, rank: 4, tone: 'red', color: '#912018' },
+  { test: /total|condemn/i, rank: 5, tone: 'grey', color: 'var(--gray-700)' },
+  { test: /partial/i, rank: 4, tone: 'red', color: 'var(--error-800)' },
   { test: /major|unsafe|severe|structural/i, rank: 3, tone: 'red', color: '#d92d20' },
   { test: /moderate/i, rank: 2, tone: 'amber', color: '#f79009' },
   { test: /minor|cosmetic|light/i, rank: 1, tone: 'amber', color: '#fdb022' },
 ];
-const OTHER_DAMAGE: Level = { rank: 2, tone: 'amber', color: '#98a2b3' };
+const OTHER_DAMAGE: Level = { rank: 2, tone: 'amber', color: 'var(--gray-400)' };
 
 function damageLevel(condition: string): Level {
   return DAMAGE_LEVELS.find((l) => l.test.test(condition)) ?? OTHER_DAMAGE;

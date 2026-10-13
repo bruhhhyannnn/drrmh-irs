@@ -32,7 +32,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       className={cn(
         figtree.variable,
         splineSansMono.variable,
-        'font-landing min-h-dvh bg-gray-50 text-gray-900 antialiased'
+        'font-landing min-h-dvh bg-canvas text-gray-900 antialiased'
       )}
     >
       <Sidebar />
@@ -66,7 +66,7 @@ function CampusScopeGate({ children }: { children: React.ReactNode }) {
   if (blocked) return null;
   if (!isSuperAdmin && !hasCampus) {
     return (
-      <div className="flex flex-col gap-1.5 rounded-[22px] border border-gray-200 bg-white p-6">
+      <div className="flex flex-col gap-1.5 rounded-[22px] border border-gray-200 bg-surface p-6">
         <h1 className="text-[18px] font-bold">No campus assigned</h1>
         <p className="text-[15px] leading-normal text-pretty text-gray-600">
           Your account isn&apos;t linked to a campus yet, so there is nothing to show. Ask a super
@@ -88,11 +88,11 @@ function Sidebar() {
   const userType = useAuthStore((s) => s.userProfile?.user_type?.name);
   const nav = navFor(useIsSuperAdmin());
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-[#eaecf0] bg-white lg:flex">
+    <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-line bg-surface lg:flex">
       <Link
         href="/dashboard"
         className={cn(
-          'flex h-16 shrink-0 items-center gap-3 border-b border-[#eaecf0] px-5',
+          'flex h-16 shrink-0 items-center gap-3 border-b border-line px-5',
           FOCUS_RING,
           'focus-visible:-outline-offset-3'
         )}
@@ -144,7 +144,7 @@ function Sidebar() {
           );
         })}
       </nav>
-      <p className="border-t border-[#eaecf0] px-5 py-4 text-[12px] text-gray-500">
+      <p className="border-t border-line px-5 py-4 text-[12px] text-gray-500">
         DRRM-H © {new Date().getFullYear()} · Version {version}
       </p>
     </aside>
@@ -155,7 +155,7 @@ function BadgeDot({ className }: { className: string }) {
   return (
     <span
       aria-hidden
-      className={cn('bg-error-600 absolute size-2 rounded-full border-2 border-white', className)}
+      className={cn('bg-error-600 absolute size-2 rounded-full border-2 border-surface', className)}
     />
   );
 }
@@ -165,7 +165,7 @@ function Rail() {
   const pending = usePendingBadge();
   const nav = navFor(useIsSuperAdmin());
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-22 flex-col items-center gap-1 overflow-y-auto border-r border-[#eaecf0] bg-white px-2 py-3.5 md:flex lg:hidden">
+    <aside className="fixed inset-y-0 left-0 z-30 hidden w-22 flex-col items-center gap-1 overflow-y-auto border-r border-line bg-surface px-2 py-3.5 md:flex lg:hidden">
       <Link
         href="/dashboard"
         aria-label="Dashboard"
@@ -230,7 +230,7 @@ function BottomTabs() {
       <nav
         aria-label="Main"
         data-bottom-bar
-        className="fixed inset-x-0 bottom-0 z-40 grid h-17 grid-cols-5 border-t border-[#eaecf0] bg-white pb-[env(safe-area-inset-bottom)] md:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 grid h-17 grid-cols-5 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden"
       >
         {tabs.map((item) => {
           const on = isActivePath(pathname, item.href);
@@ -298,7 +298,7 @@ function MoreSheet({
       <div aria-hidden className="absolute inset-0 bg-[rgba(16,24,40,.35)]" onClick={onClose} />
       <div
         ref={sheetRef}
-        className="absolute inset-x-3 bottom-[calc(68px+12px+env(safe-area-inset-bottom))] flex flex-col rounded-[22px] border border-gray-200 bg-white p-1.5 shadow-[0_18px_40px_rgba(16,24,40,.22)]"
+        className="absolute inset-x-3 bottom-[calc(68px+12px+env(safe-area-inset-bottom))] flex flex-col rounded-[22px] border border-gray-200 bg-surface p-1.5 shadow-[0_18px_40px_rgba(16,24,40,.22)]"
       >
         {items.map((item) => {
           const on = isActivePath(pathname, item.href);
@@ -335,7 +335,7 @@ function TopBar() {
 
   return (
     <>
-      <header className="sticky top-0 z-20 border-b border-[#eaecf0] bg-white">
+      <header className="sticky top-0 z-20 border-b border-line bg-surface">
         <div className="mx-auto flex h-15 w-full max-w-7xl items-center gap-3 px-4 md:h-16 md:px-6 lg:px-8">
           <Image
             src="/irs-logo.png"
@@ -351,13 +351,13 @@ function TopBar() {
             aria-label={`My profile: ${name}`}
             onClick={() => setProfileOpen(true)}
             className={cn(
-              'flex h-11 shrink-0 items-center gap-2.5 rounded-full border border-gray-200 bg-white pr-2.5 pl-1.5 hover:bg-gray-50',
+              'flex h-11 shrink-0 items-center gap-2.5 rounded-full border border-gray-200 bg-surface pr-2.5 pl-1.5 hover:bg-gray-50',
               FOCUS_RING
             )}
           >
             <span
               aria-hidden
-              className="bg-brand-500 grid size-8 place-items-center rounded-full text-[13px] font-bold text-white uppercase"
+              className="bg-brand-solid grid size-8 place-items-center rounded-full text-[13px] font-bold text-white uppercase"
             >
               {getInitials(name).slice(0, 2)}
             </span>

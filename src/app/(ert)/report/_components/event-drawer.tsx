@@ -56,7 +56,7 @@ export function EventDrawer({
                 'flex cursor-pointer items-center gap-3.5 rounded-2xl p-4 text-left has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-[#5a9ef2]',
                 checked
                   ? 'border-brand-500 bg-brand-25 border-2 shadow-[0_4px_8px_-2px_rgba(16,24,40,.10)]'
-                  : 'border-[1.5px] border-gray-200 bg-white hover:border-gray-300'
+                  : 'border-[1.5px] border-gray-200 bg-surface hover:border-gray-300'
               )}
             >
               <input
@@ -70,7 +70,7 @@ export function EventDrawer({
               <span
                 aria-hidden
                 className={cn(
-                  'size-5.5 shrink-0 rounded-full bg-white',
+                  'size-5.5 shrink-0 rounded-full bg-surface',
                   checked ? 'border-brand-500 border-6' : 'border-[1.5px] border-gray-400'
                 )}
               />

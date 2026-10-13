@@ -47,8 +47,8 @@ export function WaitingToSend() {
         className={cn(
           'flex h-11 shrink-0 items-center gap-2 rounded-full border pr-3.5 pl-3 text-[14px] font-semibold whitespace-nowrap',
           waiting
-            ? 'bg-warning-50 border-[#fedf89] text-[#b54708] hover:bg-warning-100'
-            : 'bg-error-50 border-[#fecdca] text-[#b42318] hover:bg-error-100',
+            ? 'bg-warning-50 border-warning-200 text-warning-700 hover:bg-warning-100'
+            : 'bg-error-50 border-error-200 text-error-700 hover:bg-error-100',
           FOCUS_RING
         )}
       >
@@ -65,7 +65,7 @@ export function WaitingToSend() {
     chip = (
       <span
         role="status"
-        className="bg-success-50 flex h-11 shrink-0 items-center gap-2 rounded-full border border-[#abefc6] pr-3.5 pl-3 text-[14px] font-semibold whitespace-nowrap text-[#027a48]"
+        className="bg-success-50 flex h-11 shrink-0 items-center gap-2 rounded-full border border-success-200 pr-3.5 pl-3 text-[14px] font-semibold whitespace-nowrap text-success-700"
       >
         <Check size={16} strokeWidth={2.5} aria-hidden />
         Sent · <Mono>{formatTime(lastFieldSyncAt)}</Mono>
@@ -152,14 +152,14 @@ function WaitingDrawer({
               ]}
             />
             {entry.status === 'failed' && entry.errorMessage && (
-              <p className="text-[14px] leading-[1.45] font-medium text-[#b42318]">
+              <p className="text-[14px] leading-[1.45] font-medium text-error-700">
                 {entry.errorMessage}
               </p>
             )}
           </li>
         ))}
       </ul>
-      <div className="bg-warning-50 flex items-start gap-2.5 rounded-2xl border border-[#fedf89] px-3.5 py-3 text-[16px] leading-normal font-medium text-[#93370d]">
+      <div className="bg-warning-50 flex items-start gap-2.5 rounded-2xl border border-warning-200 px-3.5 py-3 text-[16px] leading-normal font-medium text-warning-800">
         <AlertTriangle size={16} aria-hidden className="mt-0.5 shrink-0" />
         <span className="text-pretty">
           Keep this app installed, and don&apos;t clear its data, until this list is empty.

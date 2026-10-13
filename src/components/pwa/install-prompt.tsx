@@ -160,7 +160,7 @@ export function InstallPrompt() {
           }}
           className={cn(
             figtree.variable,
-            'font-landing fixed inset-x-4 z-35 mx-auto flex max-w-105 flex-col gap-4 rounded-[22px] border border-gray-200 bg-white p-4 text-gray-900 shadow-[0_18px_40px_rgba(16,24,40,.22)] antialiased md:right-6 md:left-auto md:w-105 md:p-5 print:hidden'
+            'font-landing fixed inset-x-4 z-35 mx-auto flex max-w-105 flex-col gap-4 rounded-[22px] border border-gray-200 bg-surface p-4 text-gray-900 shadow-[0_18px_40px_rgba(16,24,40,.22)] antialiased md:right-6 md:left-auto md:w-105 md:p-5 print:hidden'
           )}
         >
           <div className="flex items-start gap-3.5">
@@ -172,7 +172,7 @@ export function InstallPrompt() {
               height={52}
               unoptimized
               loading="eager"
-              className="size-13 shrink-0 rounded-[14px] border border-[#eaecf0] bg-white object-contain p-1"
+              className="size-13 shrink-0 rounded-[14px] border border-line bg-surface object-contain p-1"
             />
             <div className="flex min-w-0 flex-1 flex-col gap-1 pt-0.5">
               <h2 id={titleId} className="text-[17px] leading-tight font-extrabold">

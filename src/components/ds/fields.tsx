@@ -62,7 +62,7 @@ export function FieldError({ id, children }: { id?: string; children?: React.Rea
     <p
       id={id}
       role="alert"
-      className="text-[13px] large-text:text-[14px] leading-[1.45] font-semibold text-[#b42318]"
+      className="text-[13px] large-text:text-[14px] leading-[1.45] font-semibold text-error-700"
     >
       {children}
     </p>
@@ -70,9 +70,9 @@ export function FieldError({ id, children }: { id?: string; children?: React.Rea
 }
 
 const CONTROL =
-  'w-full rounded-2xl border bg-white text-[15px] large-text:text-[17px] text-gray-900 placeholder:text-gray-500 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400';
+  'w-full rounded-2xl border bg-surface text-[15px] large-text:text-[17px] text-gray-900 placeholder:text-gray-500 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400';
 
-const controlBorder = (invalid?: boolean) => (invalid ? 'border-[#b42318]' : 'border-gray-300');
+const controlBorder = (invalid?: boolean) => (invalid ? 'border-error-700' : 'border-gray-300');
 
 export const TextInput = forwardRef<
   HTMLInputElement,
@@ -209,11 +209,11 @@ export function SelectField({
 }
 
 const BUTTON_VARIANTS = {
-  primary: 'bg-brand-500 text-white hover:brightness-92',
-  outline: 'border-[1.5px] border-gray-300 bg-white text-gray-900 hover:brightness-97',
+  primary: 'bg-brand-solid text-white hover:brightness-92',
+  outline: 'border-[1.5px] border-gray-300 bg-surface text-gray-900 hover:brightness-97',
   ghost: 'text-gray-700 hover:bg-gray-100',
   /** Delete next to other actions: red outline. */
-  danger: 'border-[1.5px] border-[#fda29b] bg-white text-[#b42318] hover:bg-error-50',
+  danger: 'border-[1.5px] border-error-300 bg-surface text-error-700 hover:bg-error-50',
   /** The confirm button of a delete dialog. */
   destructive: 'bg-error-600 text-white hover:brightness-92',
 };
@@ -309,7 +309,7 @@ export function OptionTile({
         'flex cursor-pointer items-center justify-center gap-1.5 rounded-2xl px-2 text-center leading-tight transition-colors has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-[#5a9ef2]',
         checked
           ? 'border-brand-500 bg-brand-25 text-brand-500 border-2 font-bold'
-          : 'border-[1.5px] border-gray-200 bg-white font-semibold text-gray-700 hover:border-gray-300 hover:bg-gray-50',
+          : 'border-[1.5px] border-gray-200 bg-surface font-semibold text-gray-700 hover:border-gray-300 hover:bg-gray-50',
         className
       )}
     >
@@ -355,7 +355,7 @@ export function SegmentedControl({
             className={cn(
               'flex h-10 flex-1 cursor-pointer items-center justify-center rounded-full px-4 text-[14px] large-text:text-[16px] transition-colors has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-[#5a9ef2]',
               on
-                ? 'bg-white font-bold text-gray-900 shadow-[0_1px_3px_rgba(16,24,40,.12)]'
+                ? 'bg-surface font-bold text-gray-900 shadow-[0_1px_3px_rgba(16,24,40,.12)] dark:bg-gray-300'
                 : 'font-semibold text-gray-600'
             )}
           >
@@ -389,7 +389,7 @@ export function Stepper({
 }) {
   const set = (next: number) => onChange(Math.max(0, Math.min(100_000, next)));
   return (
-    <div className="flex h-12.5 shrink-0 items-center overflow-hidden rounded-full border border-gray-300 bg-white">
+    <div className="flex h-12.5 shrink-0 items-center overflow-hidden rounded-full border border-gray-300 bg-surface">
       <button
         type="button"
         aria-label={`${label}: minus one`}

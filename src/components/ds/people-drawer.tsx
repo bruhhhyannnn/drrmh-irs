@@ -178,7 +178,7 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
                         {name}
                       </span>
                       {condition && (
-                        <span className="bg-warning-50 flex min-h-5.5 items-center rounded-full px-2 text-[12px] large-text:text-[13px] font-semibold text-[#b54708]">
+                        <span className="bg-warning-50 flex min-h-5.5 items-center rounded-full px-2 text-[12px] large-text:text-[13px] font-semibold text-warning-700">
                           {condition}
                         </span>
                       )}
@@ -192,7 +192,7 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
                     aria-label={`Remove ${name}`}
                     onClick={() => setPeople((list) => list.filter((_, idx) => idx !== i))}
                     className={cn(
-                      'hover:bg-error-50 grid size-10 shrink-0 place-items-center rounded-full text-gray-500 transition-colors hover:text-[#b42318]',
+                      'hover:bg-error-50 grid size-10 shrink-0 place-items-center rounded-full text-gray-500 transition-colors hover:text-error-700',
                       FOCUS_RING
                     )}
                   >
@@ -205,7 +205,7 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
         </div>
       )}
 
-      <div className="flex flex-col gap-4 rounded-2xl border border-[#eaecf0] bg-gray-50 p-5">
+      <div className="flex flex-col gap-4 rounded-2xl border border-line bg-gray-50 p-5">
         <span className="text-[15px] large-text:text-[17px] font-bold">
           {people.length ? kindCopy.another : kindCopy.first}
         </span>

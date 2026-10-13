@@ -10,7 +10,7 @@ export function ErtFrame({ children }: { children: React.ReactNode }) {
       className={cn(
         figtree.variable,
         splineSansMono.variable,
-        'font-landing flex min-h-dvh flex-col bg-gray-50 text-gray-900 antialiased'
+        'font-landing flex min-h-dvh flex-col bg-canvas text-gray-900 antialiased'
       )}
     >
       <TopBar />

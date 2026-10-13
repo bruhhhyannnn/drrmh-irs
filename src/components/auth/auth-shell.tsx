@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 // One frame for sign-in, password reset and profile setup, so only the right-hand content
 // changes between screens. Breakpoints follow the design frames: phone is the base, tablet is
-// `md`, web is `lg`. Light theme only, like the other redesigned pages.
+// `md`, web is `lg`. The maroon photo panel looks the same in both themes.
 
 const PHOTOS = [
   '/upm-drrmh-background-1.jpg',
@@ -38,7 +38,7 @@ export function AuthShell({
       className={cn(
         figtree.variable,
         splineSansMono.variable,
-        'font-landing min-h-dvh bg-white text-gray-900 antialiased lg:grid lg:grid-cols-[500px_minmax(0,1fr)]'
+        'font-landing min-h-dvh bg-surface text-gray-900 antialiased lg:grid lg:grid-cols-[500px_minmax(0,1fr)]'
       )}
     >
       <header className="relative isolate flex min-h-35 flex-col justify-between gap-6 overflow-hidden px-4 py-5 md:min-h-45 md:px-8 md:py-7 lg:sticky lg:top-0 lg:h-dvh lg:p-10">
@@ -109,7 +109,7 @@ function ReportIncidentLink({ floating, className }: { floating?: boolean; class
     <Link
       href="/bystander-report"
       className={cn(
-        'group flex items-center gap-3.5 rounded-2xl bg-white px-4 py-3.5 transition-colors',
+        'group flex items-center gap-3.5 rounded-2xl bg-surface px-4 py-3.5 transition-colors',
         floating
           ? 'shadow-[0_18px_40px_rgba(16,24,40,.22)]'
           : 'border-[1.5px] border-gray-200 hover:border-gray-300',

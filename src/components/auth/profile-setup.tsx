@@ -108,8 +108,8 @@ export function ProfileSetup() {
 
   return (
     <AuthShell>
-      <div className="flex items-center gap-3 rounded-2xl border border-[#eaecf0] bg-gray-50 px-3.5 py-3">
-        <span className="bg-brand-500 grid size-10 shrink-0 place-items-center rounded-full text-[14px] font-bold text-white uppercase">
+      <div className="flex items-center gap-3 rounded-2xl border border-line bg-gray-50 px-3.5 py-3">
+        <span className="bg-brand-solid grid size-10 shrink-0 place-items-center rounded-full text-[14px] font-bold text-white uppercase">
           {getInitials(fullName || email)}
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">

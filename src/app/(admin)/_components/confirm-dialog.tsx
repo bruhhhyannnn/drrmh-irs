@@ -45,7 +45,7 @@ export function ConfirmDialog({ open, ...props }: ConfirmDialogProps) {
 
 const ICON_TONES = {
   danger: 'bg-error-50 text-error-600',
-  success: 'bg-success-50 text-[#027a48]',
+  success: 'bg-success-50 text-success-700',
   neutral: 'bg-gray-100 text-gray-600',
 };
 
@@ -114,7 +114,7 @@ function DialogPanel({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={bodyId}
-        className="relative flex max-h-full w-full max-w-110 flex-col gap-5 overflow-y-auto rounded-[22px] bg-white p-6 shadow-[0_18px_40px_rgba(16,24,40,.22)]"
+        className="relative flex max-h-full w-full max-w-110 flex-col gap-5 overflow-y-auto rounded-[22px] bg-surface p-6 shadow-[0_18px_40px_rgba(16,24,40,.22)]"
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.96 }}
@@ -132,8 +132,8 @@ function DialogPanel({
           </p>
         </div>
         {warning && (
-          <div className="bg-warning-50 flex items-start gap-2.5 rounded-2xl border border-[#fedf89] px-3.5 py-3 text-[14px] leading-normal font-medium text-[#93370d]">
-            <AlertTriangle size={18} aria-hidden className="mt-px shrink-0 text-[#b54708]" />
+          <div className="bg-warning-50 flex items-start gap-2.5 rounded-2xl border border-warning-200 px-3.5 py-3 text-[14px] leading-normal font-medium text-warning-800">
+            <AlertTriangle size={18} aria-hidden className="mt-px shrink-0 text-warning-700" />
             <span className="text-pretty">{warning}</span>
           </div>
         )}
@@ -144,7 +144,7 @@ function DialogPanel({
             aria-checked={checkbox.checked}
             onClick={() => checkbox.onChange(!checkbox.checked)}
             className={cn(
-              'flex items-start gap-3 rounded-2xl border border-gray-300 bg-white px-3.5 py-3 text-left hover:bg-gray-50',
+              'flex items-start gap-3 rounded-2xl border border-gray-300 bg-surface px-3.5 py-3 text-left hover:bg-gray-50',
               FOCUS_RING
             )}
           >
@@ -192,14 +192,14 @@ export function CheckBox({
       aria-hidden
       className={cn(
         'grid size-5 shrink-0 place-items-center rounded-md border-[1.5px] text-white',
-        on ? 'border-brand-500 bg-brand-500' : 'border-gray-300 bg-white',
+        on ? 'border-brand-solid bg-brand-solid' : 'border-gray-300 bg-surface',
         className
       )}
     >
       {checked ? (
         <Check size={12} strokeWidth={3} />
       ) : partial ? (
-        <span className="h-0.5 w-2 rounded bg-white" />
+        <span className="h-0.5 w-2 rounded bg-surface" />
       ) : null}
     </span>
   );

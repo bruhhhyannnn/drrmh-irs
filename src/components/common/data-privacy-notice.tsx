@@ -37,10 +37,7 @@ export const PRIVACY_NOTICE_SECTIONS: { title: string; body: React.ReactNode }[]
       <>
         For questions about this notice or to exercise your data privacy rights, contact the UP
         Manila DRRM-H Center at{' '}
-        <a
-          href="mailto:drrmh.upm@up.edu.ph"
-          className="text-brand-600 dark:text-brand-400 font-semibold"
-        >
+        <a href="mailto:drrmh.upm@up.edu.ph" className="text-brand-600 font-semibold">
           drrmh.upm@up.edu.ph
         </a>
         .
@@ -53,14 +50,12 @@ export function DataPrivacyContent() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <div className="bg-brand-100 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400 flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+        <div className="bg-brand-100 text-brand-600 flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
           <ShieldCheck size={20} />
         </div>
         <div>
-          <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            {PRIVACY_NOTICE_TITLE}
-          </h4>
-          <p className="text-xs text-gray-400 dark:text-gray-500">{PRIVACY_NOTICE_SUBTITLE}</p>
+          <h4 className="text-lg font-semibold text-gray-800">{PRIVACY_NOTICE_TITLE}</h4>
+          <p className="text-xs text-gray-400">{PRIVACY_NOTICE_SUBTITLE}</p>
         </div>
       </div>
 
@@ -76,8 +71,8 @@ export function DataPrivacyContent() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">{title}</p>
-      <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400">{children}</p>
+      <p className="text-sm font-semibold text-gray-700">{title}</p>
+      <p className="text-sm leading-relaxed text-gray-500">{children}</p>
     </div>
   );
 }

@@ -14,7 +14,7 @@ const footerLink = cn('w-fit rounded hover:underline', FOCUS_RING);
 
 export function SiteFooter() {
   return (
-    <footer className="bg-gray-900 pt-14 pb-8 text-gray-300">
+    <footer className="bg-[#101828] pt-14 pb-8 text-[#d0d5dd]">
       <Container className="flex flex-col gap-8">
         <div className="grid grid-cols-1 gap-x-10 gap-y-8 md:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
           <div className="flex min-w-0 flex-col gap-3.5">
@@ -30,7 +30,7 @@ export function SiteFooter() {
                 <span className="text-[15px] leading-[1.2] font-extrabold text-white">
                   UPM DRRM-H
                 </span>
-                <span className="text-[12px] text-gray-400">Incident Reporting System</span>
+                <span className="text-[12px] text-[#98a2b3]">Incident Reporting System</span>
               </span>
             </div>
             <p className="max-w-95 text-[14px] leading-[1.6] text-pretty">
@@ -57,7 +57,7 @@ export function SiteFooter() {
           </FooterColumn>
         </div>
 
-        <div className="flex flex-wrap justify-between gap-x-6 gap-y-2 border-t border-gray-800 pt-6 text-[13px] leading-normal text-gray-400">
+        <div className="flex flex-wrap justify-between gap-x-6 gap-y-2 border-t border-[#1d2939] pt-6 text-[13px] leading-normal text-[#98a2b3]">
           <span>© 2026 UP Manila DRRM-H — Incident Reporting System. All rights reserved.</span>
         </div>
       </Container>

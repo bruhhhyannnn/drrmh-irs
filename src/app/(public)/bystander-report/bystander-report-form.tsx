@@ -313,9 +313,9 @@ export function BystanderReportForm() {
           {!isOnline && (
             <div
               role="status"
-              className="flex items-start gap-3 rounded-2xl border border-[#fedf89] bg-warning-50 px-4 py-3.5 text-[16px] leading-normal text-[#93370d]"
+              className="flex items-start gap-3 rounded-2xl border border-warning-200 bg-warning-50 px-4 py-3.5 text-[16px] leading-normal text-warning-800"
             >
-              <WifiOff size={18} aria-hidden className="mt-0.5 shrink-0 text-[#b54708]" />
+              <WifiOff size={18} aria-hidden className="mt-0.5 shrink-0 text-warning-700" />
               <span>
                 <strong className="font-bold">You&apos;re offline.</strong> You can still fill out
                 and submit this form. It will be saved on this device and sent automatically once

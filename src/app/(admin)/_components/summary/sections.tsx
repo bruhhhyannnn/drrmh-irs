@@ -30,8 +30,8 @@ export function CompletedBanner({ summary }: { summary: Summary }) {
   const by = personName(event.completer);
   const pending = summary.clusters.pending.map((c) => c.name);
   return (
-    <div className="flex items-start gap-3 rounded-[18px] border border-[#b2ddff] bg-[#eff8ff] px-4 py-3.5">
-      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-white text-[#175cd3]">
+    <div className="flex items-start gap-3 rounded-[18px] border border-info-200 bg-info-50 px-4 py-3.5">
+      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-surface text-info-700">
         <Check size={16} aria-hidden />
       </span>
       <div className="flex min-w-0 flex-col gap-0.5">
@@ -55,8 +55,8 @@ export function CompletedBanner({ summary }: { summary: Summary }) {
 
 const TILE_ICON = {
   neutral: 'bg-gray-100 text-gray-600',
-  red: 'bg-error-50 text-[#b42318]',
-  amber: 'bg-warning-50 text-[#b54708]',
+  red: 'bg-error-50 text-error-700',
+  amber: 'bg-warning-50 text-warning-700',
 };
 
 export function OverviewTiles({ summary }: { summary: Summary }) {
@@ -96,7 +96,7 @@ export function OverviewTiles({ summary }: { summary: Summary }) {
       {tiles.map((t) => (
         <div
           key={t.label}
-          className="flex min-w-0 flex-col gap-2 rounded-[18px] border border-gray-200 bg-white px-4.5 py-4 shadow-[0_1px_3px_rgba(16,24,40,.06)]"
+          className="flex min-w-0 flex-col gap-2 rounded-[18px] border border-gray-200 bg-surface px-4.5 py-4 shadow-[0_1px_3px_rgba(16,24,40,.06)]"
         >
           <div className="flex items-center justify-between gap-2">
             <span className="text-[14px] font-semibold text-gray-600">{t.label}</span>
@@ -112,8 +112,8 @@ export function OverviewTiles({ summary }: { summary: Summary }) {
           <Mono
             className={cn(
               'text-[30px] leading-none font-extrabold md:text-[34px]',
-              t.tone === 'red' && t.value !== '0' && 'text-[#b42318]',
-              t.tone === 'amber' && t.value !== '0' && 'text-[#b54708]'
+              t.tone === 'red' && t.value !== '0' && 'text-error-700',
+              t.tone === 'amber' && t.value !== '0' && 'text-warning-700'
             )}
           >
             {t.value}
@@ -131,7 +131,7 @@ const CLUSTER_GRID = 'grid grid-cols-[minmax(0,1.5fr)_72px_88px_minmax(0,1fr)] i
 
 function DoneMark() {
   return (
-    <span className="bg-success-50 grid size-6 shrink-0 place-items-center rounded-full text-[#027a48]">
+    <span className="bg-success-50 grid size-6 shrink-0 place-items-center rounded-full text-success-700">
       <Check size={13} strokeWidth={2.5} aria-hidden />
       <span className="sr-only">Reported</span>
     </span>
@@ -180,7 +180,7 @@ export function ClustersCard({ summary }: { summary: Summary }) {
           role="row"
           className={cn(
             CLUSTER_GRID,
-            'h-10 border-t border-[#eaecf0] bg-gray-50 text-[13px] font-semibold text-gray-600',
+            'h-10 border-t border-line bg-gray-50 text-[13px] font-semibold text-gray-600',
             PAD_X
           )}
         >
@@ -197,7 +197,7 @@ export function ClustersCard({ summary }: { summary: Summary }) {
           <div
             key={c.id}
             role="row"
-            className={cn('flex flex-col gap-1.5 border-t border-[#eaecf0] py-3', PAD_X)}
+            className={cn('flex flex-col gap-1.5 border-t border-line py-3', PAD_X)}
           >
             <div className={CLUSTER_GRID}>
               <div role="cell" className="flex min-w-0 items-center gap-3">
@@ -208,7 +208,7 @@ export function ClustersCard({ summary }: { summary: Summary }) {
               <Mono
                 className={cn(
                   'text-right text-[16px] font-semibold',
-                  c.casualties ? 'text-[#b42318]' : 'text-gray-400'
+                  c.casualties ? 'text-error-700' : 'text-gray-400'
                 )}
               >
                 {c.casualties}
@@ -236,7 +236,7 @@ export function ClustersCard({ summary }: { summary: Summary }) {
           <div
             key={p.id}
             role="row"
-            className={cn(CLUSTER_GRID, 'border-t border-[#eaecf0] py-3', PAD_X)}
+            className={cn(CLUSTER_GRID, 'border-t border-line py-3', PAD_X)}
           >
             <div role="cell" className="flex min-w-0 items-center gap-3">
               <PendingMark />
@@ -251,13 +251,13 @@ export function ClustersCard({ summary }: { summary: Summary }) {
           role="row"
           className={cn(
             CLUSTER_GRID,
-            'min-h-12 rounded-b-[22px] border-t border-[#eaecf0] bg-gray-50',
+            'min-h-12 rounded-b-[22px] border-t border-line bg-gray-50',
             PAD_X
           )}
         >
           <span className="text-[16px] font-bold">Total</span>
           <Mono className="text-right text-[17px] font-extrabold">{summary.totals.reports}</Mono>
-          <Mono className="text-right text-[17px] font-extrabold text-[#b42318]">
+          <Mono className="text-right text-[17px] font-extrabold text-error-700">
             {summary.totals.casualties}
           </Mono>
           <Mono className="text-right text-[17px] font-extrabold">
@@ -269,10 +269,7 @@ export function ClustersCard({ summary }: { summary: Summary }) {
       {/* Phone: stacked rows */}
       <ul className="md:hidden">
         {done.map((c) => (
-          <li
-            key={c.id}
-            className={cn('flex flex-col gap-1.5 border-t border-[#eaecf0] py-3', PAD_X)}
-          >
+          <li key={c.id} className={cn('flex flex-col gap-1.5 border-t border-line py-3', PAD_X)}>
             <div className="flex items-center gap-3">
               <DoneMark />
               <div className="flex min-w-0 flex-1 flex-col gap-px">
@@ -296,10 +293,7 @@ export function ClustersCard({ summary }: { summary: Summary }) {
           </li>
         ))}
         {pending.map((p) => (
-          <li
-            key={p.id}
-            className={cn('flex items-center gap-3 border-t border-[#eaecf0] py-3', PAD_X)}
-          >
+          <li key={p.id} className={cn('flex items-center gap-3 border-t border-line py-3', PAD_X)}>
             <PendingMark />
             <span className="min-w-0 flex-1 text-[17px] leading-[1.3] font-bold text-gray-600">
               {p.name}
@@ -309,7 +303,7 @@ export function ClustersCard({ summary }: { summary: Summary }) {
         ))}
         <li
           className={cn(
-            'flex min-h-13 items-center gap-3 rounded-b-[22px] border-t border-[#eaecf0] bg-gray-50',
+            'flex min-h-13 items-center gap-3 rounded-b-[22px] border-t border-line bg-gray-50',
             PAD_X
           )}
         >
@@ -380,7 +374,7 @@ export function HeadcountCard({ summary }: { summary: Summary }) {
       ) : (
         <p className="text-[16px] text-gray-500">No people counted yet.</p>
       )}
-      <span className="border-t border-[#eaecf0] pt-3 text-[14px] text-gray-500">
+      <span className="border-t border-line pt-3 text-[14px] text-gray-500">
         {clusterId
           ? `${rows.length} of ${summary.headcount.fieldsTotal} fields have people counted in this cluster. Fields at 0 are not listed.`
           : `${rows.length} of ${summary.headcount.fieldsTotal} fields have people counted. Fields at 0 are not listed.`}
@@ -410,7 +404,7 @@ function ShowAllFooter({
   return (
     <div
       className={cn(
-        'flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-b-[22px] border-t border-[#eaecf0] bg-gray-25 py-2',
+        'flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-b-[22px] border-t border-line bg-gray-25 py-2',
         PAD_X
       )}
     >
@@ -458,7 +452,7 @@ export function CasualtiesCard({ summary }: { summary: Summary }) {
         )}
       </div>
       {rows.length === 0 ? (
-        <p className={cn('border-t border-[#eaecf0] py-6 text-[16px] text-gray-500', PAD_X)}>
+        <p className={cn('border-t border-line py-6 text-[16px] text-gray-500', PAD_X)}>
           No casualties reported.
         </p>
       ) : (
@@ -468,7 +462,7 @@ export function CasualtiesCard({ summary }: { summary: Summary }) {
               role="row"
               className={cn(
                 CAS_GRID,
-                'h-10 items-center border-t border-[#eaecf0] bg-gray-50 text-[13px] font-semibold text-gray-600',
+                'h-10 items-center border-t border-line bg-gray-50 text-[13px] font-semibold text-gray-600',
                 PAD_X
               )}
             >
@@ -484,7 +478,7 @@ export function CasualtiesCard({ summary }: { summary: Summary }) {
               <div
                 key={c.id}
                 role="row"
-                className={cn(CAS_GRID, 'border-t border-[#eaecf0] py-3', PAD_X)}
+                className={cn(CAS_GRID, 'border-t border-line py-3', PAD_X)}
               >
                 <div role="cell" className="flex min-w-0 flex-col gap-0.5">
                   <span className="text-[16px] leading-[1.35] font-semibold">{c.name}</span>
@@ -515,7 +509,7 @@ export function CasualtiesCard({ summary }: { summary: Summary }) {
             {shown.map((c) => (
               <li
                 key={c.id}
-                className={cn('flex flex-col gap-1.5 border-t border-[#eaecf0] py-3.5', PAD_X)}
+                className={cn('flex flex-col gap-1.5 border-t border-line py-3.5', PAD_X)}
               >
                 <div className="flex items-start justify-between gap-2.5">
                   <div className="flex min-w-0 flex-col gap-0.5">
@@ -579,7 +573,7 @@ export function MissingCard({ summary }: { summary: Summary }) {
         )}
       </div>
       {rows.length === 0 ? (
-        <p className={cn('border-t border-[#eaecf0] py-6 text-[16px] text-gray-500', PAD_X)}>
+        <p className={cn('border-t border-line py-6 text-[16px] text-gray-500', PAD_X)}>
           No missing persons reported.
         </p>
       ) : (
@@ -589,7 +583,7 @@ export function MissingCard({ summary }: { summary: Summary }) {
               role="row"
               className={cn(
                 MIS_GRID,
-                'h-10 items-center border-t border-[#eaecf0] bg-gray-50 text-[13px] font-semibold text-gray-600',
+                'h-10 items-center border-t border-line bg-gray-50 text-[13px] font-semibold text-gray-600',
                 PAD_X
               )}
             >
@@ -604,7 +598,7 @@ export function MissingCard({ summary }: { summary: Summary }) {
               <div
                 key={m.id}
                 role="row"
-                className={cn(MIS_GRID, 'border-t border-[#eaecf0] py-3', PAD_X)}
+                className={cn(MIS_GRID, 'border-t border-line py-3', PAD_X)}
               >
                 <div role="cell" className="flex min-w-0 flex-col gap-0.5">
                   <span className="text-[16px] leading-[1.35] font-semibold">{m.name}</span>
@@ -629,7 +623,7 @@ export function MissingCard({ summary }: { summary: Summary }) {
             {shown.map((m) => (
               <li
                 key={m.id}
-                className={cn('flex flex-col gap-1.5 border-t border-[#eaecf0] py-3.5', PAD_X)}
+                className={cn('flex flex-col gap-1.5 border-t border-line py-3.5', PAD_X)}
               >
                 <div className="flex min-w-0 flex-col gap-0.5">
                   <span className="text-[17px] leading-[1.35] font-semibold">{m.name}</span>
@@ -723,7 +717,7 @@ export function ReportsReceivedChart({
         }
       />
       {!compare && (
-        <dl className="grid grid-cols-3 gap-2 border-t border-[#eaecf0] pt-3.5">
+        <dl className="grid grid-cols-3 gap-2 border-t border-line pt-3.5">
           {[
             ['First report', milestones.first],
             ['Half received by', milestones.half],
@@ -819,8 +813,8 @@ export function AnalyticsGrid({ summary }: { summary: Summary }) {
 /* ─── Compare with last drill ────────────────────────────────────────────────────────── */
 
 const CHANGE_TONES = {
-  good: 'bg-success-50 text-[#027a48]',
-  bad: 'bg-error-50 text-[#b42318]',
+  good: 'bg-success-50 text-success-700',
+  bad: 'bg-error-50 text-error-700',
   same: 'bg-gray-100 text-gray-600',
 };
 
@@ -869,7 +863,7 @@ export function CompareCard({
           role="row"
           className={cn(
             CMP_GRID,
-            'h-10 border-t border-[#eaecf0] bg-gray-50 text-[13px] font-semibold text-gray-600',
+            'h-10 border-t border-line bg-gray-50 text-[13px] font-semibold text-gray-600',
             PAD_X
           )}
         >
@@ -886,7 +880,7 @@ export function CompareCard({
           <div
             key={row.measure}
             role="row"
-            className={cn(CMP_GRID, 'min-h-12 border-t border-[#eaecf0] py-2', PAD_X)}
+            className={cn(CMP_GRID, 'min-h-12 border-t border-line py-2', PAD_X)}
           >
             <span role="cell" className="text-[16px] leading-[1.35] font-semibold">
               {row.measure}
@@ -903,7 +897,7 @@ export function CompareCard({
         {rows.map((row) => (
           <li
             key={row.measure}
-            className={cn('flex flex-col gap-1.5 border-t border-[#eaecf0] py-3', PAD_X)}
+            className={cn('flex flex-col gap-1.5 border-t border-line py-3', PAD_X)}
           >
             <div className="flex items-center justify-between gap-2.5">
               <span className="text-[17px] leading-[1.35] font-semibold">{row.measure}</span>

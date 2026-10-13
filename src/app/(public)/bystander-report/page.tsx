@@ -16,7 +16,7 @@ export default function BystanderReportPage() {
       className={cn(
         figtree.variable,
         splineSansMono.variable,
-        'font-landing min-h-screen overflow-x-clip bg-gray-50 text-gray-900 antialiased'
+        'font-landing min-h-screen overflow-x-clip bg-canvas text-gray-900 antialiased'
       )}
     >
       <TopBar />

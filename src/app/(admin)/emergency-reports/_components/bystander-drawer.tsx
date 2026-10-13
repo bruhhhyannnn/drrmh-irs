@@ -139,7 +139,7 @@ function BystanderDetails({ report: r }: { report: BystanderRow }) {
 
       {r.description && (
         <DrawerSection title="What happened">
-          <p className="rounded-2xl border border-[#eaecf0] bg-gray-50 px-4 py-3.5 text-[15px] leading-[1.6] text-pretty text-gray-700">
+          <p className="rounded-2xl border border-line bg-gray-50 px-4 py-3.5 text-[15px] leading-[1.6] text-pretty text-gray-700">
             {r.description}
           </p>
         </DrawerSection>
@@ -153,7 +153,7 @@ function BystanderDetails({ report: r }: { report: BystanderRow }) {
             {headcount.map((c) => (
               <li
                 key={c.id}
-                className="flex min-w-0 flex-col gap-1 rounded-[14px] border border-[#eaecf0] bg-white px-3 py-2.5"
+                className="flex min-w-0 flex-col gap-1 rounded-[14px] border border-line bg-surface px-3 py-2.5"
               >
                 <Mono className="text-[18px] leading-none font-bold">
                   {c.count.toLocaleString()}
@@ -252,7 +252,7 @@ function PeopleList({
           <span
             className={cn(
               'grid size-9 shrink-0 place-items-center rounded-full',
-              tone === 'red' ? 'bg-error-50 text-[#b42318]' : 'bg-warning-50 text-[#b54708]'
+              tone === 'red' ? 'bg-error-50 text-error-700' : 'bg-warning-50 text-warning-700'
             )}
           >
             <UserRound size={18} aria-hidden />
@@ -276,7 +276,7 @@ function Photos({ reportId, count }: { reportId: string; count: number }) {
   return (
     <DrawerSection title="Photos" aside={plural(count, 'photo', 'photos')}>
       {isError ? (
-        <p className="text-[14px] font-semibold text-[#b42318]">The photos could not be loaded.</p>
+        <p className="text-[14px] font-semibold text-error-700">The photos could not be loaded.</p>
       ) : (
         <div className="grid grid-cols-3 gap-2">
           {isPending
@@ -291,7 +291,7 @@ function Photos({ reportId, count }: { reportId: string; count: number }) {
                   rel="noreferrer"
                   title="Open full size"
                   className={cn(
-                    'block aspect-4/3 overflow-hidden rounded-[14px] border border-[#eaecf0] bg-gray-100',
+                    'block aspect-4/3 overflow-hidden rounded-[14px] border border-line bg-gray-100',
                     FOCUS_RING
                   )}
                 >

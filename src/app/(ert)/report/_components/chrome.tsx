@@ -4,7 +4,8 @@ import Image from 'next/image';
 import { useId } from 'react';
 
 // Page frame and building blocks shared by the ERT screens. Breakpoints follow the design
-// frames: phone is the base, tablet is `md`, web is `lg`. Light theme only.
+// frames: phone is the base, tablet is `md`, web is `lg`. The maroon hero looks the same in both
+// themes.
 
 /** Content column: 1140px max with the design's 16 / 32 / 40px gutters. */
 export const GUTTER = 'mx-auto w-full max-w-285 px-4 md:px-8 lg:px-10';
@@ -62,9 +63,9 @@ function HeroFrame({ children }: { children: React.ReactNode }) {
 
 const PILL_TONES = {
   live: 'bg-white/16 text-white',
-  success: 'bg-success-50 text-[#027a48]',
-  warning: 'bg-warning-50 text-[#b54708]',
-  error: 'bg-error-50 text-[#b42318]',
+  success: 'bg-success-50 text-success-700',
+  warning: 'bg-warning-50 text-warning-700',
+  error: 'bg-error-50 text-error-700',
 };
 
 /** Small rounded status label, e.g. Ongoing, Submitted, Offline. */
@@ -103,7 +104,7 @@ export function Card({
   return (
     <div
       className={cn(
-        'rounded-[22px] border border-gray-200 bg-white shadow-[0_1px_3px_rgba(16,24,40,.08)]',
+        'rounded-[22px] border border-gray-200 bg-surface shadow-[0_1px_3px_rgba(16,24,40,.08)]',
         className
       )}
       {...props}
@@ -169,7 +170,7 @@ export function DetailList({
   rows: { label: string; value: React.ReactNode }[];
 }) {
   return (
-    <div className="flex flex-col self-stretch rounded-2xl border border-[#eaecf0] bg-gray-50 px-4 py-1 text-left text-[16px]">
+    <div className="flex flex-col self-stretch rounded-2xl border border-line bg-gray-50 px-4 py-1 text-left text-[16px]">
       {title && (
         <span className="pt-3 pb-1.5 text-[12px] font-bold tracking-[.08em] text-gray-500 uppercase">
           {title}
@@ -179,7 +180,7 @@ export function DetailList({
         {rows.map((row) => (
           <div
             key={row.label}
-            className="flex items-center justify-between gap-3 border-b border-[#eaecf0] py-2.5 last:border-b-0"
+            className="flex items-center justify-between gap-3 border-b border-line py-2.5 last:border-b-0"
           >
             <dt className="text-gray-600">{row.label}</dt>
             <dd className="text-right font-semibold">{row.value}</dd>
@@ -201,7 +202,7 @@ export function Avatar({ name, size = 40 }: { name: string; size?: 32 | 40 | 44 
     <span
       aria-hidden
       className={cn(
-        'bg-brand-500 grid shrink-0 place-items-center rounded-full font-bold text-white uppercase',
+        'bg-brand-solid grid shrink-0 place-items-center rounded-full font-bold text-white uppercase',
         size === 32 && 'size-8 text-[14px]',
         size === 40 && 'size-10 text-[16px]',
         size === 44 && 'size-11 text-[17px]'
@@ -235,7 +236,7 @@ export function NoticeCard({
         <span
           className={cn(
             'grid size-16 place-items-center rounded-full',
-            iconTone === 'neutral' ? 'bg-gray-100 text-gray-600' : 'bg-warning-50 text-[#b54708]'
+            iconTone === 'neutral' ? 'bg-gray-100 text-gray-600' : 'bg-warning-50 text-warning-700'
           )}
         >
           {icon}

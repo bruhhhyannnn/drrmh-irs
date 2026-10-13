@@ -81,11 +81,11 @@ export function FormField({
 /** Label / value rows in a bordered box. */
 export function KvList({ rows }: { rows: { label: string; value: React.ReactNode }[] }) {
   return (
-    <dl className="flex flex-col rounded-2xl border border-[#eaecf0] bg-white px-4 py-0.5">
+    <dl className="flex flex-col rounded-2xl border border-line bg-surface px-4 py-0.5">
       {rows.map((row) => (
         <div
           key={row.label}
-          className="flex flex-wrap gap-x-4 gap-y-0.5 border-b border-[#eaecf0] py-3 text-[14px] leading-[1.45] last:border-b-0"
+          className="flex flex-wrap gap-x-4 gap-y-0.5 border-b border-line py-3 text-[14px] leading-[1.45] last:border-b-0"
         >
           <dt className="flex-[0_0_130px] text-gray-500">{row.label}</dt>
           <dd className="min-w-0 flex-[1_1_160px] font-semibold text-gray-900">
@@ -168,7 +168,7 @@ export function StatBoxes({
       {stats.map((s) => (
         <div
           key={s.label}
-          className="flex flex-col gap-1 rounded-2xl border border-[#eaecf0] bg-gray-50 px-4 py-3.5"
+          className="flex flex-col gap-1 rounded-2xl border border-line bg-gray-50 px-4 py-3.5"
         >
           <span className="text-[12px] font-semibold text-gray-500">{s.label}</span>
           <span
@@ -177,9 +177,9 @@ export function StatBoxes({
               s.value === 0
                 ? 'text-gray-400'
                 : s.tone === 'red'
-                  ? 'text-[#b42318]'
+                  ? 'text-error-700'
                   : s.tone === 'amber'
-                    ? 'text-[#b54708]'
+                    ? 'text-warning-700'
                     : 'text-gray-900'
             )}
           >

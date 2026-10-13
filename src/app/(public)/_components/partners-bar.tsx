@@ -4,7 +4,7 @@ import { Container } from './primitives';
 
 export function PartnersBar() {
   return (
-    <div className="border-b border-[#eaecf0] bg-white">
+    <div className="border-b border-line bg-surface">
       <Container className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 py-7">
         <span className="text-center text-[13px] font-semibold text-gray-500">
           Developed under the DRRM-H Program

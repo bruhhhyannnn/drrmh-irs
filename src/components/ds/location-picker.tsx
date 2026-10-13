@@ -114,14 +114,10 @@ export function LocationPicker({
         aria-describedby={error ? 'location-error' : undefined}
         className={cn(
           'relative h-45 overflow-hidden rounded-2xl border md:h-50',
-          error ? 'border-[#b42318]' : 'border-gray-200'
+          error ? 'border-error-700' : 'border-gray-200'
         )}
       >
-        <Map
-          theme="light"
-          center={location ? [location.lng, location.lat] : MANILA}
-          zoom={location ? 16 : 12}
-        >
+        <Map center={location ? [location.lng, location.lat] : MANILA} zoom={location ? 16 : 12}>
           <MapControls showZoom position="top-right" />
           <MapClickHandler onPick={(lng, lat) => void pick(lat, lng, true)} />
           {location && <MapFlyTo lat={location.lat} lng={location.lng} />}
@@ -144,7 +140,7 @@ export function LocationPicker({
           onClick={() => locate(true)}
           disabled={isLocating}
           className={cn(
-            'absolute bottom-3 left-3 z-10 flex h-12 items-center gap-2 rounded-full bg-white px-4.5 text-[14px] large-text:text-[16px] font-bold text-gray-900 shadow-[0_4px_8px_-2px_rgba(16,24,40,.16)] transition-[filter] hover:brightness-97 disabled:cursor-wait',
+            'absolute bottom-3 left-3 z-10 flex h-12 items-center gap-2 rounded-full bg-surface px-4.5 text-[14px] large-text:text-[16px] font-bold text-gray-900 shadow-[0_4px_8px_-2px_rgba(16,24,40,.16)] transition-[filter] hover:brightness-97 disabled:cursor-wait',
             FOCUS_RING
           )}
         >
@@ -155,7 +151,7 @@ export function LocationPicker({
 
       {location ? (
         <div className="flex items-start gap-2.5">
-          <MapPin size={16} aria-hidden className="mt-0.5 shrink-0 text-[#027a48]" />
+          <MapPin size={16} aria-hidden className="mt-0.5 shrink-0 text-success-700" />
           <span className="min-w-0 flex-1 text-[14px] large-text:text-[16px] leading-[1.45] text-gray-700">
             {location.name ??
               (isGeocoding ? (
@@ -185,7 +181,9 @@ export function LocationPicker({
         </p>
       )}
       {geoError && !location && (
-        <p className="text-[13px] large-text:text-[14px] font-medium text-[#b54708]">{geoError}</p>
+        <p className="text-[13px] large-text:text-[14px] font-medium text-warning-700">
+          {geoError}
+        </p>
       )}
       <FieldError id="location-error">{error}</FieldError>
     </div>

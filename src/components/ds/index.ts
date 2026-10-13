@@ -1,5 +1,6 @@
 // Building blocks from the "wireframe to hi-fi" design system, shared by the redesigned pages
-// (landing, bystander report, auth, ERT, admin). Light theme only, set in Figtree + Spline Sans Mono.
+// (landing, bystander report, auth, ERT, admin), set in Figtree + Spline Sans Mono. Colours come
+// from the theme tokens in globals.css, so the controls work in light and dark mode.
 
 export { Banner } from './banner';
 export { Drawer } from './drawer';

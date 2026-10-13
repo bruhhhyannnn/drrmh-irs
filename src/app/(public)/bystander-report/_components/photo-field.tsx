@@ -67,7 +67,7 @@ export function PhotoField({ photos, onAdd, onRemove }: PhotoFieldProps) {
         {photos.map((photo, i) => (
           <div
             key={photo.id}
-            className="relative aspect-square overflow-hidden rounded-[14px] border border-[#eaecf0] bg-gray-100"
+            className="relative aspect-square overflow-hidden rounded-[14px] border border-line bg-gray-100"
           >
             <img
               src={photo.url}

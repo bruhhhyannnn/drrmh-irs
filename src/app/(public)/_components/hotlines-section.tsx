@@ -19,7 +19,7 @@ export function HotlinesSection() {
               FOCUS_RING
             )}
           >
-            <span className="bg-brand-500 grid size-11 shrink-0 place-items-center rounded-full text-white">
+            <span className="bg-brand-solid grid size-11 shrink-0 place-items-center rounded-full text-white">
               <Phone size={20} aria-hidden />
             </span>
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -36,7 +36,7 @@ export function HotlinesSection() {
             <a
               href={`tel:${h.tel}`}
               className={cn(
-                'flex min-h-16 items-center gap-3.5 rounded-2xl border-[1.5px] border-gray-200 bg-white px-4 py-3 text-gray-900 transition-colors hover:border-gray-300 hover:bg-gray-50',
+                'flex min-h-16 items-center gap-3.5 rounded-2xl border-[1.5px] border-gray-200 bg-surface px-4 py-3 text-gray-900 transition-colors hover:border-gray-300 hover:bg-gray-50',
                 FOCUS_RING
               )}
             >

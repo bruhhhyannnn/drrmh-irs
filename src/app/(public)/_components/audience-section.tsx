@@ -11,7 +11,7 @@ export function AudienceSection() {
         {AUDIENCES.map(({ icon: Icon, eyebrow, title, points, cta }) => (
           <article
             key={eyebrow}
-            className="flex flex-col gap-4.5 rounded-[22px] border border-gray-200 bg-white p-5 shadow-[0_1px_3px_rgba(16,24,40,.08)] md:p-7"
+            className="flex flex-col gap-4.5 rounded-[22px] border border-gray-200 bg-surface p-5 shadow-[0_1px_3px_rgba(16,24,40,.08)] md:p-7"
           >
             <span className="bg-brand-25 text-brand-500 grid size-12 place-items-center rounded-full">
               <Icon size={22} aria-hidden />
@@ -25,7 +25,7 @@ export function AudienceSection() {
                 <CheckItem key={point}>{point}</CheckItem>
               ))}
             </ul>
-            <div className="mt-auto border-t border-[#eaecf0] pt-4">
+            <div className="mt-auto border-t border-line pt-4">
               <ArrowLink href={cta.href}>{cta.label}</ArrowLink>
             </div>
           </article>

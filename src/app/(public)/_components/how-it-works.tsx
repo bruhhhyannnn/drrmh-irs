@@ -11,11 +11,11 @@ export function HowItWorks() {
         {STEPS.map((step, i) => (
           <li
             key={step.title}
-            className="flex flex-col gap-3 rounded-[22px] border border-gray-200 bg-white p-6"
+            className="flex flex-col gap-3 rounded-[22px] border border-gray-200 bg-surface p-6"
           >
             <span
               aria-hidden
-              className="bg-brand-500 font-landing-mono grid size-10 place-items-center rounded-full text-[14px] font-semibold text-white"
+              className="bg-brand-solid font-landing-mono grid size-10 place-items-center rounded-full text-[14px] font-semibold text-white"
             >
               {String(i + 1).padStart(2, '0')}
             </span>

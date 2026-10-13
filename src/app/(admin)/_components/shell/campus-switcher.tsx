@@ -42,7 +42,7 @@ export function useEventTitle() {
 export function CampusLabel() {
   const name = useAuthStore((s) => s.userProfile?.campus?.name);
   return (
-    <span className="flex h-10 max-w-full min-w-0 items-center gap-2 rounded-full border border-[#eaecf0] bg-gray-50 pr-3.5 pl-3 text-[14px] font-semibold whitespace-nowrap text-gray-900">
+    <span className="flex h-10 max-w-full min-w-0 items-center gap-2 rounded-full border border-line bg-gray-50 pr-3.5 pl-3 text-[14px] font-semibold whitespace-nowrap text-gray-900">
       <University size={16} aria-hidden className="text-brand-500 shrink-0" />
       <span className="sr-only">Campus: </span>
       <span className="min-w-0 truncate">{name ?? 'No campus'}</span>
@@ -99,7 +99,7 @@ export function CampusSwitcher() {
         aria-controls={menuId}
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          'flex h-10 max-w-full min-w-0 items-center gap-2 rounded-full border border-gray-200 bg-white px-3 text-[14px] font-semibold whitespace-nowrap text-gray-900 hover:bg-gray-50',
+          'flex h-10 max-w-full min-w-0 items-center gap-2 rounded-full border border-gray-200 bg-surface px-3 text-[14px] font-semibold whitespace-nowrap text-gray-900 hover:bg-gray-50',
           FOCUS_RING
         )}
       >
@@ -117,7 +117,7 @@ export function CampusSwitcher() {
             id={menuId}
             role="menu"
             aria-label="Show campus"
-            className="absolute top-[calc(100%+6px)] left-0 z-50 flex max-h-[min(420px,70dvh)] w-70 max-w-[calc(100vw-32px)] flex-col overflow-y-auto rounded-[18px] border border-gray-200 bg-white p-1.5 shadow-[0_18px_40px_rgba(16,24,40,.22)]"
+            className="absolute top-[calc(100%+6px)] left-0 z-50 flex max-h-[min(420px,70dvh)] w-70 max-w-[calc(100vw-32px)] flex-col overflow-y-auto rounded-[18px] border border-gray-200 bg-surface p-1.5 shadow-[0_18px_40px_rgba(16,24,40,.22)]"
           >
             {options.map((option) => {
               const on = option.id === campusId;

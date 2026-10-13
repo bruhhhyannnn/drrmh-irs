@@ -351,14 +351,14 @@ function UserForm({
                         key={rule.label}
                         className={cn(
                           'flex items-center gap-2 text-[13px] font-medium',
-                          ok ? 'text-[#027a48]' : 'text-gray-600'
+                          ok ? 'text-success-700' : 'text-gray-600'
                         )}
                       >
                         <span
                           aria-hidden
                           className={cn(
                             'grid size-4.5 shrink-0 place-items-center rounded-full',
-                            ok ? 'bg-success-50 text-[#027a48]' : 'bg-gray-100 text-gray-400'
+                            ok ? 'bg-success-50 text-success-700' : 'bg-gray-100 text-gray-400'
                           )}
                         >
                           {ok ? (

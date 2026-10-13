@@ -24,7 +24,7 @@ export function PeopleRow({
       <span
         className={cn(
           'grid size-10 shrink-0 place-items-center rounded-full',
-          kind === 'missing' ? 'bg-gray-100 text-gray-600' : 'bg-error-50 text-[#b42318]'
+          kind === 'missing' ? 'bg-gray-100 text-gray-600' : 'bg-error-50 text-error-700'
         )}
       >
         <Icon size={20} aria-hidden />
@@ -64,7 +64,7 @@ export function PeopleList({
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
             <span className="text-[17px] font-semibold">{person.name || UNKNOWN_PERSON}</span>
             {person.condition && (
-              <span className="bg-warning-50 flex min-h-5.5 items-center rounded-full px-2 text-[13px] font-semibold text-[#b54708]">
+              <span className="bg-warning-50 flex min-h-5.5 items-center rounded-full px-2 text-[13px] font-semibold text-warning-700">
                 {person.condition}
               </span>
             )}

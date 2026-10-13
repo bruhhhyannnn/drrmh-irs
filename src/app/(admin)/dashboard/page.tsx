@@ -57,7 +57,7 @@ export default function DashboardPage() {
         subtitle={`${campusName ?? 'All campuses'} · ${format(new Date(), 'EEEE, MMMM d, yyyy')}`}
       />
       {error ? (
-        <Card className="p-6 text-[17px] text-[#b42318]">
+        <Card className="p-6 text-[17px] text-error-700">
           The dashboard couldn&apos;t be loaded: {error.message}
         </Card>
       ) : isPending || !data ? (
@@ -135,8 +135,8 @@ function OngoingCard({ event }: { event: Dashboard['ongoing'][number] }) {
   const eventTitle = useEventTitle();
   const stats = [
     { label: 'Reports', value: event.reports, tone: 'text-gray-900' },
-    { label: 'Casualties', value: event.casualties, tone: 'text-[#b42318]' },
-    { label: 'Missing', value: event.missing, tone: 'text-[#b54708]' },
+    { label: 'Casualties', value: event.casualties, tone: 'text-error-700' },
+    { label: 'Missing', value: event.missing, tone: 'text-warning-700' },
   ];
   return (
     <Card className="flex flex-col gap-4 p-4.5 md:p-6">
@@ -164,7 +164,7 @@ function OngoingCard({ event }: { event: Dashboard['ongoing'][number] }) {
         </div>
         <Bar value={event.clustersReported} max={event.clustersTotal} size="sm" />
       </div>
-      <dl className="grid grid-cols-3 gap-2 border-t border-[#eaecf0] pt-3.5">
+      <dl className="grid grid-cols-3 gap-2 border-t border-line pt-3.5">
         {stats.map((s) => (
           <div key={s.label} className="flex min-w-0 flex-col gap-0.5">
             <dt className="text-[13px] font-medium text-gray-500">{s.label}</dt>
@@ -214,14 +214,14 @@ function NothingOngoing({ next }: { next: Dashboard['nextEvent'] }) {
         <Link
           href={`/events/details?id=${next.id}`}
           className={cn(
-            'flex min-w-0 flex-[1_1_300px] items-center gap-3.5 rounded-2xl border border-[#eaecf0] bg-gray-50 px-3.5 py-3 text-gray-900 hover:border-gray-300',
+            'flex min-w-0 flex-[1_1_300px] items-center gap-3.5 rounded-2xl border border-line bg-gray-50 px-3.5 py-3 text-gray-900 hover:border-gray-300',
             FOCUS_RING
           )}
         >
           {startedAt ? (
             <DateBlock date={startedAt} tone="white" />
           ) : (
-            <span className="grid h-13 w-12 shrink-0 place-items-center rounded-[14px] border border-[#eaecf0] bg-white text-gray-400">
+            <span className="grid h-13 w-12 shrink-0 place-items-center rounded-[14px] border border-line bg-surface text-gray-400">
               <CalendarDays size={18} aria-hidden />
             </span>
           )}
@@ -302,7 +302,7 @@ function StatTiles({ data }: { data: Dashboard }) {
           key={t.label}
           href={t.href}
           className={cn(
-            'flex min-w-0 flex-col gap-1.5 rounded-[18px] border border-gray-200 bg-white px-4.5 py-4 text-gray-900 shadow-[0_1px_3px_rgba(16,24,40,.06)] hover:border-gray-300',
+            'flex min-w-0 flex-col gap-1.5 rounded-[18px] border border-gray-200 bg-surface px-4.5 py-4 text-gray-900 shadow-[0_1px_3px_rgba(16,24,40,.06)] hover:border-gray-300',
             FOCUS_RING
           )}
         >
@@ -377,7 +377,7 @@ function EventsByStatus({ data }: { data: Dashboard }) {
       </div>
       <ul className="flex flex-col">
         {rows.map((r) => (
-          <li key={r.key} className="flex items-center gap-2.5 border-b border-[#eaecf0] py-2.5">
+          <li key={r.key} className="flex items-center gap-2.5 border-b border-line py-2.5">
             <span
               aria-hidden
               className="size-2.5 shrink-0 rounded-full"
@@ -394,7 +394,7 @@ function EventsByStatus({ data }: { data: Dashboard }) {
 
 /* ─── This month ─────────────────────────────────────────────────────────────────────── */
 
-const DOT = { ongoing: 'bg-success-500', upcoming: 'bg-warning-500', completed: 'bg-[#2e90fa]' };
+const DOT = { ongoing: 'bg-success-500', upcoming: 'bg-warning-500', completed: 'bg-info-500' };
 
 function MonthCard({ data }: { data: Dashboard }) {
   const eventTitle = useEventTitle();
@@ -431,7 +431,7 @@ function MonthCard({ data }: { data: Dashboard }) {
                 key={day.toISOString()}
                 className={cn(
                   'font-landing-mono relative grid h-9 place-items-center rounded-[10px] text-[14px]',
-                  on ? 'bg-brand-500 font-bold text-white' : 'font-medium text-gray-700'
+                  on ? 'bg-brand-solid font-bold text-white' : 'font-medium text-gray-700'
                 )}
               >
                 {day.getDate()}
@@ -454,7 +454,7 @@ function MonthCard({ data }: { data: Dashboard }) {
                 <Link
                   href={`/events/details?id=${e.id}`}
                   className={cn(
-                    'flex items-center gap-3.5 rounded-lg border-b border-[#eaecf0] py-3 hover:bg-gray-25',
+                    'flex items-center gap-3.5 rounded-lg border-b border-line py-3 hover:bg-gray-25',
                     FOCUS_RING
                   )}
                 >

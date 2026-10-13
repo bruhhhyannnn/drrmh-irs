@@ -72,7 +72,7 @@ export function StepPeopleDamage(props: StepPeopleDamageProps) {
             {Array.from({ length: 4 }, (_, i) => (
               <div
                 key={i}
-                className="flex min-h-15 items-center gap-3 border-b border-[#eaecf0] py-1.25"
+                className="flex min-h-15 items-center gap-3 border-b border-line py-1.25"
               >
                 <Skeleton className="h-4 w-2/5 rounded-md" />
                 <Skeleton className="ml-auto h-12.5 w-36 rounded-full" />
@@ -101,7 +101,7 @@ export function StepPeopleDamage(props: StepPeopleDamageProps) {
             {categories.map((category) => (
               <div
                 key={category.id}
-                className="flex min-h-15 items-center gap-3 border-b border-[#eaecf0] py-1.25"
+                className="flex min-h-15 items-center gap-3 border-b border-line py-1.25"
               >
                 <label
                   htmlFor={`count-${category.id}`}
@@ -129,7 +129,7 @@ export function StepPeopleDamage(props: StepPeopleDamageProps) {
           hasPeople={props.hasMissing}
           onOpen={props.onOpenMissing}
         />
-        <div className="h-px bg-[#eaecf0]" />
+        <div className="h-px bg-line" />
         <PeopleRow
           icon={Users}
           tone="danger"
@@ -213,7 +213,7 @@ function PeopleRow({
       <span
         className={cn(
           'grid size-10 shrink-0 place-items-center rounded-full',
-          tone === 'danger' ? 'bg-error-50 text-[#b42318]' : 'bg-gray-100 text-gray-600'
+          tone === 'danger' ? 'bg-error-50 text-error-700' : 'bg-gray-100 text-gray-600'
         )}
       >
         <Icon size={20} aria-hidden />

@@ -23,7 +23,7 @@ export default function LandingPage() {
       className={cn(
         figtree.variable,
         splineSansMono.variable,
-        'font-landing min-h-screen overflow-x-clip bg-white text-gray-900 antialiased'
+        'font-landing min-h-screen overflow-x-clip bg-surface text-gray-900 antialiased'
       )}
     >
       <main>

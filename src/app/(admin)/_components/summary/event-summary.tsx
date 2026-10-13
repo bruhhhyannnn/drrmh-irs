@@ -70,7 +70,7 @@ export function EventSummary({ eventId, before }: { eventId: string; before?: Re
 
   if (error) {
     return (
-      <p className="text-[17px] text-[#b42318]">
+      <p className="text-[17px] text-error-700">
         The summary couldn&apos;t be loaded: {error.message}
       </p>
     );
@@ -119,7 +119,7 @@ export function EventSummary({ eventId, before }: { eventId: string; before?: Re
                   value={compareId}
                   onChange={(e) => setCompareId(e.target.value)}
                   className={cn(
-                    'h-10 max-w-64 appearance-none truncate rounded-xl border border-gray-300 bg-white pr-9 pl-3.5 text-[16px] font-semibold text-gray-900',
+                    'h-10 max-w-64 appearance-none truncate rounded-xl border border-gray-300 bg-surface pr-9 pl-3.5 text-[16px] font-semibold text-gray-900',
                     FOCUS_RING
                   )}
                 >
@@ -154,7 +154,7 @@ export function EventSummary({ eventId, before }: { eventId: string; before?: Re
               type="button"
               onClick={() => setCompareId(previous?.id ?? null)}
               className={cn(
-                'flex h-10 items-center gap-2 rounded-full border-[1.5px] border-gray-300 bg-white px-4 text-[16px] font-bold whitespace-nowrap text-gray-700 hover:bg-gray-50',
+                'flex h-10 items-center gap-2 rounded-full border-[1.5px] border-gray-300 bg-surface px-4 text-[16px] font-bold whitespace-nowrap text-gray-700 hover:bg-gray-50',
                 FOCUS_RING
               )}
             >

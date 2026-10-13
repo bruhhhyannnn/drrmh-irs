@@ -16,7 +16,7 @@ const LOGOS = [
 /** Logos and name on the left, Call 911 always visible on the right. */
 export function TopBar() {
   return (
-    <header className="flex h-16 items-center gap-2.5 border-b border-[#eaecf0] bg-white px-4 md:h-18 md:px-8 lg:px-10">
+    <header className="flex h-16 items-center gap-2.5 border-b border-line bg-surface px-4 md:h-18 md:px-8 lg:px-10">
       {LOGOS.map((logo, i) => (
         <Image
           key={logo.src}
@@ -89,7 +89,7 @@ export const PageCard = forwardRef<
       <div
         ref={ref}
         className={cn(
-          'shadow-theme-md relative mx-auto flex w-full scroll-mt-4 flex-col rounded-[22px] border border-gray-200 bg-white',
+          'shadow-theme-md relative mx-auto flex w-full scroll-mt-4 flex-col rounded-[22px] border border-gray-200 bg-surface',
           className
         )}
       >
@@ -115,7 +115,7 @@ export function StepHeader({ step, aside }: { step: number; aside: React.ReactNo
         {Array.from({ length: STEP_COUNT }, (_, i) => (
           <span
             key={i}
-            className={cn('h-1.5 rounded-full', i < step ? 'bg-brand-500' : 'bg-[#eaecf0]')}
+            className={cn('h-1.5 rounded-full', i < step ? 'bg-brand-500' : 'bg-line')}
           />
         ))}
       </div>
@@ -141,7 +141,7 @@ export const StepTitle = forwardRef<HTMLHeadingElement, { children: React.ReactN
 /** Button row under a step: wraps in reverse so the main action sits on top on phones. */
 export function StepFooter({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-wrap-reverse items-center justify-between gap-x-4 gap-y-3 border-t border-[#eaecf0] pt-5">
+    <div className="flex flex-wrap-reverse items-center justify-between gap-x-4 gap-y-3 border-t border-line pt-5">
       {children}
     </div>
   );

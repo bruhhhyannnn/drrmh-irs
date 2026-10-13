@@ -19,7 +19,7 @@ import { WaitingToSend } from './waiting-to-send';
 export function TopBar() {
   const { userProfile } = useAuthStore();
   return (
-    <header className="border-b border-[#eaecf0] bg-white">
+    <header className="border-b border-line bg-surface">
       <div className={cn(GUTTER, 'relative flex h-16 items-center gap-2.5 md:h-18')}>
         <Image
           src="/irs-logo.png"
@@ -83,7 +83,7 @@ function AccountMenu() {
         aria-label={`Account: ${name}`}
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          'flex h-11 shrink-0 items-center gap-2.5 rounded-full border border-gray-200 bg-white pr-2.5 pl-1.5 hover:bg-gray-50',
+          'flex h-11 shrink-0 items-center gap-2.5 rounded-full border border-gray-200 bg-surface pr-2.5 pl-1.5 hover:bg-gray-50',
           FOCUS_RING
         )}
       >
@@ -102,7 +102,7 @@ function AccountMenu() {
           <div
             ref={menuRef}
             id={menuId}
-            className="absolute top-[calc(100%-4px)] right-4 z-50 flex w-[calc(100%-32px)] flex-col overflow-hidden rounded-[22px] border border-gray-200 bg-white shadow-[0_18px_40px_rgba(16,24,40,.22)] md:right-8 md:w-75 lg:right-10"
+            className="absolute top-[calc(100%-4px)] right-4 z-50 flex w-[calc(100%-32px)] flex-col overflow-hidden rounded-[22px] border border-gray-200 bg-surface shadow-[0_18px_40px_rgba(16,24,40,.22)] md:right-8 md:w-75 lg:right-10"
           >
             <div className="flex items-center gap-3 p-4.5">
               <Avatar name={name} size={44} />
@@ -111,7 +111,7 @@ function AccountMenu() {
                 <span className="truncate text-[14px] text-gray-500">{email}</span>
               </div>
             </div>
-            <div className="flex flex-col border-t border-[#eaecf0] p-1.5">
+            <div className="flex flex-col border-t border-line p-1.5">
               <MenuButton
                 onClick={() => {
                   setOpen(false);
@@ -150,7 +150,7 @@ function MenuButton({
       onClick={onClick}
       className={cn(
         'flex h-12 items-center gap-3 rounded-[14px] px-3 text-left text-[17px] font-semibold',
-        tone === 'danger' ? 'hover:bg-error-50 text-[#b42318]' : 'text-gray-900 hover:bg-gray-50',
+        tone === 'danger' ? 'hover:bg-error-50 text-error-700' : 'text-gray-900 hover:bg-gray-50',
         FOCUS_RING
       )}
     >

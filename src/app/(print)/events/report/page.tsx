@@ -91,7 +91,7 @@ function EventReport() {
   if (error || outOfScope || (!isPending && !source)) {
     return (
       <Shell>
-        <p className="mx-auto max-w-200 p-10 text-[15px] text-[#b42318]">
+        <p className="mx-auto max-w-200 p-10 text-[15px] text-error-700">
           {error
             ? `The report couldn't be loaded: ${error.message}`
             : 'This event no longer exists.'}
@@ -134,7 +134,7 @@ function EventReport() {
             type="button"
             onClick={() => window.print()}
             className={cn(
-              'bg-brand-500 flex h-10 items-center gap-2 rounded-full px-4.5 text-[14px] font-bold text-white hover:brightness-92',
+              'bg-brand-solid flex h-10 items-center gap-2 rounded-full px-4.5 text-[14px] font-bold text-white hover:brightness-92',
               FOCUS_RING
             )}
           >
@@ -188,7 +188,7 @@ function EventReport() {
             ['Campus', event.campus.name],
             ['Prepared by', preparedBy],
           ].map(([label, value]) => (
-            <div key={label} className="flex flex-col gap-0.5 bg-white px-3.5 py-2.5">
+            <div key={label} className="flex flex-col gap-0.5 bg-surface px-3.5 py-2.5">
               <span className="text-[13px] font-semibold text-gray-500">{label}</span>
               <span className="text-[15px] leading-[1.35] font-semibold">{value}</span>
             </div>
@@ -221,13 +221,13 @@ function EventReport() {
                 'Casualties',
                 String(summary.totals.casualties),
                 `${summary.totals.serious} serious or worse`,
-                'text-[#b42318]',
+                'text-error-700',
               ],
               [
                 'Missing',
                 String(summary.totals.missing),
                 `${summary.totals.unidentified} not identified`,
-                'text-[#b54708]',
+                'text-warning-700',
               ],
             ].map(([label, value, sub, tone]) => (
               <div
@@ -286,14 +286,15 @@ function Shell({ toolbar, children }: { toolbar?: React.ReactNode; children: Rea
   return (
     <div
       data-print-report
+      data-theme="light"
       className={cn(
         figtree.variable,
         splineSansMono.variable,
-        'font-landing min-h-dvh bg-gray-100 text-gray-900 antialiased print:bg-white'
+        'font-landing min-h-dvh bg-gray-100 text-gray-900 antialiased print:bg-surface'
       )}
     >
       {toolbar && (
-        <div className="sticky top-0 z-10 border-b border-gray-200 bg-white print:hidden">
+        <div className="sticky top-0 z-10 border-b border-gray-200 bg-surface print:hidden">
           {toolbar}
         </div>
       )}
@@ -323,7 +324,7 @@ function Sheet({
   return (
     <article
       className={cn(
-        'flex min-h-280.75 w-full max-w-198.5 flex-col gap-5.5 bg-white px-14 pt-12 pb-8 shadow-[0_1px_3px_rgba(0,0,0,.08),0_12px_32px_rgba(0,0,0,.08)]',
+        'flex min-h-280.75 w-full max-w-198.5 flex-col gap-5.5 bg-surface px-14 pt-12 pb-8 shadow-[0_1px_3px_rgba(0,0,0,.08),0_12px_32px_rgba(0,0,0,.08)]',
         'print:min-h-0 print:max-w-none print:gap-5 print:p-0 print:shadow-none',
         !last && 'print:break-after-page'
       )}
@@ -382,11 +383,11 @@ function Section({
 }
 
 const TH = 'text-[12px] font-bold tracking-[.04em] text-gray-600 uppercase';
-const ROW = 'break-inside-avoid border-b border-[#eaecf0]';
+const ROW = 'break-inside-avoid border-b border-line';
 
 const CHANGE_TONES = {
-  good: 'bg-success-50 text-[#027a48]',
-  bad: 'bg-error-50 text-[#b42318]',
+  good: 'bg-success-50 text-success-700',
+  bad: 'bg-error-50 text-error-700',
   same: 'bg-gray-100 text-gray-600',
 };
 
@@ -450,7 +451,7 @@ function ClustersSection({ summary }: { summary: Summary }) {
             <span
               className={cn(
                 'font-landing-mono text-right text-[15px] font-semibold',
-                c.casualties ? 'text-[#b42318]' : 'text-gray-400'
+                c.casualties ? 'text-error-700' : 'text-gray-400'
               )}
             >
               {c.casualties}
@@ -474,7 +475,7 @@ function ClustersSection({ summary }: { summary: Summary }) {
       {pending.map((p) => (
         <div key={p.id} className={cn(grid, ROW, 'py-2')}>
           <span className="text-[15px] font-bold text-gray-600">{p.name}</span>
-          <span className="col-span-3 text-right text-[14px] font-semibold text-[#b54708]">
+          <span className="col-span-3 text-right text-[14px] font-semibold text-warning-700">
             No report
           </span>
         </div>
@@ -484,7 +485,7 @@ function ClustersSection({ summary }: { summary: Summary }) {
         <span className="font-landing-mono text-right text-[15px] font-extrabold">
           {summary.totals.reports}
         </span>
-        <span className="font-landing-mono text-right text-[15px] font-extrabold text-[#b42318]">
+        <span className="font-landing-mono text-right text-[15px] font-extrabold text-error-700">
           {summary.totals.casualties}
         </span>
         <span className="font-landing-mono text-right text-[15px] font-extrabold">

@@ -4,7 +4,8 @@ import type { Tone } from '../_lib/status';
 
 export { Skeleton } from '@/components/ui/skeleton';
 
-// Small building blocks shared by the admin pages. Light theme only, Figtree + Spline Sans Mono.
+// Small building blocks shared by the admin pages, set in Figtree + Spline Sans Mono. Colours come
+// from the theme tokens in globals.css, so they work in light and dark mode.
 
 export function Card({
   className,
@@ -14,7 +15,7 @@ export function Card({
   return (
     <div
       className={cn(
-        'min-w-0 rounded-[22px] border border-gray-200 bg-white shadow-[0_1px_3px_rgba(16,24,40,.08)]',
+        'min-w-0 rounded-[22px] border border-gray-200 bg-surface shadow-[0_1px_3px_rgba(16,24,40,.08)]',
         className
       )}
       {...props}
@@ -25,11 +26,11 @@ export function Card({
 }
 
 const CHIP_TONES: Record<Tone, { box: string; dot: string }> = {
-  green: { box: 'bg-success-50 text-[#027a48]', dot: 'bg-success-500' },
-  amber: { box: 'bg-warning-50 text-[#b54708]', dot: 'bg-warning-500' },
-  blue: { box: 'bg-[#eff8ff] text-[#175cd3]', dot: 'bg-[#2e90fa]' },
+  green: { box: 'bg-success-50 text-success-700', dot: 'bg-success-500' },
+  amber: { box: 'bg-warning-50 text-warning-700', dot: 'bg-warning-500' },
+  blue: { box: 'bg-info-50 text-info-700', dot: 'bg-info-500' },
   grey: { box: 'bg-gray-100 text-gray-600', dot: 'bg-gray-400' },
-  red: { box: 'bg-error-50 text-[#b42318]', dot: 'bg-error-600' },
+  red: { box: 'bg-error-50 text-error-700', dot: 'bg-error-600' },
   maroon: { box: 'bg-brand-25 text-brand-500', dot: 'bg-brand-500' },
   neutral: { box: 'bg-gray-100 text-gray-700', dot: 'bg-gray-500' },
 };
@@ -80,7 +81,7 @@ export function Avatar({
       aria-hidden
       className={cn(
         'grid shrink-0 place-items-center rounded-full font-bold uppercase',
-        highlight ? 'bg-brand-500 text-white' : 'bg-gray-100 text-gray-700',
+        highlight ? 'bg-brand-solid text-white' : 'bg-gray-100 text-gray-700',
         size === 32 && 'size-8 text-[14px]',
         size === 36 && 'size-9 text-[14px]',
         size === 40 && 'size-10 text-[16px]',
@@ -111,7 +112,7 @@ export function CampusMark({ name, size = 56 }: { name: string; size?: 40 | 56 }
       aria-hidden
       className={cn(
         box,
-        'bg-brand-25 text-brand-500 grid shrink-0 place-items-center rounded-full border-[1.5px] border-[#fbd5d5] font-extrabold',
+        'bg-brand-25 text-brand-500 grid shrink-0 place-items-center rounded-full border-[1.5px] border-[#fbd5d5] font-extrabold dark:border-brand-100',
         size === 56 ? 'text-[17px]' : 'text-[13px]'
       )}
     >
@@ -194,8 +195,8 @@ export function DateBlock({ date, tone = 'grey' }: { date: Date; tone?: 'grey' |
   return (
     <span
       className={cn(
-        'flex h-13 w-12 shrink-0 flex-col items-center justify-center gap-0.5 rounded-[14px] border border-[#eaecf0]',
-        tone === 'grey' ? 'bg-gray-50' : 'bg-white'
+        'flex h-13 w-12 shrink-0 flex-col items-center justify-center gap-0.5 rounded-[14px] border border-line',
+        tone === 'grey' ? 'bg-gray-50' : 'bg-surface'
       )}
     >
       <span className="text-brand-500 text-[11px] font-bold tracking-[.08em] uppercase">

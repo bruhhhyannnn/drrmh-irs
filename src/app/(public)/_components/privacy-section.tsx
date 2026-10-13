@@ -17,12 +17,12 @@ export function PrivacySection() {
         <SectionHeading>Protected under the Data Privacy Act of 2012</SectionHeading>
         <PrivacyNoticeLead />
       </div>
-      <ul className="flex flex-col rounded-[22px] border border-[#eaecf0] bg-gray-50 px-6 py-1 text-[16px] leading-normal text-gray-700">
+      <ul className="flex flex-col rounded-[22px] border border-line bg-gray-50 px-6 py-1 text-[16px] leading-normal text-gray-700">
         {PRIVACY_POINTS.map((point) => (
           <CheckItem
             key={point}
             size={18}
-            className="gap-3 border-t border-[#eaecf0] py-4.5 first:border-t-0"
+            className="gap-3 border-t border-line py-4.5 first:border-t-0"
           >
             {point}
           </CheckItem>

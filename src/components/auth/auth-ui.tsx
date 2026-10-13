@@ -11,7 +11,7 @@ import { useEffect, useRef } from 'react';
 
 /** Maroon text link, e.g. "Forgot password?" or "Sign out". */
 export const AUTH_LINK = cn(
-  'text-brand-500 font-bold hover:text-[#7a1515] hover:underline',
+  'text-brand-500 font-bold hover:text-brand-600 hover:underline',
   FOCUS_RING
 );
 
@@ -59,7 +59,7 @@ export function StatusIcon({ tone }: { tone: 'success' | 'warning' }) {
     <span
       className={cn(
         'grid size-14 place-items-center rounded-full',
-        tone === 'success' ? 'bg-success-50 text-[#027a48]' : 'bg-warning-50 text-[#b54708]'
+        tone === 'success' ? 'bg-success-50 text-success-700' : 'bg-warning-50 text-warning-700'
       )}
     >
       <Icon size={26} strokeWidth={2.25} aria-hidden />

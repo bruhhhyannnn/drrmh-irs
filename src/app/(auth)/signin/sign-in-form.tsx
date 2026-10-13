@@ -101,7 +101,7 @@ export function SignInForm() {
           type="button"
           onClick={changeEmail}
           className={cn(
-            'flex h-11 max-w-full items-center gap-2 self-start rounded-full border border-gray-200 bg-white pr-3.5 pl-2.5 text-[14px] font-medium text-gray-900 hover:bg-gray-50',
+            'flex h-11 max-w-full items-center gap-2 self-start rounded-full border border-gray-200 bg-surface pr-3.5 pl-2.5 text-[14px] font-medium text-gray-900 hover:bg-gray-50',
             FOCUS_RING
           )}
         >
@@ -169,9 +169,9 @@ export function SignInForm() {
       />
 
       <div className="flex items-center gap-3">
-        <span aria-hidden className="h-px flex-1 bg-[#eaecf0]" />
+        <span aria-hidden className="h-px flex-1 bg-line" />
         <span className="text-[13px] font-medium text-gray-500">or with email</span>
-        <span aria-hidden className="h-px flex-1 bg-[#eaecf0]" />
+        <span aria-hidden className="h-px flex-1 bg-line" />
       </div>
 
       <div className="flex flex-col gap-1.5">

@@ -88,7 +88,7 @@ function SiteNav() {
       <Link
         href={ROUTES.signIn}
         className={cn(
-          'text-brand-500 flex h-11 shrink-0 items-center rounded-full bg-white px-4.5 text-[14px] font-bold whitespace-nowrap transition-[filter] hover:brightness-97',
+          'text-brand-500 flex h-11 shrink-0 items-center rounded-full bg-surface px-4.5 text-[14px] font-bold whitespace-nowrap transition-[filter] hover:brightness-97',
           FOCUS_RING
         )}
       >
@@ -100,7 +100,7 @@ function SiteNav() {
 
 function ReportCard() {
   return (
-    <div className="flex flex-col gap-5 rounded-[22px] bg-white p-5 text-gray-900 shadow-[0_18px_40px_rgba(16,24,40,.22)] md:p-7">
+    <div className="flex flex-col gap-5 rounded-[22px] bg-surface p-5 text-gray-900 shadow-[0_18px_40px_rgba(16,24,40,.22)] md:p-7">
       <div className="flex flex-col gap-2">
         <span className="text-brand-500 flex items-center gap-2 text-[12px] font-bold tracking-[.08em] uppercase">
           <span aria-hidden className="bg-brand-500 size-2 rounded-full" />
@@ -119,7 +119,7 @@ function ReportCard() {
         Life-threatening?
         <TextLink href="tel:911">Call 911</TextLink>
       </p>
-      <div className="h-px bg-[#eaecf0]" />
+      <div className="h-px bg-line" />
       <p className="text-[15px] font-bold">For ERT and DRRM-H staff</p>
       <ButtonLink href={ROUTES.signIn} variant="outline" fullWidth>
         Sign in

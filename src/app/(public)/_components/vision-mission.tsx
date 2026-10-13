@@ -14,7 +14,7 @@ export function VisionMission() {
         ].map((item) => (
           <div
             key={item.label}
-            className="flex flex-col gap-3 rounded-[22px] border border-gray-200 bg-white p-5 md:p-7"
+            className="flex flex-col gap-3 rounded-[22px] border border-gray-200 bg-surface p-5 md:p-7"
           >
             <Eyebrow tone="meta">{item.label}</Eyebrow>
             <p className="text-[19px] leading-[1.55] font-medium text-pretty text-gray-900">

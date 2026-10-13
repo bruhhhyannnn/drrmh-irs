@@ -6,7 +6,7 @@ import Link from 'next/link';
 export { FOCUS_RING };
 
 /** Brand link colour — maroon, darkening and underlining on hover. */
-const LINK = 'text-brand-500 hover:text-[#7a1515] hover:underline';
+const LINK = 'text-brand-500 hover:text-brand-600 hover:underline';
 
 /** Content column: 1140px max, with the design's 20 / 40 / 64px gutters (phone / tablet / web). */
 export function Container({
@@ -24,7 +24,7 @@ export function Container({
 }
 
 const SECTION_TONES = {
-  white: 'bg-white',
+  white: 'bg-surface',
   muted: 'bg-gray-50',
   inverse: 'bg-[#4d0e0e] text-white',
 };
@@ -99,7 +99,7 @@ export function CheckItem({
 }) {
   return (
     <li className={cn('flex gap-2.5', className)}>
-      <Check size={size} aria-hidden className="mt-0.75 shrink-0 text-[#027a48]" />
+      <Check size={size} aria-hidden className="mt-0.75 shrink-0 text-success-700" />
       <span>{children}</span>
     </li>
   );
@@ -130,8 +130,8 @@ export function SmartLink({
 }
 
 const BUTTON_VARIANTS = {
-  primary: 'bg-brand-500 text-white hover:brightness-92',
-  outline: 'border-[1.5px] border-gray-300 bg-white text-gray-900 hover:brightness-97',
+  primary: 'bg-brand-solid text-white hover:brightness-92',
+  outline: 'border-[1.5px] border-gray-300 bg-surface text-gray-900 hover:brightness-97',
 };
 
 /** The design system's 52px pill button, rendered as a link. */

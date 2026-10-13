@@ -198,7 +198,10 @@ function CampusFields({ campusId, campusName }: { campusId: string; campusName: 
   /** The drop line: under the target when moving down, over it when moving up. */
   const dropStyle = (index: number) => {
     if (!drag || drag.over !== index || drag.from === index) return undefined;
-    return { boxShadow: drag.from < index ? 'inset 0 -3px 0 #a11d1d' : 'inset 0 3px 0 #a11d1d' };
+    return {
+      boxShadow:
+        drag.from < index ? 'inset 0 -3px 0 var(--brand-500)' : 'inset 0 3px 0 var(--brand-500)',
+    };
   };
 
   const add = async () => {
@@ -271,7 +274,7 @@ function CampusFields({ campusId, campusName }: { campusId: string; campusName: 
                   style={{ ...gridTracks(columns), ...dropStyle(i) }}
                   className={cn(
                     GRID_ROW,
-                    'min-h-16 border-b border-[#eaecf0] py-2.5',
+                    'min-h-16 border-b border-line py-2.5',
                     drag?.from === i && 'opacity-45',
                     !isActive(a) && 'bg-gray-25'
                   )}
@@ -394,7 +397,7 @@ function CampusFields({ campusId, campusName }: { campusId: string; campusName: 
           e.preventDefault();
           void add();
         }}
-        className="flex flex-wrap items-center gap-2.5 rounded-b-[22px] border-t border-[#eaecf0] bg-gray-50 px-4 py-4 md:px-5"
+        className="flex flex-wrap items-center gap-2.5 rounded-b-[22px] border-t border-line bg-gray-50 px-4 py-4 md:px-5"
       >
         <label htmlFor="new-field" className="sr-only">
           New or existing field name

@@ -48,7 +48,7 @@ export function ResultScreen({
         <span
           className={cn(
             'grid size-16 place-items-center rounded-full',
-            isSent ? 'bg-success-50 text-[#027a48]' : 'bg-warning-50 text-[#b54708]'
+            isSent ? 'bg-success-50 text-success-700' : 'bg-warning-50 text-warning-700'
           )}
         >
           {isSent ? (
@@ -73,7 +73,7 @@ export function ResultScreen({
           </p>
         </div>
 
-        <dl className="flex flex-col self-stretch rounded-2xl border border-[#eaecf0] bg-gray-50 px-4 py-1 text-left text-[16px]">
+        <dl className="flex flex-col self-stretch rounded-2xl border border-line bg-gray-50 px-4 py-1 text-left text-[16px]">
           <SummaryRow label={isSent ? 'Sent' : 'Saved'}>
             <span className="font-landing-mono text-[14px]">
               {format(new Date(result.at), 'MMM d, yyyy · h:mm a')}
@@ -91,7 +91,7 @@ export function ResultScreen({
             <span
               className={cn(
                 'flex h-6.5 items-center gap-1.5 rounded-full px-2.5 text-[13px] font-semibold whitespace-nowrap',
-                isSent ? 'bg-success-50 text-[#027a48]' : 'bg-warning-50 text-[#b54708]'
+                isSent ? 'bg-success-50 text-success-700' : 'bg-warning-50 text-warning-700'
               )}
             >
               <span
@@ -152,7 +152,7 @@ function SummaryRow({
     <div
       className={cn(
         'flex items-center justify-between gap-3 py-2.5',
-        !last && 'border-b border-[#eaecf0]'
+        !last && 'border-b border-line'
       )}
     >
       <dt className="text-gray-600">{label}</dt>

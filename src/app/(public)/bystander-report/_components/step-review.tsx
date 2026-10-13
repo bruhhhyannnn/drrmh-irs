@@ -95,13 +95,13 @@ export function StepReview({
         </FieldLabel>
         <div
           className={cn(
-            'flex h-12 items-center overflow-hidden rounded-2xl border bg-white has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-[#5a9ef2]',
-            contactError ? 'border-[#b42318]' : 'border-gray-300'
+            'flex h-12 items-center overflow-hidden rounded-2xl border bg-surface has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-[#5a9ef2]',
+            contactError ? 'border-error-700' : 'border-gray-300'
           )}
         >
           <span
             aria-hidden
-            className="font-landing-mono flex h-full shrink-0 items-center border-r border-[#eaecf0] bg-gray-50 px-3.5 text-[17px] font-medium text-gray-600"
+            className="font-landing-mono flex h-full shrink-0 items-center border-r border-line bg-gray-50 px-3.5 text-[17px] font-medium text-gray-600"
           >
             +63
           </span>
@@ -170,7 +170,7 @@ function ReviewRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className={cn('flex items-center gap-4 py-3', !last && 'border-b border-[#eaecf0]')}>
+    <div className={cn('flex items-center gap-4 py-3', !last && 'border-b border-line')}>
       <div className={cn('flex min-w-0 flex-1 flex-col', gap)}>
         <span className="text-[14px] font-medium text-gray-500">{label}</span>
         <div className={cn('flex flex-col wrap-break-word', gap)}>{children}</div>
@@ -180,7 +180,7 @@ function ReviewRow({
         onClick={onEdit}
         aria-label={`Edit ${label.toLowerCase()}`}
         className={cn(
-          'text-brand-500 shrink-0 rounded text-[16px] font-bold hover:text-[#7a1515] hover:underline',
+          'text-brand-500 shrink-0 rounded text-[16px] font-bold hover:text-brand-600 hover:underline',
           FOCUS_RING
         )}
       >

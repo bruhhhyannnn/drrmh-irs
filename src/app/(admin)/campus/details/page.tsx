@@ -120,7 +120,7 @@ function CampusDetails() {
           key={selected.id}
           eventId={selected.id}
           before={
-            <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2.5 rounded-[18px] border border-gray-200 bg-white px-4 py-3 md:px-5">
+            <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2.5 rounded-[18px] border border-gray-200 bg-surface px-4 py-3 md:px-5">
               <label htmlFor="campus-event" className="text-[16px] font-semibold text-gray-600">
                 Showing
               </label>
@@ -130,7 +130,7 @@ function CampusDetails() {
                   value={selected.id}
                   onChange={(e) => setPickedId(e.target.value)}
                   className={cn(
-                    'h-11 w-full appearance-none truncate rounded-[14px] border border-gray-300 bg-white pr-10 pl-3.5 text-[16px] font-semibold text-gray-900',
+                    'h-11 w-full appearance-none truncate rounded-[14px] border border-gray-300 bg-surface pr-10 pl-3.5 text-[16px] font-semibold text-gray-900',
                     FOCUS_RING
                   )}
                 >

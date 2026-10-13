@@ -387,7 +387,7 @@ function CampusChecklist({
     <div
       role="group"
       aria-labelledby="event-campuses-label"
-      className="flex flex-col overflow-hidden rounded-2xl border border-gray-300 bg-white"
+      className="flex flex-col overflow-hidden rounded-2xl border border-gray-300 bg-surface"
     >
       <button
         type="button"
@@ -395,7 +395,7 @@ function CampusChecklist({
         aria-checked={all ? true : some ? 'mixed' : false}
         onClick={() => onChange(all ? [] : campuses.map((c) => c.id))}
         className={cn(
-          'flex min-h-13 items-center gap-3 border-b border-[#eaecf0] bg-gray-50 px-4 text-left',
+          'flex min-h-13 items-center gap-3 border-b border-line bg-gray-50 px-4 text-left',
           FOCUS_RING,
           'focus-visible:-outline-offset-3'
         )}

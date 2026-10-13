@@ -145,7 +145,7 @@ export function UpdatePasswordForm() {
         {passwordsMatch && (
           <p
             aria-hidden
-            className="flex items-center gap-2 text-[13px] font-semibold text-[#027a48]"
+            className="flex items-center gap-2 text-[13px] font-semibold text-success-700"
           >
             <Check size={16} strokeWidth={2.5} />
             Passwords match

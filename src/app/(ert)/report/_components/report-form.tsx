@@ -39,7 +39,7 @@ import { PeopleRow } from './people-rows';
 
 type DrawerName = 'event' | 'missing' | 'casualty' | 'privacy';
 
-const TEXT_LINK = cn('text-brand-500 font-bold hover:text-[#7a1515] hover:underline', FOCUS_RING);
+const TEXT_LINK = cn('text-brand-500 font-bold hover:text-brand-600 hover:underline', FOCUS_RING);
 
 /**
  * The status report as one page, not steps: the leader fills the headcount as people arrive,
@@ -350,7 +350,7 @@ export function ErtReportForm({
                   {Array.from({ length: 6 }, (_, i) => (
                     <div
                       key={i}
-                      className="flex min-h-15 items-center gap-3 border-b border-[#eaecf0] py-1.5"
+                      className="flex min-h-15 items-center gap-3 border-b border-line py-1.5"
                     >
                       <Skeleton className="h-4 w-2/5 rounded-md" />
                       <Skeleton className="ml-auto h-12.5 w-36 rounded-full" />
@@ -362,7 +362,7 @@ export function ErtReportForm({
                   {categories.map((cc) => (
                     <div
                       key={cc.category_id}
-                      className="flex min-h-15 items-center gap-3 border-b border-[#eaecf0] py-1.5"
+                      className="flex min-h-15 items-center gap-3 border-b border-line py-1.5"
                     >
                       <span className="min-w-0 flex-1 text-[16px] leading-[1.3] font-semibold text-pretty text-gray-700">
                         {cc.category.name}
@@ -396,7 +396,7 @@ export function ErtReportForm({
                   hasPeople={missingPersons.length > 0}
                   onManage={() => openDrawer('missing')}
                 />
-                <div className="h-px bg-[#eaecf0]" />
+                <div className="h-px bg-line" />
                 <PeopleRow
                   kind="casualty"
                   meta={casualtiesMeta(casualties, conditionName)}
@@ -449,7 +449,7 @@ export function ErtReportForm({
 
         <aside
           aria-label="Before you submit"
-          className="sticky top-6 hidden flex-col gap-4.5 rounded-[22px] border border-gray-200 bg-white p-6 shadow-theme-md lg:flex"
+          className="sticky top-6 hidden flex-col gap-4.5 rounded-[22px] border border-gray-200 bg-surface p-6 shadow-theme-md lg:flex"
         >
           <h2 className="text-[19px] leading-[1.3] font-bold">Before you submit</h2>
           <ul className="flex flex-col gap-3.5">
@@ -472,7 +472,7 @@ export function ErtReportForm({
               detail={selectedDamage?.name ?? 'Not chosen yet'}
             />
           </ul>
-          <div className="flex items-baseline justify-between gap-3 rounded-2xl border border-[#eaecf0] bg-gray-50 px-4 py-3.5">
+          <div className="flex items-baseline justify-between gap-3 rounded-2xl border border-line bg-gray-50 px-4 py-3.5">
             <span className="text-[16px] font-semibold text-gray-600">Headcount total</span>
             <Mono className="text-[28px] font-extrabold">{total}</Mono>
           </div>
@@ -482,7 +482,7 @@ export function ErtReportForm({
             </Button>
             {savedAt && (
               <span className="flex items-center justify-center gap-1.5 text-[14px] font-medium text-gray-500">
-                <Check size={12} strokeWidth={3} aria-hidden className="text-[#027a48]" />
+                <Check size={12} strokeWidth={3} aria-hidden className="text-success-700" />
                 Draft saved on this phone · <Mono>{formatTime(savedAt)}</Mono>
               </span>
             )}
@@ -493,7 +493,7 @@ export function ErtReportForm({
 
       <div
         data-bottom-bar
-        className="sticky bottom-0 z-20 border-t border-[#eaecf0] bg-white shadow-[0_-4px_12px_rgba(16,24,40,.06)] lg:hidden"
+        className="sticky bottom-0 z-20 border-t border-line bg-surface shadow-[0_-4px_12px_rgba(16,24,40,.06)] lg:hidden"
       >
         <div className={cn(GUTTER, 'flex items-center gap-4 py-3')}>
           <div className="flex min-w-0 flex-1 flex-col gap-px">
@@ -502,7 +502,7 @@ export function ErtReportForm({
               <Mono className="text-[22px] font-bold">{total}</Mono>
               {savedAt && (
                 <span className="flex items-center gap-1 text-[13px] font-medium whitespace-nowrap text-gray-500">
-                  <Check size={12} strokeWidth={3} aria-hidden className="text-[#027a48]" />
+                  <Check size={12} strokeWidth={3} aria-hidden className="text-success-700" />
                   Draft saved <Mono>{formatTime(savedAt)}</Mono>
                 </span>
               )}
@@ -646,9 +646,9 @@ function CheckItem({
         className={cn(
           'grid size-6 shrink-0 place-items-center rounded-full',
           done
-            ? 'bg-success-50 text-[#027a48]'
+            ? 'bg-success-50 text-success-700'
             : error
-              ? 'border-[1.5px] border-[#b42318]'
+              ? 'border-[1.5px] border-error-700'
               : 'border-[1.5px] border-gray-300'
         )}
       >
@@ -659,7 +659,7 @@ function CheckItem({
           {label}
           <span className="sr-only">{done ? ': done' : ': not done yet'}</span>
         </span>
-        <span className={cn('truncate text-[14px]', error ? 'text-[#b42318]' : 'text-gray-500')}>
+        <span className={cn('truncate text-[14px]', error ? 'text-error-700' : 'text-gray-500')}>
           {detail}
         </span>
       </div>
@@ -681,7 +681,7 @@ function PrivacyLine({
     <div
       className={cn(
         'flex items-start gap-2.5 text-[14px] leading-normal text-gray-600',
-        stacked ? 'border-t border-[#eaecf0] pt-4' : 'px-1',
+        stacked ? 'border-t border-line pt-4' : 'px-1',
         className
       )}
     >

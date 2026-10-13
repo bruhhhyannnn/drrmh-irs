@@ -373,7 +373,7 @@ function ReportForm({
               {Array.from({ length: 5 }, (_, i) => (
                 <div
                   key={i}
-                  className="flex min-h-14.5 items-center gap-2.5 border-b border-[#eaecf0] py-1"
+                  className="flex min-h-14.5 items-center gap-2.5 border-b border-line py-1"
                 >
                   <Skeleton className="h-4 w-2/5 rounded-md" />
                   <Skeleton className="ml-auto h-12.5 w-36 rounded-full" />
@@ -385,7 +385,7 @@ function ReportForm({
               {categories.map((cc) => (
                 <div
                   key={cc.category_id}
-                  className="flex min-h-14.5 items-center gap-2.5 border-b border-[#eaecf0] py-1"
+                  className="flex min-h-14.5 items-center gap-2.5 border-b border-line py-1"
                 >
                   <label
                     htmlFor={`count-${cc.category_id}`}
@@ -429,14 +429,11 @@ function ReportForm({
                   ? casualtiesMeta(casualties, conditionName)
                   : 'None reported',
                 icon: <Users size={20} aria-hidden />,
-                tone: 'bg-error-50 text-[#b42318]',
+                tone: 'bg-error-50 text-error-700',
                 count: casualties.length,
               },
             ].map((row) => (
-              <li
-                key={row.kind}
-                className="flex items-center gap-3.5 border-b border-[#eaecf0] py-3"
-              >
+              <li key={row.kind} className="flex items-center gap-3.5 border-b border-line py-3">
                 <span
                   className={`grid size-10 shrink-0 place-items-center rounded-full ${row.tone}`}
                 >

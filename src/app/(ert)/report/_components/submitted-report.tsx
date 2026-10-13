@@ -182,7 +182,7 @@ export function SubmittedReport({
 
           <Card className="flex flex-col gap-4.5 p-5 md:p-6">
             <div className="flex items-center gap-3.5">
-              <span className="bg-success-50 grid size-11 shrink-0 place-items-center rounded-full text-[#027a48]">
+              <span className="bg-success-50 grid size-11 shrink-0 place-items-center rounded-full text-success-700">
                 <Check size={22} strokeWidth={2.5} aria-hidden />
               </span>
               <div className="flex flex-col gap-0.5">
@@ -224,7 +224,7 @@ export function SubmittedReport({
                 {headcount.map((pc) => (
                   <div
                     key={pc.category_id}
-                    className="flex min-h-11 items-center justify-between gap-3 border-b border-[#eaecf0]"
+                    className="flex min-h-11 items-center justify-between gap-3 border-b border-line"
                   >
                     <dt className="text-[16px] leading-[1.3] text-gray-700">{pc.category.name}</dt>
                     <dd>
@@ -257,7 +257,7 @@ export function SubmittedReport({
               }
             />
             <PeopleList people={missingPersons} />
-            <div className="h-px bg-[#eaecf0]" />
+            <div className="h-px bg-line" />
             <PeopleRow
               kind="casualty"
               meta={
@@ -378,7 +378,7 @@ function SubmittedReportSkeleton() {
 
 function StatTile({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-1 rounded-2xl border border-[#eaecf0] bg-gray-50 px-4 py-3.5">
+    <div className="flex flex-col gap-1 rounded-2xl border border-line bg-gray-50 px-4 py-3.5">
       <dt className="text-[13px] font-semibold text-gray-500">{label}</dt>
       <dd>{children}</dd>
     </div>
@@ -387,7 +387,7 @@ function StatTile({ label, children }: { label: string; children: React.ReactNod
 
 function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-wrap gap-x-4 gap-y-1 border-b border-[#eaecf0] py-3.5 last:border-b-0">
+    <div className="flex flex-wrap gap-x-4 gap-y-1 border-b border-line py-3.5 last:border-b-0">
       <dt className="flex-[0_0_140px] text-gray-500">{label}</dt>
       <dd className="min-w-0 flex-[1_1_220px]">{children}</dd>
     </div>

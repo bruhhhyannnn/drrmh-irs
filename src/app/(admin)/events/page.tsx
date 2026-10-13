@@ -197,7 +197,7 @@ function Events() {
       />
 
       {error ? (
-        <Card className="p-6 text-[17px] text-[#b42318]">
+        <Card className="p-6 text-[17px] text-error-700">
           The events couldn&apos;t be loaded: {error.message}
         </Card>
       ) : (

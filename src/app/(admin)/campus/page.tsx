@@ -33,7 +33,7 @@ export default function CampusPage() {
       />
 
       {error ? (
-        <Card className="p-6 text-[17px] text-[#b42318]">
+        <Card className="p-6 text-[17px] text-error-700">
           The campuses couldn&apos;t be loaded: {error.message}
         </Card>
       ) : isPending ? (
@@ -59,7 +59,7 @@ export default function CampusPage() {
                 <Link
                   href={`/campus/details?id=${campus.id}`}
                   className={cn(
-                    'flex min-w-0 flex-col gap-4 rounded-[22px] border border-gray-200 bg-white p-5 text-gray-900 shadow-[0_1px_3px_rgba(16,24,40,.08)] transition-shadow hover:border-gray-300 hover:shadow-[0_4px_8px_-2px_rgba(16,24,40,.10)]',
+                    'flex min-w-0 flex-col gap-4 rounded-[22px] border border-gray-200 bg-surface p-5 text-gray-900 shadow-[0_1px_3px_rgba(16,24,40,.08)] transition-shadow hover:border-gray-300 hover:shadow-[0_4px_8px_-2px_rgba(16,24,40,.10)]',
                     FOCUS_RING
                   )}
                 >
@@ -73,7 +73,7 @@ export default function CampusPage() {
                     </div>
                     <ChevronRight size={18} aria-hidden className="shrink-0 text-gray-400" />
                   </div>
-                  <dl className="grid grid-cols-3 gap-2 border-t border-[#eaecf0] pt-3.5">
+                  <dl className="grid grid-cols-3 gap-2 border-t border-line pt-3.5">
                     {stats.map((s) => (
                       <div key={s.label} className="flex flex-col gap-0.5">
                         <dt className="text-[13px] font-medium text-gray-500">{s.label}</dt>
@@ -89,11 +89,11 @@ export default function CampusPage() {
                     ))}
                   </dl>
                   {campus._count.population_categories === 0 && (
-                    <div className="bg-warning-50 flex items-start gap-2 rounded-[14px] px-3 py-2.5 text-[14px] leading-[1.45] font-medium text-[#93370d]">
+                    <div className="bg-warning-50 flex items-start gap-2 rounded-[14px] px-3 py-2.5 text-[14px] leading-[1.45] font-medium text-warning-800">
                       <AlertTriangle
                         size={16}
                         aria-hidden
-                        className="mt-px shrink-0 text-[#b54708]"
+                        className="mt-px shrink-0 text-warning-700"
                       />
                       <span>
                         No population fields yet, so ERT headcount has nothing to fill in.

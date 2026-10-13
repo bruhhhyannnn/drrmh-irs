@@ -2,8 +2,8 @@ import { cn } from '@/lib';
 import { AlertTriangle } from 'lucide-react';
 
 const TONES = {
-  error: { box: 'border-[#fecdca] bg-error-50 text-[#b42318]', icon: 'text-error-600' },
-  warning: { box: 'border-[#fedf89] bg-warning-50 text-[#93370d]', icon: 'text-[#b54708]' },
+  error: { box: 'border-error-200 bg-error-50 text-error-700', icon: 'text-error-600' },
+  warning: { box: 'border-warning-200 bg-warning-50 text-warning-800', icon: 'text-warning-700' },
 };
 
 /** One-line message above a form: red for errors, amber for warnings such as being offline. */

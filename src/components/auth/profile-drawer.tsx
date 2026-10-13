@@ -1,6 +1,7 @@
 'use client';
 
 import { Button, Drawer } from '@/components/ds';
+import { AppearanceSetting } from '@/components/theme';
 import { cn, getInitials, supabase } from '@/lib';
 import { useAuthStore } from '@/store';
 import { format } from 'date-fns';
@@ -11,8 +12,8 @@ import toast from 'react-hot-toast';
 
 const BADGE_TONES = {
   maroon: 'bg-brand-25 text-brand-500',
-  green: 'bg-success-50 text-[#027a48]',
-  amber: 'bg-warning-50 text-[#b54708]',
+  green: 'bg-success-50 text-success-700',
+  amber: 'bg-warning-50 text-warning-700',
   grey: 'bg-gray-100 text-gray-600',
 };
 
@@ -84,7 +85,7 @@ export function ProfileDrawer({ open, onClose }: { open: boolean; onClose: () =>
           <div className="flex items-center gap-3.5">
             <span
               aria-hidden
-              className="bg-brand-500 grid size-12 shrink-0 place-items-center rounded-full text-[16px] large-text:text-[18px] font-bold text-white uppercase"
+              className="bg-brand-solid grid size-12 shrink-0 place-items-center rounded-full text-[16px] large-text:text-[18px] font-bold text-white uppercase"
             >
               {getInitials(fullName).slice(0, 2)}
             </span>
@@ -112,11 +113,11 @@ export function ProfileDrawer({ open, onClose }: { open: boolean; onClose: () =>
           <h3 className="text-[11px] large-text:text-[12px] font-bold tracking-[.08em] text-gray-500 uppercase">
             Details
           </h3>
-          <dl className="flex flex-col rounded-2xl border border-[#eaecf0] bg-white px-4 py-0.5">
+          <dl className="flex flex-col rounded-2xl border border-line bg-surface px-4 py-0.5">
             {rows.map((row) => (
               <div
                 key={row.label}
-                className="flex flex-wrap gap-x-4 gap-y-0.5 border-b border-[#eaecf0] py-3 text-[14px] large-text:text-[16px] leading-[1.45] last:border-b-0"
+                className="flex flex-wrap gap-x-4 gap-y-0.5 border-b border-line py-3 text-[14px] large-text:text-[16px] leading-[1.45] last:border-b-0"
               >
                 <dt className="flex-[0_0_130px] text-gray-500">{row.label}</dt>
                 <dd className="min-w-0 flex-[1_1_160px] font-semibold text-gray-900">
@@ -126,6 +127,8 @@ export function ProfileDrawer({ open, onClose }: { open: boolean; onClose: () =>
             ))}
           </dl>
         </section>
+
+        <AppearanceSetting />
       </div>
     </Drawer>
   );
