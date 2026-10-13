@@ -68,6 +68,7 @@ CI (`.github/workflows/ci.yml`) runs on PRs/pushes to `main`: `npm ci` → `pris
 - Prettier: single quotes, semicolons, 100 print width, Tailwind class sorting and import organizing run automatically via `prettier-plugin-tailwindcss` / `prettier-plugin-organize-imports` — don't hand-order imports or Tailwind classes.
 - `src/components/ui/map.tsx` is vendored (from mapcn) and excluded from linting — don't "fix" lint issues there.
 - Zod schemas for forms live in `src/lib/schemas.ts`; forms use `react-hook-form` + `@hookform/resolvers`.
+- Light / dark mode: colours are theme tokens in `globals.css` that change under `.dark` on `<html>`, so classes like `text-gray-600` or `text-brand-500` need no `dark:` variant. Use `bg-canvas` for page backgrounds, `bg-surface` (not `bg-white`) for cards, bars, drawers and inputs, `border-line` for hairlines, and `bg-brand-solid` for maroon fills with white text on them. Hex values in class names stay the same in both themes (the maroon heroes). The choice (Light / Dark / Device) is saved per device by `useThemeStore` and set in My profile; `data-theme="light"` keeps a subtree light (the A4 report).
 
 ## Documentation & Planning Workflow
 
