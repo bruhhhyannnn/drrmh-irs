@@ -5,11 +5,11 @@ import { figtree, FOCUS_RING, splineSansMono } from '@/components/ds';
 import { usePendingBystanderCount } from '@/components/hooks/use-bystander-reports';
 import { cn, getInitials } from '@/lib';
 import { useAuthStore } from '@/store';
-import { ChevronDown, Menu } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, Menu } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import packageJson from '../../../../../package.json';
 import { CampusLabel, CampusSwitcher, useIsSuperAdmin, useScopedCampusId } from './campus-switcher';
 import { isActivePath, navFor, SUPER_ADMIN_HREFS, type NavItem } from './nav';
@@ -19,6 +19,13 @@ const { version } = packageJson;
 // One shell for every admin page: sidebar on web (≥1024px), an 88px icon rail on tablet
 // (≥768px), bottom tabs on phone. The top bar holds the campus switcher (super admins) or the
 // assigned campus (administrators) and the account button.
+
+/** The DRRM pillar items open in a new tab: they will become their own apps. */
+function newTabProps(item: NavItem) {
+  return item.newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {};
+}
+
+const NEW_TAB_NOTE = <span className="sr-only"> (opens in a new tab)</span>;
 
 function usePendingBadge() {
   const campusId = useScopedCampusId();
@@ -121,6 +128,7 @@ function Sidebar() {
               )}
               <Link
                 href={item.href}
+                {...newTabProps(item)}
                 aria-current={on ? 'page' : undefined}
                 className={cn(
                   'flex h-11 items-center gap-3 rounded-xl px-3 text-[14px]',
@@ -132,6 +140,12 @@ function Sidebar() {
               >
                 <item.icon size={20} aria-hidden className="shrink-0" />
                 <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                {item.newTab && (
+                  <>
+                    <ArrowUpRight size={16} aria-hidden className="shrink-0 text-gray-400" />
+                    {NEW_TAB_NOTE}
+                  </>
+                )}
                 {item.key === 'bystander' && pending > 0 && (
                   <span className="font-landing-mono bg-error-600 grid h-5.5 min-w-5.5 place-items-center rounded-full px-1.75 text-[12px] font-bold text-white">
                     <span className="sr-only">, </span>
@@ -183,27 +197,34 @@ function Rail() {
         {nav.map((item) => {
           const on = isActivePath(pathname, item.href);
           return (
-            <Link
-              key={item.key}
-              href={item.href}
-              aria-current={on ? 'page' : undefined}
-              className={cn(
-                'relative flex w-18 flex-col items-center gap-1 rounded-[14px] pt-2 pb-1.75 text-center text-[11px] leading-[1.2]',
-                on
-                  ? 'bg-brand-25 text-brand-500 font-bold'
-                  : 'font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900',
-                FOCUS_RING
+            <Fragment key={item.key}>
+              {/* The rail has no group titles; a rule sets the pillars (separate apps) apart. */}
+              {item.group && item.newTab && (
+                <span aria-hidden className="bg-line my-1.5 h-px w-10 shrink-0" />
               )}
-            >
-              <item.icon size={20} aria-hidden />
-              <span>{item.short}</span>
-              {item.key === 'bystander' && pending > 0 && (
-                <>
-                  <BadgeDot className="top-1.25 right-4.5" />
-                  <span className="sr-only">, {pending} pending</span>
-                </>
-              )}
-            </Link>
+              <Link
+                href={item.href}
+                {...newTabProps(item)}
+                aria-current={on ? 'page' : undefined}
+                className={cn(
+                  'relative flex w-18 flex-col items-center gap-1 rounded-[14px] pt-2 pb-1.75 text-center text-[11px] leading-[1.2]',
+                  on
+                    ? 'bg-brand-25 text-brand-500 font-bold'
+                    : 'font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                  FOCUS_RING
+                )}
+              >
+                <item.icon size={20} aria-hidden />
+                <span>{item.short}</span>
+                {item.newTab && NEW_TAB_NOTE}
+                {item.key === 'bystander' && pending > 0 && (
+                  <>
+                    <BadgeDot className="top-1.25 right-4.5" />
+                    <span className="sr-only">, {pending} pending</span>
+                  </>
+                )}
+              </Link>
+            </Fragment>
           );
         })}
       </nav>
@@ -276,7 +297,7 @@ function BottomTabs() {
   );
 }
 
-/** Campus (super admins), Users and Settings on phone, above the bottom tabs. */
+/** Campus (super admins), Users, Settings and the DRRM pillars on phone, above the bottom tabs. */
 function MoreSheet({
   items,
   pathname,
@@ -298,24 +319,37 @@ function MoreSheet({
       <div aria-hidden className="absolute inset-0 bg-[rgba(16,24,40,.35)]" onClick={onClose} />
       <div
         ref={sheetRef}
-        className="absolute inset-x-3 bottom-[calc(68px+12px+env(safe-area-inset-bottom))] flex flex-col rounded-[22px] border border-gray-200 bg-surface p-1.5 shadow-[0_18px_40px_rgba(16,24,40,.22)]"
+        className="absolute inset-x-3 bottom-[calc(68px+12px+env(safe-area-inset-bottom))] flex max-h-[calc(100dvh-104px-env(safe-area-inset-bottom))] flex-col overflow-y-auto rounded-[22px] border border-gray-200 bg-surface p-1.5 shadow-[0_18px_40px_rgba(16,24,40,.22)]"
       >
         {items.map((item) => {
           const on = isActivePath(pathname, item.href);
           return (
-            <Link
-              key={item.key}
-              href={item.href}
-              aria-current={on ? 'page' : undefined}
-              className={cn(
-                'flex h-12 items-center gap-3 rounded-[14px] px-3 text-[15px]',
-                on ? 'bg-brand-25 text-brand-500 font-bold' : 'font-semibold text-gray-900',
-                FOCUS_RING
+            <Fragment key={item.key}>
+              {item.group && (
+                <span className="px-3 pt-3 pb-1 text-[11px] font-bold tracking-[.08em] text-gray-500 uppercase">
+                  {item.group}
+                </span>
               )}
-            >
-              <item.icon size={20} aria-hidden />
-              {item.label}
-            </Link>
+              <Link
+                href={item.href}
+                {...newTabProps(item)}
+                aria-current={on ? 'page' : undefined}
+                className={cn(
+                  'flex h-12 shrink-0 items-center gap-3 rounded-[14px] px-3 text-[15px]',
+                  on ? 'bg-brand-25 text-brand-500 font-bold' : 'font-semibold text-gray-900',
+                  FOCUS_RING
+                )}
+              >
+                <item.icon size={20} aria-hidden />
+                <span className="min-w-0 flex-1">{item.label}</span>
+                {item.newTab && (
+                  <>
+                    <ArrowUpRight size={16} aria-hidden className="shrink-0 text-gray-400" />
+                    {NEW_TAB_NOTE}
+                  </>
+                )}
+              </Link>
+            </Fragment>
           );
         })}
         <p className="px-3 pt-2 pb-1.5 text-[12px] text-gray-500">DRRM-H IRS · Version {version}</p>
