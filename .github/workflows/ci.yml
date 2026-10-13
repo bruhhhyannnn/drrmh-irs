@@ -38,8 +38,9 @@ jobs:
         run: npx tsc --noEmit
 
       # --- 4. UNIT TESTING ---
-      # - name: Run Unit Tests
-      # run: npm run test
+      # Vitest only. The Playwright end-to-end tests run locally (npm run test:e2e).
+      - name: Run Unit Tests
+        run: npm run test
 
       # --- 5. BUILD ---
       - name: Build
