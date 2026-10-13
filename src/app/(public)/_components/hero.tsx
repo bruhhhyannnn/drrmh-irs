@@ -7,11 +7,11 @@ import { ButtonLink, Container, FOCUS_RING, TextLink } from './primitives';
 
 export function Hero() {
   return (
-    <div className="relative isolate text-white">
+    <div className="relative isolate flex min-h-svh flex-col text-white">
       <HeroBackground />
-      <Container>
+      <Container className="flex flex-1 flex-col">
         <SiteNav />
-        <div className="grid grid-cols-1 items-center gap-8 pt-8 pb-12 md:gap-10 md:pt-12 md:pb-18 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-14 lg:pt-16 lg:pb-24">
+        <div className="grid flex-1 grid-cols-1 content-center items-center gap-8 pt-8 pb-12 md:gap-10 md:pt-12 md:pb-18 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-14 lg:pt-16 lg:pb-24">
           <div className="flex min-w-0 flex-col gap-5">
             <span className="text-[12px] font-bold tracking-[.08em] text-[#fbd5d5] uppercase">
               UP Manila · DRRM-H Program
