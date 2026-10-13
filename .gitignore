@@ -6,6 +6,12 @@
 
 # testing
 /coverage
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+# signed-in session saved by e2e/auth.setup.ts
+/e2e/.auth/
 
 # next.js
 /.next/
