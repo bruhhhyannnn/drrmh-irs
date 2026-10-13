@@ -1,4 +1,5 @@
-import { SettingsTablePage } from '@/components/settings';
+import { SettingsPage } from '../_components/settings-page';
+
 export default function Page() {
-  return <SettingsTablePage title="Casualty Conditions" table="casualty_conditions" />;
+  return <SettingsPage tab="casualty-conditions" />;
 }

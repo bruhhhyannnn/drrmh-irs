@@ -3,7 +3,7 @@ import {
   deleteUser,
   getUser,
   getUsers,
-  toggleUserStatus,
+  setUserActive,
   updateUser,
   type CreateUserInput,
   type UpdateUserInput,
@@ -30,7 +30,11 @@ export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateUserInput) => createUser(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['campuses-overview'] });
+    },
   });
 }
 
@@ -45,11 +49,11 @@ export function useUpdateUser() {
   });
 }
 
-export function useToggleUserStatus() {
+export function useSetUserActive() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, current }: { id: string; current: boolean }) =>
-      toggleUserStatus(id, current),
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
+      setUserActive(id, isActive),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] }),
   });
 }

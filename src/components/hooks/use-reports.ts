@@ -1,28 +1,32 @@
 import {
-  createReport,
   createReportCasualty,
   createReportMissingPerson,
   deleteReport,
   deleteReportCasualty,
   deleteReportMissingPerson,
+  getMyLatestReport,
   getMyReportForOngoingEvent,
   getReport,
   getReportCasualties,
-  getReportClusterSummary,
   getReportMissingPersons,
   getReports,
-  getReportsByEvent,
-  getReportTotals,
-  updateReport,
+  saveReportEdits,
+  type ReportEditData,
+  type ReportListFilters,
 } from '@/actions/reports';
-import { CasualtyFormData, MissingPersonFormData, ReportFormData } from '@/lib';
-import type { Prisma } from '@prisma/client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { CasualtyFormData, MissingPersonFormData } from '@/lib';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-export function useReports(page: number, query: string, campusId?: string) {
+export function useReports(
+  page: number,
+  query: string,
+  campusId?: string,
+  filters: ReportListFilters = {}
+) {
   return useQuery({
-    queryKey: ['reports', page, query, campusId],
-    queryFn: () => getReports(page, query, campusId),
+    queryKey: ['reports', page, query, campusId, filters.eventId, filters.clusterId],
+    queryFn: () => getReports(page, query, campusId, filters),
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -34,27 +38,17 @@ export function useReport(id?: string) {
   });
 }
 
-export function useCreateReport() {
+export function useSaveReportEdits() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: ReportFormData & { user_id?: string }) => createReport(data),
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['reports'] });
-      if (variables.user_id) {
-        queryClient.invalidateQueries({ queryKey: ['my-report', variables.user_id] });
-      }
-    },
-  });
-}
-
-export function useUpdateReport() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Prisma.ReportUpdateInput }) =>
-      updateReport(id, data),
+    mutationFn: ({ id, data }: { id: string; data: ReportEditData }) => saveReportEdits(id, data),
     onSuccess: (_data, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ['reports'] });
+      for (const key of ['reports', 'event-summary', 'dashboard']) {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      }
       queryClient.invalidateQueries({ queryKey: ['report', id] });
+      queryClient.invalidateQueries({ queryKey: ['report-casualties', id] });
+      queryClient.invalidateQueries({ queryKey: ['report-missing-persons', id] });
     },
   });
 }
@@ -63,15 +57,11 @@ export function useDeleteReport() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteReport(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reports'] }),
-  });
-}
-
-export function useEventReports(eventId?: string) {
-  return useQuery({
-    queryKey: ['event-reports', eventId],
-    queryFn: () => getReportsByEvent(eventId!),
-    enabled: !!eventId,
+    onSuccess: () => {
+      for (const key of ['reports', 'event-summary', 'dashboard', 'events']) {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      }
+    },
   });
 }
 
@@ -83,17 +73,11 @@ export function useMyReport(userId?: string) {
   });
 }
 
-export function useReportClusterSummary(campusId?: string) {
+export function useMyLatestReport(userId?: string, options?: { enabled?: boolean }) {
   return useQuery({
-    queryKey: ['report-cluster-summary', campusId],
-    queryFn: () => getReportClusterSummary(campusId),
-  });
-}
-
-export function useReportTotals(campusId?: string) {
-  return useQuery({
-    queryKey: ['report-totals', campusId],
-    queryFn: () => getReportTotals(campusId),
+    queryKey: ['my-latest-report', userId],
+    queryFn: () => getMyLatestReport(userId!),
+    enabled: !!userId && (options?.enabled ?? true),
   });
 }
 

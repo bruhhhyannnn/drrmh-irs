@@ -4,6 +4,13 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   turbopack: {},
   allowedDevOrigins: ['10.10.4.89'],
+  experimental: {
+    serverActions: {
+      // Bystander reports carry up to 3 photos (~1 MB each after the browser resizes them) in
+      // one createBystanderReport call; the 1 MB default would reject them.
+      bodySizeLimit: '8mb',
+    },
+  },
 };
 
 export default withPWA({

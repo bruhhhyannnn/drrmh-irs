@@ -1,0 +1,20 @@
+import { figtree, splineSansMono } from '@/components/ds';
+import { cn } from '@/lib';
+import { TopBar } from './top-bar';
+
+/** Solid white top bar over a light grey page, in Figtree. */
+export function ErtFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      data-large-text
+      className={cn(
+        figtree.variable,
+        splineSansMono.variable,
+        'font-landing flex min-h-dvh flex-col bg-canvas text-gray-900 antialiased'
+      )}
+    >
+      <TopBar />
+      {children}
+    </div>
+  );
+}

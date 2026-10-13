@@ -2,13 +2,10 @@
 'use client';
 
 import { Loader2, Locate, Maximize, Minus, Plus, X } from 'lucide-react';
-import type { MarkerOptions, PopupOptions } from 'maplibre-gl';
+// maplibre-gl 6 is ESM-only with no default export.
 import * as MapLibreGL from 'maplibre-gl';
+import { type MarkerOptions, type PopupOptions } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-
-if (typeof window !== 'undefined') {
-  MapLibreGL.setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
-}
 
 import {
   createContext,
@@ -26,6 +23,14 @@ import {
 import { createPortal } from 'react-dom';
 
 import { cn } from '@/lib/utils';
+
+// maplibre-gl 6 finds its worker next to its own module via import.meta.url, which the bundler
+// rewrites; point it at the worker file the bundler emits instead.
+if (typeof window !== 'undefined') {
+  MapLibreGL.setWorkerUrl(
+    new URL('maplibre-gl/dist/maplibre-gl-worker.mjs', import.meta.url).href
+  );
+}
 
 const defaultStyles = {
   dark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
@@ -218,8 +223,6 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
   // Initialize the map
   useEffect(() => {
     if (!containerRef.current) return;
-
-    MapLibreGL.setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
     const initialStyle = resolvedTheme === 'dark' ? mapStyles.dark : mapStyles.light;
     currentStyleRef.current = initialStyle;

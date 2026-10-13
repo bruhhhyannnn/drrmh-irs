@@ -3,7 +3,6 @@
 import { getEvent } from '@/actions/events';
 import type { getReportsByEvent } from '@/actions/reports';
 import { getReportsByEvent as fetchReportsByEvent } from '@/actions/reports';
-import { CLUSTERS } from '@/lib';
 import {
   sumPopulationCountsByCategory,
   totalPopulationCount,
@@ -62,7 +61,11 @@ function buildClusterBreakdownSheet(wb: ExcelJS.Workbook, reports: EventReport[]
   sheet.addRow(headers);
   styleHeaderRow(sheet.getRow(1));
 
-  CLUSTERS.forEach((cluster) => {
+  // Every cluster that reported, in name order (clusters differ per campus).
+  const clusters = [...new Set(reports.map((r) => r.cluster.name))].sort((a, b) =>
+    a.localeCompare(b)
+  );
+  clusters.forEach((cluster) => {
     const cr = reports.filter((r) => r.cluster.name === cluster);
     const totalsById = new Map(sumPopulationCountsByCategory(cr).map((t) => [t.id, t.total]));
     const totalAffected = categories.reduce((sum, c) => sum + (totalsById.get(c.id) ?? 0), 0);

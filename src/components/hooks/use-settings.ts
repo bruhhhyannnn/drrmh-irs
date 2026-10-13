@@ -48,10 +48,11 @@ export function useDeleteSetting(table: SettingsTable) {
 }
 
 // Individual Settings Item
-export function useUnits(clusterId?: string) {
+export function useUnits(clusterId?: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['units', clusterId],
     queryFn: () => getUnits(clusterId),
+    enabled: options?.enabled ?? true,
   });
 }
 

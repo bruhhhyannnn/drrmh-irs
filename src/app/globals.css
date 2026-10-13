@@ -1,7 +1,21 @@
 @import 'tailwindcss';
 @import 'shadcn/tailwind.css';
 
-@custom-variant dark (&:is(.dark *));
+/* Dark mode: `.dark` on <html>, set before the first paint by the script in the root layout. A
+   `data-theme="light"` subtree (the A4 event report) stays light. Most colours need no `dark:`
+   variant: see the theme colours below. */
+@custom-variant dark {
+  &:where(.dark, .dark *):not(:where([data-theme='light'], [data-theme='light'] *)) {
+    @slot;
+  }
+}
+
+/* Inside the A4 event report: the admin summary charts are reused there at their print sizes. */
+@custom-variant print-report (&:where([data-print-report] *));
+
+/* The ERT and bystander pages: the shared ds controls (also used in admin drawers and the
+   sign-in pages) step up to the larger type scale only under these page roots. */
+@custom-variant large-text (&:where([data-large-text] *));
 
 @theme {
   --font-sans:
@@ -23,48 +37,15 @@
   --color-white: #ffffff;
   --color-black: #101828;
 
-  /* Brand - UPM Maroon */
-  --color-brand-25: #fff5f5;
-  --color-brand-50: #ffe5e5;
-  --color-brand-100: #f5c6c6;
-  --color-brand-200: #e58e8e;
-  --color-brand-300: #d65a5a;
-  --color-brand-400: #c53030;
-  --color-brand-500: #a11d1d;
-  --color-brand-600: #7f1616;
-  --color-brand-700: #5f1010;
-  --color-brand-800: #470b0b;
-  --color-brand-900: #2f0707;
-  --color-brand-950: #1a0303;
-
-  --color-gray-25: #fcfcfd;
-  --color-gray-50: #f9fafb;
-  --color-gray-100: #f2f4f7;
-  --color-gray-200: #e4e7ec;
-  --color-gray-300: #d0d5dd;
-  --color-gray-400: #98a2b3;
-  --color-gray-500: #667085;
-  --color-gray-600: #475467;
-  --color-gray-700: #344054;
-  --color-gray-800: #1d2939;
-  --color-gray-900: #101828;
-  --color-gray-950: #0c111d;
-  --color-gray-dark: #1a2231;
-
-  --color-success-50: #ecfdf3;
-  --color-success-100: #d1fadf;
+  /* Solid status colours (dots, bars, the red count badge): the same in both themes. */
   --color-success-500: #12b76a;
   --color-success-600: #039855;
-
-  --color-error-50: #fef3f2;
-  --color-error-100: #fee4e2;
   --color-error-500: #f04438;
   --color-error-600: #d92d20;
-
-  --color-warning-50: #fffaeb;
-  --color-warning-100: #fef0c7;
   --color-warning-500: #f79009;
   --color-warning-600: #dc6803;
+  --color-info-500: #2e90fa;
+  --color-gray-dark: #1a2231;
 
   --shadow-theme-sm: 0px 1px 3px 0px rgba(16, 24, 40, 0.1), 0px 1px 2px 0px rgba(16, 24, 40, 0.06);
   --shadow-theme-md:
@@ -72,6 +53,205 @@
   --shadow-theme-lg:
     0px 12px 16px -4px rgba(16, 24, 40, 0.08), 0px 4px 6px -2px rgba(16, 24, 40, 0.03);
   --shadow-theme-xs: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+
+  /* Landing page hero — four photos cross-fading on a 16s loop */
+  --animate-hero-fade: hero-fade 16s linear infinite;
+
+  @keyframes hero-fade {
+    0% {
+      opacity: 0;
+    }
+    6.25% {
+      opacity: 1;
+    }
+    25% {
+      opacity: 1;
+    }
+    31.25% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+}
+
+/* Landing page fonts — next/font sets --font-figtree / --font-spline-sans-mono on the page root,
+   so these must be inlined to resolve there rather than on :root. */
+@theme inline {
+  --font-landing: var(--font-figtree), system-ui, sans-serif;
+  --font-landing-mono: var(--font-spline-sans-mono), ui-monospace, monospace;
+}
+
+/* Theme colours. The values below change with the theme and utilities read them through this
+   map, so `bg-gray-50`, `text-brand-500` or `border-line` work in light and dark without `dark:`
+   variants: the grey scale flips (gray-900 is always the strongest text), and the brand and
+   status tints darken while their text shades lighten. Colours written as hex in class names
+   (the maroon heroes, the focus ring) stay the same in both themes.
+   - canvas: page background. surface: cards, bars, menus, drawers, inputs. line: hairlines.
+   - brand-solid: maroon fills that carry white text (primary buttons, avatars). brand-500 is
+     the accent for text, icons, borders and bars, and turns light in dark mode. */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+
+  --color-gray-25: var(--gray-25);
+  --color-gray-50: var(--gray-50);
+  --color-gray-100: var(--gray-100);
+  --color-gray-200: var(--gray-200);
+  --color-gray-300: var(--gray-300);
+  --color-gray-400: var(--gray-400);
+  --color-gray-500: var(--gray-500);
+  --color-gray-600: var(--gray-600);
+  --color-gray-700: var(--gray-700);
+  --color-gray-800: var(--gray-800);
+  --color-gray-900: var(--gray-900);
+  --color-gray-950: var(--gray-950);
+
+  /* Brand - UPM Maroon */
+  --color-brand-solid: var(--brand-solid);
+  --color-brand-25: var(--brand-25);
+  --color-brand-50: var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-300: var(--brand-300);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-brand-800: var(--brand-800);
+  --color-brand-900: var(--brand-900);
+  --color-brand-950: var(--brand-950);
+
+  /* Status tints (50-300: backgrounds and borders) and text (700-800) */
+  --color-success-50: var(--success-50);
+  --color-success-100: var(--success-100);
+  --color-success-200: var(--success-200);
+  --color-success-700: var(--success-700);
+  --color-error-50: var(--error-50);
+  --color-error-100: var(--error-100);
+  --color-error-200: var(--error-200);
+  --color-error-300: var(--error-300);
+  --color-error-700: var(--error-700);
+  --color-error-800: var(--error-800);
+  --color-warning-50: var(--warning-50);
+  --color-warning-100: var(--warning-100);
+  --color-warning-200: var(--warning-200);
+  --color-warning-700: var(--warning-700);
+  --color-warning-800: var(--warning-800);
+  --color-info-50: var(--info-50);
+  --color-info-200: var(--info-200);
+  --color-info-700: var(--info-700);
+}
+
+@layer base {
+  :root,
+  [data-theme='light'] {
+    color-scheme: light;
+    --canvas: #f9fafb;
+    --surface: #ffffff;
+    --line: #eaecf0;
+
+    --gray-25: #fcfcfd;
+    --gray-50: #f9fafb;
+    --gray-100: #f2f4f7;
+    --gray-200: #e4e7ec;
+    --gray-300: #d0d5dd;
+    --gray-400: #98a2b3;
+    --gray-500: #667085;
+    --gray-600: #475467;
+    --gray-700: #344054;
+    --gray-800: #1d2939;
+    --gray-900: #101828;
+    --gray-950: #0c111d;
+
+    --brand-solid: #a11d1d;
+    --brand-25: #fff5f5;
+    --brand-50: #ffe5e5;
+    --brand-100: #f5c6c6;
+    --brand-200: #e58e8e;
+    --brand-300: #d65a5a;
+    --brand-400: #c53030;
+    --brand-500: #a11d1d;
+    --brand-600: #7f1616;
+    --brand-700: #5f1010;
+    --brand-800: #470b0b;
+    --brand-900: #2f0707;
+    --brand-950: #1a0303;
+
+    --success-50: #ecfdf3;
+    --success-100: #d1fadf;
+    --success-200: #abefc6;
+    --success-700: #027a48;
+    --error-50: #fef3f2;
+    --error-100: #fee4e2;
+    --error-200: #fecdca;
+    --error-300: #fda29b;
+    --error-700: #b42318;
+    --error-800: #912018;
+    --warning-50: #fffaeb;
+    --warning-100: #fef0c7;
+    --warning-200: #fedf89;
+    --warning-700: #b54708;
+    --warning-800: #93370d;
+    --info-50: #eff8ff;
+    --info-200: #b2ddff;
+    --info-700: #175cd3;
+  }
+
+  .dark {
+    color-scheme: dark;
+    --canvas: #0c111d;
+    --surface: #161b26;
+    --line: #262c38;
+
+    --gray-25: #191e2a;
+    --gray-50: #1d2331;
+    --gray-100: #252c3a;
+    --gray-200: #2e3543;
+    --gray-300: #414959;
+    --gray-400: #6b7487;
+    --gray-500: #8f97a8;
+    --gray-600: #aab1be;
+    --gray-700: #c5cbd5;
+    --gray-800: #dce0e7;
+    --gray-900: #eef0f4;
+    --gray-950: #f8f9fb;
+
+    --brand-solid: #b42424;
+    --brand-25: #2a161a;
+    --brand-50: #34191d;
+    --brand-100: #4a1f24;
+    --brand-200: #6b2a2e;
+    --brand-300: #8e3436;
+    --brand-400: #c75050;
+    --brand-500: #ec6d6d;
+    --brand-600: #f29393;
+    --brand-700: #f6b4b4;
+    --brand-800: #fad4d4;
+    --brand-900: #fde8e8;
+    --brand-950: #fff5f5;
+
+    --success-50: #0e2a1e;
+    --success-100: #113826;
+    --success-200: #1a5137;
+    --success-700: #75e0a7;
+    --error-50: #3a1613;
+    --error-100: #4b1b17;
+    --error-200: #6c2721;
+    --error-300: #93372e;
+    --error-700: #fda29b;
+    --error-800: #fecdca;
+    --warning-50: #32230b;
+    --warning-100: #45300e;
+    --warning-200: #6b4a10;
+    --warning-700: #fdb022;
+    --warning-800: #fec84b;
+    --info-50: #102440;
+    --info-200: #1d4477;
+    --info-700: #84caff;
+  }
 }
 
 @layer base {
@@ -80,7 +260,7 @@
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
+    border-color: var(--gray-200, currentColor);
   }
   button:not(:disabled),
   [role='button']:not(:disabled) {
@@ -88,7 +268,7 @@
   }
   html {
     scrollbar-width: thin;
-    scrollbar-color: var(--color-gray-300) transparent;
+    scrollbar-color: var(--gray-300) transparent;
   }
   html::-webkit-scrollbar {
     width: 2px;
@@ -97,17 +277,16 @@
     background: transparent;
   }
   html::-webkit-scrollbar-thumb {
-    background-color: var(--color-gray-300);
+    background-color: var(--gray-300);
     border-radius: 9999px;
   }
-  .dark html {
-    scrollbar-color: var(--color-gray-800) transparent;
-  }
-  .dark html::-webkit-scrollbar-thumb {
-    background-color: var(--color-gray-800);
-  }
   body {
-    @apply relative bg-gray-50 font-sans font-normal dark:bg-gray-950;
+    @apply bg-canvas relative font-sans font-normal;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    html:has([data-smooth-scroll]) {
+      scroll-behavior: smooth;
+    }
   }
   .maplibregl-popup-content {
     @apply rounded-none! bg-transparent! p-0! shadow-none!;
@@ -125,36 +304,9 @@
     background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: var(--color-gray-300);
+    background-color: var(--gray-300);
     border-radius: 9999px;
   }
-  .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: var(--color-gray-800);
-  }
-}
-
-@utility menu-item {
-  @apply relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium;
-}
-
-@utility menu-item-active {
-  @apply bg-brand-50 text-brand-500 dark:bg-brand-900/30 dark:text-brand-400;
-}
-
-@utility menu-item-inactive {
-  @apply text-gray-400 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-600 dark:hover:bg-white/5 dark:hover:text-white;
-}
-
-@utility menu-item-icon-active {
-  @apply text-brand-500 dark:text-brand-400;
-}
-
-@utility menu-item-icon-inactive {
-  @apply text-gray-400 group-hover:text-gray-700 dark:text-gray-600 dark:group-hover:text-white;
-}
-
-@utility menu-item-text {
-  @apply truncate;
 }
 
 /* ─── MapLibre map container ─── */
@@ -170,16 +322,6 @@ input[type='time']::-webkit-calendar-picker-indicator {
 }
 
 input[type='time']::-webkit-calendar-picker-indicator:hover {
-  opacity: 1;
-}
-
-.dark input[type='time']::-webkit-calendar-picker-indicator {
-  filter: invert(1);
-  opacity: 0.5;
-}
-
-.dark input[type='time']::-webkit-calendar-picker-indicator:hover {
-  filter: invert(1);
   opacity: 1;
 }
 

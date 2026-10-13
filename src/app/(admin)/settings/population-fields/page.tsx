@@ -1,5 +1,5 @@
-import { PopulationFieldsPage } from '@/components/settings';
+import { SettingsPage } from '../_components/settings-page';
 
 export default function Page() {
-  return <PopulationFieldsPage />;
+  return <SettingsPage tab="population-fields" />;
 }

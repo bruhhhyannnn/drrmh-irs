@@ -1,403 +1,490 @@
 'use client';
 
-import { PageBreadcrumb } from '@/components/common';
-import { EventCalendar } from '@/components/dashboard/event-calendar';
-import { useEvents } from '@/components/hooks/use-events';
+import { ButtonLink, FOCUS_RING } from '@/components/ds';
+import { useCampuses } from '@/components/hooks/use-campus';
+import { useDashboard } from '@/components/hooks/use-dashboard';
+import { cn } from '@/lib';
 import {
-  useReportClusterSummary,
-  useReports,
-  useReportTotals,
-} from '@/components/hooks/use-reports';
-import { useUsers } from '@/components/hooks/use-users';
-import { Badge } from '@/components/ui';
-import { useThemeStore } from '@/store';
-import { format } from 'date-fns';
+  eachDayOfInterval,
+  endOfMonth,
+  format,
+  getDay,
+  isSameDay,
+  isToday,
+  isTomorrow,
+  startOfMonth,
+} from 'date-fns';
 import {
-  Activity,
-  AlertTriangle,
   CalendarDays,
+  ChartNoAxesColumn,
   ChevronRight,
-  FileText,
-  Inbox,
+  Plus,
+  TriangleAlert,
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
+import { PageHeader } from '../_components/page-header';
+import {
+  useEventTitle,
+  useIsSuperAdmin,
+  useScopedCampusId,
+} from '../_components/shell/campus-switcher';
 import {
   Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Legend,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+  Card,
+  CardHeading,
+  Chip,
+  DateBlock,
+  EmptyNote,
+  Mono,
+  Skeleton,
+} from '../_components/ui';
+import { formatDate, formatEventWindow, formatTime, plural } from '../_lib/format';
+import { capitalize, eventTone } from '../_lib/status';
 
-const STATUS_COLORS: Record<string, string> = {
-  upcoming: '#f59e0b',
-  ongoing: '#22c55e',
-  completed: '#3b82f6',
-  unknown: '#9ca3af',
-};
+type Dashboard = NonNullable<ReturnType<typeof useDashboard>['data']>;
 
 export default function DashboardPage() {
-  const { data: events } = useEvents();
-  const { data: reportsData } = useReports(1, '');
-  const { data: users = [] } = useUsers();
-  const { data: clusterSummary = [] } = useReportClusterSummary();
-  const { data: totalAffected } = useReportTotals();
-  const { theme } = useThemeStore();
-
-  const stats = {
-    events: events?.length,
-    reports: reportsData?.total ?? 0,
-    users: users.length,
-  };
-
-  const statusData = Object.entries(
-    (events ?? []).reduce(
-      (acc, e) => {
-        const key = e.status?.name ?? 'Unknown';
-        acc[key] = (acc[key] ?? 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
-    )
-  ).map(([name, value]) => ({ name, value }));
+  const campusId = useScopedCampusId();
+  const { data: campuses = [] } = useCampuses();
+  const { data, isPending, error } = useDashboard(campusId || undefined);
+  const campusName = campusId ? campuses.find((c) => c.id === campusId)?.name : 'All campuses';
 
   return (
-    <div className="flex flex-col">
-      <PageBreadcrumb pageTitle="Dashboard" />
+    <>
+      <PageHeader
+        title="Dashboard"
+        subtitle={`${campusName ?? 'All campuses'} · ${format(new Date(), 'EEEE, MMMM d, yyyy')}`}
+      />
+      {error ? (
+        <Card className="p-6 text-[17px] text-error-700">
+          The dashboard couldn&apos;t be loaded: {error.message}
+        </Card>
+      ) : isPending || !data ? (
+        <DashboardSkeleton />
+      ) : (
+        <>
+          <OngoingNow data={data} />
+          <StatTiles data={data} />
+          <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+            <ReportsByCluster data={data} />
+            <EventsByStatus data={data} />
+          </div>
+          <MonthCard data={data} />
+        </>
+      )}
+    </>
+  );
+}
 
-      <div className="flex flex-col gap-4 xl:h-[calc(100vh-240px)] xl:flex-row">
-        {/* LEFT COLUMN */}
-        <div className="w-full xl:h-full xl:w-1/3">
-          <div className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-900">
-            <div className="mb-4 flex items-start justify-between border-b border-gray-100 pb-3 dark:border-white/10">
-              <div>
-                <h3 className="font-semibold text-gray-900 dark:text-white">Recent events</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Latest updates across the platform
-                </p>
-              </div>
-            </div>
+function DashboardSkeleton() {
+  return (
+    <div className="flex flex-col gap-4" aria-busy="true">
+      <span className="sr-only">Loading the dashboard…</span>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 3 }, (_, i) => (
+          <Skeleton key={i} className="h-64" />
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {Array.from({ length: 4 }, (_, i) => (
+          <Skeleton key={i} className="h-28" />
+        ))}
+      </div>
+    </div>
+  );
+}
 
-            <div className="custom-scrollbar flex-1 space-y-2 overflow-y-auto pr-1">
-              {events?.length ? (
-                events.slice(0, 5).map((event) => {
-                  const statusLower = event.status.name.toLocaleLowerCase();
-                  const badgeColor =
-                    statusLower === 'ongoing'
-                      ? 'success'
-                      : statusLower === 'completed'
-                        ? 'primary'
-                        : 'warning';
+/* ─── Ongoing now ────────────────────────────────────────────────────────────────────── */
 
-                  return (
-                    <Link
-                      key={event.id}
-                      href={`/events/details?id=${event.id}`}
-                      className="group flex flex-col gap-2 rounded-xl border border-gray-100 bg-gray-50 p-3 transition-all hover:border-gray-200 hover:bg-white hover:shadow-sm dark:border-white/5 dark:bg-white/5 dark:hover:border-white/10 dark:hover:bg-white/10"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <p className="group-hover:text-brand-600 dark:group-hover:text-brand-400 truncate text-sm font-medium text-gray-900 dark:text-white">
-                            {event.name}
-                          </p>
-                          <div className="mt-1 flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                            <CalendarDays size={12} />
-                            <span>
-                              {event.started_at
-                                ? format(new Date(event.started_at), 'MMM d, yyyy')
-                                : 'No date set'}
-                            </span>
-                          </div>
-                        </div>
-                        <Badge
-                          color={badgeColor}
-                          size="sm"
-                          className="shrink-0 px-2 py-1 text-[10px] leading-none font-medium"
-                        >
-                          {event.status.name}
-                        </Badge>
-                      </div>
-                    </Link>
-                  );
-                })
-              ) : (
-                <EmptyState message="No recent events" />
+function OngoingNow({ data }: { data: Dashboard }) {
+  // Administrators see one campus, so its ongoing events stack full width.
+  const isSuperAdmin = useIsSuperAdmin();
+  return (
+    <section className="flex flex-col gap-3" aria-labelledby="ongoing-now">
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 id="ongoing-now" className="text-[19px] leading-[1.3] font-bold">
+          Ongoing now
+        </h2>
+        <Link
+          href="/events"
+          className={cn('text-brand-500 rounded text-[16px] font-bold hover:underline', FOCUS_RING)}
+        >
+          All events
+        </Link>
+      </div>
+      {data.ongoing.length ? (
+        <div
+          className={cn(
+            'grid grid-cols-1 items-start gap-4',
+            isSuperAdmin && 'md:grid-cols-2 lg:grid-cols-3'
+          )}
+        >
+          {data.ongoing.map((e) => (
+            <OngoingCard key={e.id} event={e} />
+          ))}
+        </div>
+      ) : (
+        <NothingOngoing next={data.nextEvent} />
+      )}
+    </section>
+  );
+}
+
+function OngoingCard({ event }: { event: Dashboard['ongoing'][number] }) {
+  const eventTitle = useEventTitle();
+  const stats = [
+    { label: 'Reports', value: event.reports, tone: 'text-gray-900' },
+    { label: 'Casualties', value: event.casualties, tone: 'text-error-700' },
+    { label: 'Missing', value: event.missing, tone: 'text-warning-700' },
+  ];
+  return (
+    <Card className="flex flex-col gap-4 p-4.5 md:p-6">
+      <div className="flex">
+        <Chip tone="green" dot>
+          Ongoing
+        </Chip>
+      </div>
+      <div className="flex flex-col gap-1">
+        <h3 className="text-[20px] leading-[1.3] font-bold text-balance">
+          {eventTitle(event.name, event.campus)}
+        </h3>
+        <span className="text-[14px] text-gray-500">
+          {event.startedAt
+            ? `Started ${formatDate(event.startedAt)} · ${formatTime(event.startedAt)}`
+            : 'No start time set'}
+        </span>
+      </div>
+      <div className="flex flex-col gap-2">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="text-[14px] font-semibold text-gray-700">Clusters reported</span>
+          <Mono className="text-[16px] font-bold">
+            {event.clustersReported} of {event.clustersTotal}
+          </Mono>
+        </div>
+        <Bar value={event.clustersReported} max={event.clustersTotal} size="sm" />
+      </div>
+      <dl className="grid grid-cols-3 gap-2 border-t border-line pt-3.5">
+        {stats.map((s) => (
+          <div key={s.label} className="flex min-w-0 flex-col gap-0.5">
+            <dt className="text-[13px] font-medium text-gray-500">{s.label}</dt>
+            <dd
+              className={cn(
+                'font-landing-mono text-[22px] leading-[1.2] font-bold',
+                s.value ? s.tone : 'text-gray-400'
               )}
-            </div>
+            >
+              {s.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <ButtonLink href={`/events/details?id=${event.id}`} variant="outline" size="sm" fullWidth>
+        Open summary
+        <ChevronRight size={16} aria-hidden />
+      </ButtonLink>
+    </Card>
+  );
+}
 
-            {events && events.length > 0 && (
-              <div className="mt-4 border-t border-gray-100 pt-3 dark:border-white/10">
-                <Link
-                  href="/events"
-                  className="text-brand-600 hover:text-brand-400 dark:text-brand-400 dark:hover:text-brand-300 flex items-center justify-center gap-1 text-xs font-medium transition-colors"
-                >
-                  View all events
-                  <ChevronRight size={14} />
-                </Link>
-              </div>
+function nextLabel(date: Date | null) {
+  if (!date) return 'Next · no start time set';
+  const day = isToday(date) ? 'today' : isTomorrow(date) ? 'tomorrow' : format(date, 'EEE, MMM d');
+  return `Next · ${day}, ${format(date, 'h:mm a')}`;
+}
+
+function NothingOngoing({ next }: { next: Dashboard['nextEvent'] }) {
+  const isSuperAdmin = useIsSuperAdmin();
+  const startedAt = next?.startedAt ? new Date(next.startedAt) : null;
+  return (
+    <Card className="flex flex-wrap items-center gap-x-6 gap-y-4 p-4.5 md:p-6">
+      <div className="flex min-w-0 flex-[1_1_280px] items-start gap-3.5">
+        <span className="grid size-11 shrink-0 place-items-center rounded-full bg-gray-100 text-gray-600">
+          <CalendarDays size={20} aria-hidden />
+        </span>
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="text-[19px] leading-[1.3] font-bold">No event is ongoing</span>
+          <span className="text-[16px] leading-normal text-pretty text-gray-600">
+            ERT members can send status reports only while an event is ongoing. Set the event to
+            Ongoing when the drill starts.
+          </span>
+        </div>
+      </div>
+      {next ? (
+        <Link
+          href={`/events/details?id=${next.id}`}
+          className={cn(
+            'flex min-w-0 flex-[1_1_300px] items-center gap-3.5 rounded-2xl border border-line bg-gray-50 px-3.5 py-3 text-gray-900 hover:border-gray-300',
+            FOCUS_RING
+          )}
+        >
+          {startedAt ? (
+            <DateBlock date={startedAt} tone="white" />
+          ) : (
+            <span className="grid h-13 w-12 shrink-0 place-items-center rounded-[14px] border border-line bg-surface text-gray-400">
+              <CalendarDays size={18} aria-hidden />
+            </span>
+          )}
+          <div className="flex min-w-0 flex-1 flex-col gap-0.75">
+            <span className="text-[12px] font-bold tracking-[.08em] text-gray-500 uppercase">
+              {nextLabel(startedAt)}
+            </span>
+            <span className="text-[17px] leading-[1.3] font-semibold">{next.name}</span>
+            {/* Super admins see which campuses run it; administrators, what it is. */}
+            {isSuperAdmin ? (
+              <span className="text-[14px] leading-[1.4] text-gray-500">
+                {next.campuses.join(', ')}
+              </span>
+            ) : (
+              next.description && (
+                <span className="truncate text-[14px] leading-[1.4] text-gray-500">
+                  {next.description}
+                </span>
+              )
             )}
           </div>
+          <ChevronRight size={18} aria-hidden className="shrink-0 text-gray-400" />
+        </Link>
+      ) : (
+        <div className="flex flex-[1_1_300px] items-center justify-center">
+          <ButtonLink href="/events?add=1" size="sm">
+            <Plus size={16} aria-hidden />
+            Add event
+          </ButtonLink>
         </div>
-
-        {/* RIGHT COLUMN */}
-        <div className="flex w-full flex-col gap-4 xl:w-2/3">
-          {/* Stats grid — 2 cols on sm+, 4 on xl */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <StatCard
-              title="Total Events"
-              value={stats?.events ?? '—'}
-              icon={<CalendarDays size={20} />}
-              color="brand"
-              trend="Events in total"
-            />
-            <StatCard
-              title="Total Reports"
-              value={stats?.reports ?? '—'}
-              icon={<FileText size={20} />}
-              color="success"
-              trend="Reports from all clusters"
-            />
-            <StatCard
-              title="Total Users"
-              value={stats?.users ?? '—'}
-              icon={<Users size={20} />}
-              color="warning"
-              trend="Registered users"
-            />
-            <StatCard
-              title="Active Incidents"
-              value={
-                (totalAffected?.casualties ?? 0) +
-                (totalAffected?.missing ?? 0) +
-                (totalAffected?.reports ?? 0)
-              }
-              icon={<AlertTriangle size={20} />}
-              color="error"
-              trend="Total affected across all events"
-            />
-          </div>
-
-          {/* Charts */}
-          <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-2">
-            {/* Events by Status */}
-            <div className="flex min-h-72 flex-col rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-900">
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                  Events by status
-                </h3>
-                <Activity className="text-gray-400 dark:text-gray-500" size={16} />
-              </div>
-              <div className="flex flex-1 items-center justify-center">
-                {statusData.length ? (
-                  <ResponsiveContainer width="100%" height={200}>
-                    <PieChart>
-                      <Pie
-                        data={statusData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={55}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                        stroke="none"
-                        cornerRadius={4}
-                      >
-                        {statusData.map((entry) => (
-                          <Cell
-                            key={entry.name}
-                            fill={
-                              STATUS_COLORS[entry.name.toLocaleLowerCase()] ?? STATUS_COLORS.unknown
-                            }
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{
-                          background:
-                            theme === 'dark' ? 'rgba(17,24,39,0.95)' : 'rgba(255,255,255,0.95)',
-                          border: theme === 'dark' ? '1px solid #374151' : '1px solid #e5e7eb',
-                          borderRadius: '8px',
-                          color: theme === 'dark' ? '#f9fafb' : '#111827',
-                          fontSize: '14px',
-                        }}
-                        itemStyle={{ color: theme === 'dark' ? '#f9fafb' : '#111827' }}
-                      />
-                      <Legend
-                        verticalAlign="bottom"
-                        height={24}
-                        iconType="circle"
-                        wrapperStyle={{ fontSize: '14px', paddingTop: '10px', color: 'inherit' }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <EmptyState message="No event data" />
-                )}
-              </div>
-            </div>
-
-            {/* Reports by Cluster */}
-            <div className="flex min-h-72 flex-col rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-900">
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                  Reports by cluster
-                </h3>
-                <Activity className="text-gray-400 dark:text-gray-500" size={16} />
-              </div>
-              <div className="flex flex-1 items-center justify-center">
-                {clusterSummary.length ? (
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart
-                      data={clusterSummary}
-                      margin={{ top: 10, right: 0, left: -24, bottom: 0 }}
-                    >
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        vertical={false}
-                        stroke="rgba(156,163,175,0.15)"
-                      />
-                      <XAxis
-                        dataKey="cluster"
-                        tick={{ fontSize: 12, fill: '#6b7280' }}
-                        axisLine={false}
-                        tickLine={false}
-                        dy={8}
-                      />
-                      <YAxis
-                        allowDecimals={false}
-                        tick={{ fontSize: 12, fill: '#6b7280' }}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <Tooltip
-                        cursor={{
-                          fill: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-                        }}
-                        contentStyle={{
-                          background:
-                            theme === 'dark' ? 'rgba(17,24,39,0.95)' : 'rgba(255,255,255,0.95)',
-                          border: theme === 'dark' ? '1px solid #374151' : '1px solid #e5e7eb',
-                          borderRadius: '8px',
-                          color: theme === 'dark' ? '#f9fafb' : '#111827',
-                          fontSize: '14px',
-                        }}
-                        itemStyle={{ color: theme === 'dark' ? '#f9fafb' : '#111827' }}
-                      />
-                      <Legend
-                        iconType="circle"
-                        wrapperStyle={{ fontSize: '14px', paddingTop: '10px' }}
-                      />
-                      <Bar
-                        dataKey="reports"
-                        name="Reports"
-                        fill="#a11d1d"
-                        radius={[3, 3, 0, 0]}
-                        maxBarSize={32}
-                      />
-                      <Bar
-                        dataKey="casualties"
-                        name="Casualties"
-                        fill="#ef4444"
-                        radius={[3, 3, 0, 0]}
-                        maxBarSize={32}
-                      />
-                      <Bar
-                        dataKey="missing"
-                        name="Missing"
-                        fill="#f59e0b"
-                        radius={[3, 3, 0, 0]}
-                        maxBarSize={32}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <EmptyState message="No cluster reports" />
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Calendar */}
-      <div className="mt-4">
-        <EventCalendar />
-      </div>
-    </div>
+      )}
+    </Card>
   );
 }
 
-function StatCard({
-  title,
-  value,
-  icon,
-  color = 'brand',
-  trend,
-}: {
-  title: string;
-  value: number | string;
-  icon: React.ReactNode;
-  color?: 'brand' | 'success' | 'warning' | 'error';
-  trend?: string;
-}) {
-  const styles = {
-    brand: {
-      bg: 'bg-blue-100 dark:bg-blue-500/10',
-      iconBg: 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400',
-    },
-    success: {
-      bg: 'bg-green-100 dark:bg-green-500/10',
-      iconBg: 'bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400',
-    },
-    warning: {
-      bg: 'bg-amber-100 dark:bg-amber-500/10',
-      iconBg: 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400',
-    },
-    error: {
-      bg: 'bg-red-100 dark:bg-red-500/10',
-      iconBg: 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400',
-    },
-  };
+/* ─── Tiles ──────────────────────────────────────────────────────────────────────────── */
 
+function StatTiles({ data }: { data: Dashboard }) {
+  const { counts } = data;
+  const tiles = [
+    {
+      label: 'Events',
+      value: counts.events,
+      sub: counts.ongoing ? `${counts.ongoing} ongoing` : `${counts.upcoming} upcoming`,
+      href: '/events',
+      icon: <CalendarDays size={18} aria-hidden />,
+      accent: false,
+    },
+    {
+      label: 'Reports',
+      value: counts.reports,
+      sub: 'Across all events',
+      href: '/reports',
+      icon: <ChartNoAxesColumn size={18} aria-hidden />,
+      accent: false,
+    },
+    {
+      label: 'Users',
+      value: counts.users,
+      sub: 'Registered users',
+      href: '/users',
+      icon: <Users size={18} aria-hidden />,
+      accent: false,
+    },
+    {
+      label: 'Bystander reports',
+      value: counts.pendingBystander,
+      sub: 'Pending review',
+      href: '/emergency-reports',
+      icon: <TriangleAlert size={18} aria-hidden />,
+      accent: true,
+    },
+  ];
   return (
-    <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md dark:border-white/10 dark:bg-gray-900">
-      <div className="flex items-start justify-between">
-        <div className="space-y-1.5">
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{title}</p>
-          {value === undefined || value === null ? (
-            <div className="h-6 w-20 animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800" />
-          ) : (
-            <p className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-              {value}
-            </p>
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {tiles.map((t) => (
+        <Link
+          key={t.label}
+          href={t.href}
+          className={cn(
+            'flex min-w-0 flex-col gap-1.5 rounded-[18px] border border-gray-200 bg-surface px-4.5 py-4 text-gray-900 shadow-[0_1px_3px_rgba(16,24,40,.06)] hover:border-gray-300',
+            FOCUS_RING
           )}
-        </div>
-        <div
-          className={`flex h-10 w-10 items-center justify-center rounded-xl ${styles[color].iconBg}`}
         >
-          {icon}
-        </div>
-      </div>
-      {trend && <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">{trend}</div>}
-      <div
-        className={`pointer-events-none absolute -right-4 -bottom-4 h-24 w-24 rounded-full blur-2xl ${styles[color].bg}`}
-      />
+          <div className="flex items-start justify-between gap-2">
+            <span className="text-[14px] leading-[1.3] font-semibold text-gray-600">{t.label}</span>
+            <span
+              className={cn(
+                'grid size-8 shrink-0 place-items-center rounded-[10px]',
+                t.accent ? 'bg-brand-25 text-brand-500' : 'bg-gray-100 text-gray-600'
+              )}
+            >
+              {t.icon}
+            </span>
+          </div>
+          <Mono className="text-[30px] leading-[1.1] font-extrabold">
+            {t.value.toLocaleString()}
+          </Mono>
+          <span
+            className={cn('text-[14px] font-medium', t.accent ? 'text-brand-500' : 'text-gray-500')}
+          >
+            {t.sub}
+          </span>
+        </Link>
+      ))}
     </div>
   );
 }
 
-function EmptyState({ message }: { message: string }) {
+/* ─── Charts ─────────────────────────────────────────────────────────────────────────── */
+
+function ReportsByCluster({ data }: { data: Dashboard }) {
+  const max = Math.max(1, ...data.clusters.map((c) => c.reports));
   return (
-    <div className="flex h-full min-h-40 w-full flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50/50 dark:border-white/10 dark:bg-white/5">
-      <Inbox className="mb-2 text-gray-300 dark:text-gray-600" size={24} />
-      <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{message}</p>
-    </div>
+    <Card className="flex flex-col gap-4 p-4.5 md:p-6">
+      <CardHeading title="Reports by cluster" aside="All events" />
+      {data.clusters.length ? (
+        <ul className="flex flex-col gap-2.5">
+          {data.clusters.map((c) => (
+            <li key={c.id} className="grid grid-cols-[96px_minmax(0,1fr)_36px] items-center gap-3">
+              <span className="truncate text-[14px] font-semibold text-gray-700" title={c.name}>
+                {c.name}
+              </span>
+              <Bar value={c.reports} max={max} />
+              <Mono className="text-right text-[14px] font-semibold">{c.reports}</Mono>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <EmptyNote>No reports yet.</EmptyNote>
+      )}
+    </Card>
+  );
+}
+
+const STATUS_ROWS = [
+  { key: 'ongoing', label: 'Ongoing', color: '#12b76a' },
+  { key: 'upcoming', label: 'Upcoming', color: '#f79009' },
+  { key: 'completed', label: 'Completed', color: '#2e90fa' },
+] as const;
+
+function EventsByStatus({ data }: { data: Dashboard }) {
+  const rows = STATUS_ROWS.map((r) => ({ ...r, count: data.counts[r.key] }));
+  return (
+    <Card className="flex flex-col gap-4 p-4.5 md:p-6">
+      <CardHeading title="Events by status" aside={plural(data.counts.events, 'event', 'events')} />
+      <div aria-hidden className="flex h-3 gap-0.75 overflow-hidden rounded-full bg-gray-100">
+        {rows
+          .filter((r) => r.count > 0)
+          .map((r) => (
+            <div key={r.key} style={{ flexGrow: r.count, flexBasis: 0, background: r.color }} />
+          ))}
+      </div>
+      <ul className="flex flex-col">
+        {rows.map((r) => (
+          <li key={r.key} className="flex items-center gap-2.5 border-b border-line py-2.5">
+            <span
+              aria-hidden
+              className="size-2.5 shrink-0 rounded-full"
+              style={{ background: r.color }}
+            />
+            <span className="flex-1 text-[16px] font-medium text-gray-700">{r.label}</span>
+            <Mono className="text-[16px] font-semibold">{r.count}</Mono>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+/* ─── This month ─────────────────────────────────────────────────────────────────────── */
+
+const DOT = { ongoing: 'bg-success-500', upcoming: 'bg-warning-500', completed: 'bg-info-500' };
+
+function MonthCard({ data }: { data: Dashboard }) {
+  const eventTitle = useEventTitle();
+  const today = new Date();
+  const days = eachDayOfInterval({ start: startOfMonth(today), end: endOfMonth(today) });
+  const leading = getDay(days[0]);
+  const events = data.month.map((e) => ({ ...e, startedAt: new Date(e.startedAt) }));
+
+  return (
+    <Card className="flex flex-col gap-4 p-4.5 md:p-6">
+      <CardHeading
+        title={format(today, 'MMMM yyyy')}
+        aside={`${plural(events.length, 'event', 'events')} this month`}
+      />
+      <div className="grid grid-cols-1 items-start gap-7 md:grid-cols-[260px_minmax(0,1fr)] lg:grid-cols-[280px_minmax(0,1fr)]">
+        <div className="hidden grid-cols-7 gap-0.5 md:grid" aria-hidden>
+          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+            <span
+              key={i}
+              className="grid h-6 place-items-center text-[12px] font-semibold text-gray-500"
+            >
+              {d}
+            </span>
+          ))}
+          {Array.from({ length: leading }, (_, i) => (
+            <span key={`pad-${i}`} />
+          ))}
+          {days.map((day) => {
+            const on = isSameDay(day, today);
+            const dayEvents = events.filter((e) => isSameDay(e.startedAt, day));
+            const status = dayEvents[0]?.status as keyof typeof DOT | undefined;
+            return (
+              <span
+                key={day.toISOString()}
+                className={cn(
+                  'font-landing-mono relative grid h-9 place-items-center rounded-[10px] text-[14px]',
+                  on ? 'bg-brand-solid font-bold text-white' : 'font-medium text-gray-700'
+                )}
+              >
+                {day.getDate()}
+                {dayEvents.length > 0 && (
+                  <span
+                    className={cn(
+                      'absolute bottom-1 left-1/2 size-1.25 -translate-x-1/2 rounded-full',
+                      on ? 'bg-white' : (status && DOT[status]) || 'bg-gray-400'
+                    )}
+                  />
+                )}
+              </span>
+            );
+          })}
+        </div>
+        {events.length ? (
+          <ul className="flex flex-col">
+            {events.map((e) => (
+              <li key={e.id}>
+                <Link
+                  href={`/events/details?id=${e.id}`}
+                  className={cn(
+                    'flex items-center gap-3.5 rounded-lg border-b border-line py-3 hover:bg-gray-25',
+                    FOCUS_RING
+                  )}
+                >
+                  <DateBlock date={e.startedAt} />
+                  <div className="flex min-w-0 flex-1 flex-col gap-0.75">
+                    <span className="text-[17px] leading-[1.3] font-semibold">
+                      {eventTitle(e.name, e.campus)}
+                    </span>
+                    <span className="text-[14px] text-gray-500">
+                      {formatEventWindow(e.startedAt, e.endedAt).split(' · ')[1] ??
+                        formatTime(e.startedAt)}
+                    </span>
+                  </div>
+                  <Chip tone={eventTone(e.status)} dot>
+                    {capitalize(e.status)}
+                  </Chip>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-[16px] text-gray-500">
+            No events this month. The next one is{' '}
+            {data.nextEvent?.startedAt
+              ? `on ${formatDate(data.nextEvent.startedAt)}`
+              : 'not scheduled yet'}
+            .
+          </p>
+        )}
+      </div>
+    </Card>
   );
 }

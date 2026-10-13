@@ -1,9 +1,17 @@
-import { AuthHeader, ForgotPasswordForm } from '@/components/auth';
+import { AuthShell, ForgotPasswordForm } from '@/components/auth';
+import type { Metadata } from 'next';
+import { Suspense } from 'react';
+
+export const metadata: Metadata = {
+  title: 'Forgot password | DRRM-H IRS',
+};
 
 export default function ForgotPasswordPage() {
   return (
-    <AuthHeader>
-      <ForgotPasswordForm />
-    </AuthHeader>
+    <AuthShell>
+      <Suspense>
+        <ForgotPasswordForm />
+      </Suspense>
+    </AuthShell>
   );
 }

@@ -1,208 +1,197 @@
 'use client';
 
-import { GoogleSignInForm } from '@/components/auth';
-import { Button, Input, Label } from '@/components/ui';
-import { SignInFormData, signInSchema, supabase } from '@/lib';
-import { useAuthStore, useThemeStore } from '@/store';
+import { AUTH_LINK, AuthBanner, AuthHeading } from '@/components/auth/auth-ui';
+import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
+import {
+  Button,
+  FieldError,
+  FieldLabel,
+  FOCUS_RING,
+  PasswordInput,
+  TextInput,
+} from '@/components/ds';
+import { cn, SignInFormData, signInSchema, supabase } from '@/lib';
+import { useAuthStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertTriangle, ArrowLeft, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+type Banner = { tone: 'error' | 'warning'; message: string };
+
+/** Banners for `?error=` values set by the OAuth callback. */
+const PARAM_BANNERS: Record<string, Banner> = {
+  timeout: { tone: 'warning', message: 'Sign-in timed out. Please try again.' },
+  domain: {
+    tone: 'error',
+    message:
+      'Only UP (up.edu.ph) accounts are allowed. Please sign in with your UP Google account.',
+  },
+  setup: { tone: 'error', message: 'Failed to set up your account. Please contact support.' },
+};
+
+/**
+ * Google first for ERT members, email and password below for admins. The password step shows
+ * the email as a chip with Change; errors show in one banner under the title.
+ */
 export function SignInForm() {
-  const [step, setStep] = useState<'email' | 'password'>('email');
-  const [showPassword, setShowPassword] = useState(false);
-  const [authError, setAuthError] = useState('');
-  const { theme } = useThemeStore();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams?.get('from') ?? '/dashboard';
   const { user } = useAuthStore();
+  const [step, setStep] = useState<'email' | 'password'>('email');
+  const [banner, setBanner] = useState<Banner | null>(
+    () => PARAM_BANNERS[searchParams?.get('error') ?? ''] ?? null
+  );
 
   const {
     register,
     handleSubmit,
     trigger,
+    getValues,
+    setFocus,
     formState: { errors, isSubmitting },
-  } = useForm<SignInFormData>({
-    resolver: zodResolver(signInSchema),
-  });
+  } = useForm<SignInFormData>({ resolver: zodResolver(signInSchema) });
 
   useEffect(() => {
-    const errorParam = searchParams?.get('error');
-    if (user && errorParam !== 'unauthorized') {
-      router.push(redirectTo);
-    }
-  }, [user, router, redirectTo, searchParams]);
+    if (user) router.push(redirectTo);
+  }, [user, router, redirectTo]);
 
+  // Move focus with the step, but leave the page alone on first load (the Google button,
+  // not the email field, is what most people need).
+  const prevStep = useRef(step);
   useEffect(() => {
-    const errorParam = searchParams?.get('error');
-    const messageParam = searchParams?.get('message');
-    if (errorParam === 'unauthorized' && messageParam) {
-      setAuthError(decodeURIComponent(messageParam));
-      const timer = setTimeout(() => router.replace('/signin'), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, []);
+    if (prevStep.current === step) return;
+    prevStep.current = step;
+    setFocus(step);
+  }, [step, setFocus]);
 
-  const handleContinue = async () => {
-    setAuthError('');
-    const isEmailValid = await trigger('email');
-    if (isEmailValid) setStep('password');
+  const goToPassword = async () => {
+    setBanner(null);
+    if (await trigger('email')) setStep('password');
   };
 
-  const handleBack = () => {
-    setAuthError('');
+  const changeEmail = () => {
+    setBanner(null);
     setStep('email');
   };
 
   const onSubmit = async (data: SignInFormData) => {
-    setAuthError('');
+    setBanner(null);
     const { error } = await supabase.auth.signInWithPassword({
       email: data.email,
       password: data.password,
     });
     if (error) {
-      setAuthError(error.message);
+      setBanner({ tone: 'error', message: error.message });
       return;
     }
     router.push(redirectTo);
   };
 
+  const bannerEl = banner && <AuthBanner tone={banner.tone}>{banner.message}</AuthBanner>;
+
+  if (step === 'password') {
+    const email = getValues('email');
+    return (
+      <form noValidate onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+        <button
+          type="button"
+          onClick={changeEmail}
+          className={cn(
+            'flex h-11 max-w-full items-center gap-2 self-start rounded-full border border-gray-200 bg-surface pr-3.5 pl-2.5 text-[14px] font-medium text-gray-900 hover:bg-gray-50',
+            FOCUS_RING
+          )}
+        >
+          <ArrowLeft size={16} aria-hidden className="shrink-0 text-gray-600" />
+          <span className="truncate">{email}</span>
+          <span className="text-brand-500 font-bold">Change</span>
+        </button>
+
+        <AuthHeading title="Enter your password">
+          Admin sign-in with email and password.
+        </AuthHeading>
+        {bannerEl}
+
+        {/* Lets password managers pair the password with the email from the first step. */}
+        <input type="email" autoComplete="username" value={email} readOnly hidden />
+
+        <div className="flex flex-col gap-1.5">
+          <FieldLabel
+            htmlFor="password"
+            action={
+              <Link
+                href={`/forgot-password?email=${encodeURIComponent(email)}`}
+                className={cn(AUTH_LINK, 'text-[14px]')}
+              >
+                Forgot password?
+              </Link>
+            }
+          >
+            Password
+          </FieldLabel>
+          <PasswordInput
+            id="password"
+            autoComplete="current-password"
+            invalid={!!errors.password || banner?.tone === 'error'}
+            aria-describedby={errors.password ? 'password-error' : undefined}
+            {...register('password')}
+          />
+          <FieldError id="password-error">{errors.password?.message}</FieldError>
+        </div>
+
+        <Button type="submit" fullWidth loading={isSubmitting}>
+          {isSubmitting ? 'Signing in…' : 'Sign in'}
+        </Button>
+      </form>
+    );
+  }
+
   return (
-    <div className="w-full max-w-md space-y-5">
-      {/* Title */}
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Welcome</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          ERT Members sign in with Google · Admins use email and password
-        </p>
+    <form
+      noValidate
+      onSubmit={(e) => {
+        e.preventDefault();
+        void goToPassword();
+      }}
+      className="flex flex-col gap-5"
+    >
+      <AuthHeading title="Sign in">
+        ERT members use Google. Admins use email and password.
+      </AuthHeading>
+      {bannerEl}
+
+      <GoogleSignInButton
+        onStart={() => setBanner(null)}
+        onError={(message) => setBanner({ tone: 'error', message })}
+      />
+
+      <div className="flex items-center gap-3">
+        <span aria-hidden className="h-px flex-1 bg-line" />
+        <span className="text-[13px] font-medium text-gray-500">or with email</span>
+        <span aria-hidden className="h-px flex-1 bg-line" />
       </div>
 
-      {step === 'email' && (
-        <>
-          {/* Google sign-in */}
-          <GoogleSignInForm />
-
-          {/* Divider */}
-          <div className="relative flex items-center gap-3">
-            <div className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
-            <span className="text-xs text-gray-400">or sign in with email</span>
-            <div className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
-          </div>
-        </>
-      )}
-
-      {/* Email / password form */}
-      <div className="space-y-4">
-        {authError && (
-          <div className="bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-400 rounded-lg px-4 py-3 text-sm">
-            {authError}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {step === 'email' && (
-            <>
-              <Input
-                label="Email"
-                id="email"
-                type="email"
-                autoFocus
-                placeholder="you@up.edu.ph"
-                error={!!errors.email}
-                hint={errors.email?.message}
-                {...register('email')}
-              />
-              <Button type="button" className="w-full" onClick={handleContinue}>
-                Continue
-              </Button>
-            </>
-          )}
-
-          {step === 'password' && (
-            <>
-              <button
-                type="button"
-                onClick={handleBack}
-                className="flex items-center gap-1 text-sm text-gray-500 transition-all duration-200 hover:text-gray-800 dark:hover:text-gray-200"
-              >
-                <ArrowLeft size={14} />
-                Back
-              </button>
-
-              <div>
-                <Input type="Email" label="Email" readOnly {...register('email')} />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    autoFocus
-                    error={!!errors.password}
-                    hint={errors.password?.message}
-                    className="pr-10"
-                    {...register('password')}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((p) => !p)}
-                    className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 transition-all duration-200 hover:text-gray-600"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex justify-center">
-                <Link
-                  href="/forgot-password"
-                  className="text-sm text-gray-500 transition-all duration-200 hover:text-gray-800 dark:hover:text-gray-200"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full"
-                isLoading={isSubmitting}
-                loadingText="Signing in..."
-              >
-                Sign in
-              </Button>
-            </>
-          )}
-        </form>
-      </div>
-
-      {/* Bystander quick link */}
-      <Link
-        href="/bystander-report"
-        className="group border-brand-200 hover:border-brand-400 dark:border-brand-700 dark:hover:border-brand-600 flex items-center gap-4 rounded-xl border bg-white p-4 transition-all duration-200 hover:shadow-md dark:bg-white/5"
-      >
-        <div className="bg-brand-50 dark:bg-brand-950 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg">
-          <div className="animate-pulse">
-            <AlertTriangle size={20} color={theme === 'dark' ? '#d65a5a' : '#a11d1d'} />
-          </div>
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-gray-900 dark:text-white">Report an Incident</p>
-          <p className="text-xs text-gray-400 dark:text-gray-500">
-            Anonymous submission — no account needed
-          </p>
-        </div>
-        <ArrowRight
-          size={16}
-          className="group-hover:text-brand-500 dark:group-hover:text-brand-500 shrink-0 text-gray-300 transition-transform duration-200 group-hover:translate-x-0.5 dark:text-gray-600"
+      <div className="flex flex-col gap-1.5">
+        <FieldLabel htmlFor="email">Email</FieldLabel>
+        <TextInput
+          id="email"
+          type="email"
+          inputMode="email"
+          autoComplete="username"
+          placeholder="you@up.edu.ph"
+          invalid={!!errors.email}
+          aria-describedby={errors.email ? 'email-error' : undefined}
+          {...register('email')}
         />
-      </Link>
-    </div>
+        <FieldError id="email-error">{errors.email?.message}</FieldError>
+      </div>
+
+      <Button type="submit" fullWidth>
+        Continue
+      </Button>
+    </form>
   );
 }

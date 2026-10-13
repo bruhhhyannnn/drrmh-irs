@@ -1,44 +1,41 @@
 import { cn } from '@/lib';
-import Image from 'next/image';
 
-interface SpinnerProps {
-  size?: 'sm' | 'md' | 'lg';
-  center?: boolean;
-  className?: string;
-}
-
-const sizeMap = {
-  sm: 'h-15 w-15',
-  md: 'h-17 w-17',
-  lg: 'h-19 w-19',
+const ring = {
+  sm: 'size-4.5 border-2',
+  md: 'size-6 border-[2.5px]',
+  lg: 'size-10 border-[3px]',
 };
 
-export function Spinner({ size = 'md', center = false, className }: SpinnerProps) {
-  return (
-    <div
+/**
+ * Small ring for buttons and inline use, in the text colour of whatever it sits in. Pass
+ * `label={null}` when the surrounding text already says what is happening (a button reading
+ * "Adding…"), so screen readers don't hear it twice.
+ */
+export function Spinner({
+  size = 'sm',
+  label = 'Loading',
+  className,
+}: {
+  size?: keyof typeof ring;
+  label?: string | null;
+  className?: string;
+}) {
+  const circle = (
+    <span
+      aria-hidden
       className={cn(
-        'relative flex animate-bounce items-center justify-center',
-        center && 'mx-auto',
-        sizeMap[size],
-        className
+        'inline-block shrink-0 rounded-full border-current/25 border-t-current motion-safe:animate-spin',
+        ring[size],
+        label === null && className
       )}
-    >
-      <Image
-        src="/irs-logo.png"
-        alt="DRRM-H Logo"
-        sizes="(max-width: 768px) 48px, 64px"
-        className="object-contain"
-        fill
-      />
-      <div className="absolute inset-0 animate-spin rounded-full bg-linear-to-tr from-35% to-white blur-xs dark:to-gray-900" />
-    </div>
+    />
   );
-}
+  if (label === null) return circle;
 
-export function PageError({ message }: { message: string }) {
   return (
-    <div className="flex h-[50vh] items-center justify-center">
-      <p className="text-error-500 text-sm">{message}</p>
-    </div>
+    <span role="status" className={cn('inline-flex', className)}>
+      {circle}
+      <span className="sr-only">{label}</span>
+    </span>
   );
 }
