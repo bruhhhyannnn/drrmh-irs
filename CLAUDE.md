@@ -14,6 +14,8 @@ npm run build         # Production build (next build --webpack — required by n
 npm run lint          # ESLint on src/**/*.{ts,tsx}
 npm run lint:fix      # ESLint --fix
 npm run type-check    # tsc --noEmit
+npm run test          # Vitest unit tests (vitest run); npm run test:watch to re-run on save
+npm run test:e2e      # Playwright end-to-end tests (reuses npm run dev on :3000 or starts it)
 npm run seed           # Seed lookup data (tsx prisma/seed.ts)
 npx prisma generate    # Regenerate Prisma client (also runs automatically via postinstall)
 ```
@@ -25,9 +27,9 @@ npx prisma generate    # Regenerate Prisma client (also runs automatically via p
 > - `npx prisma migrate dev` (DISALLOWED)
 > - `npx prisma migrate reset` (DISALLOWED)
 
-There is no test suite configured (`npm run test` is commented out in CI). Verify changes with `npm run lint`, `npm run type-check`, and `npm run build`.
+Verify changes with `npm run lint`, `npm run type-check`, `npm run test` and `npm run build`; run `npm run test:e2e` for changes to pages and flows. See **Testing** below.
 
-CI (`.github/workflows/ci.yml`) runs on PRs/pushes to `main`: `npm ci` → `prisma generate` → `npm audit --audit-level=critical` → lint → type-check → build. Pre-commit hook (Husky) runs `lint-staged` (eslint --fix + prettier on staged files).
+CI (`.github/workflows/ci.yml`) runs on PRs/pushes to `main`: `npm ci` → `prisma generate` → `npm audit --audit-level=critical` → lint → type-check → unit tests → build. The end-to-end tests are local only. Pre-commit hook (Husky) runs `lint-staged` (eslint --fix + prettier on staged files).
 
 ## Architecture
 
@@ -61,6 +63,12 @@ CI (`.github/workflows/ci.yml`) runs on PRs/pushes to `main`: `npm ci` → `pris
 **Prisma schema** (`prisma/schema.prisma`) uses `snake_case` DB columns/tables (`@map`/`@@map`) with PascalCase Prisma model names — e.g. model `User` maps to table `users`. IDs are DB-generated UUIDs (`dbgenerated("gen_random_uuid()")`). The generated client is emitted to `src/generated/` — never hand-edit it.
 
 **Prisma config** lives in `prisma.config.ts` (not `package.json`), using `DATABASE_URL` and `SHADOW_DATABASE_URL`.
+
+## Testing
+
+- **Unit tests (Vitest, `vitest.config.mts`)** sit next to the code as `*.test.ts(x)` (`src/**` only). The default environment is Node; a test needing a DOM (components, localStorage, IndexedDB via `fake-indexeddb`) starts with `// @vitest-environment jsdom`. `vitest.setup.ts` mocks `next/font/google` (so the `@/components/ds` barrel imports), adds jest-dom matchers, RTL cleanup and a `matchMedia` stub. Supabase env vars point at a dead local address; mock `./supabase-admin` / Prisma in tests rather than reaching a real service. Dates are formatted in `Asia/Manila` (pinned in the config). Pure logic (`_lib/`, `src/lib`) is the first place to add tests.
+- **End-to-end tests (Playwright, `playwright.config.ts`)** live in `e2e/`: `public/` (signed out) and `admin/` (signed in through `auth.setup.ts` with `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD` from `.env`; skipped when unset). Import `test` / `expect` from `e2e/support/test.ts`, never `@playwright/test`: its auto fixture installs the write guard (`e2e/support/writes.ts`), which aborts every server action whose exported name doesn't start with `get` (looked up in `.next/**/server-reference-manifest.json`) and every non-read Supabase call except sign-in. The tests read the real dev database and must not depend on specific rows. `writes.blocked` lists what a test tried to write.
+- **Server action naming is load-bearing:** a read-only action must be named `get…`, and nothing named `get…` may write. A read with another name is blocked in the end-to-end tests; a write named `get…` would reach the database.
 
 ## Conventions
 

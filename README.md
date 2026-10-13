@@ -976,11 +976,23 @@ npm run start        # Start production server
 npm run lint         # Run ESLint
 npm run lint:fix     # Auto-fix ESLint issues
 npm run type-check   # TypeScript check (tsc --noEmit)
+npm run test         # Unit tests (Vitest)
+npm run test:watch   # Unit tests, re-run on save
+npm run test:e2e     # End-to-end tests in a browser (Playwright)
+npm run test:e2e:ui  # The same, in Playwright's UI mode
 npm run seed         # Seed lookup data (clusters, positions, statuses, etc.)
 npx prisma generate  # Regenerate the Prisma client (also runs on npm install)
 ```
 
-There is no automated test suite yet. CI (`.github/workflows/ci.yml`) runs on pushes and pull requests to `main` and does the following: install, `prisma generate`, `npm audit`, lint, type-check, and build. A Husky pre-commit hook runs ESLint and Prettier on staged files.
+CI (`.github/workflows/ci.yml`) runs on pushes and pull requests to `main` and does the following: install, `prisma generate`, `npm audit`, lint, type-check, unit tests, and build. A Husky pre-commit hook runs ESLint and Prettier on staged files.
+
+### Testing
+
+- **Unit tests (Vitest)** sit next to the code they test as `*.test.ts(x)`: schemas, the offline queue, the event summary, formatting, photo metadata stripping, and design-system components (React Testing Library). They run in Node; a file that needs a DOM starts with `// @vitest-environment jsdom`. They don't touch the database or Supabase.
+- **End-to-end tests (Playwright)** live in `e2e/` and drive Chromium against the app. `npm run test:e2e` reuses your running `npm run dev` on port 3000, or starts it. Run `npx playwright install chromium` once first.
+  - They read from the database in `.env` but **never write to it**. `e2e/support/writes.ts` stops every server action that isn't a `get…` read before it leaves the browser, and every Supabase call other than signing in and reads. The app sees a dropped connection, so a bystander report sent in a test ends up in the offline queue instead of the database.
+  - The signed-in admin tests need a test account: set `E2E_ADMIN_EMAIL` and `E2E_ADMIN_PASSWORD` in `.env`. Without them, those tests are skipped and the public ones still run.
+  - Reports open with `npx playwright show-report`. A failed test keeps a trace (`npx playwright show-trace <file>`).
 
 ---
 
