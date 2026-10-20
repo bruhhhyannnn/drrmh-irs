@@ -17,7 +17,7 @@
 
 This is the web platform for the UPM DRRM-H Incident Reporting System. It is a centralized system for managing, monitoring, and analyzing incident reports submitted during drills, emergencies, and other DRRM-H-related events, across multiple UP campuses.
 
-ERT members submit status reports through the signed-in `/report` page, and bystanders submit incident reports anonymously through a QR-accessible public form. Both forms work offline: reports are saved on the device and sent automatically once the connection returns. Administrators get a centralized view of all incidents, headcounts, drill statuses, and post-event summaries.
+ERT members submit status reports through the signed-in `/report` page and check building safety with the MATATAG checklist on `/assessment`, and bystanders submit incident reports anonymously through a QR-accessible public form. All three work offline: they are saved on the device and sent automatically once the connection returns. Administrators get a centralized view of all incidents, headcounts, drill statuses, and post-event summaries.
 
 ### What it does
 
@@ -35,7 +35,9 @@ ERT members submit status reports through the signed-in `/report` page, and byst
 **For ERT members and bystanders**
 
 - **Landing page** — Public home page with summary stats
+- **ERT home** (`/home`) — Where ERT members land after sign-in: Status report, and Building assessment for those who can use it; a Report | Assessment switch in the top bar moves between the two
 - **ERT Report page** (`/report`) — One status report per member per ongoing event, with location pin, headcount, damage, missing persons, and casualties
+- **Building assessment** (`/assessment`) — The MATATAG checklist (UP Resilience Institute, Ver. July 25, 2025) in English and Filipino: pick the building, set its floors and areas so only the questions that apply are asked, answer Yes / No / N/A section by section, and see the score overall, per DRRM pillar and per section. Drafts are saved on the phone as you go and an assessment submitted offline sends on its own later
 - **Bystander Report** (`/bystander-report`) — Anonymous incident report, reachable by QR code
 - **Offline support (PWA)** — Installable app, offline fallback page, and an on-device queue that syncs reports when back online
 
@@ -370,6 +372,9 @@ flowchart TB
     UC_AddCasualty(("add casualty")) -. extend .-> UC_ViewReport
     UC_SignIn -. include .-> UC_NewProfile(("new user<br>create profile"))
     UC_EditProfile(("edit profile")) -. extend .-> UC_NewProfile
+    Actor --- UC_Assess(("assess a<br>building"))
+    UC_Assess -. include .-> UC_Draft(("save draft<br>on phone"))
+    UC_ViewAssessment(("view submitted<br>assessment")) -. extend .-> UC_Assess
 ```
 
 ## Use-Case Diagram — Bystander
@@ -934,6 +939,144 @@ erDiagram
     timestamptz created_at
   }
 
+  drrm_pillars {
+    uuid id PK
+    string code UK
+    string name
+    int sort_order
+  }
+
+  building_area_types {
+    uuid id PK
+    string code UK
+    string name_en
+    string name_fil
+    int sort_order
+    bool is_active
+  }
+
+  assessment_templates {
+    uuid id PK
+    string code UK
+    string name
+    string description
+  }
+
+  assessment_template_versions {
+    uuid id PK
+    uuid template_id FK
+    string label
+    enum status
+    timestamptz published_at
+    uuid published_by FK
+    uuid created_by FK
+  }
+
+  assessment_sections {
+    uuid id PK
+    uuid version_id FK
+    string code
+    string title_en
+    string title_fil
+    int sort_order
+    uuid area_type_id FK
+  }
+
+  assessment_items {
+    uuid id PK
+    uuid section_id FK
+    uuid parent_id FK
+    string code
+    string prompt_en
+    string prompt_fil
+    string reference
+    bool is_scored
+    enum safe_answer
+    uuid area_type_id FK
+    int min_floors
+    string flag_label
+    uuid pillar_id FK
+    int sort_order
+  }
+
+  buildings {
+    uuid id PK
+    uuid unit_id FK
+    string name
+    int floor_count
+    bool is_active
+    uuid created_by FK
+  }
+
+  building_areas {
+    uuid building_id PK
+    uuid area_type_id PK
+  }
+
+  assessments {
+    uuid id PK
+    uuid client_ref UK
+    uuid template_version_id FK
+    uuid building_id FK
+    uuid event_id FK
+    uuid evaluator_id FK
+    string incident_commander
+    int floor_count
+    timestamptz started_at
+    timestamptz ended_at
+    bool needs_follow_up
+  }
+
+  assessment_areas {
+    uuid assessment_id PK
+    uuid area_type_id PK
+  }
+
+  assessment_answers {
+    uuid id PK
+    uuid assessment_id FK
+    uuid item_id FK
+    enum answer
+    string remarks
+  }
+
+  assessment_pillar_scores {
+    uuid assessment_id PK
+    uuid pillar_id PK
+    int safe_count
+    int counted_count
+    int na_count
+  }
+
+  assessment_section_comments {
+    uuid id PK
+    uuid assessment_id FK
+    uuid section_id FK
+    string comment
+  }
+
+  assessment_templates ||--o{ assessment_template_versions : "versioned_as"
+  assessment_template_versions ||--o{ assessment_sections : "contains"
+  assessment_sections ||--o{ assessment_items : "contains"
+  assessment_items ||--o{ assessment_items : "groups"
+  building_area_types ||--o{ assessment_sections : "gates"
+  building_area_types ||--o{ assessment_items : "gates"
+  drrm_pillars ||--o{ assessment_items : "classifies"
+  units ||--o{ buildings : "has"
+  buildings ||--o{ building_areas : "has"
+  building_area_types ||--o{ building_areas : "kind_of"
+  buildings ||--o{ assessments : "assessed_in"
+  assessment_template_versions ||--o{ assessments : "answered_with"
+  events ||--o{ assessments : "linked_to"
+  users ||--o{ assessments : "evaluates"
+  assessments ||--o{ assessment_areas : "had"
+  assessments ||--o{ assessment_answers : "has"
+  assessment_items ||--o{ assessment_answers : "answered_in"
+  assessments ||--o{ assessment_pillar_scores : "scored_as"
+  drrm_pillars ||--o{ assessment_pillar_scores : "scores"
+  assessments ||--o{ assessment_section_comments : "has"
+  assessment_sections ||--o{ assessment_section_comments : "commented_in"
+
   campus ||--o{ clusters : "contains"
   campus ||--o{ campus_population_categories : "configures"
   population_categories ||--o{ campus_population_categories : "enabled_for"
@@ -977,10 +1120,12 @@ npm run lint         # Run ESLint
 npm run lint:fix     # Auto-fix ESLint issues
 npm run type-check   # TypeScript check (tsc --noEmit)
 npm run seed         # Seed lookup data (clusters, positions, statuses, etc.)
+npm run seed:matatag # Seed the MATATAG checklist (safe to re-run; item ids stay the same)
+npm run test         # Unit tests for the assessment logic (node:test via tsx)
 npx prisma generate  # Regenerate the Prisma client (also runs on npm install)
 ```
 
-There is no automated test suite yet. CI (`.github/workflows/ci.yml`) runs on pushes and pull requests to `main` and does the following: install, `prisma generate`, `npm audit`, lint, type-check, and build. A Husky pre-commit hook runs ESLint and Prettier on staged files.
+`npm run test` covers the assessment logic only (checklist data, which questions apply, scoring, the draft and its payload); CI doesn't run it yet. CI (`.github/workflows/ci.yml`) runs on pushes and pull requests to `main` and does the following: install, `prisma generate`, `npm audit`, lint, type-check, and build. A Husky pre-commit hook runs ESLint and Prettier on staged files.
 
 ---
 
@@ -992,14 +1137,14 @@ src/
 ├── app/
 │   ├── (admin)/    # Protected admin pages (dashboard, campus, events, reports, users, settings)
 │   ├── (auth)/     # Sign-in, forgot password, update password
-│   ├── (ert)/      # /report — ERT member status report
+│   ├── (ert)/      # /home, /report (status report) and /assessment (building assessment)
 │   ├── (public)/   # Landing page and /bystander-report
 │   ├── auth/       # Google OAuth callback
 │   └── ~offline/   # PWA offline fallback page
 ├── components/     # UI, layout, auth, PWA, and TanStack Query hooks (components/hooks)
 ├── lib/            # Prisma/Supabase clients, Zod schemas, offline queue, utilities
-└── store/          # Zustand stores (auth, offline queue, sidebar, theme)
-prisma/             # schema.prisma and seed.ts
+└── store/          # Zustand stores (auth, offline queue, sidebar, theme, checklist language)
+prisma/             # schema.prisma, seed.ts, seed-matatag.ts, data/ (the MATATAG checklist), manual/ (SQL)
 docs/               # Plans, reviews, bug reports, and feature specs
 ```
 

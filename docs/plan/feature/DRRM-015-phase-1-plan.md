@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-- **Status:** `[Draft]`
+- **Status:** `[In Progress]` (Tasks 1–13 built and committed; Task 14 hands-on checks pending)
 - **Branch:** `feat/DRRM-015-assessment-form`, in this worktree (`workspaces/drrmh-irs/Form`) only
 
 **Goal:** An ERT member can sign in, choose Assessment, run the MATATAG checklist for one building on their phone (pre-screen, sections, review), save it as they go, and submit it online or offline. The result is stored with its pillar scores.
@@ -53,29 +53,29 @@
 
 ## File map
 
-| Path                                                                                           | Responsibility                                                                                                                      |
-| ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `prisma/manual/DRRM-015-assessment.sql`                                                        | All Phase 1–3 tables, enums, constraints, RLS                                                                                       |
-| `prisma/schema.prisma`                                                                         | Matching models + back-relations                                                                                                    |
-| `prisma/data/matatag-2025-07-25.ts` (+ `.test.ts`)                                             | The checklist as typed data (generated once from the old branch), and its integrity tests                                           |
-| `prisma/seed-matatag.ts`                                                                       | Idempotent seed of pillars, area types, template, version, sections, items                                                          |
-| `src/lib/assessment-template.ts`                                                               | Shared types (data, template, setup, records), constants, `templateFromData`, `itemLabel`                                           |
-| `src/lib/assessment-score.ts` (+ test)                                                         | `applicableItems`, `areaQuestionCounts`, `scoreAssessment`, `percent`, `recoveryStatus`, `prepareAssessmentWrite`                   |
-| `src/lib/assessment-draft.ts` (+ test)                                                         | Draft type and pure draft operations, `toPayload`, `newUuid`                                                                        |
-| `src/lib/access.ts` (+ test)                                                                   | `canUseAssessment`                                                                                                                  |
-| `src/lib/server-auth.ts`                                                                       | `requireProfile(token)` (server only)                                                                                               |
-| `src/lib/supabase.ts`                                                                          | + `getAccessToken()`                                                                                                                |
-| `src/lib/schemas.ts` (+ test)                                                                  | + `assessmentPayloadSchema`, `assessmentDetailsSchema`                                                                              |
-| `src/lib/offline-queue.ts`                                                                     | DB v3: `assessments` queue, `assessment-drafts`, `assessment-cache`, `getAllQueuedCount`                                            |
-| `src/actions/assessments/index.ts`                                                             | Template, setup, create, my list, my record                                                                                         |
-| `src/components/hooks/use-assessments.ts`                                                      | Query hooks with offline cache, drafts, submit mutation                                                                             |
-| `src/components/pwa/offline-queue-provider.tsx`                                                | + flush the assessments queue                                                                                                       |
-| `src/lib/question-language.ts`, `src/store/question-language.store.ts`                         | Language preference                                                                                                                 |
-| `src/components/assessment/bilingual.tsx`, `question-language-setting.tsx`                     | `<Bilingual>` and the My profile setting                                                                                            |
-| `src/app/(ert)/_components/` (moved: `frame`, `chrome`, `top-bar`, `waiting-to-send`)          | ERT chrome shared by `/home`, `/report`, `/assessment`; `top-bar` gains the switch                                                  |
-| `src/app/(ert)/_lib/` (moved: `format`, `use-field-queue`; new: `use-ert-access`, `use-assessment-queue`) | Shared ERT helpers                                                                                                         |
-| `src/app/(ert)/home/page.tsx`                                                                  | `/home` chooser                                                                                                                     |
-| `src/app/(ert)/assessment/page.tsx` + `_components/`                                           | Hub, stepper (details, building, section, index, review), read-only view, score summary                                             |
+| Path                                                                                                      | Responsibility                                                                                                    |
+| --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `prisma/manual/DRRM-015-assessment.sql`                                                                   | All Phase 1–3 tables, enums, constraints, RLS                                                                     |
+| `prisma/schema.prisma`                                                                                    | Matching models + back-relations                                                                                  |
+| `prisma/data/matatag-2025-07-25.ts` (+ `.test.ts`)                                                        | The checklist as typed data (generated once from the old branch), and its integrity tests                         |
+| `prisma/seed-matatag.ts`                                                                                  | Idempotent seed of pillars, area types, template, version, sections, items                                        |
+| `src/lib/assessment-template.ts`                                                                          | Shared types (data, template, setup, records), constants, `templateFromData`, `itemLabel`                         |
+| `src/lib/assessment-score.ts` (+ test)                                                                    | `applicableItems`, `areaQuestionCounts`, `scoreAssessment`, `percent`, `recoveryStatus`, `prepareAssessmentWrite` |
+| `src/lib/assessment-draft.ts` (+ test)                                                                    | Draft type and pure draft operations, `toPayload`, `newUuid`                                                      |
+| `src/lib/access.ts` (+ test)                                                                              | `canUseAssessment`                                                                                                |
+| `src/lib/server-auth.ts`                                                                                  | `requireProfile(token)` (server only)                                                                             |
+| `src/lib/supabase.ts`                                                                                     | + `getAccessToken()`                                                                                              |
+| `src/lib/schemas.ts` (+ test)                                                                             | + `assessmentPayloadSchema`, `assessmentDetailsSchema`                                                            |
+| `src/lib/offline-queue.ts`                                                                                | DB v3: `assessments` queue, `assessment-drafts`, `assessment-cache`, `getAllQueuedCount`                          |
+| `src/actions/assessments/index.ts`                                                                        | Template, setup, create, my list, my record                                                                       |
+| `src/components/hooks/use-assessments.ts`                                                                 | Query hooks with offline cache, drafts, submit mutation                                                           |
+| `src/components/pwa/offline-queue-provider.tsx`                                                           | + flush the assessments queue                                                                                     |
+| `src/lib/question-language.ts`, `src/store/question-language.store.ts`                                    | Language preference                                                                                               |
+| `src/components/assessment/bilingual.tsx`, `question-language-setting.tsx`                                | `<Bilingual>` and the My profile setting                                                                          |
+| `src/app/(ert)/_components/` (moved: `frame`, `chrome`, `top-bar`, `waiting-to-send`)                     | ERT chrome shared by `/home`, `/report`, `/assessment`; `top-bar` gains the switch                                |
+| `src/app/(ert)/_lib/` (moved: `format`, `use-field-queue`; new: `use-ert-access`, `use-assessment-queue`) | Shared ERT helpers                                                                                                |
+| `src/app/(ert)/home/page.tsx`                                                                             | `/home` chooser                                                                                                   |
+| `src/app/(ert)/assessment/page.tsx` + `_components/`                                                      | Hub, stepper (details, building, section, index, review), read-only view, score summary                           |
 
 ---
 
@@ -92,13 +92,13 @@
 - Produces enums: `AssessmentAnswer` (`yes no na` → `assessment_answer`), `AssessmentSafeAnswer` (`yes no` → `assessment_safe_answer`), `AssessmentVersionStatus` (`draft published retired` → `assessment_version_status`).
 - Relation field names later tasks use:
 
-| Model                       | Relation fields                                                                                                                                                               |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `AssessmentTemplateVersion` | `template`, `sections`, `assessments`, `publisher` ("VersionPublishedBy"), `creator` ("VersionCreatedBy")                                                                     |
-| `AssessmentSection`         | `version`, `area_type`, `items`, `comments`                                                                                                                                   |
-| `AssessmentItem`            | `section`, `parent` / `children` ("ItemChildren"), `area_type`, `pillar`, `answers`                                                                                           |
-| `Building`                  | `unit`, `creator` ("BuildingCreatedBy"), `areas`, `assessments`                                                                                                               |
-| `Assessment`                | `version`, `building`, `event`, `evaluator` ("AssessmentEvaluator"), `areas`, `answers`, `pillar_scores`, `comments`                                                          |
+| Model                       | Relation fields                                                                                                                                                                  |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AssessmentTemplateVersion` | `template`, `sections`, `assessments`, `publisher` ("VersionPublishedBy"), `creator` ("VersionCreatedBy")                                                                        |
+| `AssessmentSection`         | `version`, `area_type`, `items`, `comments`                                                                                                                                      |
+| `AssessmentItem`            | `section`, `parent` / `children` ("ItemChildren"), `area_type`, `pillar`, `answers`                                                                                              |
+| `Building`                  | `unit`, `creator` ("BuildingCreatedBy"), `areas`, `assessments`                                                                                                                  |
+| `Assessment`                | `version`, `building`, `event`, `evaluator` ("AssessmentEvaluator"), `areas`, `answers`, `pillar_scores`, `comments`                                                             |
 | Back-relations              | `Unit.buildings`, `Event.assessments`, `User.assessments`, `User.created_buildings`, `User.published_versions`, `User.created_versions`, `DrrmPillar.items`, `DrrmPillar.scores` |
 
 - [ ] **Step 1: Switch this worktree to the feature branch**
@@ -119,25 +119,25 @@ Follow the header style of `prisma/manual/DRRM-011-super-admin-v2.sql`. "HOW TO 
   - every other foreign key: `NO ACTION`.
 - These named constraints and indexes (the names matter for later `pg_constraint` checks and for Prisma `map:`):
 
-| Name                                     | Definition                                                                                          |
-| ---------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `uq_template_versions_label`             | UNIQUE (`template_id`, `label`)                                                                     |
-| `uq_template_versions_one_published`     | UNIQUE INDEX on (`template_id`) WHERE `status = 'published'`                                        |
-| `uq_assessment_sections_code`            | UNIQUE (`version_id`, `code`)                                                                       |
+| Name                                     | Definition                                                                                                  |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `uq_template_versions_label`             | UNIQUE (`template_id`, `label`)                                                                             |
+| `uq_template_versions_one_published`     | UNIQUE INDEX on (`template_id`) WHERE `status = 'published'`                                                |
+| `uq_assessment_sections_code`            | UNIQUE (`version_id`, `code`)                                                                               |
 | `uq_assessment_items_code`               | UNIQUE INDEX on (`section_id`, `COALESCE(parent_id, '00000000-0000-0000-0000-000000000000'::uuid)`, `code`) |
-| `chk_assessment_items_pillar`            | `(is_scored AND pillar_id IS NOT NULL) OR (NOT is_scored AND pillar_id IS NULL)`                   |
-| `chk_assessment_items_min_floors`        | `min_floors IS NULL OR min_floors >= 1`                                                             |
-| `idx_assessment_items_section_order`     | INDEX (`section_id`, `sort_order`)                                                                  |
-| `uq_buildings_unit_name`                 | UNIQUE INDEX on (`unit_id`, `lower(name)`)                                                          |
-| `chk_buildings_floor_count`              | `floor_count >= 1`                                                                                  |
-| `chk_assessments_floor_count`            | `floor_count >= 1`                                                                                  |
-| `chk_assessments_times`                  | `ended_at >= started_at`                                                                            |
-| `idx_assessments_building_ended`         | INDEX (`building_id`, `ended_at DESC`)                                                              |
-| `idx_assessments_evaluator`              | INDEX (`evaluator_id`)                                                                              |
-| `uq_assessment_answers_item`             | UNIQUE (`assessment_id`, `item_id`)                                                                 |
-| `chk_assessment_answers_content`         | `answer IS NOT NULL OR remarks IS NOT NULL`                                                         |
-| `chk_assessment_pillar_scores_counts`    | `0 <= safe_count AND safe_count <= counted_count AND na_count >= 0`                                 |
-| `uq_assessment_section_comments_section` | UNIQUE (`assessment_id`, `section_id`)                                                              |
+| `chk_assessment_items_pillar`            | `(is_scored AND pillar_id IS NOT NULL) OR (NOT is_scored AND pillar_id IS NULL)`                            |
+| `chk_assessment_items_min_floors`        | `min_floors IS NULL OR min_floors >= 1`                                                                     |
+| `idx_assessment_items_section_order`     | INDEX (`section_id`, `sort_order`)                                                                          |
+| `uq_buildings_unit_name`                 | UNIQUE INDEX on (`unit_id`, `lower(name)`)                                                                  |
+| `chk_buildings_floor_count`              | `floor_count >= 1`                                                                                          |
+| `chk_assessments_floor_count`            | `floor_count >= 1`                                                                                          |
+| `chk_assessments_times`                  | `ended_at >= started_at`                                                                                    |
+| `idx_assessments_building_ended`         | INDEX (`building_id`, `ended_at DESC`)                                                                      |
+| `idx_assessments_evaluator`              | INDEX (`evaluator_id`)                                                                                      |
+| `uq_assessment_answers_item`             | UNIQUE (`assessment_id`, `item_id`)                                                                         |
+| `chk_assessment_answers_content`         | `answer IS NOT NULL OR remarks IS NOT NULL`                                                                 |
+| `chk_assessment_pillar_scores_counts`    | `0 <= safe_count AND safe_count <= counted_count AND na_count >= 0`                                         |
+| `uq_assessment_section_comments_section` | UNIQUE (`assessment_id`, `section_id`)                                                                      |
 
 - `client_ref UUID NOT NULL UNIQUE` on `assessments`. `building_areas`, `assessment_areas` and `assessment_pillar_scores` have composite primary keys, as in the spec.
 - Add each named constraint inside a `DO` block guarded by `pg_constraint` (the DRRM-011 pattern), and each index with `CREATE [UNIQUE] INDEX IF NOT EXISTS`.
@@ -183,24 +183,95 @@ git commit -m "feat(assessment): add MATATAG assessment schema"
 **Interfaces (produces, all in `src/lib/assessment-template.ts`):**
 
 ```ts
-export const AREA_CODES = ['corridors', 'bathrooms', 'offices', 'classrooms', 'laboratories', 'athletic', 'dormitories', 'playground', 'swimming_pool', 'stairwells'] as const;
+export const AREA_CODES = [
+  'corridors',
+  'bathrooms',
+  'offices',
+  'classrooms',
+  'laboratories',
+  'athletic',
+  'dormitories',
+  'playground',
+  'swimming_pool',
+  'stairwells',
+] as const;
 export type AreaCode = (typeof AREA_CODES)[number];
-export const PILLAR_CODES = ['prevention-mitigation', 'preparedness', 'response', 'rehabilitation-recovery'] as const;
+export const PILLAR_CODES = [
+  'prevention-mitigation',
+  'preparedness',
+  'response',
+  'rehabilitation-recovery',
+] as const;
 export type PillarCode = (typeof PILLAR_CODES)[number];
 export type AnswerValue = 'yes' | 'no' | 'na';
 export type SafeAnswer = 'yes' | 'no';
 export const STRUCTURAL_FLAG = 'Needs structural follow-up';
 
 // Source data (prisma/data): codes, no ids. An item with `items` is a group parent (not scored).
-export interface ChecklistItemData { code: string; en: string; fil: string; reference?: string; pillar?: PillarCode; area?: AreaCode; safe?: 'no'; minFloors?: number; flag?: string; items?: ChecklistItemData[] }
-export interface ChecklistSectionData { code: string; en: string; fil: string; area?: AreaCode; items: ChecklistItemData[] }
-export interface ChecklistData { template: { code: string; name: string; description: string }; versionLabel: string; areaTypes: { code: AreaCode; en: string; fil: string }[]; sections: ChecklistSectionData[] }
+export interface ChecklistItemData {
+  code: string;
+  en: string;
+  fil: string;
+  reference?: string;
+  pillar?: PillarCode;
+  area?: AreaCode;
+  safe?: 'no';
+  minFloors?: number;
+  flag?: string;
+  items?: ChecklistItemData[];
+}
+export interface ChecklistSectionData {
+  code: string;
+  en: string;
+  fil: string;
+  area?: AreaCode;
+  items: ChecklistItemData[];
+}
+export interface ChecklistData {
+  template: { code: string; name: string; description: string };
+  versionLabel: string;
+  areaTypes: { code: AreaCode; en: string; fil: string }[];
+  sections: ChecklistSectionData[];
+}
 
 // The template as the app uses it. Items are flat, in sort order (a parent right before its children).
-export interface TemplateAreaType { id: string; code: string; name_en: string; name_fil: string }
-export interface TemplateItem { id: string; section_id: string; parent_id: string | null; code: string; prompt_en: string; prompt_fil: string; note_en: string | null; note_fil: string | null; reference: string | null; is_scored: boolean; safe_answer: SafeAnswer; area_type_id: string | null; min_floors: number | null; flag_label: string | null; pillar_code: PillarCode | null }
-export interface TemplateSection { id: string; code: string; title_en: string; title_fil: string; area_type_id: string | null; items: TemplateItem[] }
-export interface AssessmentTemplate { version_id: string; label: string; area_types: TemplateAreaType[]; sections: TemplateSection[] }
+export interface TemplateAreaType {
+  id: string;
+  code: string;
+  name_en: string;
+  name_fil: string;
+}
+export interface TemplateItem {
+  id: string;
+  section_id: string;
+  parent_id: string | null;
+  code: string;
+  prompt_en: string;
+  prompt_fil: string;
+  note_en: string | null;
+  note_fil: string | null;
+  reference: string | null;
+  is_scored: boolean;
+  safe_answer: SafeAnswer;
+  area_type_id: string | null;
+  min_floors: number | null;
+  flag_label: string | null;
+  pillar_code: PillarCode | null;
+}
+export interface TemplateSection {
+  id: string;
+  code: string;
+  title_en: string;
+  title_fil: string;
+  area_type_id: string | null;
+  items: TemplateItem[];
+}
+export interface AssessmentTemplate {
+  version_id: string;
+  label: string;
+  area_types: TemplateAreaType[];
+  sections: TemplateSection[];
+}
 
 /** The template straight from data: ids are code paths ("III", "III/4", "III/4.1"), area ids are area codes, version_id is "data". For tests. */
 export function templateFromData(data: ChecklistData): AssessmentTemplate;
@@ -217,7 +288,12 @@ Task 7 adds the action result types (`AssessmentSetup`, `BuildingOption`, `MyAss
 - [ ] **Step 2: Write the failing data test, `prisma/data/matatag-2025-07-25.test.ts`**
 
 ```ts
-import { itemLabel, PILLAR_CODES, STRUCTURAL_FLAG, templateFromData } from '@/lib/assessment-template';
+import {
+  itemLabel,
+  PILLAR_CODES,
+  STRUCTURAL_FLAG,
+  templateFromData,
+} from '@/lib/assessment-template';
 import { PILLARS } from '@/lib/pillars';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
@@ -231,52 +307,220 @@ const range = (prefix: string, from: number, to: number) =>
   Array.from({ length: to - from + 1 }, (_, k) => `${prefix}${from + k}`);
 
 test('17 sections, 211 scored items, counts per section', () => {
-  assert.deepEqual(T.sections.map((s) => s.code), ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII']);
-  const per = Object.fromEntries(T.sections.map((s) => [s.code, s.items.filter((i) => i.is_scored).length]));
-  assert.deepEqual(per, { I: 12, II: 7, III: 15, IV: 22, V: 25, VI: 33, VII: 7, VIII: 8, IX: 7, X: 3, XI: 5, XII: 9, XIII: 16, XIV: 13, XV: 5, XVI: 4, XVII: 20 });
+  assert.deepEqual(
+    T.sections.map((s) => s.code),
+    [
+      'I',
+      'II',
+      'III',
+      'IV',
+      'V',
+      'VI',
+      'VII',
+      'VIII',
+      'IX',
+      'X',
+      'XI',
+      'XII',
+      'XIII',
+      'XIV',
+      'XV',
+      'XVI',
+      'XVII',
+    ]
+  );
+  const per = Object.fromEntries(
+    T.sections.map((s) => [s.code, s.items.filter((i) => i.is_scored).length])
+  );
+  assert.deepEqual(per, {
+    I: 12,
+    II: 7,
+    III: 15,
+    IV: 22,
+    V: 25,
+    VI: 33,
+    VII: 7,
+    VIII: 8,
+    IX: 7,
+    X: 3,
+    XI: 5,
+    XII: 9,
+    XIII: 16,
+    XIV: 13,
+    XV: 5,
+    XVI: 4,
+    XVII: 20,
+  });
   assert.equal(scored.length, 211);
 });
 
 test('13 group parents, unscored and without a pillar', () => {
   const groups = items.filter((i) => !i.is_scored);
-  assert.deepEqual(labels(groups), ['I.3', 'III.2', 'III.4', 'IV.1', 'IV.2', 'IV.3', 'V.5', 'V.6', 'V.7', 'VI.1', 'VI.2', 'VI.7', 'VI.8'].sort());
+  assert.deepEqual(
+    labels(groups),
+    [
+      'I.3',
+      'III.2',
+      'III.4',
+      'IV.1',
+      'IV.2',
+      'IV.3',
+      'V.5',
+      'V.6',
+      'V.7',
+      'VI.1',
+      'VI.2',
+      'VI.7',
+      'VI.8',
+    ].sort()
+  );
   assert.ok(groups.every((g) => g.pillar_code === null));
 });
 
 test('every scored item has one pillar: 149 / 24 / 37 / 1', () => {
   assert.ok(scored.every((i) => i.pillar_code !== null));
   const of = (code: string) => labels(scored.filter((i) => i.pillar_code === code));
-  assert.deepEqual(of('preparedness'), ['I.1', 'I.2', 'I.3.1', 'I.3.2', 'I.3.4', 'I.4', 'I.5', 'I.6', 'I.7', 'I.8', 'V.1', 'V.2', 'V.4', ...range('V.7.', 1, 7), 'XIII.14', 'XVII.1', 'XVII.4', 'XVII.16'].sort());
-  assert.deepEqual(of('response'), ['I.9', ...range('III.2.', 1, 6), 'V.3', ...range('V.5.', 1, 7), 'VII.3', ...range('VIII.', 1, 6), 'VIII.8', 'XI.5', 'XII.9', 'XIII.3', 'XIII.6', 'XIII.7', 'XIII.8', 'XIII.12', 'XIII.13', 'XVI.2', 'XVII.6', 'XVII.12', 'XVII.17', 'XVII.19', 'XVII.20'].sort());
+  assert.deepEqual(
+    of('preparedness'),
+    [
+      'I.1',
+      'I.2',
+      'I.3.1',
+      'I.3.2',
+      'I.3.4',
+      'I.4',
+      'I.5',
+      'I.6',
+      'I.7',
+      'I.8',
+      'V.1',
+      'V.2',
+      'V.4',
+      ...range('V.7.', 1, 7),
+      'XIII.14',
+      'XVII.1',
+      'XVII.4',
+      'XVII.16',
+    ].sort()
+  );
+  assert.deepEqual(
+    of('response'),
+    [
+      'I.9',
+      ...range('III.2.', 1, 6),
+      'V.3',
+      ...range('V.5.', 1, 7),
+      'VII.3',
+      ...range('VIII.', 1, 6),
+      'VIII.8',
+      'XI.5',
+      'XII.9',
+      'XIII.3',
+      'XIII.6',
+      'XIII.7',
+      'XIII.8',
+      'XIII.12',
+      'XIII.13',
+      'XVI.2',
+      'XVII.6',
+      'XVII.12',
+      'XVII.17',
+      'XVII.19',
+      'XVII.20',
+    ].sort()
+  );
   assert.deepEqual(of('rehabilitation-recovery'), ['I.3.3']);
   assert.equal(of('prevention-mitigation').length, 149);
 });
 
 test('pillar codes are the DRRM-014 PILLARS slugs, in order', () => {
-  assert.deepEqual(PILLARS.map((p) => p.slug), [...PILLAR_CODES]);
+  assert.deepEqual(
+    PILLARS.map((p) => p.slug),
+    [...PILLAR_CODES]
+  );
 });
 
 test('reverse-scored, sprinkler and structural-flag items', () => {
-  assert.deepEqual(labels(scored.filter((i) => i.safe_answer === 'no')), ['II.3', ...range('VI.1.', 1, 7), 'VI.9'].sort());
-  assert.deepEqual(labels(scored.filter((i) => i.min_floors === 3)), [...range('V.6.', 1, 7), 'XVII.13'].sort());
-  assert.deepEqual(labels(scored.filter((i) => i.flag_label === STRUCTURAL_FLAG)), range('VI.1.', 1, 7).sort());
+  assert.deepEqual(
+    labels(scored.filter((i) => i.safe_answer === 'no')),
+    ['II.3', ...range('VI.1.', 1, 7), 'VI.9'].sort()
+  );
+  assert.deepEqual(
+    labels(scored.filter((i) => i.min_floors === 3)),
+    [...range('V.6.', 1, 7), 'XVII.13'].sort()
+  );
+  assert.deepEqual(
+    labels(scored.filter((i) => i.flag_label === STRUCTURAL_FLAG)),
+    range('VI.1.', 1, 7).sort()
+  );
 });
 
 test('area gating of sections and sub-items', () => {
-  const sectionAreas = Object.fromEntries(T.sections.filter((s) => s.area_type_id).map((s) => [s.code, s.area_type_id]));
-  assert.deepEqual(sectionAreas, { VII: 'stairwells', IX: 'bathrooms', XI: 'offices', XII: 'classrooms', XIII: 'laboratories', XIV: 'playground', XV: 'athletic', XVI: 'swimming_pool', XVII: 'dormitories' });
+  const sectionAreas = Object.fromEntries(
+    T.sections.filter((s) => s.area_type_id).map((s) => [s.code, s.area_type_id])
+  );
+  assert.deepEqual(sectionAreas, {
+    VII: 'stairwells',
+    IX: 'bathrooms',
+    XI: 'offices',
+    XII: 'classrooms',
+    XIII: 'laboratories',
+    XIV: 'playground',
+    XV: 'athletic',
+    XVI: 'swimming_pool',
+    XVII: 'dormitories',
+  });
   const byArea = (code: string) => labels(items.filter((i) => i.area_type_id === code));
-  assert.deepEqual(byArea('corridors'), ['III.4.1', 'IV.1.2', 'IV.2.1', 'IV.3.1', 'V.5.1', 'V.6.1', 'V.7.1', 'VI.1.1', 'VI.2.1', 'VI.7.1', 'VI.8.1'].sort());
-  for (const area of ['bathrooms', 'offices', 'classrooms', 'laboratories', 'athletic', 'dormitories']) {
+  assert.deepEqual(
+    byArea('corridors'),
+    [
+      'III.4.1',
+      'IV.1.2',
+      'IV.2.1',
+      'IV.3.1',
+      'V.5.1',
+      'V.6.1',
+      'V.7.1',
+      'VI.1.1',
+      'VI.2.1',
+      'VI.7.1',
+      'VI.8.1',
+    ].sort()
+  );
+  for (const area of [
+    'bathrooms',
+    'offices',
+    'classrooms',
+    'laboratories',
+    'athletic',
+    'dormitories',
+  ]) {
     assert.equal(byArea(area).length, 12, area);
   }
   assert.equal(items.find((i) => i.label === 'IV.1.1')?.area_type_id, null);
-  assert.deepEqual(T.area_types.map((a) => a.code), ['corridors', 'bathrooms', 'offices', 'classrooms', 'laboratories', 'athletic', 'dormitories', 'playground', 'swimming_pool', 'stairwells']);
+  assert.deepEqual(
+    T.area_types.map((a) => a.code),
+    [
+      'corridors',
+      'bathrooms',
+      'offices',
+      'classrooms',
+      'laboratories',
+      'athletic',
+      'dormitories',
+      'playground',
+      'swimming_pool',
+      'stairwells',
+    ]
+  );
 });
 
 test('English and Filipino text everywhere', () => {
   assert.ok(T.sections.every((s) => s.title_en.trim() && s.title_fil.trim()));
-  assert.ok(items.every((i) => i.prompt_en.trim() && i.prompt_fil.trim()), 'item text');
+  assert.ok(
+    items.every((i) => i.prompt_en.trim() && i.prompt_fil.trim()),
+    'item text'
+  );
   assert.ok(T.area_types.every((a) => a.name_en.trim() && a.name_fil.trim()));
 });
 ```
@@ -410,20 +654,57 @@ git commit -m "feat(assessment): seed the MATATAG template"
 **Interfaces (produces):**
 
 ```ts
-export interface Tally { safe: number; counted: number; na: number }
+export interface Tally {
+  safe: number;
+  counted: number;
+  na: number;
+}
 export type AnswerMap = Record<string, AnswerValue | null | undefined>; // by item id
 /** Items that apply, in template order. A group parent is included only when one of its sub-items applies. */
-export function applicableItems(template: AssessmentTemplate, floors: number, areaTypeIds: Iterable<string>): TemplateItem[];
+export function applicableItems(
+  template: AssessmentTemplate,
+  floors: number,
+  areaTypeIds: Iterable<string>
+): TemplateItem[];
 /** Scored items gated by each area type (its section's area or its own), counting min_floors. Keyed by area type id. */
-export function areaQuestionCounts(template: AssessmentTemplate, floors: number): Record<string, number>;
-export interface AssessmentScore { overall: Tally; pillars: Record<PillarCode, Tally>; sections: Record<string, Tally>; unanswered: TemplateItem[]; unsafe: TemplateItem[]; needsFollowUp: boolean }
-export function scoreAssessment(template: AssessmentTemplate, floors: number, areaTypeIds: Iterable<string>, answers: AnswerMap): AssessmentScore;
+export function areaQuestionCounts(
+  template: AssessmentTemplate,
+  floors: number
+): Record<string, number>;
+export interface AssessmentScore {
+  overall: Tally;
+  pillars: Record<PillarCode, Tally>;
+  sections: Record<string, Tally>;
+  unanswered: TemplateItem[];
+  unsafe: TemplateItem[];
+  needsFollowUp: boolean;
+}
+export function scoreAssessment(
+  template: AssessmentTemplate,
+  floors: number,
+  areaTypeIds: Iterable<string>,
+  answers: AnswerMap
+): AssessmentScore;
 export function percent(t: Tally): number | null; // Math.round(100 * safe / counted); null when counted is 0
 export function recoveryStatus(t: Tally): 'in_place' | 'missing' | 'na';
-export interface WriteInput { floor_count: number; area_type_ids: string[]; answers: { item_id: string; answer: AnswerValue | null; remarks: string | null }[]; comments: { section_id: string; comment: string }[] }
-export interface PreparedAssessment { answers: WriteInput['answers']; comments: WriteInput['comments']; pillarTallies: Record<PillarCode, Tally>; needsFollowUp: boolean; missing: number }
+export interface WriteInput {
+  floor_count: number;
+  area_type_ids: string[];
+  answers: { item_id: string; answer: AnswerValue | null; remarks: string | null }[];
+  comments: { section_id: string; comment: string }[];
+}
+export interface PreparedAssessment {
+  answers: WriteInput['answers'];
+  comments: WriteInput['comments'];
+  pillarTallies: Record<PillarCode, Tally>;
+  needsFollowUp: boolean;
+  missing: number;
+}
 /** Server-side: keep only applicable items (template order), null the answer on group parents, trim remarks ('' → null), drop empty rows and comments of sections that don't apply. */
-export function prepareAssessmentWrite(template: AssessmentTemplate, input: WriteInput): PreparedAssessment;
+export function prepareAssessmentWrite(
+  template: AssessmentTemplate,
+  input: WriteInput
+): PreparedAssessment;
 ```
 
 Rules:
@@ -442,8 +723,20 @@ Rules:
 
 ```ts
 import { MATATAG_2025_07_25 } from '../../prisma/data/matatag-2025-07-25';
-import { AREA_CODES, PILLAR_CODES, templateFromData, type AnswerValue } from './assessment-template';
-import { applicableItems, areaQuestionCounts, percent, prepareAssessmentWrite, recoveryStatus, scoreAssessment } from './assessment-score';
+import {
+  AREA_CODES,
+  PILLAR_CODES,
+  templateFromData,
+  type AnswerValue,
+} from './assessment-template';
+import {
+  applicableItems,
+  areaQuestionCounts,
+  percent,
+  prepareAssessmentWrite,
+  recoveryStatus,
+  scoreAssessment,
+} from './assessment-score';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
@@ -456,8 +749,21 @@ const OFFICE = ['offices'];
 test('pre-screen counts from the spec (Sections 3.3–3.4)', () => {
   assert.equal(scoredCount(1, []), 42);
   assert.equal(scoredCount(2, ['corridors', 'bathrooms', 'offices', 'stairwells']), 93);
-  assert.equal(scoredCount(4, ['corridors', 'bathrooms', 'offices', 'classrooms', 'laboratories', 'stairwells']), 145);
-  assert.equal(scoredCount(4, ['corridors', 'bathrooms', 'offices', 'dormitories', 'stairwells']), 128);
+  assert.equal(
+    scoredCount(4, [
+      'corridors',
+      'bathrooms',
+      'offices',
+      'classrooms',
+      'laboratories',
+      'stairwells',
+    ]),
+    145
+  );
+  assert.equal(
+    scoredCount(4, ['corridors', 'bathrooms', 'offices', 'dormitories', 'stairwells']),
+    128
+  );
   assert.equal(scoredCount(3, AREA_CODES), 211);
 });
 
@@ -471,7 +777,18 @@ test('sprinklers need 3 floors; a group parent needs an applicable sub-item', ()
 });
 
 test('questions each area adds', () => {
-  assert.deepEqual(areaQuestionCounts(T, 3), { corridors: 11, bathrooms: 19, offices: 17, classrooms: 21, laboratories: 28, athletic: 17, dormitories: 32, playground: 13, swimming_pool: 4, stairwells: 7 });
+  assert.deepEqual(areaQuestionCounts(T, 3), {
+    corridors: 11,
+    bathrooms: 19,
+    offices: 17,
+    classrooms: 21,
+    laboratories: 28,
+    athletic: 17,
+    dormitories: 32,
+    playground: 13,
+    swimming_pool: 4,
+    stairwells: 7,
+  });
   const two = areaQuestionCounts(T, 2);
   assert.deepEqual([two.corridors, two.bathrooms, two.dormitories], [10, 18, 30]);
 });
@@ -482,12 +799,19 @@ test('reverse items: NO is safe on II.3; YES on VI.1.3 needs structural follow-u
   assert.equal(score({ [id('II.3')]: 'yes' }).overall.safe, 0);
   const cracked = score({ [id('VI.1.3')]: 'yes' });
   assert.equal(cracked.needsFollowUp, true);
-  assert.deepEqual(cracked.unsafe.map((i) => i.id), [id('VI.1.3')]);
+  assert.deepEqual(
+    cracked.unsafe.map((i) => i.id),
+    [id('VI.1.3')]
+  );
   assert.equal(score({ [id('VI.1.3')]: 'no' }).needsFollowUp, false);
 });
 
 test('N/A and non-applicable answers are left out', () => {
-  const s = scoreAssessment(T, 1, OFFICE, { [id('II.1')]: 'na', [id('II.2')]: 'yes', [id('XIII.1')]: 'no' });
+  const s = scoreAssessment(T, 1, OFFICE, {
+    [id('II.1')]: 'na',
+    [id('II.2')]: 'yes',
+    [id('XIII.1')]: 'no',
+  });
   assert.deepEqual(s.overall, { safe: 1, counted: 1, na: 1 });
   assert.equal(s.sections['XIII'], undefined);
 });
@@ -495,8 +819,20 @@ test('N/A and non-applicable answers are left out', () => {
 test('the four pillars add up to the overall score', () => {
   const values: AnswerValue[] = ['no', 'yes', 'na'];
   const scored = applicableItems(T, 4, AREA_CODES).filter((i) => i.is_scored);
-  const s = scoreAssessment(T, 4, AREA_CODES, Object.fromEntries(scored.map((i, k) => [i.id, values[k % 3]])));
-  const sum = PILLAR_CODES.reduce((t, p) => ({ safe: t.safe + s.pillars[p].safe, counted: t.counted + s.pillars[p].counted, na: t.na + s.pillars[p].na }), { safe: 0, counted: 0, na: 0 });
+  const s = scoreAssessment(
+    T,
+    4,
+    AREA_CODES,
+    Object.fromEntries(scored.map((i, k) => [i.id, values[k % 3]]))
+  );
+  const sum = PILLAR_CODES.reduce(
+    (t, p) => ({
+      safe: t.safe + s.pillars[p].safe,
+      counted: t.counted + s.pillars[p].counted,
+      na: t.na + s.pillars[p].na,
+    }),
+    { safe: 0, counted: 0, na: 0 }
+  );
   assert.deepEqual(sum, s.overall);
   assert.equal(s.unanswered.length, 0);
 });
@@ -523,7 +859,10 @@ test('prepareAssessmentWrite keeps only what applies and counts what is missing'
       { item_id: 'III/2', answer: 'yes', remarks: 'Door sticks' }, // group parent
       { item_id: 'unknown', answer: 'yes', remarks: null },
     ],
-    comments: [{ section_id: 'II', comment: ' Ok ' }, { section_id: 'XIII', comment: 'x' }],
+    comments: [
+      { section_id: 'II', comment: ' Ok ' },
+      { section_id: 'XIII', comment: 'x' },
+    ],
   });
   assert.deepEqual(p.answers, [
     { item_id: id('II.1'), answer: 'yes', remarks: null },
@@ -570,11 +909,23 @@ git commit -m "feat(assessment): applicability and scoring"
 
 ```ts
 // src/lib/access.ts: the one place the rule lives (spec 5.6, keep its comment about the Safety Officer rule)
-export function canUseAssessment(p: { user_type?: { name: string } | null; position?: { name: string } | null } | null | undefined): boolean;
+export function canUseAssessment(
+  p: { user_type?: { name: string } | null; position?: { name: string } | null } | null | undefined
+): boolean;
 
 // src/lib/server-auth.ts: imported only by server actions
-export type VerifiedProfile = Prisma.UserGetPayload<{ include: { user_type: true; position: true; campus: true; cluster: true; unit: { include: { cluster: true } } } }>;
-export type CallerCheck = { ok: true; profile: VerifiedProfile } | { ok: false; reason: 'signed_out' | 'no_profile' | 'inactive' };
+export type VerifiedProfile = Prisma.UserGetPayload<{
+  include: {
+    user_type: true;
+    position: true;
+    campus: true;
+    cluster: true;
+    unit: { include: { cluster: true } };
+  };
+}>;
+export type CallerCheck =
+  | { ok: true; profile: VerifiedProfile }
+  | { ok: false; reason: 'signed_out' | 'no_profile' | 'inactive' };
 export async function requireProfile(token: string | null | undefined): Promise<CallerCheck>;
 
 // src/lib/supabase.ts
@@ -619,7 +970,10 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 test('Phase 1: ERT members only', () => {
-  assert.equal(canUseAssessment({ user_type: { name: 'ERT Member' }, position: { name: 'Marshall' } }), true);
+  assert.equal(
+    canUseAssessment({ user_type: { name: 'ERT Member' }, position: { name: 'Marshall' } }),
+    true
+  );
   for (const name of ['Administrator', 'Super Admin', 'Bystander']) {
     assert.equal(canUseAssessment({ user_type: { name } }), false, name);
   }
@@ -635,17 +989,31 @@ import { test } from 'node:test';
 
 const U = '7a0c3b9e-3f5b-4d2a-9c1e-2b8f6d4a1e00';
 const valid = {
-  client_ref: U, evaluator_id: U, template_version_id: U,
-  building: { new: { unit_id: U, name: ' Annex ' } }, event_id: null, incident_commander: '',
-  floor_count: 2, area_type_ids: [U], started_at: '2026-10-20T01:00:00.000Z', ended_at: '2026-10-20T02:00:00.000Z',
-  answers: [{ item_id: U, answer: 'yes', remarks: null }], comments: [],
+  client_ref: U,
+  evaluator_id: U,
+  template_version_id: U,
+  building: { new: { unit_id: U, name: ' Annex ' } },
+  event_id: null,
+  incident_commander: '',
+  floor_count: 2,
+  area_type_ids: [U],
+  started_at: '2026-10-20T01:00:00.000Z',
+  ended_at: '2026-10-20T02:00:00.000Z',
+  answers: [{ item_id: U, answer: 'yes', remarks: null }],
+  comments: [],
 };
 
 test('assessment payload', () => {
   const parsed = assessmentPayloadSchema.parse(valid);
   assert.deepEqual(parsed.building, { new: { unit_id: U, name: 'Annex' } });
   assert.equal(assessmentPayloadSchema.safeParse({ ...valid, floor_count: 0 }).success, false);
-  assert.equal(assessmentPayloadSchema.safeParse({ ...valid, answers: [{ item_id: U, answer: 'maybe', remarks: null }] }).success, false);
+  assert.equal(
+    assessmentPayloadSchema.safeParse({
+      ...valid,
+      answers: [{ item_id: U, answer: 'maybe', remarks: null }],
+    }).success,
+    false
+  );
   assert.equal(assessmentPayloadSchema.safeParse({ ...valid, building: { id: U } }).success, true);
 });
 ```
@@ -684,28 +1052,62 @@ git commit -m "feat(assessment): access rule, caller check and payload schema"
 
 ```ts
 export type DraftStep = 'details' | 'building' | `section:${string}` | 'review';
-export interface DraftAnswer { answer?: AnswerValue; remarks?: string }
+export interface DraftAnswer {
+  answer?: AnswerValue;
+  remarks?: string;
+}
 export interface AssessmentDraft {
   version: 1;
-  client_ref: string; evaluator_id: string; campus_id: string; template_version_id: string;
-  started_at: string; updated_at: number;
-  cluster_id: string; unit_id: string;
-  building_id: string; new_building_name: string; building_name: string; // building_id '' while adding one
-  incident_commander: string; event_id: string; // '' = none
-  floor_count: number; area_type_ids: string[];
+  client_ref: string;
+  evaluator_id: string;
+  campus_id: string;
+  template_version_id: string;
+  started_at: string;
+  updated_at: number;
+  cluster_id: string;
+  unit_id: string;
+  building_id: string;
+  new_building_name: string;
+  building_name: string; // building_id '' while adding one
+  incident_commander: string;
+  event_id: string; // '' = none
+  floor_count: number;
+  area_type_ids: string[];
   prefilled_from: string | null; // ISO date of the building's last assessment
   answers: Record<string, DraftAnswer>; // by item id, kept when set aside
   comments: Record<string, string>; // by section id
   step: DraftStep;
 }
 export function newUuid(): string; // crypto.randomUUID when available, else v4 from crypto.getRandomValues (plain-http LAN dev has no randomUUID)
-export function newDraft(input: { client_ref: string; evaluator_id: string; campus_id: string; template_version_id: string; cluster_id: string; unit_id: string; now: Date }): AssessmentDraft; // floors 1, no areas, step 'details'
+export function newDraft(input: {
+  client_ref: string;
+  evaluator_id: string;
+  campus_id: string;
+  template_version_id: string;
+  cluster_id: string;
+  unit_id: string;
+  now: Date;
+}): AssessmentDraft; // floors 1, no areas, step 'details'
 export function clampFloors(value: number): number; // Math.round, then 1..200; NaN → 1
-export function applyBuildingProfile(draft: AssessmentDraft, building: BuildingOption): AssessmentDraft; // building_id/name, floor_count, area_type_ids, prefilled_from = last_assessed_at; answers untouched; new_building_name ''
-export function setAsideCount(template: AssessmentTemplate, draft: AssessmentDraft, next: { floor_count: number; area_type_ids: string[] }): number; // answered items that apply now but not after
+export function applyBuildingProfile(
+  draft: AssessmentDraft,
+  building: BuildingOption
+): AssessmentDraft; // building_id/name, floor_count, area_type_ids, prefilled_from = last_assessed_at; answers untouched; new_building_name ''
+export function setAsideCount(
+  template: AssessmentTemplate,
+  draft: AssessmentDraft,
+  next: { floor_count: number; area_type_ids: string[] }
+): number; // answered items that apply now but not after
 export function draftSteps(template: AssessmentTemplate, draft: AssessmentDraft): DraftStep[];
-export function sectionProgress(template: AssessmentTemplate, draft: AssessmentDraft): Record<string, { answered: number; total: number }>; // applicable scored items, by section id
-export function toPayload(template: AssessmentTemplate, draft: AssessmentDraft, endedAt: Date): AssessmentPayload;
+export function sectionProgress(
+  template: AssessmentTemplate,
+  draft: AssessmentDraft
+): Record<string, { answered: number; total: number }>; // applicable scored items, by section id
+export function toPayload(
+  template: AssessmentTemplate,
+  draft: AssessmentDraft,
+  endedAt: Date
+): AssessmentPayload;
 ```
 
 `BuildingOption` (add to `assessment-template.ts` now; Task 7 returns it):
@@ -726,7 +1128,17 @@ export function toPayload(template: AssessmentTemplate, draft: AssessmentDraft, 
 
 ```ts
 import { MATATAG_2025_07_25 } from '../../prisma/data/matatag-2025-07-25';
-import { applyBuildingProfile, clampFloors, draftSteps, newDraft, newUuid, sectionProgress, setAsideCount, toPayload, type AssessmentDraft } from './assessment-draft';
+import {
+  applyBuildingProfile,
+  clampFloors,
+  draftSteps,
+  newDraft,
+  newUuid,
+  sectionProgress,
+  setAsideCount,
+  toPayload,
+  type AssessmentDraft,
+} from './assessment-draft';
 import { templateFromData } from './assessment-template';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
@@ -734,30 +1146,62 @@ import { test } from 'node:test';
 const T = templateFromData(MATATAG_2025_07_25);
 const id = (label: string) => label.replace('.', '/');
 const draft = (patch: Partial<AssessmentDraft> = {}): AssessmentDraft => ({
-  ...newDraft({ client_ref: newUuid(), evaluator_id: 'u1', campus_id: 'c1', template_version_id: T.version_id, cluster_id: 'k1', unit_id: 'unit1', now: new Date('2026-10-20T01:00:00Z') }),
+  ...newDraft({
+    client_ref: newUuid(),
+    evaluator_id: 'u1',
+    campus_id: 'c1',
+    template_version_id: T.version_id,
+    cluster_id: 'k1',
+    unit_id: 'unit1',
+    now: new Date('2026-10-20T01:00:00Z'),
+  }),
   ...patch,
 });
 
 test('floors clamp to a whole number from 1 to 200', () => {
-  assert.deepEqual([clampFloors(0), clampFloors(Number.NaN), clampFloors(2.6), clampFloors(500)], [1, 1, 3, 200]);
+  assert.deepEqual(
+    [clampFloors(0), clampFloors(Number.NaN), clampFloors(2.6), clampFloors(500)],
+    [1, 1, 3, 200]
+  );
 });
 
 test('unticking an area sets its answers aside; ticking it again brings them back', () => {
-  const d = draft({ floor_count: 4, area_type_ids: ['laboratories'], answers: { [id('XIII.1')]: { answer: 'yes' }, [id('V.5.5')]: { answer: 'no' }, [id('II.1')]: { answer: 'yes' } } });
+  const d = draft({
+    floor_count: 4,
+    area_type_ids: ['laboratories'],
+    answers: {
+      [id('XIII.1')]: { answer: 'yes' },
+      [id('V.5.5')]: { answer: 'no' },
+      [id('II.1')]: { answer: 'yes' },
+    },
+  });
   assert.equal(setAsideCount(T, d, { floor_count: 4, area_type_ids: [] }), 2);
   const unticked = { ...d, area_type_ids: [] };
-  assert.deepEqual(toPayload(T, unticked, new Date()).answers.map((a) => a.item_id), [id('II.1')]);
+  assert.deepEqual(
+    toPayload(T, unticked, new Date()).answers.map((a) => a.item_id),
+    [id('II.1')]
+  );
   assert.equal(Object.keys(unticked.answers).length, 3);
   assert.equal(sectionProgress(T, d)['XIII'].answered, 1);
 });
 
 test('floors 4 → 2 sets the sprinkler answers aside', () => {
-  const d = draft({ floor_count: 4, area_type_ids: ['corridors'], answers: { [id('V.6.1')]: { answer: 'yes' } } });
+  const d = draft({
+    floor_count: 4,
+    area_type_ids: ['corridors'],
+    answers: { [id('V.6.1')]: { answer: 'yes' } },
+  });
   assert.equal(setAsideCount(T, d, { floor_count: 2, area_type_ids: ['corridors'] }), 1);
 });
 
 test('toPayload: new building, no event, group remarks, comments, evaluator', () => {
-  const d = draft({ building_id: '', new_building_name: '  Annex  ', area_type_ids: ['bathrooms'], answers: { 'III/2': { remarks: 'Hinges loose' }, [id('XIII.1')]: { answer: 'no' } }, comments: { II: '  ', III: 'Check doors', XIII: 'x' } });
+  const d = draft({
+    building_id: '',
+    new_building_name: '  Annex  ',
+    area_type_ids: ['bathrooms'],
+    answers: { 'III/2': { remarks: 'Hinges loose' }, [id('XIII.1')]: { answer: 'no' } },
+    comments: { II: '  ', III: 'Check doors', XIII: 'x' },
+  });
   const p = toPayload(T, d, new Date('2026-10-20T02:00:00Z'));
   assert.deepEqual(p.building, { new: { unit_id: 'unit1', name: 'Annex' } });
   assert.equal(p.event_id, null);
@@ -769,14 +1213,36 @@ test('toPayload: new building, no event, group remarks, comments, evaluator', ()
 
 test('choosing a building takes its saved profile and keeps the answers', () => {
   const d = draft({ answers: { [id('II.1')]: { answer: 'yes' } } });
-  const next = applyBuildingProfile(d, { id: 'b1', unit_id: 'unit1', name: 'Main', floor_count: 4, area_type_ids: ['offices'], last_assessed_at: '2026-01-05T00:00:00.000Z' });
-  assert.deepEqual([next.building_id, next.building_name, next.floor_count, next.prefilled_from], ['b1', 'Main', 4, '2026-01-05T00:00:00.000Z']);
+  const next = applyBuildingProfile(d, {
+    id: 'b1',
+    unit_id: 'unit1',
+    name: 'Main',
+    floor_count: 4,
+    area_type_ids: ['offices'],
+    last_assessed_at: '2026-01-05T00:00:00.000Z',
+  });
+  assert.deepEqual(
+    [next.building_id, next.building_name, next.floor_count, next.prefilled_from],
+    ['b1', 'Main', 4, '2026-01-05T00:00:00.000Z']
+  );
   assert.deepEqual(next.area_type_ids, ['offices']);
   assert.deepEqual(next.answers, d.answers);
 });
 
 test('steps skip sections with nothing to ask', () => {
-  assert.deepEqual(draftSteps(T, draft()), ['details', 'building', 'section:I', 'section:II', 'section:III', 'section:IV', 'section:V', 'section:VI', 'section:VIII', 'section:X', 'review']);
+  assert.deepEqual(draftSteps(T, draft()), [
+    'details',
+    'building',
+    'section:I',
+    'section:II',
+    'section:III',
+    'section:IV',
+    'section:V',
+    'section:VI',
+    'section:VIII',
+    'section:X',
+    'review',
+  ]);
 });
 
 test('newUuid is a v4 uuid', () => {
@@ -824,12 +1290,31 @@ export interface AssessmentSetup {
   buildings: BuildingOption[]; // active buildings of the campus
   events: { id: string; name: string; status: string }[]; // ongoing, or completed with ended_at in the last 30 days
 }
-export type CreateAssessmentResult = { ok: true; id: string } | { ok: false; error: string; retry: boolean };
-export interface MyAssessmentRow { id: string; building_name: string; unit_name: string; ended_at: string; safe: number; counted: number; needs_follow_up: boolean }
+export type CreateAssessmentResult =
+  { ok: true; id: string } | { ok: false; error: string; retry: boolean };
+export interface MyAssessmentRow {
+  id: string;
+  building_name: string;
+  unit_name: string;
+  ended_at: string;
+  safe: number;
+  counted: number;
+  needs_follow_up: boolean;
+}
 export interface AssessmentRecord {
-  id: string; building_name: string; unit_name: string; cluster_name: string; campus_name: string;
-  evaluator_name: string; incident_commander: string; event_name: string | null;
-  started_at: string; ended_at: string; floor_count: number; area_type_ids: string[]; needs_follow_up: boolean;
+  id: string;
+  building_name: string;
+  unit_name: string;
+  cluster_name: string;
+  campus_name: string;
+  evaluator_name: string;
+  incident_commander: string;
+  event_name: string | null;
+  started_at: string;
+  ended_at: string;
+  floor_count: number;
+  area_type_ids: string[];
+  needs_follow_up: boolean;
   answers: Record<string, { answer: AnswerValue | null; remarks: string | null }>;
   comments: Record<string, string>;
   template: AssessmentTemplate; // the version it was answered with
@@ -839,9 +1324,15 @@ export interface AssessmentRecord {
 export async function getPublishedTemplate(): Promise<AssessmentTemplate | null>;
 export async function getTemplateVersion(versionId: string): Promise<AssessmentTemplate | null>;
 export async function getAssessmentSetup(campusId: string): Promise<AssessmentSetup>;
-export async function createAssessment(token: string | null, payload: AssessmentPayload): Promise<CreateAssessmentResult>;
+export async function createAssessment(
+  token: string | null,
+  payload: AssessmentPayload
+): Promise<CreateAssessmentResult>;
 export async function getMyAssessments(token: string | null): Promise<MyAssessmentRow[]>; // newest first, 50; [] when the check fails
-export async function getMyAssessment(token: string | null, id: string): Promise<AssessmentRecord | null>; // own only
+export async function getMyAssessment(
+  token: string | null,
+  id: string
+): Promise<AssessmentRecord | null>; // own only
 ```
 
 Dates leave the server as ISO strings.
@@ -917,7 +1408,11 @@ git commit -m "feat(assessment): assessment server actions with caller check"
 ```ts
 // DB_VERSION 3; stores 'assessments' (keyPath id), 'assessment-drafts' (keyPath client_ref), 'assessment-cache' (keyPath key)
 export type QueuedAssessment = QueuedEntry<AssessmentPayload>;
-export const queueAssessment, getQueuedAssessments, getQueuedAssessmentCount, removeQueuedAssessment, markQueuedAssessmentFailed; // makeQueue
+export const queueAssessment,
+  getQueuedAssessments,
+  getQueuedAssessmentCount,
+  removeQueuedAssessment,
+  markQueuedAssessmentFailed; // makeQueue
 export async function getAllQueuedCount(): Promise<number>; // pending bystander + field + assessments
 export async function saveAssessmentDraft(draft: AssessmentDraft): Promise<void>;
 export async function getAssessmentDraft(clientRef: string): Promise<AssessmentDraft | undefined>;
@@ -936,7 +1431,11 @@ export function useAssessmentSetup(campusId?: string): UseQueryResult<Assessment
 export function useAssessmentDrafts(evaluatorId?: string): UseQueryResult<AssessmentDraft[]>; // ['assessment-drafts', id]; IndexedDB only; newest updated_at first
 export function useMyAssessments(userId?: string): UseQueryResult<MyAssessmentRow[]>; // ['my-assessments', userId]
 export function useMyAssessment(id?: string): UseQueryResult<AssessmentRecord | null>; // ['my-assessment', id]
-export function useSubmitAssessment(): UseMutationResult<{ status: 'sent'; id: string } | { status: 'queued' }, Error, { template: AssessmentTemplate; draft: AssessmentDraft }>;
+export function useSubmitAssessment(): UseMutationResult<
+  { status: 'sent'; id: string } | { status: 'queued' },
+  Error,
+  { template: AssessmentTemplate; draft: AssessmentDraft }
+>;
 ```
 
 How the hooks behave:
@@ -1004,7 +1503,9 @@ git commit -m "feat(assessment): offline drafts, cache and queue"
 // src/app/(ert)/_lib/use-ert-access.ts
 export type ErtProfile = NonNullable<ReturnType<typeof useAuthStore.getState>['userProfile']>;
 /** Signed out → /signin, admin → /dashboard, and with requireAssessment, !canUseAssessment → /home. */
-export function useErtAccess(options?: { requireAssessment?: boolean }): { status: 'checking' } | { status: 'setup' } | { status: 'ready'; profile: ErtProfile };
+export function useErtAccess(options?: {
+  requireAssessment?: boolean;
+}): { status: 'checking' } | { status: 'setup' } | { status: 'ready'; profile: ErtProfile };
 // src/app/(ert)/_lib/use-assessment-queue.ts: same shape as useFieldQueue
 export function useQueuedAssessments(): QueuedAssessment[];
 // src/app/(ert)/_lib/format.ts: add
@@ -1067,8 +1568,16 @@ git commit -m "feat(assessment): ERT home chooser and Report | Assessment switch
 export type QuestionLanguage = 'both' | 'en' | 'fil';
 export const QUESTION_LANGUAGE_KEY = 'irs-question-language';
 export function readQuestionLanguage(): QuestionLanguage; // 'both' when unset or storage is blocked
-export const useQuestionLanguageStore: UseBoundStore<{ language: QuestionLanguage; setLanguage: (l: QuestionLanguage) => void }>; // mirrors useThemeStore
-export function Bilingual(props: { en: string; fil: string; as?: 'span' | 'p' | 'h2' | 'h3'; className?: string }): JSX.Element;
+export const useQuestionLanguageStore: UseBoundStore<{
+  language: QuestionLanguage;
+  setLanguage: (l: QuestionLanguage) => void;
+}>; // mirrors useThemeStore
+export function Bilingual(props: {
+  en: string;
+  fil: string;
+  as?: 'span' | 'p' | 'h2' | 'h3';
+  className?: string;
+}): JSX.Element;
 export function QuestionLanguageSetting(): JSX.Element;
 ```
 
@@ -1117,7 +1626,10 @@ export function AssessmentHub(): JSX.Element;
 export function AssessmentView(props: { id: string }): JSX.Element;
 export function AssessmentStepper(props: { clientRef: string }): JSX.Element;
 // score-summary.tsx: used by the view and by the review step
-export function ScoreSummary(props: { score: AssessmentScore; template: AssessmentTemplate }): JSX.Element; // overall % + "x of y safe"; Prevention / Preparedness / Response % with PILLARS icon + label; Recovery as "Public Service Continuity Plan: In place / Missing / N/A"; "Needs structural follow-up" Banner (tone warning) when flagged; per-section table (code, title via Bilingual, %, x of y)
+export function ScoreSummary(props: {
+  score: AssessmentScore;
+  template: AssessmentTemplate;
+}): JSX.Element; // overall % + "x of y safe"; Prevention / Preparedness / Response % with PILLARS icon + label; Recovery as "Public Service Continuity Plan: In place / Missing / N/A"; "Needs structural follow-up" Banner (tone warning) when flagged; per-section table (code, title via Bilingual, %, x of y)
 ```
 
 The page uses `useErtAccess({ requireAssessment: true })` and wraps every state in `ErtFrame`.
@@ -1182,10 +1694,27 @@ git commit -m "feat(assessment): assessment hub and read-only view"
 ```tsx
 export function AssessmentStepper(props: { clientRef: string }): JSX.Element;
 // Each step gets the draft and an updater; the stepper owns state and autosave.
-type StepProps = { template: AssessmentTemplate; draft: AssessmentDraft; update: (fn: (d: AssessmentDraft) => AssessmentDraft) => void };
-export function DetailsStep(props: StepProps & { setup: AssessmentSetup; profile: ErtProfile; onValidChange: (valid: boolean) => void }): JSX.Element;
+type StepProps = {
+  template: AssessmentTemplate;
+  draft: AssessmentDraft;
+  update: (fn: (d: AssessmentDraft) => AssessmentDraft) => void;
+};
+export function DetailsStep(
+  props: StepProps & {
+    setup: AssessmentSetup;
+    profile: ErtProfile;
+    onValidChange: (valid: boolean) => void;
+  }
+): JSX.Element;
 export function BuildingStep(props: StepProps): JSX.Element;
-export function SectionIndex(props: { template: AssessmentTemplate; draft: AssessmentDraft; steps: DraftStep[]; current: DraftStep; grown: Set<string>; onOpen: (step: DraftStep) => void }): JSX.Element;
+export function SectionIndex(props: {
+  template: AssessmentTemplate;
+  draft: AssessmentDraft;
+  steps: DraftStep[];
+  current: DraftStep;
+  grown: Set<string>;
+  onOpen: (step: DraftStep) => void;
+}): JSX.Element;
 ```
 
 **Stepper:**
@@ -1276,7 +1805,14 @@ git commit -m "feat(assessment): stepper, pre-screen and section index"
 
 ```tsx
 export function SectionStep(props: StepProps & { section: TemplateSection }): JSX.Element;
-export function ReviewStep(props: StepProps & { onJump: (sectionId: string, itemId: string) => void; onSubmit: () => void; submitting: boolean; error: string }): JSX.Element;
+export function ReviewStep(
+  props: StepProps & {
+    onJump: (sectionId: string, itemId: string) => void;
+    onSubmit: () => void;
+    submitting: boolean;
+    error: string;
+  }
+): JSX.Element;
 ```
 
 **Section step:**
@@ -1373,6 +1909,7 @@ git commit -m "feat(assessment): checklist sections, review and submit"
    - `evaluator_id` is the signed-in account's profile id.
 
    Expected: `{ ok: false, error: "Your account can't submit assessments.", retry: false }`. The same script with an ERT member's token and id → `{ ok: true }`. That writes one test assessment to the test database.
+
 2. **Shared phone:** as ERT member A, queue an assessment offline, sign out, sign in as ERT member B, go online. Expected: A's entry stays waiting (`retry`), and B's hub shows neither A's drafts nor A's queue entry. Sign in as A → it sends.
 3. **Safety Officer rule:** flip `canUseAssessment` to the Safety Officer rule locally. The `/home` card, the switch, the `/assessment` guard and `createAssessment` all follow. Revert it.
 
