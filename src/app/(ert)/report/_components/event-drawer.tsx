@@ -3,7 +3,7 @@
 import { Button, Drawer } from '@/components/ds';
 import { cn } from '@/lib';
 import { useState } from 'react';
-import { formatShortDateTime } from '../_lib/format';
+import { formatShortDateTime } from '../../_lib/format';
 
 export interface OngoingEvent {
   id: string;

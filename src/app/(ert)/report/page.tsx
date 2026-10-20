@@ -8,11 +8,11 @@ import { isAdminUserType } from '@/lib';
 import { useAuthStore, useOfflineQueueStore } from '@/store';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { ErtFrame } from './_components/frame';
+import { ErtFrame } from '../_components/frame';
+import { useFieldQueue } from '../_lib/use-field-queue';
 import { NoOngoingEvent, OfflineFirstLoad, SavedOffline } from './_components/notice-screens';
 import { ErtReportForm } from './_components/report-form';
 import { SubmittedReport } from './_components/submitted-report';
-import { useFieldQueue } from './_lib/use-field-queue';
 
 /** How often the page checks for a newly started (or ended) event. */
 const EVENT_POLL_MS = 30_000;

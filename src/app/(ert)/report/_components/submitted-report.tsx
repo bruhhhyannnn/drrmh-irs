@@ -23,8 +23,8 @@ import { cn, totalPopulationCount } from '@/lib';
 import { ArrowLeft, Check } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { formatDateTime } from '../_lib/format';
-import { Card, GUTTER, Hero, HeroSkeleton, Mono, Pill } from './chrome';
+import { Card, GUTTER, Hero, HeroSkeleton, Mono, Pill } from '../../_components/chrome';
+import { formatDateTime } from '../../_lib/format';
 import { PeopleList, PeopleRow } from './people-rows';
 
 const toSex = (sex: string | null): PersonSex =>

@@ -25,9 +25,19 @@ import { useAuthStore, useOfflineQueueStore } from '@/store';
 import { useQueryClient } from '@tanstack/react-query';
 import { Check, RotateCcw, Shield, WifiOff } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import {
+  Avatar,
+  Card,
+  Dot,
+  GUTTER,
+  Hero,
+  Mono,
+  personName,
+  Pill,
+  SectionCard,
+} from '../../_components/chrome';
+import { formatTime } from '../../_lib/format';
 import { clearDraft, loadDraft, saveDraft } from '../_lib/draft';
-import { formatTime } from '../_lib/format';
-import { Avatar, Card, Dot, GUTTER, Hero, Mono, personName, Pill, SectionCard } from './chrome';
 import { EventDrawer, type OngoingEvent } from './event-drawer';
 import { LocationSection, type PickedLocation } from './location-section';
 import { PeopleRow } from './people-rows';
