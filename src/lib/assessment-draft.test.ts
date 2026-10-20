@@ -10,7 +10,9 @@ import {
   newUuid,
   parseFloors,
   sectionProgress,
+  sectionScoredItems,
   setAsideCount,
+  stepQuestion,
   toPayload,
   type AssessmentDraft,
 } from './assessment-draft';
@@ -159,4 +161,45 @@ test('typed floors: blank is "not yet", the rest is clamped (review I5)', () => 
 
 test('newUuid is a v4 uuid', () => {
   assert.match(newUuid(), /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+});
+
+test('flashcard question stepping walks one scored question at a time across sections', () => {
+  const d = draft({ floor_count: 1, area_type_ids: [] });
+  const secI = sectionScoredItems(T, d, 'I');
+  const secII = sectionScoredItems(T, d, 'II');
+  assert.equal(secI.length, 12);
+  assert.equal(secI[0].id, id('I.1'));
+  assert.equal(secI[2].id, id('I.3.1'));
+
+  // From building, Next lands on the first question of Section I.
+  const fromBuilding = stepQuestion(T, { ...d, step: 'building' }, 'next');
+  assert.deepEqual(fromBuilding, { step: 'section:I', item_id: secI[0].id });
+
+  // From Section I Q1, Next goes to Q2; Back goes back to building.
+  assert.deepEqual(stepQuestion(T, { ...d, step: 'section:I', item_id: secI[0].id }, 'next'), {
+    step: 'section:I',
+    item_id: secI[1].id,
+  });
+  assert.deepEqual(stepQuestion(T, { ...d, step: 'section:I', item_id: secI[0].id }, 'prev'), {
+    step: 'building',
+    item_id: undefined,
+  });
+
+  // From the last question of Section I, Next goes to Section II Q1; Back from Section II Q1 returns to Section I's last question.
+  const lastI = secI[secI.length - 1].id;
+  assert.deepEqual(stepQuestion(T, { ...d, step: 'section:I', item_id: lastI }, 'next'), {
+    step: 'section:II',
+    item_id: secII[0].id,
+  });
+  assert.deepEqual(stepQuestion(T, { ...d, step: 'section:II', item_id: secII[0].id }, 'prev'), {
+    step: 'section:I',
+    item_id: lastI,
+  });
+
+  // From review, Back lands on the last question of the last applicable section (X).
+  const secX = sectionScoredItems(T, d, 'X');
+  assert.deepEqual(stepQuestion(T, { ...d, step: 'review' }, 'prev'), {
+    step: 'section:X',
+    item_id: secX[secX.length - 1].id,
+  });
 });

@@ -3,7 +3,12 @@
 import { Bilingual } from '@/components/assessment/bilingual';
 import { FOCUS_RING } from '@/components/ds';
 import { cn } from '@/lib';
-import { sectionProgress, type AssessmentDraft, type DraftStep } from '@/lib/assessment-draft';
+import {
+  activeSectionItem,
+  sectionProgress,
+  type AssessmentDraft,
+  type DraftStep,
+} from '@/lib/assessment-draft';
 import type { AssessmentTemplate } from '@/lib/assessment-template';
 import { Check } from 'lucide-react';
 import { Mono, Pill } from '../../_components/chrome';
@@ -22,7 +27,7 @@ export function SectionIndex({
   steps: DraftStep[];
   current: DraftStep;
   grown: Set<string>;
-  onOpen: (step: DraftStep) => void;
+  onOpen: (step: DraftStep, itemId?: string) => void;
 }) {
   const progress = sectionProgress(template, draft);
   const sections = new Map(template.sections.map((s) => [s.id, s]));
@@ -33,6 +38,7 @@ export function SectionIndex({
         {steps.map((step) => {
           const isCurrent = step === current;
           let content: React.ReactNode;
+          let activeQuestions: ReturnType<typeof activeSectionItem> = null;
           if (step === 'details') content = <span className="flex-1">Details</span>;
           else if (step === 'building')
             content = <span className="flex-1">About the building</span>;
@@ -42,6 +48,7 @@ export function SectionIndex({
             const section = sections.get(sectionId);
             const p = progress[sectionId] ?? { answered: 0, total: 0 };
             const done = p.total > 0 && p.answered === p.total;
+            if (isCurrent) activeQuestions = activeSectionItem(template, draft, sectionId);
             content = (
               <>
                 <span className="flex min-w-0 flex-1 gap-2">
@@ -70,7 +77,7 @@ export function SectionIndex({
             );
           }
           return (
-            <li key={step}>
+            <li key={step} className="flex flex-col gap-1.5">
               <button
                 type="button"
                 aria-current={isCurrent ? 'step' : undefined}
@@ -83,6 +90,34 @@ export function SectionIndex({
               >
                 {content}
               </button>
+              {activeQuestions && (
+                <div className="flex flex-wrap gap-1.5 px-3 pb-2 lg:hidden">
+                  {activeQuestions.items.map((q, idx) => {
+                    const isActiveItem = q.id === activeQuestions.item.id;
+                    const isAnswered = Boolean(draft.answers[q.id]?.answer);
+                    return (
+                      <button
+                        key={q.id}
+                        type="button"
+                        aria-label={`Question ${idx + 1}`}
+                        aria-current={isActiveItem ? 'true' : undefined}
+                        onClick={() => onOpen(step, q.id)}
+                        className={cn(
+                          'font-landing-mono grid size-9 place-items-center rounded-xl border text-[13px] transition-colors',
+                          isActiveItem
+                            ? 'bg-brand-solid border-transparent font-bold text-white'
+                            : isAnswered
+                              ? 'border-success-300 bg-success-50 font-semibold text-success-700'
+                              : 'border-gray-200 bg-surface text-gray-600 hover:bg-gray-50',
+                          FOCUS_RING
+                        )}
+                      >
+                        {idx + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </li>
           );
         })}

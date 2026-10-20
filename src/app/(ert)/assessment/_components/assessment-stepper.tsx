@@ -8,8 +8,14 @@ import {
 } from '@/components/hooks/use-assessments';
 import { Loader } from '@/components/ui/loader';
 import { cn } from '@/lib';
-import { draftSteps, type AssessmentDraft, type DraftStep } from '@/lib/assessment-draft';
-import type { AssessmentSetup, AssessmentTemplate } from '@/lib/assessment-template';
+import {
+  draftSteps,
+  sectionScoredItems,
+  stepQuestion,
+  type AssessmentDraft,
+  type DraftStep,
+} from '@/lib/assessment-draft';
+import type { AnswerValue, AssessmentSetup, AssessmentTemplate } from '@/lib/assessment-template';
 import { getAssessmentDraft, saveAssessmentDraft } from '@/lib/offline-queue';
 import { useQueryClient } from '@tanstack/react-query';
 import { CloudOff, FileQuestion, ListChecks } from 'lucide-react';
@@ -177,44 +183,82 @@ function DraftForm({
   }, [flush]);
 
   /* ─── Steps ─── */
+  const isDesktop = useIsDesktop();
   const steps = draftSteps(template, draft);
   // A section screened out by the building's profile isn't a step any more.
   const current: DraftStep = steps.includes(draft.step) ? draft.step : 'building';
   useEffect(() => {
-    if (current !== draft.step) update((d) => ({ ...d, step: current }));
+    if (current !== draft.step) update((d) => ({ ...d, step: current, item_id: undefined }));
   }, [current, draft.step, update]);
 
   const index = steps.indexOf(current);
-  const prev = steps[index - 1];
-  const next = steps[index + 1];
+  const prevStep = steps[index - 1];
+  const nextStep = steps[index + 1];
+  const prevTarget = isDesktop
+    ? prevStep
+      ? { step: prevStep, item_id: undefined }
+      : null
+    : stepQuestion(template, draft, 'prev');
+  const nextTarget = isDesktop
+    ? nextStep
+      ? { step: nextStep, item_id: undefined }
+      : null
+    : stepQuestion(template, draft, 'next');
 
-  const go = (step: DraftStep) => {
-    update((d) => ({ ...d, step }));
-    if (step.startsWith('section:')) {
-      const sectionId = step.slice('section:'.length);
-      setGrown((g) => {
-        if (!g.has(sectionId)) return g;
-        const rest = new Set(g);
-        rest.delete(sectionId);
-        return rest;
-      });
-    }
+  const clearGrown = (step: DraftStep) => {
+    if (!step.startsWith('section:')) return;
+    const sectionId = step.slice('section:'.length);
+    setGrown((g) => {
+      if (!g.has(sectionId)) return g;
+      const rest = new Set(g);
+      rest.delete(sectionId);
+      return rest;
+    });
+  };
+
+  const go = (step: DraftStep, itemId?: string) => {
+    update((d) => {
+      let resolvedItemId = itemId;
+      if (!resolvedItemId && step.startsWith('section:')) {
+        const items = sectionScoredItems(template, d, step.slice('section:'.length));
+        resolvedItemId = items.find((i) => !d.answers[i.id]?.answer)?.id ?? items[0]?.id;
+      }
+      return { ...d, step, item_id: resolvedItemId };
+    });
+    clearGrown(step);
     setIndexOpen(false);
+    window.scrollTo({ top: 0 });
+  };
+
+  const answerAndAdvance = (itemId: string, answer: AnswerValue) => {
+    let nextStepAfter: DraftStep | undefined;
+    update((d) => {
+      const withAnswer: AssessmentDraft = {
+        ...d,
+        answers: { ...d.answers, [itemId]: { ...d.answers[itemId], answer } },
+      };
+      const target = stepQuestion(template, withAnswer, 'next');
+      if (!target) return withAnswer;
+      nextStepAfter = target.step;
+      return { ...withAnswer, step: target.step, item_id: target.item_id };
+    });
+    if (nextStepAfter) clearGrown(nextStepAfter);
     window.scrollTo({ top: 0 });
   };
 
   /* ─── Jump from the review to an unanswered question ─── */
   const [focusItem, setFocusItem] = useState<string | null>(null);
   const jump = (sectionId: string, itemId: string) => {
-    go(`section:${sectionId}`);
+    go(`section:${sectionId}`, itemId);
     setFocusItem(itemId);
   };
   useEffect(() => {
     if (!focusItem) return;
     const el = document.getElementById(`item-${focusItem}`);
-    if (!el) return;
-    el.scrollIntoView({ block: 'start' });
-    el.focus({ preventScroll: true });
+    if (el && el.offsetParent !== null) {
+      el.scrollIntoView({ block: 'start' });
+      el.focus({ preventScroll: true });
+    }
     setFocusItem(null);
   }, [focusItem, current]);
 
@@ -266,7 +310,17 @@ function DraftForm({
     );
   } else {
     const section = template.sections.find((s) => `section:${s.id}` === current);
-    if (section) content = <SectionStep key={section.id} {...stepProps} section={section} />;
+    if (section) {
+      content = (
+        <SectionStep
+          key={section.id}
+          {...stepProps}
+          section={section}
+          onOpenIndex={() => setIndexOpen(true)}
+          onAnswerAndAdvance={answerAndAdvance}
+        />
+      );
+    }
   }
 
   const index_ = (
@@ -280,15 +334,19 @@ function DraftForm({
     />
   );
   const title = draft.building_name || draft.new_building_name.trim() || 'New assessment';
+  const isSectionStep = current.startsWith('section:');
 
   return (
     <>
-      <Hero eyebrow={`Step ${index + 1} of ${steps.length}`} title={title} />
+      <div className={cn(isSectionStep && 'hidden lg:block')}>
+        <Hero eyebrow={`Step ${index + 1} of ${steps.length}`} title={title} />
+      </div>
 
       <div
         className={cn(
           GUTTER,
-          'flex-1 py-6 md:py-8 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-8'
+          isSectionStep ? 'flex-1 py-4 lg:py-8' : 'flex-1 py-6 md:py-8',
+          'lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-8'
         )}
       >
         <main className="flex min-w-0 flex-col gap-5">{content}</main>
@@ -306,19 +364,27 @@ function DraftForm({
         data-bottom-bar
         className="sticky bottom-0 z-20 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]"
       >
-        <div className={cn(GUTTER, 'flex items-center gap-2 py-3')}>
-          <Button variant="outline" disabled={!prev} onClick={() => prev && go(prev)}>
+        <div className={cn(GUTTER, 'flex items-center justify-between gap-2 py-3')}>
+          <Button
+            variant="outline"
+            disabled={!prevTarget}
+            onClick={() => prevTarget && go(prevTarget.step, prevTarget.item_id)}
+          >
             Back
           </Button>
           <Button variant="ghost" onClick={() => setIndexOpen(true)} aria-label="Questions">
             <ListChecks size={18} aria-hidden />
-            <span className="hidden sm:inline">Questions</span>
+            <span className="hidden min-[360px]:inline">Questions</span>
           </Button>
-          <div className="flex-1" />
-          {next && (
-            <Button onClick={() => go(next)} disabled={current === 'details' && !detailsValid}>
+          {nextTarget ? (
+            <Button
+              onClick={() => go(nextTarget.step, nextTarget.item_id)}
+              disabled={current === 'details' && !detailsValid}
+            >
               Next
             </Button>
+          ) : (
+            <span aria-hidden className="w-20" />
           )}
         </div>
       </div>
@@ -338,4 +404,17 @@ function DraftForm({
       </Drawer>
     </>
   );
+}
+
+/** True from the `lg` (1024px) breakpoint up, where sections render as a full list. */
+function useIsDesktop(): boolean {
+  const [desktop, setDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    setDesktop(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setDesktop(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return desktop;
 }

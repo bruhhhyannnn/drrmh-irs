@@ -44,6 +44,8 @@ export interface AssessmentDraft {
   /** By section id. */
   comments: Record<string, string>;
   step: DraftStep;
+  /** Current scored item id within a section step (used by the mobile flashcard view). */
+  item_id?: string;
 }
 
 /** A v4 uuid. crypto.randomUUID only exists in secure contexts, so plain-http LAN dev falls back. */
@@ -151,6 +153,72 @@ export function draftSteps(template: AssessmentTemplate, draft: AssessmentDraft)
       .map((s): DraftStep => `section:${s.id}`),
     'review',
   ];
+}
+
+/** Applicable scored items in one section, in the visual order the section renders them. */
+export function sectionScoredItems(
+  template: AssessmentTemplate,
+  draft: AssessmentDraft,
+  sectionId: string
+): TemplateItem[] {
+  const section = template.sections.find((s) => s.id === sectionId);
+  if (!section) return [];
+  const applies = new Set(applicable(template, draft).map((i) => i.id));
+  const items = section.items.filter((i) => applies.has(i.id));
+  const topLevel = items.filter((i) => i.parent_id === null);
+  return topLevel.flatMap((item) =>
+    item.is_scored ? [item] : items.filter((c) => c.parent_id === item.id && c.is_scored)
+  );
+}
+
+/** The active scored item in a section (defaults to the first item when `draft.item_id` is unset). */
+export function activeSectionItem(
+  template: AssessmentTemplate,
+  draft: AssessmentDraft,
+  sectionId: string
+): { items: TemplateItem[]; index: number; item: TemplateItem } | null {
+  const items = sectionScoredItems(template, draft, sectionId);
+  if (items.length === 0) return null;
+  const found = draft.item_id ? items.findIndex((i) => i.id === draft.item_id) : -1;
+  const index = found >= 0 ? found : 0;
+  return { items, index, item: items[index] };
+}
+
+/**
+ * Step one question backward or forward across the form (for the mobile flashcard view).
+ * Crossing a section boundary lands on the first question of the next section when moving
+ * forward, or the last question of the previous section when moving backward.
+ */
+export function stepQuestion(
+  template: AssessmentTemplate,
+  draft: AssessmentDraft,
+  direction: 'prev' | 'next'
+): { step: DraftStep; item_id?: string } | null {
+  const steps = draftSteps(template, draft);
+  const current: DraftStep = steps.includes(draft.step) ? draft.step : 'building';
+  const stepIdx = steps.indexOf(current);
+
+  if (current.startsWith('section:')) {
+    const sectionId = current.slice('section:'.length);
+    const active = activeSectionItem(template, draft, sectionId);
+    if (active) {
+      if (direction === 'next' && active.index < active.items.length - 1) {
+        return { step: current, item_id: active.items[active.index + 1].id };
+      }
+      if (direction === 'prev' && active.index > 0) {
+        return { step: current, item_id: active.items[active.index - 1].id };
+      }
+    }
+  }
+
+  const target = steps[stepIdx + (direction === 'next' ? 1 : -1)];
+  if (!target) return null;
+  if (target.startsWith('section:')) {
+    const items = sectionScoredItems(template, draft, target.slice('section:'.length));
+    const item_id = direction === 'next' ? items[0]?.id : items[items.length - 1]?.id;
+    return { step: target, item_id };
+  }
+  return { step: target, item_id: undefined };
 }
 
 /** Applicable scored items, answered and in all, by section id. */
