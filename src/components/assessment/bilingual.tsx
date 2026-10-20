@@ -10,26 +10,35 @@ export function Bilingual({
   en,
   fil,
   as: Tag = 'span',
+  id,
   className,
 }: {
   en: string;
   fil: string;
   as?: 'span' | 'p' | 'h2' | 'h3';
+  /** For aria-labelledby, e.g. the answer buttons of a question. */
+  id?: string;
   className?: string;
 }) {
   const language = useQuestionLanguageStore((s) => s.language);
   const filipino = fil.trim();
 
-  if (language === 'en' || !filipino) return <Tag className={className}>{en}</Tag>;
+  if (language === 'en' || !filipino) {
+    return (
+      <Tag id={id} className={className}>
+        {en}
+      </Tag>
+    );
+  }
   if (language === 'fil') {
     return (
-      <Tag lang="fil" className={className}>
+      <Tag id={id} lang="fil" className={className}>
         {filipino}
       </Tag>
     );
   }
   return (
-    <Tag className={className}>
+    <Tag id={id} className={className}>
       {en}
       <span lang="fil" className="mt-0.5 block text-[0.9em] font-normal text-gray-500">
         {filipino}

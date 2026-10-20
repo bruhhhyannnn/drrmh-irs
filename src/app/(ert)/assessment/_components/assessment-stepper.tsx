@@ -1,8 +1,11 @@
 'use client';
 
-import { Bilingual } from '@/components/assessment/bilingual';
 import { Button, ButtonLink, Drawer } from '@/components/ds';
-import { useAssessmentSetup, useTemplateVersion } from '@/components/hooks/use-assessments';
+import {
+  useAssessmentSetup,
+  useSubmitAssessment,
+  useTemplateVersion,
+} from '@/components/hooks/use-assessments';
 import { Loader } from '@/components/ui/loader';
 import { cn } from '@/lib';
 import { draftSteps, type AssessmentDraft, type DraftStep } from '@/lib/assessment-draft';
@@ -10,13 +13,16 @@ import type { AssessmentSetup, AssessmentTemplate } from '@/lib/assessment-templ
 import { getAssessmentDraft, saveAssessmentDraft } from '@/lib/offline-queue';
 import { useQueryClient } from '@tanstack/react-query';
 import { CloudOff, FileQuestion, ListChecks } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Card, GUTTER, Hero, Mono, NoticeCard } from '../../_components/chrome';
+import { Card, GUTTER, Hero, NoticeCard } from '../../_components/chrome';
 import type { ErtProfile } from '../../_lib/use-ert-access';
 import { BuildingStep } from './building-step';
 import { DetailsStep } from './details-step';
+import { ReviewStep } from './review-step';
 import { SectionIndex } from './section-index';
+import { SectionStep } from './section-step';
 
 /** How long after the last change the draft is written to the phone. */
 const AUTOSAVE_MS = 500;
@@ -134,12 +140,14 @@ function DraftForm({
   /* ─── Autosave ─── */
   const latest = useRef(draft);
   const dirty = useRef(false);
+  /** Set while submitting and after: the draft is about to be (or has been) removed. */
+  const closed = useRef(false);
   useEffect(() => {
     latest.current = draft;
   }, [draft]);
 
   const flush = useCallback(() => {
-    if (!dirty.current) return;
+    if (!dirty.current || closed.current) return;
     dirty.current = false;
     saveAssessmentDraft(latest.current)
       .then(() => queryClient.invalidateQueries({ queryKey: ['assessment-drafts'] }))
@@ -195,6 +203,47 @@ function DraftForm({
     window.scrollTo({ top: 0 });
   };
 
+  /* ─── Jump from the review to an unanswered question ─── */
+  const [focusItem, setFocusItem] = useState<string | null>(null);
+  const jump = (sectionId: string, itemId: string) => {
+    go(`section:${sectionId}`);
+    setFocusItem(itemId);
+  };
+  useEffect(() => {
+    if (!focusItem) return;
+    const el = document.getElementById(`item-${focusItem}`);
+    if (!el) return;
+    el.scrollIntoView({ block: 'start' });
+    el.focus({ preventScroll: true });
+    setFocusItem(null);
+  }, [focusItem, current]);
+
+  /* ─── Submit ─── */
+  const router = useRouter();
+  const submitMutation = useSubmitAssessment();
+  const [submitError, setSubmitError] = useState('');
+  const submit = async () => {
+    setSubmitError('');
+    // The draft is removed once it's sent or queued; a late autosave must not write it back.
+    closed.current = true;
+    dirty.current = false;
+    try {
+      const result = await submitMutation.mutateAsync({ template, draft: latest.current });
+      if (result.status === 'sent') {
+        toast.success('Assessment submitted');
+        router.replace(`/assessment?view=${result.id}`);
+      } else {
+        toast.success("Saved on this phone — sends when you're back online");
+        router.replace('/assessment');
+      }
+    } catch (err) {
+      closed.current = false;
+      dirty.current = true;
+      flush();
+      setSubmitError(err instanceof Error ? err.message : "Couldn't submit the assessment.");
+    }
+  };
+
   const stepProps = { template, draft, update };
   let content: React.ReactNode;
   if (current === 'details') {
@@ -207,29 +256,18 @@ function DraftForm({
     );
   } else if (current === 'review') {
     content = (
-      <Card className="p-5 md:p-6">
-        <h2 className="text-[19px] font-bold">Review</h2>
-        <p className="mt-2 text-[15px] text-gray-600">The review and submit step comes next.</p>
-      </Card>
+      <ReviewStep
+        {...stepProps}
+        onJump={jump}
+        onOpenStep={go}
+        onSubmit={submit}
+        submitting={submitMutation.isPending}
+        error={submitError}
+      />
     );
   } else {
     const section = template.sections.find((s) => `section:${s.id}` === current);
-    content = (
-      <Card className="flex flex-col gap-2 p-5 md:p-6">
-        <div className="flex items-start gap-3">
-          <Mono className="font-semibold text-gray-500">{section?.code}</Mono>
-          {section && (
-            <Bilingual
-              as="h2"
-              en={section.title_en}
-              fil={section.title_fil}
-              className="text-[19px] font-bold"
-            />
-          )}
-        </div>
-        <p className="text-[15px] text-gray-600">The questions for this section come next.</p>
-      </Card>
-    );
+    if (section) content = <SectionStep key={section.id} {...stepProps} section={section} />;
   }
 
   const index_ = (
