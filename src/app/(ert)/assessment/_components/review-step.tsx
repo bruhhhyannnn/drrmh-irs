@@ -70,6 +70,8 @@ export function ReviewStep({
         </Banner>
       )}
 
+      <ScoreSummary score={score} template={template} />
+
       {missing > 0 && (
         <Card className="flex flex-col gap-4 p-5 md:p-6">
           <h3 className="text-[18px] font-bold">
@@ -102,8 +104,6 @@ export function ReviewStep({
           ))}
         </Card>
       )}
-
-      <ScoreSummary score={score} template={template} />
 
       {error && <Banner>{error}</Banner>}
 
