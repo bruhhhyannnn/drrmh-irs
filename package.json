@@ -9,6 +9,7 @@
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "type-check": "tsc --noEmit",
+    "test": "tsx --test \"src/**/*.test.ts\" \"prisma/**/*.test.ts\"",
     "postinstall": "prisma generate",
     "seed": "tsx prisma/seed.ts",
     "prepare": "husky"
