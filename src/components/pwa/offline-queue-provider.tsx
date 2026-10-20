@@ -1,20 +1,25 @@
 'use client';
 
+import { createAssessment } from '@/actions/assessments';
 import { createBystanderReport } from '@/actions/emergency-reports';
 import { createReport } from '@/actions/reports';
 import { toBystanderPhotoFormData } from '@/lib';
 import {
-  getQueuedFieldReportCount,
+  getAllQueuedCount,
+  getQueuedAssessments,
   getQueuedFieldReports,
-  getQueuedReportCount,
   getQueuedReports,
   isNetworkError,
+  markQueuedAssessmentFailed,
   markQueuedFieldReportFailed,
   markQueuedReportFailed,
+  removeQueuedAssessment,
   removeQueuedFieldReport,
   removeQueuedReport,
   type QueuedEntry,
 } from '@/lib/offline-queue';
+import type { AssessmentPayload } from '@/lib/schemas';
+import { getAccessToken } from '@/lib/supabase';
 import { useOfflineQueueStore } from '@/store';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
@@ -57,11 +62,22 @@ async function flushOne<TPayload>(
   return { synced, failed };
 }
 
+/** createAssessment answers instead of throwing. A `retry` answer (signed out, another account
+ * on this phone) is thrown as a TypeError so flushOne keeps the entry pending, like a dropped
+ * connection; any other refusal marks it failed. */
+async function submitQueuedAssessment(payload: AssessmentPayload) {
+  const result = await createAssessment(await getAccessToken(), payload);
+  if (result.ok) return;
+  if (result.retry) throw new TypeError(result.error);
+  throw new Error(result.error);
+}
+
 /**
  * Mounted once at the app root. Tracks connectivity, keeps the pending offline-report count
- * in sync, and flushes the two local queues (see `src/lib/offline-queue.ts`) back to the
- * server the moment the connection returns — bystander reports (public, anonymous) and field
- * reports submitted through `ReportForm` (logged-in ERT members). An entry queued while
+ * in sync, and flushes the three local queues (see `src/lib/offline-queue.ts`) back to the
+ * server the moment the connection returns — bystander reports (public, anonymous), field
+ * reports submitted through `ReportForm` (logged-in ERT members) and building assessments,
+ * sent with the signed-in user's access token. An entry queued while
  * offline stays queued — never silently dropped — until it either syncs or is confirmed as a
  * real (non-network) failure.
  */
@@ -72,11 +88,7 @@ export function OfflineQueueProvider() {
 
   const refreshCount = async () => {
     try {
-      const [bystanderCount, fieldCount] = await Promise.all([
-        getQueuedReportCount(),
-        getQueuedFieldReportCount(),
-      ]);
-      setPendingCount(bystanderCount + fieldCount);
+      setPendingCount(await getAllQueuedCount());
     } catch {
       // IndexedDB unavailable (private browsing, unsupported browser) — queue feature is a
       // no-op there, nothing to reflect in the UI
@@ -90,7 +102,7 @@ export function OfflineQueueProvider() {
     useOfflineQueueStore.setState({ lastAttemptAt: Date.now() });
 
     try {
-      const [bystanderResult, fieldResult] = await Promise.all([
+      const [bystanderResult, fieldResult, assessmentResult] = await Promise.all([
         flushOne(getQueuedReports, removeQueuedReport, markQueuedReportFailed, (payload, photos) =>
           createBystanderReport(payload, toBystanderPhotoFormData(photos))
         ),
@@ -100,7 +112,29 @@ export function OfflineQueueProvider() {
           markQueuedFieldReportFailed,
           (payload) => createReport(payload)
         ),
+        flushOne(
+          getQueuedAssessments,
+          removeQueuedAssessment,
+          markQueuedAssessmentFailed,
+          submitQueuedAssessment
+        ),
       ]);
+
+      if (assessmentResult.synced > 0) {
+        const n = assessmentResult.synced;
+        toast.success(
+          n === 1 ? '1 offline assessment submitted' : `${n} offline assessments submitted`
+        );
+        queryClient.invalidateQueries({ queryKey: ['my-assessments'] });
+      }
+      if (assessmentResult.failed > 0) {
+        const n = assessmentResult.failed;
+        toast.error(
+          n === 1
+            ? '1 offline assessment could not be submitted — check waiting to send'
+            : `${n} offline assessments could not be submitted — check waiting to send`
+        );
+      }
 
       const synced = bystanderResult.synced + fieldResult.synced;
       const failed = bystanderResult.failed + fieldResult.failed;
