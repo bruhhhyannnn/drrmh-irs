@@ -1,492 +1,430 @@
 'use client';
 
 import { createBystanderReport } from '@/actions/emergency-reports';
-import { useGetBystanderIncidentTypes } from '@/app/(admin)/emergency-reports/use-bystander-reports';
-import {
-  CasualtyModal,
-  CasualtyRow,
-  MissingPersonRow,
-  PersonModal,
-} from '@/app/(admin)/reports/missing-casualty-modals';
-import { LocationPicker } from '@/app/(admin)/reports/report-form';
-import { DataPrivacyNotice } from '@/components/common';
+import { PeopleDrawer, PrivacyDrawer } from '@/components/ds';
+import { useGetBystanderIncidentTypes } from '@/components/hooks/use-bystander-reports';
+import { useCampuses } from '@/components/hooks/use-campus';
+import { useCampusPopulationCategories } from '@/components/hooks/use-population-categories';
 import {
   useCasualtyConditions,
   useClusters,
   useDamageConditions,
   useUnits,
 } from '@/components/hooks/use-settings';
-import { Button, Input, Select, Textarea } from '@/components/ui';
-import { BystanderReportFormData, cn } from '@/lib';
+import {
+  bystanderFormSchema,
+  toBystanderPhotoFormData,
+  toPhContactNumber,
+  type BystanderCasualty,
+  type BystanderFormValues,
+  type BystanderMissingPerson,
+  type BystanderReportFormData,
+} from '@/lib';
 import { getQueuedReportCount, isNetworkError, queueBystanderReport } from '@/lib/offline-queue';
 import { useOfflineQueueStore } from '@/store';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
-import { CheckCircle, CloudOff, Pencil, Plus, UserRound, Users, WifiOff } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { WifiOff } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useForm, type FieldErrors } from 'react-hook-form';
 import toast from 'react-hot-toast';
+import { HeroBand, PageCard } from './_components/chrome';
+import type { PhotoItem } from './_components/photo-field';
+import { ResultScreen, type ReportResult } from './_components/result-screen';
+import { StepPeopleDamage } from './_components/step-people-damage';
+import { StepReview } from './_components/step-review';
+import { StepWhatWhere } from './_components/step-what-where';
+import {
+  casualtiesMeta,
+  formatCoordinates,
+  headcountSummary,
+  missingPersonsMeta,
+  peopleSummary,
+} from './_lib/summary';
 
-// ─── Main component ───────────────────────────────────────────────────────────
+type Step = 1 | 2 | 3;
+type DrawerName = 'privacy' | 'missing' | 'casualty';
 
+const EMPTY_VALUES: BystanderFormValues = {
+  incident_type_id: '',
+  campus_id: '',
+  latitude: null,
+  longitude: null,
+  cluster_id: '',
+  unit_id: '',
+  damage_condition_id: '',
+  location_description: '',
+  description: '',
+  contact_number: '',
+};
+
+/** Step 1's required fields, in screen order, with the element that takes focus on error. */
+const STEP_ONE_FIELDS = {
+  incident_type_id: 'incident-type',
+  campus_id: 'campus',
+  latitude: 'location-map',
+  cluster_id: 'cluster',
+} as const;
+type StepOneField = keyof typeof STEP_ONE_FIELDS;
+
+const STEP_TWO_FIELDS = ['location_description', 'description'] as const;
+
+const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/** Moves focus to a field that failed validation and brings it into view. */
+function focusField(elementId: string) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  const target = el.matches('input, select, textarea') ? el : (el.querySelector('input') ?? el);
+  target.focus({ preventScroll: true });
+  el.scrollIntoView({ block: 'center', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+}
+
+/**
+ * Anonymous bystander report — a three-step form in response order: what and where (required),
+ * people and damage (optional), then review and send. Reports sent without a connection go to
+ * the offline queue with their photos and are sent by `OfflineQueueProvider` later.
+ */
 export function BystanderReportForm() {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const isOnline = useOfflineQueueStore((s) => s.isOnline);
-  const pendingCount = useOfflineQueueStore((s) => s.pendingCount);
   const setPendingCount = useOfflineQueueStore((s) => s.setPendingCount);
-
-  const { data: incidentTypes = [] } = useGetBystanderIncidentTypes();
-  const { data: clusters = [] } = useClusters();
-  const { data: casualtyConditions = [] } = useCasualtyConditions();
-  const { data: damageConditions = [] } = useDamageConditions();
-
-  const [selectedClusterId, setSelectedClusterId] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-  const [savedOffline, setSavedOffline] = useState(false);
-  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
-
-  // ── Location state ──────────────────────────────────────────
-  const [pickedLat, setPickedLat] = useState<number | null>(null);
-  const [pickedLng, setPickedLng] = useState<number | null>(null);
-  const [pickedName, setPickedName] = useState<string | null>(null);
-  const [locationError, setLocationError] = useState(false);
-
-  // ── Missing persons / casualties ────────────────────────────
-  const [personModalOpen, setPersonModalOpen] = useState(false);
-  const [casualtyModalOpen, setCasualtyModalOpen] = useState(false);
-  const [missingPersons, setMissingPersons] = useState<MissingPersonRow[]>([]);
-  const [casualties, setCasualties] = useState<CasualtyRow[]>([]);
-
-  const { data: units = [] } = useUnits(selectedClusterId || undefined);
 
   const {
     register,
-    control,
-    handleSubmit,
-    setValue,
     watch,
-    formState: { isSubmitting },
-  } = useForm<BystanderReportFormData>();
+    setValue,
+    trigger,
+    handleSubmit,
+    reset,
+    getFieldState,
+    formState: { errors: formErrors },
+  } = useForm<BystanderFormValues>({
+    resolver: zodResolver(bystanderFormSchema),
+    defaultValues: EMPTY_VALUES,
+  });
+  const values = watch();
+  const errors = Object.fromEntries(
+    Object.entries(formErrors).map(([field, error]) => [field, error?.message])
+  ) as Partial<Record<keyof BystanderFormValues, string>>;
 
-  // ── Submit ────────────────────────────────────────────────────────────────
+  // ── Lookups ──────────────────────────────────────────────────────
+  const { data: incidentTypes = [], isPending: incidentTypesPending } =
+    useGetBystanderIncidentTypes();
+  const { data: campuses = [] } = useCampuses();
+  const { data: clusters = [] } = useClusters();
+  const { data: casualtyConditions = [] } = useCasualtyConditions();
+  const { data: damageConditions = [] } = useDamageConditions();
+  const { data: units = [] } = useUnits(values.cluster_id || undefined, {
+    enabled: !!values.cluster_id,
+  });
+  const { data: campusCategories = [], isLoading: categoriesLoading } =
+    useCampusPopulationCategories(values.campus_id || undefined);
 
-  const onSubmit = handleSubmit(async (values) => {
-    if (pickedLat === null || pickedLng === null) {
-      setLocationError(true);
-      document
-        .getElementById('location-section')
-        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
+  // "Other" goes last; the rest keep the server's alphabetical order.
+  const types = [...incidentTypes].sort(
+    (a, b) => Number(a.name === 'Other') - Number(b.name === 'Other')
+  );
+  const activeCampuses = campuses.filter((c) => c.is_active);
+  const campusClusters = clusters.filter((c) => c.is_active && c.campus_id === values.campus_id);
+  const clusterUnits = units.filter((u) => u.is_active && u.cluster_id === values.cluster_id);
+  const categories = campusCategories.map((cc) => ({ id: cc.category_id, name: cc.category.name }));
+  const conditionName = (id: string) =>
+    casualtyConditions.find((c) => c.id === id)?.name ?? 'Unknown condition';
+
+  // ── Form state outside react-hook-form ───────────────────────────
+  const [step, setStep] = useState<Step>(1);
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [missingPersons, setMissingPersons] = useState<BystanderMissingPerson[]>([]);
+  const [casualties, setCasualties] = useState<BystanderCasualty[]>([]);
+  const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  const [drawer, setDrawer] = useState<DrawerName | null>(null);
+  const [drawerKey, setDrawerKey] = useState(0);
+  const [isSending, setIsSending] = useState(false);
+  const [result, setResult] = useState<ReportResult | null>(null);
+
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const stepChanged = useRef(false);
+
+  // A single active campus needs no choosing.
+  const onlyCampusId = activeCampuses.length === 1 ? activeCampuses[0].id : '';
+  useEffect(() => {
+    if (onlyCampusId && !watch('campus_id')) setValue('campus_id', onlyCampusId);
+  }, [onlyCampusId, setValue, watch]);
+
+  // New step: back to the top, focus on its title so the change is announced.
+  useEffect(() => {
+    if (!stepChanged.current) return;
+    stepChanged.current = false;
+    window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+    titleRef.current?.focus({ preventScroll: true });
+  }, [step]);
+
+  // Photo previews are object URLs; release them when the page goes away.
+  const photosRef = useRef(photos);
+  photosRef.current = photos;
+  useEffect(() => () => photosRef.current.forEach((p) => URL.revokeObjectURL(p.url)), []);
+
+  const goTo = (next: Step) => {
+    stepChanged.current = true;
+    setStep(next);
+  };
+
+  const openDrawer = (name: DrawerName) => {
+    setDrawerKey((key) => key + 1);
+    setDrawer(name);
+  };
+
+  const setField = (
+    field: 'incident_type_id' | 'campus_id' | 'cluster_id' | 'unit_id' | 'damage_condition_id',
+    value: string
+  ) => {
+    setValue(field, value, { shouldValidate: !!formErrors[field] });
+    // Campus decides the cluster list and the headcount fields; cluster decides the units.
+    if (field === 'campus_id') {
+      setValue('cluster_id', '');
+      setValue('unit_id', '');
+      setCounts({});
     }
-    setLocationError(false);
+    if (field === 'cluster_id') setValue('unit_id', '');
+  };
 
+  const setLocation = (lat: number | null, lng: number | null) => {
+    setValue('latitude', lat, { shouldValidate: !!formErrors.latitude });
+    setValue('longitude', lng);
+  };
+
+  const continueFromStepOne = async () => {
+    const fields = Object.keys(STEP_ONE_FIELDS) as StepOneField[];
+    if (await trigger(fields)) return goTo(2);
+    const firstInvalid = fields.find((field) => getFieldState(field).error);
+    if (firstInvalid) focusField(STEP_ONE_FIELDS[firstInvalid]);
+  };
+
+  const continueFromStepTwo = async () => {
+    if (await trigger([...STEP_TWO_FIELDS])) goTo(3);
+  };
+
+  const removePhoto = (id: string) => {
+    const photo = photos.find((p) => p.id === id);
+    if (photo) URL.revokeObjectURL(photo.url);
+    setPhotos((list) => list.filter((p) => p.id !== id));
+  };
+
+  const startOver = () => {
+    photos.forEach((p) => URL.revokeObjectURL(p.url));
+    setPhotos([]);
+    setCounts({});
+    setMissingPersons([]);
+    setCasualties([]);
+    // Someone sending a second report is very likely on the same campus.
+    reset({ ...EMPTY_VALUES, campus_id: values.campus_id });
+    setStep(1);
+    setResult(null);
+  };
+
+  // ── Labels shared by the review step and the result screen ───────
+  const typeName = types.find((t) => t.id === values.incident_type_id)?.name ?? '';
+  const campusName = activeCampuses.find((c) => c.id === values.campus_id)?.name ?? '';
+  const clusterName = campusClusters.find((c) => c.id === values.cluster_id)?.name ?? '';
+  const unitName = clusterUnits.find((u) => u.id === values.unit_id)?.name;
+  const incidentLabel = `${typeName} · ${[campusName, clusterName].filter(Boolean).join(', ')}`;
+
+  // ── Send ─────────────────────────────────────────────────────────
+  const send = async (v: BystanderFormValues) => {
+    if (v.latitude === null || v.longitude === null) return;
     const payload: BystanderReportFormData = {
-      ...values,
-      latitude: pickedLat,
-      longitude: pickedLng,
-      report_missing_persons: missingPersons.filter((p) => p.name.trim()),
-      report_casualties: casualties.filter((c) => c.condition_id && c.name.trim()),
+      incident_type_id: v.incident_type_id,
+      cluster_id: v.cluster_id,
+      unit_id: v.unit_id || null,
+      latitude: v.latitude,
+      longitude: v.longitude,
+      description: v.description.trim() || undefined,
+      location_description: v.location_description.trim() || undefined,
+      damage_condition_id: v.damage_condition_id || null,
+      contact_number: v.contact_number.trim() ? toPhContactNumber(v.contact_number) : null,
+      population_counts: categories
+        .map((c) => ({ category_id: c.id, count: counts[c.id] ?? 0 }))
+        .filter((c) => c.count > 0),
+      report_missing_persons: missingPersons,
+      report_casualties: casualties,
     };
+    const blobs = photos.map((p) => p.blob);
+    const summary = { incident: incidentLabel, photosChosen: blobs.length };
 
-    setIsSubmittingReport(true);
-    try {
-      // No point even trying the network call if the browser already knows it's offline —
-      // go straight to the local queue.
-      if (!navigator.onLine) {
-        await queueBystanderReport(payload);
-        setPendingCount(await getQueuedReportCount());
-        setSavedOffline(true);
-        setSubmitted(true);
+    const saveOffline = async () => {
+      try {
+        await queueBystanderReport(payload, blobs);
+      } catch {
+        toast.error(
+          "This report couldn't be saved on this device. If anyone needs help now, call 911."
+        );
         return;
       }
+      setPendingCount(await getQueuedReportCount());
+      setResult({ kind: 'offline', at: new Date().toISOString(), photosSaved: 0, ...summary });
+    };
 
-      await createBystanderReport(payload);
+    setIsSending(true);
+    try {
+      // No point trying the network if the browser already knows it's offline.
+      if (!navigator.onLine) return await saveOffline();
+      const saved = await createBystanderReport(payload, toBystanderPhotoFormData(blobs));
       queryClient.invalidateQueries({ queryKey: ['bystander-reports'] });
-      toast.success('Report submitted successfully');
-      setSubmitted(true);
+      setResult({ kind: 'sent', at: saved.submittedAt, photosSaved: saved.photoCount, ...summary });
     } catch (err) {
-      if (isNetworkError(err)) {
-        // Connection dropped mid-submit — fall back to the same local queue rather than
-        // losing what was just filled in.
-        await queueBystanderReport(payload);
-        setPendingCount(await getQueuedReportCount());
-        setSavedOffline(true);
-        setSubmitted(true);
-      } else {
+      // Connection dropped mid-send: keep the report instead of losing it.
+      if (isNetworkError(err)) await saveOffline();
+      else
         toast.error(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
-      }
     } finally {
-      setIsSubmittingReport(false);
+      setIsSending(false);
     }
-  });
+  };
 
-  // ── Options ───────────────────────────────────────────────────────────────
+  const onInvalid = (invalid: FieldErrors<BystanderFormValues>) => {
+    const firstStepOne = (Object.keys(STEP_ONE_FIELDS) as StepOneField[]).find((f) => invalid[f]);
+    if (firstStepOne) return goTo(1);
+    if (STEP_TWO_FIELDS.some((f) => invalid[f])) return goTo(2);
+    if (invalid.contact_number) focusField('contact-number');
+  };
 
-  const incidentTypeOptions = incidentTypes.map((t) => ({ value: t.id, label: t.name }));
-  const clusterOptions = clusters.map((c) => ({ value: c.id, label: c.name }));
-  const unitOptions = units.map((u) => ({ value: u.id, label: u.name }));
-  const conditionOptions = casualtyConditions.map((c) => ({ value: c.id, label: c.name }));
-  const damageOptions = damageConditions.map((d) => ({ value: d.id, label: d.name }));
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    // Enter in a text field on steps 1–2 must not send the report.
+    if (step !== 3) return e.preventDefault();
+    return handleSubmit(send, onInvalid)(e);
+  };
 
-  // ── Success state ─────────────────────────────────────────────────────────
-
-  if (submitted) {
-    return (
-      <div className="flex w-full max-w-xl flex-col items-center gap-4 py-12 text-center">
-        <div
-          className={cn(
-            'flex h-16 w-16 items-center justify-center rounded-full',
-            savedOffline ? 'bg-amber-100 dark:bg-amber-500/15' : 'bg-green-100 dark:bg-green-500/15'
-          )}
-        >
-          {savedOffline ? (
-            <CloudOff size={32} className="text-amber-600 dark:text-amber-400" />
-          ) : (
-            <CheckCircle size={32} className="text-green-600 dark:text-green-400" />
-          )}
-        </div>
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {savedOffline ? 'Report Saved Offline' : 'Report Received'}
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {savedOffline
-              ? "No internet connection was found, so your report was saved on this device. It will be submitted automatically as soon as you're back online — you don't need to do anything else."
-              : 'Thank you. Your report has been received and will be reviewed by the DRRM-H Emergency Response Team.'}
-          </p>
-        </div>
-        <button
-          onClick={() => router.push('/signin')}
-          className="text-sm text-gray-500 transition hover:text-gray-800 dark:hover:text-gray-200"
-        >
-          Back to home
-        </button>
-      </div>
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
+  if (result) return <ResultScreen result={result} onSendAnother={startOver} />;
 
   return (
-    <div className="w-full max-w-xl space-y-4">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Report an Emergency</h1>
-        <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">
-          Anonymous bystander submission
+    <>
+      <HeroBand className="h-40 px-4 pt-6 md:px-8 md:pt-9 lg:px-10">
+        <h1 className="text-[26px] leading-[1.2] font-extrabold text-white md:text-[30px]">
+          Report an emergency
+        </h1>
+        <p className="mt-1.5 text-[17px] leading-[1.45] text-[#fde8e8]">
+          Anonymous. A contact number is optional.
         </p>
-      </div>
+      </HeroBand>
 
-      {!isOnline && (
-        <div className="flex items-center gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
-          <WifiOff size={16} className="shrink-0" />
-          <span>
-            You&apos;re offline. You can still fill out and submit this form — it will be saved on
-            this device and sent automatically once you&apos;re back online.
-          </span>
-        </div>
-      )}
-
-      {pendingCount > 0 && (
-        <div className="flex items-center gap-2.5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300">
-          <CloudOff size={16} className="shrink-0" />
-          <span>
-            {pendingCount === 1
-              ? '1 report saved on this device is waiting to sync.'
-              : `${pendingCount} reports saved on this device are waiting to sync.`}{' '}
-            {isOnline ? "It'll submit shortly." : "It'll submit automatically once you're online."}
-          </span>
-        </div>
-      )}
-
-      {/* ── Form info header ───────────────────────────────── */}
-      <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-5 shadow-md dark:border-white/5 dark:bg-gray-900">
-        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-          Bystander Emergency Report
-        </h2>
-        <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
-          Use this form to report an emergency or incident you have witnessed on campus. Please
-          provide as much accurate information as possible — including location, affected people,
-          and any structural damage — so the DRRM-H Emergency Response Team can respond
-          appropriately.
-        </p>
-        <DataPrivacyNotice summary="This submission is anonymous — your identity will not be collected or stored. Any information provided will be used solely for emergency response and internal documentation purposes. For life-threatening emergencies, call 911 immediately." />
-      </div>
-
-      <form onSubmit={onSubmit} className="space-y-4">
-        {/* ── Incident Type ───────────────────────────────────────────────── */}
-        <SectionCard title="Incident" accent>
-          <Controller
-            control={control}
-            name="incident_type_id"
-            rules={{ required: true }}
-            render={({ field }) => (
-              <Select
-                options={incidentTypeOptions}
-                label="Incident Type"
-                required
-                placeholder="What type of emergency is this?"
-                error={!watch('incident_type_id') && isSubmitting}
-                value={field.value}
-                onChange={field.onChange}
-              />
-            )}
-          />
-        </SectionCard>
-
-        {/* ── Location ────────────────────────────────────────────────────── */}
-        <SectionCard title="Location *">
-          <LocationPicker
-            lat={pickedLat}
-            lng={pickedLng}
-            locationName={pickedName}
-            error={locationError}
-            onPick={(lat, lng, name) => {
-              setPickedLat(lat);
-              setPickedLng(lng);
-              setPickedName(name);
-              setLocationError(false);
-            }}
-            onClear={() => {
-              setPickedLat(null);
-              setPickedLng(null);
-              setPickedName(null);
-            }}
-          />
-        </SectionCard>
-
-        {/* ── Cluster & Unit ───────────────────────────────────────────────── */}
-        <SectionCard title="Cluster / Unit *">
-          <div className="space-y-4">
-            <Controller
-              control={control}
-              name="cluster_id"
-              rules={{ required: true }}
-              render={({ field }) => (
-                <Select
-                  label="Cluster"
-                  required
-                  options={clusterOptions}
-                  placeholder="Select cluster"
-                  error={!watch('cluster_id') && isSubmitting}
-                  value={field.value}
-                  onChange={(value) => {
-                    setSelectedClusterId(value);
-                    field.onChange(value);
-                    setValue('unit_id', '');
-                  }}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="unit_id"
-              render={({ field }) => (
-                <Select
-                  label="Unit (optional)"
-                  options={unitOptions}
-                  placeholder={selectedClusterId ? 'Select unit' : 'Select cluster first'}
-                  disabled={!selectedClusterId}
-                  value={field.value}
-                  onChange={field.onChange}
-                />
-              )}
-            />
-          </div>
-        </SectionCard>
-
-        {/* ── Additional Details ──────────────────────────────────────────── */}
-        <SectionCard title="Additional Details">
-          <div className="space-y-4">
-            <Input
-              label="Location Description (optional)"
-              id="Location Description (optional)"
-              placeholder="e.g. Near the main gate, beside the flagpole"
-              {...register('location_description')}
-            />
-            <div>
-              <p className="mb-1.5 block text-sm font-medium text-gray-500 dark:text-gray-400">
-                Description (optional)
-              </p>
-              <Textarea
-                placeholder="Briefly describe what happened..."
-                rows={4}
-                {...register('description')}
-              />
-            </div>
-          </div>
-        </SectionCard>
-
-        {/* ── Missing Persons ──────────────────────────────────────────────── */}
-        <SectionCard title="Missing Persons">
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {missingPersons.length === 0
-                ? 'No missing persons added'
-                : `${missingPersons.length} missing ${missingPersons.length === 1 ? 'person' : 'persons'}`}
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setPersonModalOpen(true)}
-              startIcon={missingPersons.length === 0 ? <Plus size={13} /> : <Pencil size={13} />}
+      <PageCard className="-mt-12 mb-8 max-w-180 md:mb-14">
+        <form noValidate onSubmit={onSubmit} className="flex flex-col gap-5 p-5 md:gap-6 md:p-8">
+          {!isOnline && (
+            <div
+              role="status"
+              className="flex items-start gap-3 rounded-2xl border border-warning-200 bg-warning-50 px-4 py-3.5 text-[16px] leading-normal text-warning-800"
             >
-              {missingPersons.length === 0 ? 'Add' : 'Manage'}
-            </Button>
-          </div>
-
-          {missingPersons.length === 0 ? (
-            <div className="flex items-center gap-2 rounded-lg border border-dashed border-gray-200 p-4 dark:border-white/10">
-              <UserRound size={16} className="shrink-0 text-gray-300 dark:text-gray-600" />
-              <p className="text-sm text-gray-400">No missing persons added</p>
+              <WifiOff size={18} aria-hidden className="mt-0.5 shrink-0 text-warning-700" />
+              <span>
+                <strong className="font-bold">You&apos;re offline.</strong> You can still fill out
+                and submit this form. It will be saved on this device and sent automatically once
+                you&apos;re back online.
+              </span>
             </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setPersonModalOpen(true)}
-              className="w-full rounded-lg border border-gray-200 px-4 py-3 text-left transition hover:border-gray-300 hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/3"
-            >
-              <div className="flex items-center gap-3">
-                <div className="bg-warning-100 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400 flex h-9 w-9 shrink-0 items-center justify-center rounded-full">
-                  <UserRound size={16} />
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-xs text-gray-400">
-                    {missingPersons
-                      .slice(0, 2)
-                      .map((p) => p.name || 'Unnamed')
-                      .join(', ')}
-                    {missingPersons.length > 2 && ` +${missingPersons.length - 2} more`}
-                  </p>
-                </div>
-              </div>
-            </button>
           )}
-        </SectionCard>
 
-        {/* ── Casualties ───────────────────────────────────────────────────── */}
-        <SectionCard title="Casualties">
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {casualties.length === 0
-                ? 'No casualty details added'
-                : `${casualties.length} ${casualties.length === 1 ? 'casualty' : 'casualties'}`}
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setCasualtyModalOpen(true)}
-              startIcon={casualties.length === 0 ? <Plus size={13} /> : <Pencil size={13} />}
-            >
-              {casualties.length === 0 ? 'Add' : 'Manage'}
-            </Button>
-          </div>
-
-          {casualties.length === 0 ? (
-            <div className="flex items-center gap-2 rounded-lg border border-dashed border-gray-200 p-4 dark:border-white/10">
-              <Users size={16} className="shrink-0 text-gray-300 dark:text-gray-600" />
-              <p className="text-sm text-gray-400">No casualty details added</p>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setCasualtyModalOpen(true)}
-              className="w-full rounded-lg border border-gray-200 px-4 py-3 text-left transition hover:border-gray-300 hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/3"
-            >
-              <div className="flex items-center gap-3">
-                <div className="bg-error-100 text-error-600 dark:bg-error-900/30 dark:text-error-400 flex h-9 w-9 shrink-0 items-center justify-center rounded-full">
-                  <Users size={16} />
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-xs text-gray-400">
-                    {casualties
-                      .slice(0, 2)
-                      .map((c) => c.name || 'Unnamed')
-                      .join(', ')}
-                    {casualties.length > 2 && ` +${casualties.length - 2} more`}
-                  </p>
-                </div>
-              </div>
-            </button>
+          {step === 1 && (
+            <StepWhatWhere
+              titleRef={titleRef}
+              values={values}
+              errors={errors}
+              incidentTypes={types}
+              incidentTypesLoading={incidentTypesPending}
+              campuses={activeCampuses}
+              clusters={campusClusters}
+              units={clusterUnits}
+              pinLabel={typeName || 'Incident'}
+              onFieldChange={setField}
+              onLocationChange={setLocation}
+              onOpenPrivacy={() => openDrawer('privacy')}
+              onContinue={continueFromStepOne}
+            />
           )}
-        </SectionCard>
 
-        {/* ── Structural Damage ────────────────────────────────────────────── */}
-        <SectionCard title="Structural Damage">
-          <Controller
-            control={control}
-            name="damage_condition_id"
-            render={({ field }) => (
-              <Select
-                options={damageOptions}
-                placeholder="Select damage type"
-                value={field.value}
-                onChange={field.onChange}
-              />
-            )}
-          />
-        </SectionCard>
+          {step === 2 && (
+            <StepPeopleDamage
+              titleRef={titleRef}
+              register={register}
+              errors={errors}
+              damageConditionId={values.damage_condition_id}
+              onDamageChange={(value) => setField('damage_condition_id', value)}
+              damageConditions={damageConditions.filter((d) => d.is_active)}
+              campusName={campusName}
+              categories={categories}
+              categoriesLoading={categoriesLoading}
+              counts={counts}
+              onCountChange={(id, count) => setCounts((prev) => ({ ...prev, [id]: count }))}
+              missingMeta={missingPersonsMeta(missingPersons)}
+              casualtiesMeta={casualtiesMeta(casualties, conditionName)}
+              hasMissing={missingPersons.length > 0}
+              hasCasualties={casualties.length > 0}
+              onOpenMissing={() => openDrawer('missing')}
+              onOpenCasualties={() => openDrawer('casualty')}
+              photos={photos}
+              onAddPhotos={(added) => setPhotos((list) => [...list, ...added])}
+              onRemovePhoto={removePhoto}
+              onSkip={() => goTo(3)}
+              onBack={() => goTo(1)}
+              onContinue={continueFromStepTwo}
+            />
+          )}
 
-        {/* ── Submit ───────────────────────────────────────────────────────── */}
-        <Button
-          type="submit"
-          className="w-full"
-          isLoading={isSubmitting || isSubmittingReport}
-          loadingText="Submitting..."
-        >
-          {isOnline ? 'Submit Emergency Report' : 'Save Report (Offline)'}
-        </Button>
-      </form>
+          {step === 3 && (
+            <StepReview
+              titleRef={titleRef}
+              register={register}
+              contactError={errors.contact_number}
+              isOnline={isOnline}
+              isSending={isSending}
+              summary={{
+                incidentType: typeName,
+                coordinates:
+                  values.latitude !== null && values.longitude !== null
+                    ? formatCoordinates(values.latitude, values.longitude)
+                    : '',
+                place: [campusName, clusterName, unitName].filter(Boolean).join(' · '),
+                locationDescription: values.location_description.trim(),
+                headcount: headcountSummary(
+                  categories.map((c) => ({ name: c.name, count: counts[c.id] ?? 0 }))
+                ),
+                people: peopleSummary(missingPersons, casualties, conditionName),
+                damage:
+                  damageConditions.find((d) => d.id === values.damage_condition_id)?.name ?? null,
+                description: values.description.trim(),
+              }}
+              photos={photos}
+              onEdit={goTo}
+              onOpenPrivacy={() => openDrawer('privacy')}
+              onBack={() => goTo(2)}
+            />
+          )}
+        </form>
+      </PageCard>
 
-      <PersonModal
-        isOpen={personModalOpen}
-        onClose={() => setPersonModalOpen(false)}
-        persons={missingPersons}
-        onSave={(updated) => setMissingPersons(updated)}
+      <PrivacyDrawer
+        open={drawer === 'privacy'}
+        onClose={() => setDrawer(null)}
+        note="Bystander reports are anonymous. A contact number is optional and only shared if you add one."
       />
-      <CasualtyModal
-        isOpen={casualtyModalOpen}
-        onClose={() => setCasualtyModalOpen(false)}
-        casualties={casualties}
-        conditionOptions={conditionOptions}
-        onSave={(updated) => setCasualties(updated)}
+      <PeopleDrawer
+        key={`missing-${drawerKey}`}
+        kind="missing"
+        open={drawer === 'missing'}
+        onClose={() => setDrawer(null)}
+        people={missingPersons}
+        onSave={setMissingPersons}
+        conditions={[]}
       />
-    </div>
-  );
-}
-
-// ─── Section wrapper ──────────────────────────────────────────────────────────
-
-function SectionCard({
-  title,
-  children,
-  accent = false,
-}: {
-  title: string;
-  children: React.ReactNode;
-  accent?: boolean;
-}) {
-  return (
-    <div
-      className={cn(
-        'rounded-xl border p-5 shadow-sm',
-        accent
-          ? 'border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/30'
-          : 'border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900'
-      )}
-    >
-      <h3
-        className={cn(
-          'mb-4 text-sm font-semibold',
-          accent ? 'text-red-700 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'
-        )}
-      >
-        {title}
-      </h3>
-      {children}
-    </div>
+      <PeopleDrawer
+        key={`casualty-${drawerKey}`}
+        kind="casualty"
+        open={drawer === 'casualty'}
+        onClose={() => setDrawer(null)}
+        people={casualties}
+        onSave={setCasualties}
+        conditions={casualtyConditions.filter((c) => c.is_active)}
+      />
+    </>
   );
 }

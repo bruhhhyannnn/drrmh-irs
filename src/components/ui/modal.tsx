@@ -53,14 +53,14 @@ export function Modal({ isOpen, onClose, children, className, isFullscreen = fal
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
             onClick={(e) => e.stopPropagation()}
             className={cn(
-              'bg-gray-50 relative flex h-screen w-full flex-col shadow-2xl dark:bg-gray-800',
+              'bg-gray-50 relative flex h-screen w-full flex-col shadow-2xl',
               !isFullscreen && 'sm:max-w-2xl sm:rounded-l-2xl',
               className
             )}
           >
             <button
               onClick={onClose}
-              className="absolute top-4 right-6 z-2 flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 dark:border-gray-500 bg-gray-100 text-gray-400 transition hover:bg-gray-200 hover:text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-700 dark:hover:text-white"
+              className="absolute top-4 right-6 z-2 flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-gray-100 text-gray-400 transition hover:bg-gray-200 hover:text-gray-700"
             >
               <X size={18} />
             </button>

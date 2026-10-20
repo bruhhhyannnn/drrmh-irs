@@ -25,6 +25,7 @@ model User {
   cluster_id          String?   @db.Uuid
   campus_id           String?   @db.Uuid
   events              Event[]   @relation("CreatedBy")
+  completed_events    Event[]   @relation("CompletedBy")
   reports             Report[]
   campus              campus?   @relation(fields: [campus_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   cluster             Cluster?  @relation(fields: [cluster_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -69,21 +70,25 @@ model Unit {
 }
 
 model Event {
-  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id     String?     @db.Uuid
-  status_id   String      @db.Uuid
-  name        String
-  description String?
-  quarter     String?
-  started_at  DateTime?   @db.Timestamptz(6)
-  ended_at    DateTime?   @db.Timestamptz(6)
-  created_at  DateTime    @default(now()) @db.Timestamptz(6)
-  updated_at  DateTime    @default(now()) @updatedAt @db.Timestamptz(6)
-  campus_id   String      @db.Uuid
-  campus      campus      @relation(fields: [campus_id], references: [id], onDelete: NoAction)
-  status      EventStatus @relation(fields: [status_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  user        User?       @relation("CreatedBy", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  reports     Report[]
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id      String?     @db.Uuid
+  status_id    String      @db.Uuid
+  name         String
+  description  String?
+  quarter      String?
+  started_at   DateTime?   @db.Timestamptz(6)
+  ended_at     DateTime?   @db.Timestamptz(6)
+  created_at   DateTime    @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime    @default(now()) @updatedAt @db.Timestamptz(6)
+  campus_id    String      @db.Uuid
+  /// Who pressed Complete event (or set the status to Completed). Null for older events and
+  /// whenever the status is not Completed. See prisma/manual/DRRM-011-super-admin-v2.sql.
+  completed_by String?     @db.Uuid
+  campus       campus      @relation(fields: [campus_id], references: [id], onDelete: NoAction)
+  status       EventStatus @relation(fields: [status_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user         User?       @relation("CreatedBy", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  completer    User?       @relation("CompletedBy", fields: [completed_by], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  reports      Report[]
 
   @@index([user_id])
   @@map("events")
@@ -239,28 +244,48 @@ model bystander_report_statuses {
 }
 
 model bystander_reports {
-  id                        String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  cluster_id                String                     @db.Uuid
-  unit_id                   String?                    @db.Uuid
-  latitude                  Decimal                    @db.Decimal(10, 8)
-  longitude                 Decimal                    @db.Decimal(11, 8)
-  submitted_at              DateTime                   @default(now()) @db.Timestamptz(6)
-  created_at                DateTime                   @default(now()) @db.Timestamptz(6)
-  incident_type_id          String?                    @db.Uuid
-  status_id                 String?                    @db.Uuid
+  id                        String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cluster_id                String                           @db.Uuid
+  unit_id                   String?                          @db.Uuid
+  latitude                  Decimal                          @db.Decimal(10, 8)
+  longitude                 Decimal                          @db.Decimal(11, 8)
+  submitted_at              DateTime                         @default(now()) @db.Timestamptz(6)
+  created_at                DateTime                         @default(now()) @db.Timestamptz(6)
+  incident_type_id          String?                          @db.Uuid
+  status_id                 String?                          @db.Uuid
   description               String?
   location_description      String?
-  damage_condition_id       String?                    @db.Uuid
-  clusters                  Cluster                    @relation(fields: [cluster_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  damage_conditions         DamageCondition?           @relation(fields: [damage_condition_id], references: [id], onUpdate: NoAction)
-  bystander_incident_types  bystander_incident_types?  @relation(fields: [incident_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  bystander_report_statuses bystander_report_statuses? @relation(fields: [status_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  units                     Unit?                      @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  damage_condition_id       String?                          @db.Uuid
+  /// Optional follow-up number from the reporter, stored as +63XXXXXXXXX. Admin-only.
+  contact_number            String?
+  /// Object paths in the private `bystander-photos` Storage bucket (max 3).
+  photo_paths               String[]                         @default([])
+  clusters                  Cluster                          @relation(fields: [cluster_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  damage_conditions         DamageCondition?                 @relation(fields: [damage_condition_id], references: [id], onUpdate: NoAction)
+  bystander_incident_types  bystander_incident_types?        @relation(fields: [incident_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  bystander_report_statuses bystander_report_statuses?       @relation(fields: [status_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  units                     Unit?                            @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   report_casualties         ReportCasualty[]
   report_missing_persons    ReportMissingPerson[]
+  population_counts         BystanderReportPopulationCount[]
 
   @@index([incident_type_id])
   @@index([status_id])
+}
+
+/// Headcount on a bystander report — same shape as ReportPopulationCount. Has a count >= 0
+/// check constraint (prisma/manual/DRRM-008-bystander-report-v2.sql).
+model BystanderReportPopulationCount {
+  id                  String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bystander_report_id String             @db.Uuid
+  category_id         String             @db.Uuid
+  count               Int                @default(0)
+  created_at          DateTime           @default(now()) @db.Timestamptz(6)
+  bystander_report    bystander_reports  @relation(fields: [bystander_report_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  category            PopulationCategory @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([bystander_report_id, category_id], map: "uq_bystander_pop_counts_report_category")
+  @@map("bystander_report_population_counts")
 }
 
 model campus {
@@ -274,15 +299,16 @@ model campus {
 }
 
 model PopulationCategory {
-  id            String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  code          String                     @unique
-  name          String
-  description   String?
-  is_active     Boolean                    @default(true)
-  created_at    DateTime                   @default(now()) @db.Timestamptz(6)
-  updated_at    DateTime                   @default(now()) @updatedAt @db.Timestamptz(6)
-  campus_links  CampusPopulationCategory[]
-  report_counts ReportPopulationCount[]
+  id                      String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                    String                           @unique
+  name                    String
+  description             String?
+  is_active               Boolean                          @default(true)
+  created_at              DateTime                         @default(now()) @db.Timestamptz(6)
+  updated_at              DateTime                         @default(now()) @updatedAt @db.Timestamptz(6)
+  campus_links            CampusPopulationCategory[]
+  report_counts           ReportPopulationCount[]
+  bystander_report_counts BystanderReportPopulationCount[]
 
   @@map("population_categories")
 }

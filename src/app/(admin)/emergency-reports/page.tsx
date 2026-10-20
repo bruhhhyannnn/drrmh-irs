@@ -1,513 +1,383 @@
 'use client';
 
-import type { getBystanderReports } from '@/actions/emergency-reports';
-import { PageBreadcrumb } from '@/components/common';
-import {
-  Badge,
-  ConfirmDialog,
-  DataTable,
-  DeleteAction,
-  Input,
-  Modal,
-  PageError,
-  TableActions,
-  ViewAction,
-} from '@/components/ui';
-import type { ColumnDef } from '@tanstack/react-table';
-import { format } from 'date-fns';
-import { BookOpen, CheckCircle, Search, XCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import {
   useBystanderReports,
   useDeleteBystanderReport,
   useUpdateBystanderReportStatus,
-} from './use-bystander-reports';
+  type BystanderStatus,
+} from '@/components/hooks/use-bystander-reports';
+import { Check, Eye, Trash2, X } from 'lucide-react';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
+import { ConfirmDialog } from '../_components/confirm-dialog';
+import {
+  DataTable,
+  IconAction,
+  ListCard,
+  ListCount,
+  ListTabs,
+  ListToolbar,
+  MobileCard,
+  NameCell,
+  RowActions,
+  RowButton,
+  SearchField,
+  TextCell,
+  type Column,
+} from '../_components/data-list';
+import { PageHeader } from '../_components/page-header';
+import { useScopedCampusId } from '../_components/shell/campus-switcher';
+import { Card, Chip } from '../_components/ui';
+import { formatDate, formatTime, plural } from '../_lib/format';
+import { bystanderStatusKey, bystanderTone, capitalize } from '../_lib/status';
+import { useDebounced } from '../_lib/use-debounced';
+import { BystanderDrawer, type BystanderRow } from './_components/bystander-drawer';
 
-type BystanderRow = Awaited<ReturnType<typeof getBystanderReports>>[number];
-type StatusFilter = 'all' | 'pending' | 'reviewed' | 'verified' | 'dismissed';
+type Tab = 'action' | 'verified' | 'dismissed' | 'all';
 
-const STATUS_TABS: { key: StatusFilter; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'pending', label: 'Pending' },
-  { key: 'reviewed', label: 'Reviewed' },
-  { key: 'verified', label: 'Verified' },
-  { key: 'dismissed', label: 'Dismissed' },
-];
+const statusOf = (r: BystanderRow) => bystanderStatusKey(r.bystander_report_statuses?.name);
+const placeOf = (r: BystanderRow) => [r.clusters?.name, r.units?.name].filter(Boolean).join(' · ');
 
-export default function BystanderReportsPage() {
-  const [query, setQuery] = useState('');
-  const [debounceQuery, setDebounceQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [detailRow, setDetailRow] = useState<BystanderRow | null>(null);
-  const [deleteId, setDeleteId] = useState('');
-  const [pendingStatus, setPendingStatus] = useState<{
-    id: string;
-    status: 'reviewed' | 'verified' | 'dismissed';
-  } | null>(null);
-
-  const { data: reports = [], isPending, isFetching, error } = useBystanderReports(debounceQuery);
-  const updateStatus = useUpdateBystanderReportStatus();
-  const deleteReport = useDeleteBystanderReport();
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounceQuery(query), 400);
-    return () => clearTimeout(timer);
-  }, [query]);
-
-  const filtered = reports.filter((r) => {
-    const matchesStatus =
-      statusFilter === 'all'
-        ? true
-        : (r.bystander_report_statuses?.name ?? 'pending') === statusFilter;
-
-    const q = debounceQuery.toLowerCase();
-    const matchesQuery =
-      !q ||
-      r.clusters?.name?.toLowerCase().includes(q) ||
-      r.units?.name?.toLowerCase().includes(q) ||
-      r.bystander_incident_types?.name?.toLowerCase().includes(q);
-    // r.description?.toLowerCase().includes(q);
-
-    return matchesStatus && matchesQuery;
-  });
-
-  const statusCounts = reports.reduce<Record<string, number>>(
-    (acc, r) => {
-      const s = r.bystander_report_statuses?.name ?? 'pending';
-      acc[s] = (acc[s] ?? 0) + 1;
-      acc['all'] = (acc['all'] ?? 0) + 1;
-      return acc;
-    },
-    { all: 0, pending: 0, reviewed: 0, verified: 0, dismissed: 0 }
-  );
-
-  const columns: ColumnDef<BystanderRow, unknown>[] = [
-    {
-      id: 'incident_type',
-      header: 'Incident Type',
-      accessorFn: (r) => r.bystander_incident_types?.name ?? '',
-      cell: ({ row: { original: r } }) => (
-        <Badge color="primary" size="sm">
-          {r.bystander_incident_types?.name ?? '—'}
-        </Badge>
-      ),
-    },
-    {
-      id: 'cluster',
-      header: 'Cluster',
-      accessorFn: (r) => r.clusters?.name ?? '',
-      cell: ({ row: { original: r } }) => r.clusters?.name ?? '—',
-    },
-    {
-      id: 'unit',
-      header: 'Unit',
-      accessorFn: (r) => r.units?.name ?? '',
-      cell: ({ row: { original: r } }) => r.units?.name ?? '—',
-    },
-    {
-      id: 'missing',
-      header: 'Missing',
-      accessorFn: (r) => r.report_missing_persons?.length ?? 0,
-      cell: ({ row: { original: r } }) => {
-        const count = r.report_missing_persons?.length ?? 0;
-        return count > 0 ? (
-          <Badge color="warning" size="sm">
-            {count}
-          </Badge>
-        ) : (
-          <span className="text-gray-500 dark:text-gray-600">0</span>
-        );
-      },
-    },
-    {
-      id: 'casualties',
-      header: 'Casualties',
-      accessorFn: (r) => r.report_casualties?.length ?? 0,
-      cell: ({ row: { original: r } }) => {
-        const count = r.report_casualties?.length ?? 0;
-        return count > 0 ? (
-          <Badge color="error" size="sm">
-            {count}
-          </Badge>
-        ) : (
-          <span className="text-gray-500 dark:text-gray-600">0</span>
-        );
-      },
-    },
-    {
-      id: 'status',
-      header: 'Status',
-      accessorFn: (r) => r.bystander_report_statuses?.name ?? 'pending',
-      cell: ({ row: { original: r } }) => {
-        const status = r.bystander_report_statuses?.name ?? 'pending';
-        const color =
-          status === 'verified'
-            ? 'success'
-            : status === 'reviewed'
-              ? 'primary'
-              : status === 'dismissed'
-                ? 'error'
-                : 'warning';
-        return (
-          <Badge color={color} size="sm">
-            {status}
-          </Badge>
-        );
-      },
-    },
-    {
-      id: 'submitted',
-      header: 'Submitted',
-      accessorFn: (r) => r.submitted_at ?? '',
-      cell: ({ row: { original: r } }) =>
-        r.submitted_at ? format(new Date(r.submitted_at), 'MMM d, yyyy') : '—',
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      enableSorting: false,
-      cell: ({ row: { original: r } }) => {
-        const status = r.bystander_report_statuses?.name ?? 'pending';
-        return (
-          <TableActions>
-            {/* Mark reviewed */}
-            {status === 'pending' && (
-              <button
-                title="Mark as reviewed"
-                className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-900/60"
-                onClick={() => setPendingStatus({ id: r.id, status: 'reviewed' })}
-              >
-                <BookOpen size={13} />
-                Review
-              </button>
-            )}
-
-            {/* Verify */}
-            {(status === 'pending' || status === 'reviewed') && (
-              <button
-                title="Verify"
-                className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-1 text-xs font-medium text-green-700 transition-colors hover:bg-green-200 dark:bg-green-900/40 dark:text-green-300 dark:hover:bg-green-900/60"
-                onClick={() => setPendingStatus({ id: r.id, status: 'verified' })}
-              >
-                <CheckCircle size={13} />
-                Verify
-              </button>
-            )}
-
-            {/* Dismiss */}
-            {status !== 'dismissed' && status !== 'verified' && (
-              <button
-                title="Dismiss"
-                className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-200 dark:bg-red-900/40 dark:text-red-300 dark:hover:bg-red-900/60"
-                onClick={() => setPendingStatus({ id: r.id, status: 'dismissed' })}
-              >
-                <XCircle size={13} />
-                Dismiss
-              </button>
-            )}
-
-            <ViewAction title="View details" onClick={() => setDetailRow(r)} />
-            <DeleteAction onClick={() => setDeleteId(r.id)} />
-          </TableActions>
-        );
-      },
-    },
-  ];
-
-  if (error) return <PageError message={(error as Error).message} />;
-
+function PeopleChips({ report }: { report: BystanderRow }) {
+  const casualties = report.report_casualties.length;
+  const missing = report.report_missing_persons.length;
+  if (!casualties && !missing)
+    return <span className="font-landing-mono text-[16px] text-gray-400">—</span>;
   return (
     <>
-      <div className="space-y-6">
-        <PageBreadcrumb pageTitle="Bystander Reports" />
-
-        {/* Status filter tabs */}
-        <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700">
-          {STATUS_TABS.map(({ key, label }) => (
-            <StatusTabButton
-              key={key}
-              label={label}
-              count={statusCounts[key] ?? 0}
-              active={statusFilter === key}
-              onClick={() => setStatusFilter(key)}
-            />
-          ))}
-        </div>
-
-        {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative max-w-sm flex-1">
-            <Search
-              size={16}
-              className="absolute top-1/2 z-1 left-3 -translate-y-1/2 text-gray-400 dark:text-gray-500"
-            />
-            <Input
-              placeholder="Search by incident type, cluster, unit…"
-              className="pl-9"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {filtered.length} {filtered.length === 1 ? 'report' : 'reports'}
-          </p>
-        </div>
-
-        <DataTable
-          columns={columns}
-          data={filtered}
-          loading={isPending || isFetching}
-          emptyMessage="No bystander reports found"
-        />
-      </div>
-
-      {/* Detail modal */}
-      <Modal isOpen={!!detailRow} onClose={() => setDetailRow(null)}>
-        {detailRow && (
-          <BystanderReportDetail report={detailRow} onClose={() => setDetailRow(null)} />
-        )}
-      </Modal>
-
-      {/* Delete confirm */}
-      <ConfirmDialog
-        isOpen={!!deleteId}
-        onClose={() => setDeleteId('')}
-        onConfirm={() =>
-          deleteReport.mutate(deleteId, {
-            onSuccess: () => setDeleteId(''),
-          })
-        }
-        title="Delete bystander report"
-        message="This report will be permanently deleted. This cannot be undone."
-        confirmLabel="Delete"
-        isLoading={deleteReport.isPending}
-      />
-
-      {/* Status change confirm */}
-      <ConfirmDialog
-        isOpen={!!pendingStatus}
-        onClose={() => setPendingStatus(null)}
-        onConfirm={() => {
-          if (!pendingStatus) return;
-          updateStatus.mutate(pendingStatus, { onSuccess: () => setPendingStatus(null) });
-        }}
-        title={`Mark as ${pendingStatus?.status}`}
-        message={STATUS_CONFIRM_MSG[pendingStatus?.status ?? 'reviewed']}
-        confirmLabel={capitalize(pendingStatus?.status ?? '')}
-        isLoading={updateStatus.isPending}
-      />
+      {casualties > 0 && <Chip tone="red">{plural(casualties, 'casualty', 'casualties')}</Chip>}
+      {missing > 0 && <Chip tone="amber">{missing} missing</Chip>}
     </>
   );
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-function StatusTabButton({
-  label,
-  active,
-  onClick,
-  count,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-  count: number;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors duration-150 ${
-        active
-          ? 'border-brand-600 text-brand-600 dark:border-brand-400 dark:text-brand-400'
-          : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-300'
-      }`}
-    >
-      {label}
-      {count > 0 && (
-        <span
-          className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-            active
-              ? 'bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-400'
-              : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
-          }`}
-        >
-          {count}
-        </span>
-      )}
-    </button>
+export default function BystanderReportsPage() {
+  const campusId = useScopedCampusId();
+  const { data: reports = [], isPending, error } = useBystanderReports(campusId || undefined);
+  const updateStatus = useUpdateBystanderReportStatus();
+  const deleteReport = useDeleteBystanderReport();
+  const [tab, setTab] = useState<Tab>('action');
+  const [query, setQuery] = useState('');
+  const debounced = useDebounced(query, 200).trim().toLowerCase();
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<{ report: BystanderRow; status: BystanderStatus } | null>(
+    null
   );
-}
+  const [deleting, setDeleting] = useState<BystanderRow | null>(null);
 
-function BystanderReportDetail({ report: r }: { report: BystanderRow; onClose: () => void }) {
-  const status = r.bystander_report_statuses?.name ?? 'pending';
-  const statusColor =
-    status === 'verified'
-      ? 'success'
-      : status === 'reviewed'
-        ? 'primary'
-        : status === 'dismissed'
-          ? 'error'
-          : 'warning';
+  const allCampuses = !campusId;
+  const open = reports.find((r) => r.id === openId) ?? null;
+  const counts = { action: 0, verified: 0, dismissed: 0, all: reports.length };
+  for (const r of reports) {
+    const s = statusOf(r);
+    if (s === 'pending' || s === 'reviewed') counts.action++;
+    else counts[s]++;
+  }
+  const rows = reports.filter((r) => {
+    const s = statusOf(r);
+    const inTab =
+      tab === 'all' || (tab === 'action' ? s === 'pending' || s === 'reviewed' : s === tab);
+    if (!inTab) return false;
+    if (!debounced) return true;
+    return [
+      r.bystander_incident_types?.name,
+      r.clusters?.campus?.name,
+      r.clusters?.name,
+      r.units?.name,
+    ]
+      .filter(Boolean)
+      .some((v) => v!.toLowerCase().includes(debounced));
+  });
+
+  const setStatus = (report: BystanderRow, status: BystanderStatus, after?: () => void) =>
+    updateStatus.mutate(
+      { id: report.id, status },
+      {
+        onSuccess: () => {
+          toast.success(`Marked ${status}`);
+          after?.();
+        },
+        onError: (err) => toast.error(err.message),
+      }
+    );
+
+  const nextStep = (r: BystanderRow) => {
+    const s = statusOf(r);
+    if (s === 'pending') return { label: 'Review', run: () => setOpenId(r.id) };
+    if (s === 'reviewed')
+      return { label: 'Verify', run: () => setConfirm({ report: r, status: 'verified' }) };
+    return null;
+  };
+
+  const columns: Column<BystanderRow>[] = [
+    {
+      key: 'incident',
+      header: 'Incident',
+      width: 'minmax(0,1.5fr)',
+      cell: (r) => (
+        <NameCell
+          primary={r.bystander_incident_types?.name ?? 'Incident'}
+          secondary={
+            <>
+              {allCampuses && <span className="lg:hidden">{r.clusters?.campus?.name} · </span>}
+              {placeOf(r)}
+            </>
+          }
+        />
+      ),
+    },
+    ...(allCampuses
+      ? [
+          {
+            key: 'campus',
+            header: 'Campus',
+            width: 'minmax(0,0.85fr)',
+            hideOnTablet: true,
+            cell: (r: BystanderRow) => <TextCell>{r.clusters?.campus?.name ?? '—'}</TextCell>,
+          },
+        ]
+      : []),
+    {
+      key: 'people',
+      header: 'People',
+      width: 'minmax(0,1fr)',
+      cell: (r) => <PeopleChips report={r} />,
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      width: '108px',
+      cell: (r) => (
+        <Chip tone={bystanderTone(statusOf(r))} dot>
+          {capitalize(statusOf(r))}
+        </Chip>
+      ),
+    },
+    {
+      key: 'submitted',
+      header: 'Submitted',
+      width: 'minmax(0,1fr)',
+      hideOnTablet: true,
+      cell: (r) => (
+        <NameCell
+          muted
+          primary={formatDate(r.submitted_at)}
+          secondary={formatTime(r.submitted_at)}
+        />
+      ),
+    },
+    {
+      key: 'next',
+      header: '',
+      width: '96px',
+      align: 'right',
+      cell: (r) => {
+        const step = nextStep(r);
+        return step && <RowButton onClick={step.run}>{step.label}</RowButton>;
+      },
+    },
+    {
+      key: 'actions',
+      header: '',
+      width: '72px',
+      align: 'right',
+      cell: (r) => (
+        <RowActions>
+          <IconAction
+            label="View"
+            icon={<Eye size={18} aria-hidden />}
+            onClick={() => setOpenId(r.id)}
+          />
+          <IconAction
+            label="Delete"
+            icon={<Trash2 size={18} aria-hidden />}
+            onClick={() => setDeleting(r)}
+          />
+        </RowActions>
+      ),
+    },
+  ];
+
+  const confirmCopy =
+    confirm?.status === 'verified'
+      ? {
+          title: 'Verify this report?',
+          body: 'will be marked Verified: confirmed by an admin. It moves to the Verified tab.',
+          label: 'Verify',
+          icon: <Check size={20} aria-hidden />,
+          tone: 'success' as const,
+        }
+      : {
+          title: 'Dismiss this report?',
+          body: 'will be marked Dismissed: not actionable. It moves to the Dismissed tab and stays on record.',
+          label: 'Dismiss',
+          icon: <X size={20} aria-hidden />,
+          tone: 'neutral' as const,
+        };
 
   return (
-    <div className="space-y-6 p-1">
-      {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-4 border-b border-gray-100 pb-5 dark:border-gray-800">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Bystander Report</h2>
-            <Badge color={statusColor} size="sm">
-              {status}
-            </Badge>
-          </div>
-          {r.submitted_at && (
-            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-              Submitted {format(new Date(r.submitted_at), 'MMMM d, yyyy · h:mm a')}
-            </p>
-          )}
-        </div>
-        {r.bystander_incident_types?.name && (
-          <Badge color="primary" size="sm">
-            {r.bystander_incident_types.name}
-          </Badge>
-        )}
-      </div>
+    <>
+      <PageHeader
+        title="Bystander reports"
+        subtitle="Anonymous reports sent from the public site."
+      />
 
-      {/* ── Location & Assignment ───────────────────────────────────────── */}
-      <div>
-        <p className="mb-2.5 text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
-          Location & Assignment
-        </p>
-        <div className="grid grid-cols-2 gap-3">
-          <DetailItem label="Cluster" value={r.clusters?.name} />
-          <DetailItem label="Unit" value={r.units?.name} />
-          {r.location_description && (
-            <div className="col-span-2">
-              <DetailItem label="Location Description" value={r.location_description} />
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── Description ─────────────────────────────────────────────────── */}
-      {r.description && (
-        <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
-            Description
-          </p>
-          <p className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm leading-relaxed text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-            {r.description}
-          </p>
-        </div>
+      {error ? (
+        <Card className="p-6 text-[17px] text-error-700">
+          The bystander reports couldn&apos;t be loaded: {error.message}
+        </Card>
+      ) : (
+        <ListCard>
+          <ListTabs
+            loading={isPending}
+            label="Report status"
+            value={tab}
+            onChange={setTab}
+            tabs={[
+              { key: 'action', label: 'Needs action', count: counts.action },
+              { key: 'verified', label: 'Verified', count: counts.verified },
+              { key: 'dismissed', label: 'Dismissed', count: counts.dismissed },
+              { key: 'all', label: 'All', count: counts.all },
+            ]}
+          />
+          <ListToolbar>
+            <SearchField
+              label="Search bystander reports"
+              placeholder="Search by incident type, campus, cluster, unit…"
+              value={query}
+              onChange={setQuery}
+            />
+            <ListCount loading={isPending}>{plural(rows.length, 'report', 'reports')}</ListCount>
+          </ListToolbar>
+          <DataTable
+            label="Bystander reports"
+            columns={columns}
+            rows={rows}
+            rowKey={(r) => r.id}
+            loading={isPending}
+            empty={
+              debounced
+                ? 'No reports match this search.'
+                : tab === 'action'
+                  ? 'Nothing needs action. New reports from the public site show up here.'
+                  : `No ${tab === 'all' ? '' : `${tab} `}reports.`
+            }
+            card={(r) => {
+              const step = nextStep(r);
+              return (
+                <MobileCard
+                  title={r.bystander_incident_types?.name ?? 'Incident'}
+                  subtitle={[allCampuses && r.clusters?.campus?.name, placeOf(r)]
+                    .filter(Boolean)
+                    .join(' · ')}
+                  chip={
+                    <Chip tone={bystanderTone(statusOf(r))} dot>
+                      {capitalize(statusOf(r))}
+                    </Chip>
+                  }
+                  meta={[
+                    {
+                      label: 'Submitted',
+                      value: `${formatDate(r.submitted_at).replace(/, \d{4}$/, '')} · ${formatTime(r.submitted_at)}`,
+                    },
+                    ...(r.report_casualties.length
+                      ? [
+                          {
+                            label: 'People',
+                            value: plural(r.report_casualties.length, 'casualty', 'casualties'),
+                            tone: 'red' as const,
+                          },
+                        ]
+                      : []),
+                    ...(r.report_missing_persons.length
+                      ? [
+                          {
+                            label: 'People',
+                            value: `${r.report_missing_persons.length} missing`,
+                            tone: 'amber' as const,
+                          },
+                        ]
+                      : []),
+                  ]}
+                  actions={[
+                    {
+                      label: 'Open',
+                      icon: <Eye size={16} aria-hidden />,
+                      onClick: () => setOpenId(r.id),
+                    },
+                    ...(step
+                      ? [
+                          {
+                            label: step.label,
+                            icon: <Check size={16} aria-hidden />,
+                            onClick: step.run,
+                            variant: 'primary' as const,
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
+              );
+            }}
+          />
+        </ListCard>
       )}
 
-      {/* ── Affected People ──────────────────────────────────────────────── */}
-      <div>
-        <p className="mb-2.5 text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
-          Affected People
-        </p>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
-            <p className="text-xs text-gray-400 dark:text-gray-500">Missing Persons</p>
-            <p
-              className={`mt-0.5 text-2xl font-bold ${
-                (r.report_missing_persons?.length ?? 0) > 0
-                  ? 'text-warning-500'
-                  : 'text-gray-300 dark:text-gray-600'
-              }`}
-            >
-              {r.report_missing_persons?.length ?? 0}
-            </p>
-          </div>
-          <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
-            <p className="text-xs text-gray-400 dark:text-gray-500">Casualties</p>
-            <p
-              className={`mt-0.5 text-2xl font-bold ${
-                (r.report_casualties?.length ?? 0) > 0
-                  ? 'text-error-500'
-                  : 'text-gray-300 dark:text-gray-600'
-              }`}
-            >
-              {r.report_casualties?.length ?? 0}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Missing Persons list ─────────────────────────────────────────── */}
-      {(r.report_missing_persons?.length ?? 0) > 0 && (
-        <div>
-          <p className="mb-2.5 text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
-            Missing Persons
-          </p>
-          <div className="space-y-2">
-            {r.report_missing_persons.map((p, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between rounded-xl border border-warning-100 bg-warning-50 px-4 py-2.5 dark:border-warning-900/40 dark:bg-warning-950/30"
-              >
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                  {p.name ?? `Person ${i + 1}`}
-                </span>
-                {(p.age || p.sex) && (
-                  <span className="text-xs text-gray-400 dark:text-gray-500">
-                    {[p.age && `Age ${p.age}`, p.sex].filter(Boolean).join(' · ')}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── Casualties list ──────────────────────────────────────────────── */}
-      {(r.report_casualties?.length ?? 0) > 0 && (
-        <div>
-          <p className="mb-2.5 text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
-            Casualties
-          </p>
-          <div className="space-y-2">
-            {r.report_casualties.map((c, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between rounded-xl border border-error-100 bg-error-50 px-4 py-2.5 dark:border-error-900/40 dark:bg-error-950/30"
-              >
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                  {c.name || `Casualty ${i + 1}`}
-                </span>
-                {(c.age || c.sex) && (
-                  <span className="text-xs text-gray-400 dark:text-gray-500">
-                    {[c.age && `Age ${c.age}`, c.sex].filter(Boolean).join(' · ')}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+      <BystanderDrawer
+        report={open}
+        onClose={() => setOpenId(null)}
+        reviewing={updateStatus.isPending && !confirm}
+        onReview={(r) => setStatus(r, 'reviewed')}
+        onVerify={(r) => setConfirm({ report: r, status: 'verified' })}
+        onDismiss={(r) => setConfirm({ report: r, status: 'dismissed' })}
+      />
+      <ConfirmDialog
+        open={!!confirm}
+        onClose={() => setConfirm(null)}
+        onConfirm={() =>
+          confirm &&
+          setStatus(confirm.report, confirm.status, () => {
+            setConfirm(null);
+            setOpenId(null);
+          })
+        }
+        loading={updateStatus.isPending}
+        tone={confirmCopy.tone}
+        icon={confirmCopy.icon}
+        title={confirmCopy.title}
+        name={confirm ? (confirm.report.bystander_incident_types?.name ?? 'This report') : ''}
+        body={
+          confirm ? `at ${placeOf(confirm.report) || 'an unknown place'} ${confirmCopy.body}` : ''
+        }
+        confirmVariant="primary"
+        confirmLabel={confirmCopy.label}
+      />
+      <ConfirmDialog
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        onConfirm={() =>
+          deleting &&
+          deleteReport.mutate(deleting.id, {
+            onSuccess: () => {
+              toast.success('Report deleted');
+              if (openId === deleting.id) setOpenId(null);
+              setDeleting(null);
+            },
+            onError: (err) => toast.error(err.message),
+          })
+        }
+        loading={deleteReport.isPending}
+        tone="danger"
+        icon={<Trash2 size={20} aria-hidden />}
+        title="Delete this report?"
+        name={deleting ? (deleting.bystander_incident_types?.name ?? 'This report') : ''}
+        body={
+          deleting
+            ? `at ${placeOf(deleting) || 'an unknown place'} will be permanently deleted, with the people listed on it. This cannot be undone.`
+            : ''
+        }
+        confirmLabel="Delete report"
+      />
+    </>
   );
-}
-
-function DetailItem({ label, value }: { label: string; value?: string | null }) {
-  return (
-    <div>
-      <dt className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
-        {label}
-      </dt>
-      <dd className="mt-0.5 font-medium text-gray-900 dark:text-white">{value ?? '—'}</dd>
-    </div>
-  );
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-const STATUS_CONFIRM_MSG: Record<string, string> = {
-  reviewed: 'Mark this report as reviewed? The submitter will be notified.',
-  verified: 'Mark this report as verified? It will be flagged as confirmed.',
-  dismissed: 'Dismiss this report? It will be marked as not actionable.',
-};
-
-function capitalize(s: string) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
 }

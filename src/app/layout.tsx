@@ -1,4 +1,5 @@
 import { Providers } from '@/components/providers';
+import { THEME_SCRIPT } from '@/lib/theme';
 import { Analytics } from '@vercel/analytics/next';
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
@@ -23,6 +24,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
+      <head>
+        {/* Applies the saved light / dark theme before the first paint. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body suppressHydrationWarning>
         <Providers>{children}</Providers>
         <Analytics />

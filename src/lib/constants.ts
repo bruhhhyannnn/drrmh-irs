@@ -57,62 +57,6 @@ export const UNITS: Record<Cluster, string[]> = {
   ],
 };
 
-export const LOCATIONS: Record<Cluster, string[]> = {
-  'Pedro Gil': [
-    'Sotejo Hall',
-    'NIH Building',
-    'College of Nursing Building',
-    'College of Pharmacy Building',
-    'College of Dentistry Building',
-    'College of Allied Medical Professions Building',
-    'College of Public Health Building',
-    'College of Medicine Building',
-    'New Gold Bond Building',
-    'Sports Science and Wellness Center',
-    'UP Manila Phi House Dormitory',
-    'UP Manila Dormitory',
-    'Calderon Hall',
-    'Salcedo Hall',
-    'MSB Building',
-    'Alvior Hall',
-    'CAMP Building',
-    'Joaquin Gonzales Main Building',
-    'Joaquin Gonzales Annex Building',
-  ],
-  'Padre Faura': [
-    'Rizal Hall',
-    'GAB Building',
-    'Student Center',
-    'IMS Building',
-    'Museum Building',
-    'Paz Mendoza Building',
-    'Dela Paz Building',
-  ],
-  Taft: [
-    'Central Administration Building',
-    'Faculty of Medical Arts Building',
-    'ITC Building',
-    'CPH Annex I',
-    'CPH Annex II',
-  ],
-  SHS: ['Palo Campus', 'Baler Campus', 'Koronadal Campus', 'Tarlac Campus'],
-  PGH: [
-    'PGH Central Block',
-    'PGH Zone 1',
-    'PGH Zone 2',
-    'PGH Zone 3',
-    'PGH Zone 4',
-    'PGH Zone 5',
-    'PGH Zone 6',
-    'PGH Zone 7',
-    'PGH Zone 8',
-    'PGH Zone 9',
-    'PGH Zone 10',
-    'PGH Zone 11',
-    'PGH Zone 12',
-  ],
-};
-
 export const CASUALTY_CONDITIONS = [
   'Minor injuries — no hospitalization needed',
   'Moderate injuries — requires medical attention',
@@ -198,9 +142,17 @@ export const USER_TYPES = {
   3: 'Super Admin',
 } as const;
 
-export const ADMIN_USER_TYPES = ['Administrator', 'Super Admin'] as const;
-export type AdminUserType = (typeof ADMIN_USER_TYPES)[number];
+const ADMIN_USER_TYPES = ['Administrator', 'Super Admin'] as const;
+type AdminUserType = (typeof ADMIN_USER_TYPES)[number];
 
 export function isAdminUserType(type?: string | null): type is AdminUserType {
   return (ADMIN_USER_TYPES as readonly string[]).includes(type ?? '');
 }
+
+/* ─── Bystander report photos ─── */
+
+/** Most damage photos a bystander can attach to one report (also a DB CHECK constraint). */
+export const BYSTANDER_MAX_PHOTOS = 3;
+
+/** FormData field the photos travel in to `createBystanderReport`. */
+export const BYSTANDER_PHOTO_FIELD = 'photos';

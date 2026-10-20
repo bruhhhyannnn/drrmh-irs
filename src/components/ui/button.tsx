@@ -11,14 +11,11 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses = {
-  primary:
-    'bg-brand-500 text-white shadow-lg hover:bg-brand-600 disabled:bg-brand-300 dark:disabled:bg-brand-800 ',
-  outline:
-    'bg-white text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:ring-gray-700 dark:hover:bg-white/5',
+  primary: 'bg-brand-solid text-white shadow-lg hover:brightness-92 disabled:bg-brand-300 ',
+  outline: 'bg-surface text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50',
   ghost:
-    'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white hover:shadow-[inset_0_3px_4px_rgba(255,255,255,0.5),inset_0_-3px_4px_rgba(0,0,0,0.08)] dark:hover:shadow-[inset_0_3px_4px_rgba(255,255,255,0.06),inset_0_-3px_4px_rgba(0,0,0,0.35)]',
-  danger:
-    'bg-error-500 text-white hover:bg-error-600 disabled:bg-error-300 dark:disabled:bg-error-800',
+    'text-gray-600 hover:bg-gray-100 hover:text-gray-900 hover:shadow-[inset_0_3px_4px_rgba(255,255,255,0.5),inset_0_-3px_4px_rgba(0,0,0,0.08)]',
+  danger: 'bg-error-500 text-white hover:bg-error-600 disabled:bg-error-300',
 };
 
 const sizeClasses = {

@@ -26,32 +26,42 @@ const TITLE_MAP: Record<SettingsTable, string> = {
   damage_conditions: 'Damage Conditions',
 };
 
+// What each table's rows carry besides their own columns: the parent shown in the table, and
+// counts of linked records for the Units column and the delete confirmation.
+const INCLUDE_MAP: Partial<Record<SettingsTable, object>> = {
+  clusters: {
+    campus: { select: { name: true } },
+    _count: { select: { units: true, users: true, reports: true } },
+  },
+  units: {
+    cluster: { select: { name: true, campus_id: true } },
+    _count: { select: { users: true, reports: true } },
+  },
+  positions: { _count: { select: { users: true } } },
+  casualty_conditions: { _count: { select: { casualties: true } } },
+  damage_conditions: { _count: { select: { reports: true, bystander_reports: true } } },
+};
+
 function revalidateTable(table: SettingsTable) {
   revalidatePath('/settings');
   revalidatePath(toSettingsPath(TITLE_MAP[table]));
 }
 
+/**
+ * Every row of a lookup table, with what the settings list shows (campus, cluster, linked
+ * record counts). `filterId` narrows clusters to one campus and units to one cluster.
+ */
 export async function getSettingsItems(table: SettingsTable, filterId?: string) {
   const model = MODEL_MAP[table];
-
-  if (table === 'clusters') {
-    return prisma.cluster.findMany({
-      where: filterId ? { campus_id: filterId } : undefined,
-      select: { id: true, name: true, is_active: true, created_at: true },
-      orderBy: { name: 'asc' },
-    });
-  }
-
-  if (table === 'units') {
-    return prisma.unit.findMany({
-      where: filterId ? { cluster_id: filterId } : undefined,
-      select: { id: true, name: true, is_active: true, created_at: true },
-      orderBy: { name: 'asc' },
-    });
-  }
-
+  const where = !filterId
+    ? undefined
+    : table === 'clusters'
+      ? { campus_id: filterId }
+      : table === 'units'
+        ? { cluster_id: filterId }
+        : undefined;
   // @ts-expect-error dynamic model access
-  return prisma[model].findMany({ orderBy: { name: 'asc' } });
+  return prisma[model].findMany({ where, include: INCLUDE_MAP[table], orderBy: { name: 'asc' } });
 }
 
 function singularLabel(table: SettingsTable) {
@@ -130,14 +140,6 @@ export async function getEventStatuses() {
 export async function getDamageConditions() {
   return prisma.damageCondition.findMany({
     orderBy: { name: 'asc' },
-  });
-}
-
-export async function upsertDamageCondition(name: string) {
-  return prisma.damageCondition.upsert({
-    where: { name },
-    update: {},
-    create: { name },
   });
 }
 
