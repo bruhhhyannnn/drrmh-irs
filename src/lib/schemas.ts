@@ -244,6 +244,55 @@ export const populationCategorySchema = z.object({
   is_active: z.boolean().default(true),
 });
 
+/* ─── Building assessment ─── */
+const uuid = z.string().uuid();
+
+// One submitted assessment, as the form sends it and the offline queue replays it. The server
+// re-checks it against the template (prepareAssessmentWrite) and takes the evaluator from the
+// caller's token, not from `evaluator_id`.
+export const assessmentPayloadSchema = z.object({
+  client_ref: uuid,
+  evaluator_id: uuid,
+  template_version_id: uuid,
+  building: z.union([
+    z.object({ id: uuid }),
+    z.object({ new: z.object({ unit_id: uuid, name: z.string().trim().min(1).max(120) }) }),
+  ]),
+  event_id: uuid.nullable(),
+  incident_commander: z.string().trim().max(200),
+  floor_count: z.number().int().min(1).max(200),
+  area_type_ids: z.array(uuid).max(50),
+  started_at: z.string().datetime(),
+  ended_at: z.string().datetime(),
+  answers: z
+    .array(
+      z.object({
+        item_id: uuid,
+        answer: z.enum(['yes', 'no', 'na']).nullable(),
+        remarks: z.string().max(2000).nullable(),
+      })
+    )
+    .max(1000),
+  comments: z
+    .array(z.object({ section_id: uuid, comment: z.string().trim().min(1).max(2000) }))
+    .max(100),
+});
+
+// The Details step: where the building is and who is in charge.
+export const assessmentDetailsSchema = z
+  .object({
+    cluster_id: z.string().min(1, 'Choose a cluster'),
+    unit_id: z.string().min(1, 'Choose a college or unit'),
+    building_id: z.string(),
+    new_building_name: z.string().trim().max(120),
+    incident_commander: z.string().trim().max(200),
+    event_id: z.string(),
+  })
+  .refine((d) => d.building_id || d.new_building_name, {
+    path: ['building_id'],
+    message: 'Choose a building or add one',
+  });
+
 /* ─── Inferred types ─── */
 export type SignInFormData = z.infer<typeof signInSchema>;
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
@@ -260,3 +309,5 @@ export type BystanderReportFormData = z.infer<typeof bystanderReportSchema>;
 export type BystanderFormValues = z.input<typeof bystanderFormSchema>;
 export type BystanderMissingPerson = z.infer<typeof bystanderMissingPersonSchema>;
 export type BystanderCasualty = z.infer<typeof bystanderCasualtySchema>;
+export type AssessmentPayload = z.infer<typeof assessmentPayloadSchema>;
+export type AssessmentDetailsFormData = z.infer<typeof assessmentDetailsSchema>;
