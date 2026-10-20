@@ -3,13 +3,19 @@
 import { Bilingual } from '@/components/assessment/bilingual';
 import { Banner } from '@/components/ds';
 import { cn } from '@/lib';
-import { percent, recoveryStatus, type AssessmentScore, type Tally } from '@/lib/assessment-score';
+import {
+  percent,
+  recoveryStatus,
+  unsafeByPillar,
+  type AssessmentScore,
+  type Tally,
+} from '@/lib/assessment-score';
 import { itemLabel, type AssessmentTemplate } from '@/lib/assessment-template';
 import { PILLARS } from '@/lib/pillars';
 import { Card, Mono } from '../../_components/chrome';
 
-// The scores of one assessment: overall, by DRRM pillar and by section. Used by the read-only
-// view and by the review step before submitting.
+// The scores of one assessment: overall, by DRRM pillar, the unsafe items by pillar (the action
+// list, spec 4.2) and by section. Used by the read-only view and by the review step.
 
 const formatPercent = (t: Tally) => {
   const p = percent(t);
@@ -31,6 +37,7 @@ export function ScoreSummary({
   const flagged = score.unsafe.filter((i) => i.flag_label);
   const sectionOf = new Map(template.sections.map((s) => [s.id, s]));
   const scoredSections = template.sections.filter((s) => score.sections[s.id]);
+  const unsafeGroups = unsafeByPillar(score);
 
   return (
     <div className="flex flex-col gap-4">
@@ -107,6 +114,46 @@ export function ScoreSummary({
           </p>
         )}
       </Card>
+
+      {unsafeGroups.length > 0 && (
+        <Card className="flex flex-col gap-4 p-5 md:p-6">
+          <h3 className="text-[18px] font-bold">
+            Unsafe items <Mono className="text-gray-500">({score.unsafe.length})</Mono>
+          </h3>
+          {unsafeGroups.map(({ pillar, items }) => {
+            const info = PILLARS.find((p) => p.slug === pillar);
+            const Icon = info?.icon;
+            return (
+              <div key={pillar} className="flex flex-col gap-1.5">
+                <span className="flex items-center gap-2 text-[14px] font-bold text-gray-600">
+                  {Icon && <Icon size={16} aria-hidden className="text-brand-700" />}
+                  {info?.label ?? pillar}
+                </span>
+                <ul className="flex flex-col">
+                  {items.map((item) => {
+                    const section = sectionOf.get(item.section_id);
+                    return (
+                      <li
+                        key={item.id}
+                        className="flex gap-3 border-b border-line py-2 text-[15px] last:border-b-0"
+                      >
+                        <Mono className="w-14 shrink-0 text-[13px] text-gray-500">
+                          {section ? itemLabel(section, item) : item.code}
+                        </Mono>
+                        <Bilingual
+                          en={item.prompt_en}
+                          fil={item.prompt_fil}
+                          className="min-w-0 flex-1 leading-[1.45]"
+                        />
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            );
+          })}
+        </Card>
+      )}
 
       {scoredSections.length > 0 && (
         <Card className="overflow-hidden">

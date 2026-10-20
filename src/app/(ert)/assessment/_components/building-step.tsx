@@ -1,10 +1,11 @@
 'use client';
 
 import { Bilingual } from '@/components/assessment/bilingual';
-import { Banner, Button, Drawer, FieldLabel, Stepper, Switch } from '@/components/ds';
-import { clampFloors, sectionProgress, setAsideCount } from '@/lib/assessment-draft';
+import { Banner, Button, Drawer, FieldLabel, FOCUS_RING, Switch } from '@/components/ds';
+import { cn } from '@/lib';
+import { clampFloors, parseFloors, sectionProgress, setAsideCount } from '@/lib/assessment-draft';
 import { applicableItems, areaQuestionCounts } from '@/lib/assessment-score';
-import { useId, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { Card, Mono } from '../../_components/chrome';
 import { formatDate } from '../../_lib/format';
 import type { StepProps } from './details-step';
@@ -89,7 +90,7 @@ export function BuildingStep({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <FieldLabel htmlFor={`${id}-floors`}>How many floors?</FieldLabel>
-        <Stepper id={`${id}-floors`} label="Floors" value={floors} onChange={setFloors} />
+        <FloorsInput id={`${id}-floors`} value={floors} onCommit={setFloors} />
       </div>
 
       <fieldset className="flex flex-col gap-2.5">
@@ -158,5 +159,83 @@ export function BuildingStep({
         <p className="text-[16px] leading-[1.5]">{pending?.message}</p>
       </Drawer>
     </Card>
+  );
+}
+
+const STEP_BUTTON = cn(
+  'size-12 text-[20px] large-text:text-[22px] leading-none font-semibold max-[359px]:size-11 disabled:text-gray-300 disabled:hover:bg-transparent',
+  FOCUS_RING,
+  'focus-visible:-outline-offset-3'
+);
+
+/**
+ * − floors +, looking like the ds Stepper. Typing isn't committed until the box is left or
+ * Enter is pressed, so clearing it to type "2" doesn't pass through 1 (or end up as 12); a
+ * blank box goes back to the current value.
+ */
+function FloorsInput({
+  id,
+  value,
+  onCommit,
+}: {
+  id: string;
+  value: number;
+  onCommit: (value: number) => void;
+}) {
+  const [text, setText] = useState<string | null>(null);
+  const cancelled = useRef(false);
+  const commit = () => {
+    const parsed = text === null || cancelled.current ? null : parseFloors(text);
+    cancelled.current = false;
+    setText(null);
+    if (parsed !== null && parsed !== value) onCommit(parsed);
+  };
+
+  return (
+    <div className="flex h-12.5 shrink-0 items-center overflow-hidden rounded-full border border-gray-300 bg-surface">
+      <button
+        type="button"
+        aria-label="Floors: minus one"
+        disabled={value <= 1}
+        onClick={() => onCommit(value - 1)}
+        className={cn(STEP_BUTTON, 'text-gray-600 hover:bg-gray-100')}
+      >
+        −
+      </button>
+      <input
+        id={id}
+        type="text"
+        inputMode="decimal"
+        aria-label="Floors"
+        value={text ?? String(value)}
+        onFocus={(e) => {
+          setText(String(value));
+          e.target.select();
+        }}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') e.currentTarget.blur();
+          if (e.key === 'Escape') {
+            cancelled.current = true;
+            e.currentTarget.blur();
+          }
+        }}
+        className={cn(
+          'font-landing-mono h-full w-14 bg-transparent text-center text-[15px] large-text:text-[17px] font-semibold text-gray-900 max-[359px]:w-10',
+          FOCUS_RING,
+          'focus-visible:-outline-offset-3'
+        )}
+      />
+      <button
+        type="button"
+        aria-label="Floors: plus one"
+        disabled={value >= 200}
+        onClick={() => onCommit(value + 1)}
+        className={cn(STEP_BUTTON, 'text-brand-500 hover:bg-brand-25')}
+      >
+        +
+      </button>
+    </div>
   );
 }

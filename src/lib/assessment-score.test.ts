@@ -8,6 +8,7 @@ import {
   prepareAssessmentWrite,
   recoveryStatus,
   scoreAssessment,
+  unsafeByPillar,
 } from './assessment-score';
 import {
   AREA_CODES,
@@ -125,6 +126,27 @@ test('percent and recovery status', () => {
   assert.equal(recoveryStatus({ safe: 1, counted: 1, na: 0 }), 'in_place');
   assert.equal(recoveryStatus({ safe: 0, counted: 1, na: 0 }), 'missing');
   assert.equal(recoveryStatus({ safe: 0, counted: 0, na: 1 }), 'na');
+});
+
+test('one unsafe answer never reads 100% (review)', () => {
+  assert.equal(percent({ safe: 210, counted: 211, na: 0 }), 99);
+  assert.equal(percent({ safe: 211, counted: 211, na: 0 }), 100);
+});
+
+test('unsafe items grouped by pillar, in pillar order (spec 4.2)', () => {
+  const s = scoreAssessment(T, 1, OFFICE, {
+    [id('I.9')]: 'no',
+    [id('II.3')]: 'yes',
+    [id('II.1')]: 'no',
+    [id('II.2')]: 'yes',
+  });
+  assert.deepEqual(
+    unsafeByPillar(s).map((g) => [g.pillar, g.items.map((i) => i.id)]),
+    [
+      ['prevention-mitigation', [id('II.1'), id('II.3')]],
+      ['response', [id('I.9')]],
+    ]
+  );
 });
 
 test('prepareAssessmentWrite keeps only what applies and counts what is missing', () => {

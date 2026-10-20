@@ -1,7 +1,7 @@
 'use client';
 
 import { Bilingual } from '@/components/assessment/bilingual';
-import { ButtonLink } from '@/components/ds';
+import { Button, FOCUS_RING } from '@/components/ds';
 import { useMyAssessment } from '@/components/hooks/use-assessments';
 import { Loader } from '@/components/ui/loader';
 import { cn } from '@/lib';
@@ -15,7 +15,6 @@ import {
 } from '@/lib/assessment-template';
 import { useOfflineQueueStore } from '@/store';
 import { ArrowLeft, FileQuestion, WifiOff } from 'lucide-react';
-import Link from 'next/link';
 import {
   Card,
   DetailList,
@@ -27,6 +26,7 @@ import {
   Pill,
 } from '../../_components/chrome';
 import { formatDate, formatDateTime } from '../../_lib/format';
+import { AssessmentLink, goToAssessment } from '../_lib/nav';
 import { ScoreSummary } from './score-summary';
 
 /** One submitted assessment, read-only: details, scores, then every answer by section. */
@@ -66,9 +66,9 @@ export function AssessmentView({ id }: { id: string }) {
 
 function BackButton() {
   return (
-    <ButtonLink href="/assessment" variant="outline">
+    <Button variant="outline" onClick={() => goToAssessment('')}>
       Back to assessments
-    </ButtonLink>
+    </Button>
   );
 }
 
@@ -100,13 +100,16 @@ function RecordView({ record }: { record: AssessmentRecord }) {
       </Hero>
 
       <main className={cn(GUTTER, 'flex flex-col gap-5 py-6 md:py-8')}>
-        <Link
-          href="/assessment"
-          className="flex items-center gap-1.5 self-start rounded-lg py-1 text-[15px] font-semibold text-brand-700 hover:underline"
+        <AssessmentLink
+          query=""
+          className={cn(
+            'flex items-center gap-1.5 self-start rounded-lg py-1 text-[15px] font-semibold text-brand-700 hover:underline',
+            FOCUS_RING
+          )}
         >
           <ArrowLeft size={18} aria-hidden />
           Back to assessments
-        </Link>
+        </AssessmentLink>
 
         <DetailList
           rows={[

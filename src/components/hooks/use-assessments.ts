@@ -8,6 +8,7 @@ import {
 } from '@/actions/assessments';
 import { toPayload, type AssessmentDraft } from '@/lib/assessment-draft';
 import type { AssessmentTemplate } from '@/lib/assessment-template';
+import { cachedFetch, withTimeout } from '@/lib/offline-cache';
 import {
   deleteAssessmentDraft,
   getAllQueuedCount,
@@ -25,27 +26,21 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 // IndexedDB so the form opens offline; drafts live only on the phone; a submit made offline (or
 // cut off) goes to the offline queue, which OfflineQueueProvider sends when the connection is back.
 
-/**
- * Offline: the cached copy. Online: a fresh copy, which then replaces the cached one. A request
- * that can't reach the server falls back to the cached copy too.
- */
-async function withOfflineCache<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
-  const cached = () => getAssessmentCache<T>(key).catch(() => undefined);
-  if (!navigator.onLine) {
-    const value = await cached();
-    if (value !== undefined) return value;
-    throw new Error("This isn't saved on this phone yet. Connect to the internet once to get it.");
-  }
-  try {
-    const value = await fetcher();
-    await putAssessmentCache(key, value).catch(() => {});
-    return value;
-  } catch (err) {
-    if (!isNetworkError(err)) throw err;
-    const value = await cached();
-    if (value !== undefined) return value;
-    throw err;
-  }
+/** How long to wait for the server before using the copy saved on this phone (weak signal). */
+const SLOW_NETWORK_MS = 6_000;
+/** How long a submit may take before it goes to the offline queue instead (client_ref dedupes
+ * a submit that did land in the meantime). */
+const SUBMIT_TIMEOUT_MS = 20_000;
+
+/** The copy saved on this phone when offline or slow, else a fresh one (see cachedFetch). */
+function withOfflineCache<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+  return cachedFetch({
+    online: navigator.onLine,
+    read: () => getAssessmentCache<T>(key),
+    write: (value) => putAssessmentCache(key, value),
+    fetch: fetcher,
+    slowMs: SLOW_NETWORK_MS,
+  });
 }
 
 /** The published checklist. Also cached by version, for drafts started on it. */
@@ -150,7 +145,10 @@ export function useSubmitAssessment() {
       if (!navigator.onLine) return queue();
       let result;
       try {
-        result = await createAssessment(await getAccessToken(), payload);
+        result = await withTimeout(
+          createAssessment(await getAccessToken(), payload),
+          SUBMIT_TIMEOUT_MS
+        );
       } catch (err) {
         if (isNetworkError(err)) return queue();
         throw err;

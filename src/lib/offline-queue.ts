@@ -165,7 +165,25 @@ function makeQueue<TPayload>(storeName: string) {
     });
   }
 
-  return { add, getAll, count, remove, markFailed };
+  /** A failed entry back to pending, for a "Try again" button. */
+  async function markPending(id: string): Promise<void> {
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(storeName, 'readwrite');
+      const store = tx.objectStore(storeName);
+      const getReq = store.get(id);
+      getReq.onsuccess = () => {
+        const record = getReq.result as QueuedEntry<TPayload> | undefined;
+        if (!record) return;
+        const { errorMessage: _dropped, ...rest } = record;
+        store.put({ ...rest, status: 'pending' });
+      };
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  return { add, getAll, count, remove, markFailed, markPending };
 }
 
 /** Plain records by key: assessment drafts and the assessment cache. */
@@ -238,6 +256,7 @@ export const getQueuedAssessments = assessmentQueue.getAll;
 export const getQueuedAssessmentCount = assessmentQueue.count;
 export const removeQueuedAssessment = assessmentQueue.remove;
 export const markQueuedAssessmentFailed = assessmentQueue.markFailed;
+export const retryQueuedAssessment = assessmentQueue.markPending;
 
 /** Everything waiting to send on this phone: bystander reports, field reports and assessments. */
 export async function getAllQueuedCount(): Promise<number> {

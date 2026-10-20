@@ -4,23 +4,23 @@ import { createAssessment } from '@/actions/assessments';
 import { createBystanderReport } from '@/actions/emergency-reports';
 import { createReport } from '@/actions/reports';
 import { toBystanderPhotoFormData } from '@/lib';
+import { withTimeout } from '@/lib/offline-cache';
+import { flushOne } from '@/lib/offline-flush';
 import {
   getAllQueuedCount,
   getQueuedAssessments,
   getQueuedFieldReports,
   getQueuedReports,
-  isNetworkError,
   markQueuedAssessmentFailed,
   markQueuedFieldReportFailed,
   markQueuedReportFailed,
   removeQueuedAssessment,
   removeQueuedFieldReport,
   removeQueuedReport,
-  type QueuedEntry,
 } from '@/lib/offline-queue';
 import type { AssessmentPayload } from '@/lib/schemas';
 import { getAccessToken } from '@/lib/supabase';
-import { useOfflineQueueStore } from '@/store';
+import { useAuthStore, useOfflineQueueStore } from '@/store';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
@@ -29,44 +29,17 @@ import toast from 'react-hot-toast';
 // connection is still flaky (common on mobile data during a disaster/drill scenario).
 const RETRY_INTERVAL_MS = 45_000;
 
-interface FlushResult {
-  synced: number;
-  failed: number;
-}
-
-/** Replays every `pending` entry in one queue through `submit`, in order, stopping at the
- * first connectivity failure (leaves the rest queued for the next retry) but continuing past
- * a real server-side rejection (marked `failed` so it stops being retried forever). */
-async function flushOne<TPayload>(
-  getAll: () => Promise<QueuedEntry<TPayload>[]>,
-  remove: (id: string) => Promise<void>,
-  markFailed: (id: string, message: string) => Promise<void>,
-  submit: (payload: TPayload, attachments?: Blob[]) => Promise<unknown>
-): Promise<FlushResult> {
-  const pending = (await getAll()).filter((e) => e.status === 'pending');
-  let synced = 0;
-  let failed = 0;
-
-  for (const entry of pending) {
-    try {
-      await submit(entry.payload, entry.attachments);
-      await remove(entry.id);
-      synced += 1;
-    } catch (err) {
-      if (isNetworkError(err)) break;
-      await markFailed(entry.id, err instanceof Error ? err.message : 'Submission failed');
-      failed += 1;
-    }
-  }
-
-  return { synced, failed };
-}
+/** How long one queued assessment may take before it counts as a dropped connection. */
+const ASSESSMENT_SEND_TIMEOUT_MS = 30_000;
 
 /** createAssessment answers instead of throwing. A `retry` answer (signed out, another account
  * on this phone) is thrown as a TypeError so flushOne keeps the entry pending, like a dropped
  * connection; any other refusal marks it failed. */
 async function submitQueuedAssessment(payload: AssessmentPayload) {
-  const result = await createAssessment(await getAccessToken(), payload);
+  const result = await withTimeout(
+    createAssessment(await getAccessToken(), payload),
+    ASSESSMENT_SEND_TIMEOUT_MS
+  );
   if (result.ok) return;
   if (result.retry) throw new TypeError(result.error);
   throw new Error(result.error);
@@ -112,11 +85,14 @@ export function OfflineQueueProvider() {
           markQueuedFieldReportFailed,
           (payload) => createReport(payload)
         ),
+        // Only the signed-in account's own: on a shared phone another member's entry waits
+        // for them instead of blocking (or being refused for) whoever is signed in now.
         flushOne(
           getQueuedAssessments,
           removeQueuedAssessment,
           markQueuedAssessmentFailed,
-          submitQueuedAssessment
+          submitQueuedAssessment,
+          (entry) => entry.payload.evaluator_id === useAuthStore.getState().userProfile?.id
         ),
       ]);
 

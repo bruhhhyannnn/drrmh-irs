@@ -1,6 +1,6 @@
 'use server';
 
-import { canUseAssessment } from '@/lib/access';
+import { checkAssessmentCaller } from '@/lib/assessment-caller';
 import { prepareAssessmentWrite } from '@/lib/assessment-score';
 import {
   PILLAR_CODES,
@@ -167,7 +167,6 @@ export async function getAssessmentSetup(campusId: string): Promise<AssessmentSe
 
 /* ─── Submit ─── */
 
-const CANT_SUBMIT = "Your account can't submit assessments.";
 const fail = (error: string): CreateAssessmentResult => ({ ok: false, error, retry: false });
 
 async function findByClientRef(clientRef: string) {
@@ -226,24 +225,11 @@ export async function createAssessment(
   token: string | null,
   payload: AssessmentPayload
 ): Promise<CreateAssessmentResult> {
-  const caller = await requireProfile(token);
-  if (!caller.ok) {
-    return caller.reason === 'signed_out'
-      ? { ok: false, error: 'Sign in again to send this assessment.', retry: true }
-      : fail(CANT_SUBMIT);
-  }
-  const { profile } = caller;
-  if (!canUseAssessment(profile)) return fail(CANT_SUBMIT);
-  const campusId = profile.campus_id;
-  if (!campusId) return fail('Your profile has no campus yet.');
-  if (payload?.evaluator_id !== profile.id) {
-    return {
-      ok: false,
-      error:
-        'This assessment belongs to another account. It sends when that account signs in on this phone.',
-      retry: true,
-    };
-  }
+  // Another account signed in on a shared phone answers `retry`, never a refusal (see
+  // assessment-caller.ts), so the owner's queued entry isn't lost.
+  const caller = checkAssessmentCaller(await requireProfile(token), payload?.evaluator_id);
+  if (!caller.ok) return caller;
+  const { profile, campusId } = caller;
 
   const parsed = assessmentPayloadSchema.safeParse(payload);
   if (!parsed.success) {

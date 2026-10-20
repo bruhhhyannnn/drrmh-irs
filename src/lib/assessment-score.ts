@@ -129,9 +129,23 @@ export function scoreAssessment(
   };
 }
 
-/** Share of counted answers that are safe, rounded; null when nothing was counted. */
+/** Share of counted answers that are safe, rounded; null when nothing was counted. Never 100
+ * while any answer is unsafe (210 of 211 reads 99%, not 100%). */
 export function percent(t: Tally): number | null {
-  return t.counted === 0 ? null : Math.round((100 * t.safe) / t.counted);
+  if (t.counted === 0) return null;
+  const rounded = Math.round((100 * t.safe) / t.counted);
+  return t.safe < t.counted ? Math.min(rounded, 99) : rounded;
+}
+
+/** The unsafe items by DRRM pillar, in pillar order, leaving out pillars with none: the
+ * action list (spec 4.2). */
+export function unsafeByPillar(
+  score: AssessmentScore
+): { pillar: PillarCode; items: TemplateItem[] }[] {
+  return PILLAR_CODES.map((pillar) => ({
+    pillar,
+    items: score.unsafe.filter((i) => i.pillar_code === pillar),
+  })).filter((g) => g.items.length > 0);
 }
 
 /** Pillar 4 has one item, so it reads as In place / Missing / N/A rather than a percent. */

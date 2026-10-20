@@ -18,7 +18,9 @@ export type VerifiedProfile = Prisma.UserGetPayload<{ include: typeof profileInc
 
 export type CallerCheck =
   | { ok: true; profile: VerifiedProfile }
-  | { ok: false; reason: 'signed_out' | 'no_profile' | 'inactive' };
+  | { ok: false; reason: 'signed_out' | 'no_profile' }
+  /** `profileId`: so a caller can tell the account's own data from someone else's. */
+  | { ok: false; reason: 'inactive'; profileId: string };
 
 export async function requireProfile(token: string | null | undefined): Promise<CallerCheck> {
   if (!token) return { ok: false, reason: 'signed_out' };
@@ -30,6 +32,6 @@ export async function requireProfile(token: string | null | undefined): Promise<
     include: profileInclude,
   });
   if (!profile) return { ok: false, reason: 'no_profile' };
-  if (!profile.is_active) return { ok: false, reason: 'inactive' };
+  if (!profile.is_active) return { ok: false, reason: 'inactive', profileId: profile.id };
   return { ok: true, profile };
 }

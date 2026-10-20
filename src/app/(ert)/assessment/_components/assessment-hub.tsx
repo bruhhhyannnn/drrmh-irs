@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, ButtonLink, Drawer, FOCUS_RING } from '@/components/ds';
+import { Button, Drawer, FOCUS_RING } from '@/components/ds';
 import {
   useAssessmentDrafts,
   useAssessmentSetup,
@@ -9,32 +9,38 @@ import {
   useTemplateVersion,
 } from '@/components/hooks/use-assessments';
 import { cn } from '@/lib';
-import { newDraft, newUuid, sectionProgress, type AssessmentDraft } from '@/lib/assessment-draft';
+import {
+  draftFromPayload,
+  newDraft,
+  newUuid,
+  sectionProgress,
+  type AssessmentDraft,
+} from '@/lib/assessment-draft';
 import { percent } from '@/lib/assessment-score';
 import {
   deleteAssessmentDraft,
   getAllQueuedCount,
   removeQueuedAssessment,
+  retryQueuedAssessment,
   saveAssessmentDraft,
   type QueuedAssessment,
 } from '@/lib/offline-queue';
 import { useOfflineQueueStore } from '@/store';
 import { useQueryClient } from '@tanstack/react-query';
 import { ChevronRight, CloudOff } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Card, Dot, GUTTER, Hero, Mono, NoticeCard, Pill } from '../../_components/chrome';
 import { formatDate, formatDateTime } from '../../_lib/format';
 import { useQueuedAssessments } from '../../_lib/use-assessment-queue';
 import type { ErtProfile } from '../../_lib/use-ert-access';
+import { AssessmentLink, goToAssessment } from '../_lib/nav';
 
 /** The assessment hub: start a new one, drafts on this phone, waiting to send, submitted. */
 export function AssessmentHub({ profile }: { profile: ErtProfile }) {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const setPendingCount = useOfflineQueueStore((s) => s.setPendingCount);
+  const flushNow = useOfflineQueueStore((s) => s.flushNow);
   const template = useAssessmentTemplate();
   const setup = useAssessmentSetup(profile.campus_id ?? undefined);
   const drafts = useAssessmentDrafts(profile.id);
@@ -63,10 +69,62 @@ export function AssessmentHub({ profile }: { profile: ErtProfile }) {
       });
       await saveAssessmentDraft(draft);
       await queryClient.invalidateQueries({ queryKey: ['assessment-drafts'] });
-      router.push(`/assessment?draft=${draft.client_ref}`);
+      goToAssessment(`?draft=${draft.client_ref}`);
     } catch {
       toast.error("Couldn't save a draft on this phone.");
       setStarting(false);
+    }
+  };
+
+  const refreshQueue = async () => {
+    setQueueKey((k) => k + 1);
+    setPendingCount(await getAllQueuedCount());
+  };
+
+  /** A refused assessment back to pending, to be sent again as it is. */
+  const tryAgain = async (entry: QueuedAssessment) => {
+    try {
+      await retryQueuedAssessment(entry.id);
+      await refreshQueue();
+      flushNow();
+    } catch {
+      toast.error("Couldn't change it on this phone. Try again.");
+    }
+  };
+
+  /** A refused assessment back into a draft, to fix and send again (same client_ref). */
+  const openAsDraft = async (entry: QueuedAssessment) => {
+    const { payload } = entry;
+    const saved =
+      'id' in payload.building
+        ? setup.data?.buildings.find(
+            (b) => 'id' in payload.building && b.id === payload.building.id
+          )
+        : undefined;
+    const unitId =
+      'new' in payload.building
+        ? payload.building.new.unit_id
+        : (saved?.unit_id ?? profile.unit_id ?? '');
+    const cluster = setup.data?.clusters.find((c) => c.units.some((u) => u.id === unitId));
+    let draft = draftFromPayload(payload, {
+      campus_id: profile.campus_id ?? '',
+      cluster_id: cluster?.id ?? profile.cluster_id ?? '',
+      unit_id: unitId,
+      building_name: saved?.name ?? entry.summary?.title ?? '',
+      now: new Date(),
+    });
+    // A building that's no longer listed has to be chosen again on Details.
+    if ('id' in payload.building && setup.data && !saved) {
+      draft = { ...draft, building_id: '', building_name: '' };
+    }
+    try {
+      await saveAssessmentDraft(draft);
+      await removeQueuedAssessment(entry.id);
+      await queryClient.invalidateQueries({ queryKey: ['assessment-drafts'] });
+      await refreshQueue();
+      goToAssessment(`?draft=${draft.client_ref}`);
+    } catch {
+      toast.error("Couldn't reopen it on this phone. Try again.");
     }
   };
 
@@ -78,8 +136,7 @@ export function AssessmentHub({ profile }: { profile: ErtProfile }) {
         await queryClient.invalidateQueries({ queryKey: ['assessment-drafts'] });
       } else {
         await removeQueuedAssessment(discarding.id);
-        setQueueKey((k) => k + 1);
-        setPendingCount(await getAllQueuedCount());
+        await refreshQueue();
       }
       toast.success(discarding.kind === 'draft' ? 'Draft discarded' : 'Assessment discarded');
     } catch {
@@ -149,6 +206,8 @@ export function AssessmentHub({ profile }: { profile: ErtProfile }) {
               <QueuedRow
                 key={entry.id}
                 entry={entry}
+                onTryAgain={() => tryAgain(entry)}
+                onOpenAsDraft={() => openAsDraft(entry)}
                 onDiscard={() =>
                   setDiscarding({
                     kind: 'queued',
@@ -243,16 +302,26 @@ function DraftRow({ draft, onDiscard }: { draft: AssessmentDraft; onDiscard: () 
           <Button variant="ghost" size="sm" onClick={onDiscard}>
             Discard
           </Button>
-          <ButtonLink href={`/assessment?draft=${draft.client_ref}`} size="sm">
+          <Button size="sm" onClick={() => goToAssessment(`?draft=${draft.client_ref}`)}>
             Continue
-          </ButtonLink>
+          </Button>
         </div>
       </Card>
     </li>
   );
 }
 
-function QueuedRow({ entry, onDiscard }: { entry: QueuedAssessment; onDiscard: () => void }) {
+function QueuedRow({
+  entry,
+  onTryAgain,
+  onOpenAsDraft,
+  onDiscard,
+}: {
+  entry: QueuedAssessment;
+  onTryAgain: () => void;
+  onOpenAsDraft: () => void;
+  onDiscard: () => void;
+}) {
   const isOnline = useOfflineQueueStore((s) => s.isOnline);
   const isSyncing = useOfflineQueueStore((s) => s.isSyncing);
   const failed = entry.status === 'failed';
@@ -280,15 +349,23 @@ function QueuedRow({ entry, onDiscard }: { entry: QueuedAssessment; onDiscard: (
           )}
         </div>
         {failed && (
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col gap-3">
             {entry.errorMessage && (
-              <p className="flex-1 text-[14px] leading-[1.45] font-medium text-error-700">
+              <p className="text-[14px] leading-[1.45] font-medium text-error-700">
                 {entry.errorMessage}
               </p>
             )}
-            <Button variant="danger" size="sm" onClick={onDiscard}>
-              Discard
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={onTryAgain}>
+                Try again
+              </Button>
+              <Button variant="outline" size="sm" onClick={onOpenAsDraft}>
+                Open as draft
+              </Button>
+              <Button variant="danger" size="sm" onClick={onDiscard}>
+                Discard
+              </Button>
+            </div>
           </div>
         )}
       </Card>
@@ -306,8 +383,8 @@ function Submitted({ userId }: { userId: string }) {
       const p = percent({ safe: row.safe, counted: row.counted, na: 0 });
       return (
         <li key={row.id}>
-          <Link
-            href={`/assessment?view=${row.id}`}
+          <AssessmentLink
+            query={`?view=${row.id}`}
             className={cn('group block rounded-[22px]', FOCUS_RING)}
           >
             <Card className="flex items-center gap-3 p-4 transition-shadow group-hover:shadow-[0_6px_18px_rgba(16,24,40,.12)] md:p-5">
@@ -325,7 +402,7 @@ function Submitted({ userId }: { userId: string }) {
               <Mono className="text-[20px] font-semibold">{p === null ? '—' : `${p}%`}</Mono>
               <ChevronRight size={20} aria-hidden className="shrink-0 text-gray-400" />
             </Card>
-          </Link>
+          </AssessmentLink>
         </li>
       );
     });

@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, ButtonLink, Drawer } from '@/components/ds';
+import { Button, Drawer } from '@/components/ds';
 import {
   useAssessmentSetup,
   useSubmitAssessment,
@@ -13,11 +13,11 @@ import type { AssessmentSetup, AssessmentTemplate } from '@/lib/assessment-templ
 import { getAssessmentDraft, saveAssessmentDraft } from '@/lib/offline-queue';
 import { useQueryClient } from '@tanstack/react-query';
 import { CloudOff, FileQuestion, ListChecks } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Card, GUTTER, Hero, NoticeCard } from '../../_components/chrome';
 import type { ErtProfile } from '../../_lib/use-ert-access';
+import { goToAssessment } from '../_lib/nav';
 import { BuildingStep } from './building-step';
 import { DetailsStep } from './details-step';
 import { ReviewStep } from './review-step';
@@ -70,9 +70,9 @@ export function AssessmentStepper({
 
 function BackToHub() {
   return (
-    <ButtonLink href="/assessment" variant="outline">
+    <Button variant="outline" onClick={() => goToAssessment('')}>
       Back to assessments
-    </ButtonLink>
+    </Button>
   );
 }
 
@@ -219,7 +219,6 @@ function DraftForm({
   }, [focusItem, current]);
 
   /* ─── Submit ─── */
-  const router = useRouter();
   const submitMutation = useSubmitAssessment();
   const [submitError, setSubmitError] = useState('');
   const submit = async () => {
@@ -231,10 +230,10 @@ function DraftForm({
       const result = await submitMutation.mutateAsync({ template, draft: latest.current });
       if (result.status === 'sent') {
         toast.success('Assessment submitted');
-        router.replace(`/assessment?view=${result.id}`);
+        goToAssessment(`?view=${result.id}`, 'replace');
       } else {
         toast.success("Saved on this phone — sends when you're back online");
-        router.replace('/assessment');
+        goToAssessment('', 'replace');
       }
     } catch (err) {
       closed.current = false;

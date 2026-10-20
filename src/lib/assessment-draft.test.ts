@@ -4,9 +4,11 @@ import { MATATAG_2025_07_25 } from '../../prisma/data/matatag-2025-07-25';
 import {
   applyBuildingProfile,
   clampFloors,
+  draftFromPayload,
   draftSteps,
   newDraft,
   newUuid,
+  parseFloors,
   sectionProgress,
   setAsideCount,
   toPayload,
@@ -115,6 +117,43 @@ test('steps skip sections with nothing to ask', () => {
     'section:VIII',
     'section:X',
     'review',
+  ]);
+});
+
+test('a queued payload opens again as the same draft (review I2)', () => {
+  const d = draft({
+    building_id: '',
+    new_building_name: 'Annex',
+    floor_count: 3,
+    area_type_ids: ['bathrooms'],
+    event_id: 'e1',
+    incident_commander: 'Dr. Cruz',
+    answers: { [id('II.1')]: { answer: 'yes' }, 'III/2': { remarks: 'Hinges loose' } },
+    comments: { III: 'Check doors' },
+  });
+  const payload = toPayload(T, d, new Date('2026-10-20T02:00:00Z'));
+  const reopened = draftFromPayload(payload, {
+    campus_id: 'c1',
+    cluster_id: 'k1',
+    unit_id: 'unit1',
+    building_name: '',
+    now: new Date('2026-10-21T00:00:00Z'),
+  });
+  assert.equal(reopened.step, 'review');
+  assert.equal(reopened.client_ref, d.client_ref);
+  assert.equal(reopened.unit_id, 'unit1');
+  assert.deepEqual(toPayload(T, reopened, new Date('2026-10-20T02:00:00Z')), payload);
+});
+
+test('typed floors: blank is "not yet", the rest is clamped (review I5)', () => {
+  assert.deepEqual(['', '  ', 'abc', '0', '2.5', '12', '500'].map(parseFloors), [
+    null,
+    null,
+    null,
+    1,
+    3,
+    12,
+    200,
   ]);
 });
 

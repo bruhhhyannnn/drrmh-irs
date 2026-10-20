@@ -96,6 +96,14 @@ export function clampFloors(value: number): number {
   return Math.min(200, Math.max(1, Math.round(value)));
 }
 
+/** Floors as typed in the box: null while it's blank or not a number (not committed yet). */
+export function parseFloors(text: string): number | null {
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  const value = Number(trimmed.replace(',', '.'));
+  return Number.isFinite(value) ? clampFloors(value) : null;
+}
+
 /** Choosing a saved building takes its floors and areas from its last assessment; answers stay. */
 export function applyBuildingProfile(
   draft: AssessmentDraft,
@@ -199,5 +207,52 @@ export function toPayload(
     ended_at: endedAt.toISOString(),
     answers,
     comments,
+  };
+}
+
+/**
+ * A queued assessment turned back into a draft, so one the server refused can be fixed and
+ * sent again (same client_ref). The payload doesn't carry the campus, the cluster, or the unit
+ * and name of an existing building; the caller looks those up. Opens on the review step.
+ */
+export function draftFromPayload(
+  payload: AssessmentPayload,
+  extras: {
+    campus_id: string;
+    cluster_id: string;
+    unit_id: string;
+    building_name: string;
+    now: Date;
+  }
+): AssessmentDraft {
+  return {
+    version: 1,
+    client_ref: payload.client_ref,
+    evaluator_id: payload.evaluator_id,
+    campus_id: extras.campus_id,
+    template_version_id: payload.template_version_id,
+    started_at: payload.started_at,
+    updated_at: extras.now.getTime(),
+    cluster_id: extras.cluster_id,
+    unit_id: 'new' in payload.building ? payload.building.new.unit_id : extras.unit_id,
+    building_id: 'id' in payload.building ? payload.building.id : '',
+    new_building_name: 'new' in payload.building ? payload.building.new.name : '',
+    building_name: 'new' in payload.building ? '' : extras.building_name,
+    incident_commander: payload.incident_commander,
+    event_id: payload.event_id ?? '',
+    floor_count: payload.floor_count,
+    area_type_ids: [...payload.area_type_ids],
+    prefilled_from: null,
+    answers: Object.fromEntries(
+      payload.answers.map((a) => [
+        a.item_id,
+        {
+          ...(a.answer ? { answer: a.answer } : {}),
+          ...(a.remarks ? { remarks: a.remarks } : {}),
+        },
+      ])
+    ),
+    comments: Object.fromEntries(payload.comments.map((c) => [c.section_id, c.comment])),
+    step: 'review',
   };
 }
