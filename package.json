@@ -12,6 +12,7 @@
     "test": "tsx --test \"src/**/*.test.ts\" \"prisma/**/*.test.ts\"",
     "postinstall": "prisma generate",
     "seed": "tsx prisma/seed.ts",
+    "seed:matatag": "tsx prisma/seed-matatag.ts",
     "prepare": "husky"
   },
   "lint-staged": {
