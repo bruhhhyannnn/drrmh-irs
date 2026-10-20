@@ -1,5 +1,6 @@
 'use client';
 
+import { QuestionLanguageSetting } from '@/components/assessment/question-language-setting';
 import { Button, Drawer } from '@/components/ds';
 import { AppearanceSetting } from '@/components/theme';
 import { cn, getInitials, supabase } from '@/lib';
@@ -129,6 +130,7 @@ export function ProfileDrawer({ open, onClose }: { open: boolean; onClose: () =>
         </section>
 
         <AppearanceSetting />
+        <QuestionLanguageSetting />
       </div>
     </Drawer>
   );
