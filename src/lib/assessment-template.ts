@@ -113,6 +113,16 @@ export interface AssessmentTemplate {
   sections: TemplateSection[];
 }
 
+/** A saved building to choose on the Details step, with the profile its last assessment left. */
+export interface BuildingOption {
+  id: string;
+  unit_id: string;
+  name: string;
+  floor_count: number;
+  area_type_ids: string[];
+  last_assessed_at: string | null;
+}
+
 /** "III.4.1": the section code, then the item code. How the paper form names an item. */
 export function itemLabel(section: { code: string }, item: { code: string }) {
   return `${section.code}.${item.code}`;
