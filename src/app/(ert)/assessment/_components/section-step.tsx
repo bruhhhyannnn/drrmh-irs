@@ -66,7 +66,7 @@ export function SectionStep({
   return (
     <>
       {active && (
-        <div className="lg:hidden">
+        <div className="flex flex-1 flex-col lg:hidden">
           <FlashcardCard
             section={section}
             item={active.item}
@@ -185,7 +185,7 @@ function FlashcardCard({
     <Card
       key={item.id}
       id={`flashcard-${item.id}`}
-      className="flex min-h-[calc(100dvh-188px)] flex-col justify-between gap-5 p-5 sm:p-6"
+      className="flex flex-1 flex-col justify-between gap-5 p-5 sm:p-6"
     >
       {/* Top: tappable section dropdown + Question k / n */}
       <div className="flex flex-col items-center gap-2 text-center">

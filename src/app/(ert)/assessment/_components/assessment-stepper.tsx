@@ -345,11 +345,11 @@ function DraftForm({
       <div
         className={cn(
           GUTTER,
-          isSectionStep ? 'flex-1 py-4 lg:py-8' : 'flex-1 py-6 md:py-8',
+          isSectionStep ? 'flex flex-1 flex-col py-4 lg:py-8' : 'flex flex-1 flex-col py-6 md:py-8',
           'lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-8'
         )}
       >
-        <main className="flex min-w-0 flex-col gap-5">{content}</main>
+        <main className="flex min-w-0 flex-1 flex-col gap-5">{content}</main>
         <aside className="hidden lg:sticky lg:top-6 lg:block">
           <Card className="flex max-h-[calc(100dvh-48px)] flex-col overflow-y-auto p-2">
             <h2 className="px-3 pt-2 pb-1 text-[12px] font-bold tracking-[.08em] text-gray-500 uppercase">
