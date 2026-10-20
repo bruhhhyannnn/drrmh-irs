@@ -7,31 +7,35 @@ datasource db {
 }
 
 model User {
-  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  auth_id             String    @unique @db.Uuid
-  unit_id             String?   @db.Uuid
-  position_id         String?   @db.Uuid
-  user_type_id        String    @db.Uuid
-  username            String    @unique
-  email               String    @unique
-  first_name          String    @default("")
+  id                  String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  auth_id             String                      @unique @db.Uuid
+  unit_id             String?                     @db.Uuid
+  position_id         String?                     @db.Uuid
+  user_type_id        String                      @db.Uuid
+  username            String                      @unique
+  email               String                      @unique
+  first_name          String                      @default("")
   middle_name         String?
-  last_name           String    @default("")
+  last_name           String                      @default("")
   suffix              String?
-  is_active           Boolean   @default(true)
-  created_at          DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at          DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
-  is_profile_complete Boolean   @default(false)
-  cluster_id          String?   @db.Uuid
-  campus_id           String?   @db.Uuid
-  events              Event[]   @relation("CreatedBy")
-  completed_events    Event[]   @relation("CompletedBy")
+  is_active           Boolean                     @default(true)
+  created_at          DateTime                    @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime                    @default(now()) @updatedAt @db.Timestamptz(6)
+  is_profile_complete Boolean                     @default(false)
+  cluster_id          String?                     @db.Uuid
+  campus_id           String?                     @db.Uuid
+  events              Event[]                     @relation("CreatedBy")
+  completed_events    Event[]                     @relation("CompletedBy")
   reports             Report[]
-  campus              campus?   @relation(fields: [campus_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  cluster             Cluster?  @relation(fields: [cluster_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  position            Position? @relation(fields: [position_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  unit                Unit?     @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  user_type           UserType  @relation(fields: [user_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  campus              campus?                     @relation(fields: [campus_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  cluster             Cluster?                    @relation(fields: [cluster_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  position            Position?                   @relation(fields: [position_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  unit                Unit?                       @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user_type           UserType                    @relation(fields: [user_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  assessments         Assessment[]                @relation("AssessmentEvaluator")
+  created_buildings   Building[]                  @relation("BuildingCreatedBy")
+  published_versions  AssessmentTemplateVersion[] @relation("VersionPublishedBy")
+  created_versions    AssessmentTemplateVersion[] @relation("VersionCreatedBy")
 
   @@index([cluster_id], map: "idx_users_cluster_id")
   @@map("users")
@@ -64,31 +68,33 @@ model Unit {
   reports           Report[]
   cluster           Cluster             @relation(fields: [cluster_id], references: [id], onDelete: Cascade)
   users             User[]
+  buildings         Building[]
 
   @@unique([name, cluster_id])
   @@map("units")
 }
 
 model Event {
-  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id      String?     @db.Uuid
-  status_id    String      @db.Uuid
+  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id      String?      @db.Uuid
+  status_id    String       @db.Uuid
   name         String
   description  String?
   quarter      String?
-  started_at   DateTime?   @db.Timestamptz(6)
-  ended_at     DateTime?   @db.Timestamptz(6)
-  created_at   DateTime    @default(now()) @db.Timestamptz(6)
-  updated_at   DateTime    @default(now()) @updatedAt @db.Timestamptz(6)
-  campus_id    String      @db.Uuid
+  started_at   DateTime?    @db.Timestamptz(6)
+  ended_at     DateTime?    @db.Timestamptz(6)
+  created_at   DateTime     @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime     @default(now()) @updatedAt @db.Timestamptz(6)
+  campus_id    String       @db.Uuid
   /// Who pressed Complete event (or set the status to Completed). Null for older events and
   /// whenever the status is not Completed. See prisma/manual/DRRM-011-super-admin-v2.sql.
-  completed_by String?     @db.Uuid
-  campus       campus      @relation(fields: [campus_id], references: [id], onDelete: NoAction)
-  status       EventStatus @relation(fields: [status_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  user         User?       @relation("CreatedBy", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  completer    User?       @relation("CompletedBy", fields: [completed_by], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  completed_by String?      @db.Uuid
+  campus       campus       @relation(fields: [campus_id], references: [id], onDelete: NoAction)
+  status       EventStatus  @relation(fields: [status_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user         User?        @relation("CreatedBy", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  completer    User?        @relation("CompletedBy", fields: [completed_by], references: [id], onDelete: SetNull, onUpdate: NoAction)
   reports      Report[]
+  assessments  Assessment[]
 
   @@index([user_id])
   @@map("events")
@@ -344,4 +350,261 @@ model ReportPopulationCount {
   @@unique([report_id, category_id])
   @@index([report_id], map: "idx_report_pop_counts_report")
   @@map("report_population_counts")
+}
+
+// ─── MATATAG building assessment (prisma/manual/DRRM-015-assessment.sql) ─────────────────
+
+enum AssessmentAnswer {
+  yes
+  no
+  na
+
+  @@map("assessment_answer")
+}
+
+enum AssessmentSafeAnswer {
+  yes
+  no
+
+  @@map("assessment_safe_answer")
+}
+
+enum AssessmentVersionStatus {
+  draft
+  published
+  retired
+
+  @@map("assessment_version_status")
+}
+
+/// The four DRRM pillars (RA 10121). `code` is the slug of PILLARS in src/lib/pillars.ts.
+model DrrmPillar {
+  id         String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code       String                  @unique
+  name       String
+  sort_order Int                     @default(0)
+  created_at DateTime                @default(now()) @db.Timestamptz(6)
+  updated_at DateTime                @default(now()) @updatedAt @db.Timestamptz(6)
+  items      AssessmentItem[]
+  scores     AssessmentPillarScore[]
+
+  @@map("drrm_pillars")
+}
+
+/// Kinds of area a building can have (corridors, laboratories, swimming pool …). Shared across
+/// template versions, so a building's profile survives a new version.
+model BuildingAreaType {
+  id               String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code             String              @unique
+  name_en          String
+  name_fil         String
+  sort_order       Int                 @default(0)
+  is_active        Boolean             @default(true)
+  created_at       DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime            @default(now()) @updatedAt @db.Timestamptz(6)
+  sections         AssessmentSection[]
+  items            AssessmentItem[]
+  building_areas   BuildingArea[]
+  assessment_areas AssessmentArea[]
+
+  @@map("building_area_types")
+}
+
+model AssessmentTemplate {
+  id          String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String                      @unique
+  name        String
+  description String?
+  created_at  DateTime                    @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime                    @default(now()) @updatedAt @db.Timestamptz(6)
+  versions    AssessmentTemplateVersion[]
+
+  @@map("assessment_templates")
+}
+
+/// One `published` version per template (partial unique index uq_template_versions_one_published).
+model AssessmentTemplateVersion {
+  id           String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  template_id  String                  @db.Uuid
+  label        String
+  status       AssessmentVersionStatus @default(draft)
+  published_at DateTime?               @db.Timestamptz(6)
+  published_by String?                 @db.Uuid
+  created_by   String?                 @db.Uuid
+  created_at   DateTime                @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime                @default(now()) @updatedAt @db.Timestamptz(6)
+  template     AssessmentTemplate      @relation(fields: [template_id], references: [id], onDelete: NoAction)
+  publisher    User?                   @relation("VersionPublishedBy", fields: [published_by], references: [id], onDelete: SetNull)
+  creator      User?                   @relation("VersionCreatedBy", fields: [created_by], references: [id], onDelete: SetNull)
+  sections     AssessmentSection[]
+  assessments  Assessment[]
+
+  @@unique([template_id, label], map: "uq_template_versions_label")
+  @@map("assessment_template_versions")
+}
+
+model AssessmentSection {
+  id           String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  version_id   String                     @db.Uuid
+  code         String
+  title_en     String
+  title_fil    String
+  sort_order   Int                        @default(0)
+  /// Set: the whole section needs that area (VII, IX, XI–XVII).
+  area_type_id String?                    @db.Uuid
+  created_at   DateTime                   @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime                   @default(now()) @updatedAt @db.Timestamptz(6)
+  version      AssessmentTemplateVersion  @relation(fields: [version_id], references: [id], onDelete: Cascade)
+  area_type    BuildingAreaType?          @relation(fields: [area_type_id], references: [id], onDelete: NoAction)
+  items        AssessmentItem[]
+  comments     AssessmentSectionComment[]
+
+  @@unique([version_id, code], map: "uq_assessment_sections_code")
+  @@map("assessment_sections")
+}
+
+/// A group parent (I.3, III.2, IV.1 …) has is_scored = false and holds the shared prompt; its
+/// sub-items are scored. Unique (section, parent, code) through the expression index
+/// uq_assessment_items_code; CHECK chk_assessment_items_pillar: scored items have a pillar,
+/// group parents don't.
+model AssessmentItem {
+  id           String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  section_id   String                @db.Uuid
+  parent_id    String?               @db.Uuid
+  code         String
+  prompt_en    String
+  prompt_fil   String
+  note_en      String?
+  note_fil     String?
+  reference    String?
+  is_scored    Boolean               @default(true)
+  safe_answer  AssessmentSafeAnswer  @default(yes)
+  area_type_id String?               @db.Uuid
+  min_floors   Int?
+  flag_label   String?
+  pillar_id    String?               @db.Uuid
+  sort_order   Int                   @default(0)
+  created_at   DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime              @default(now()) @updatedAt @db.Timestamptz(6)
+  section      AssessmentSection     @relation(fields: [section_id], references: [id], onDelete: Cascade)
+  parent       AssessmentItem?       @relation("ItemChildren", fields: [parent_id], references: [id], onDelete: Cascade)
+  children     AssessmentItem[]      @relation("ItemChildren")
+  area_type    BuildingAreaType?     @relation(fields: [area_type_id], references: [id], onDelete: NoAction)
+  pillar       DrrmPillar?           @relation(fields: [pillar_id], references: [id], onDelete: NoAction)
+  answers      AssessmentAnswerRow[]
+
+  @@index([section_id, sort_order], map: "idx_assessment_items_section_order")
+  @@map("assessment_items")
+}
+
+/// A building under its main unit (campus and cluster come through the unit). Unique
+/// (unit_id, lower(name)) through the expression index uq_buildings_unit_name. floor_count and
+/// `areas` are the current profile, used to pre-fill the next assessment.
+model Building {
+  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  unit_id     String         @db.Uuid
+  name        String
+  floor_count Int            @default(1)
+  is_active   Boolean        @default(true)
+  created_by  String?        @db.Uuid
+  created_at  DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime       @default(now()) @updatedAt @db.Timestamptz(6)
+  unit        Unit           @relation(fields: [unit_id], references: [id], onDelete: NoAction)
+  creator     User?          @relation("BuildingCreatedBy", fields: [created_by], references: [id], onDelete: SetNull)
+  areas       BuildingArea[]
+  assessments Assessment[]
+
+  @@index([unit_id])
+  @@map("buildings")
+}
+
+model BuildingArea {
+  building_id  String           @db.Uuid
+  area_type_id String           @db.Uuid
+  building     Building         @relation(fields: [building_id], references: [id], onDelete: Cascade)
+  area_type    BuildingAreaType @relation(fields: [area_type_id], references: [id], onDelete: NoAction)
+
+  @@id([building_id, area_type_id])
+  @@map("building_areas")
+}
+
+/// One building assessed with one template version. Immutable after submit. client_ref is the
+/// draft's id on the phone, so an offline replay that already landed isn't inserted twice.
+model Assessment {
+  id                  String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  client_ref          String                     @unique @db.Uuid
+  template_version_id String                     @db.Uuid
+  building_id         String                     @db.Uuid
+  event_id            String?                    @db.Uuid
+  evaluator_id        String                     @db.Uuid
+  incident_commander  String                     @default("")
+  floor_count         Int
+  started_at          DateTime                   @db.Timestamptz(6)
+  ended_at            DateTime                   @db.Timestamptz(6)
+  needs_follow_up     Boolean                    @default(false)
+  created_at          DateTime                   @default(now()) @db.Timestamptz(6)
+  version             AssessmentTemplateVersion  @relation(fields: [template_version_id], references: [id], onDelete: NoAction)
+  building            Building                   @relation(fields: [building_id], references: [id], onDelete: NoAction)
+  event               Event?                     @relation(fields: [event_id], references: [id], onDelete: SetNull)
+  evaluator           User                       @relation("AssessmentEvaluator", fields: [evaluator_id], references: [id], onDelete: NoAction)
+  areas               AssessmentArea[]
+  answers             AssessmentAnswerRow[]
+  pillar_scores       AssessmentPillarScore[]
+  comments            AssessmentSectionComment[]
+
+  @@index([building_id, ended_at(sort: Desc)], map: "idx_assessments_building_ended")
+  @@index([evaluator_id], map: "idx_assessments_evaluator")
+  @@map("assessments")
+}
+
+model AssessmentArea {
+  assessment_id String           @db.Uuid
+  area_type_id  String           @db.Uuid
+  assessment    Assessment       @relation(fields: [assessment_id], references: [id], onDelete: Cascade)
+  area_type     BuildingAreaType @relation(fields: [area_type_id], references: [id], onDelete: NoAction)
+
+  @@id([assessment_id, area_type_id])
+  @@map("assessment_areas")
+}
+
+/// CHECK chk_assessment_answers_content: an answer or remarks. Group parents carry remarks only.
+model AssessmentAnswerRow {
+  id            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assessment_id String            @db.Uuid
+  item_id       String            @db.Uuid
+  answer        AssessmentAnswer?
+  remarks       String?
+  created_at    DateTime          @default(now()) @db.Timestamptz(6)
+  assessment    Assessment        @relation(fields: [assessment_id], references: [id], onDelete: Cascade)
+  item          AssessmentItem    @relation(fields: [item_id], references: [id], onDelete: NoAction)
+
+  @@unique([assessment_id, item_id], map: "uq_assessment_answers_item")
+  @@map("assessment_answers")
+}
+
+/// Written once at submit, four rows per assessment. CHECK chk_assessment_pillar_scores_counts.
+model AssessmentPillarScore {
+  assessment_id String     @db.Uuid
+  pillar_id     String     @db.Uuid
+  safe_count    Int        @default(0)
+  counted_count Int        @default(0)
+  na_count      Int        @default(0)
+  assessment    Assessment @relation(fields: [assessment_id], references: [id], onDelete: Cascade)
+  pillar        DrrmPillar @relation(fields: [pillar_id], references: [id], onDelete: NoAction)
+
+  @@id([assessment_id, pillar_id])
+  @@map("assessment_pillar_scores")
+}
+
+model AssessmentSectionComment {
+  id            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assessment_id String            @db.Uuid
+  section_id    String            @db.Uuid
+  comment       String
+  created_at    DateTime          @default(now()) @db.Timestamptz(6)
+  assessment    Assessment        @relation(fields: [assessment_id], references: [id], onDelete: Cascade)
+  section       AssessmentSection @relation(fields: [section_id], references: [id], onDelete: NoAction)
+
+  @@unique([assessment_id, section_id], map: "uq_assessment_section_comments_section")
+  @@map("assessment_section_comments")
 }
