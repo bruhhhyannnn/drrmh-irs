@@ -123,6 +123,52 @@ export interface BuildingOption {
   last_assessed_at: string | null;
 }
 
+/* ─── What the server actions return (dates as ISO strings) ─── */
+
+export interface AssessmentSetup {
+  /** Active clusters of the campus with their active units, by name. */
+  clusters: { id: string; name: string; units: { id: string; name: string }[] }[];
+  /** Active buildings of the campus. */
+  buildings: BuildingOption[];
+  /** Ongoing, or completed with ended_at in the last 30 days. */
+  events: { id: string; name: string; status: string }[];
+}
+
+export type CreateAssessmentResult =
+  { ok: true; id: string } | { ok: false; error: string; retry: boolean };
+
+export interface MyAssessmentRow {
+  id: string;
+  building_name: string;
+  unit_name: string;
+  ended_at: string;
+  safe: number;
+  counted: number;
+  needs_follow_up: boolean;
+}
+
+export interface AssessmentRecord {
+  id: string;
+  building_name: string;
+  unit_name: string;
+  cluster_name: string;
+  campus_name: string;
+  evaluator_name: string;
+  incident_commander: string;
+  event_name: string | null;
+  started_at: string;
+  ended_at: string;
+  floor_count: number;
+  area_type_ids: string[];
+  needs_follow_up: boolean;
+  /** By item id. */
+  answers: Record<string, { answer: AnswerValue | null; remarks: string | null }>;
+  /** By section id. */
+  comments: Record<string, string>;
+  /** The version it was answered with. */
+  template: AssessmentTemplate;
+}
+
 /** "III.4.1": the section code, then the item code. How the paper form names an item. */
 export function itemLabel(section: { code: string }, item: { code: string }) {
   return `${section.code}.${item.code}`;
