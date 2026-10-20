@@ -6,9 +6,9 @@ import { useEffect, useState } from 'react';
 
 /**
  * Assessments saved on this device to send later, oldest first. Re-read whenever the queue
- * count changes or a send attempt starts or ends.
+ * count changes, a send attempt starts or ends, or `refreshKey` changes (after a discard).
  */
-export function useQueuedAssessments() {
+export function useQueuedAssessments(refreshKey = 0) {
   const pendingCount = useOfflineQueueStore((s) => s.pendingCount);
   const isSyncing = useOfflineQueueStore((s) => s.isSyncing);
   const [entries, setEntries] = useState<QueuedAssessment[]>([]);
@@ -25,7 +25,7 @@ export function useQueuedAssessments() {
     return () => {
       active = false;
     };
-  }, [pendingCount, isSyncing]);
+  }, [pendingCount, isSyncing, refreshKey]);
 
   return entries;
 }
