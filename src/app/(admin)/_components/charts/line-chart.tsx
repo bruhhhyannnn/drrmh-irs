@@ -31,10 +31,12 @@ export function LineChart({
     return () => observer.disconnect();
   }, []);
   const n = points.length;
+  // Points sit INSET in from the axis labels and the edge, so values and dates have room.
+  const INSET = 40;
   const x = (i: number) =>
     n === 1
       ? (PAD.left + W - PAD.right) / 2
-      : PAD.left + (i * (W - PAD.left - PAD.right)) / (n - 1);
+      : PAD.left + INSET + (i * (W - PAD.left - PAD.right - 2 * INSET)) / (n - 1);
   const y = (v: number) => PAD.top + ((100 - v) * (H - PAD.top - PAD.bottom)) / 100;
 
   return (
@@ -116,10 +118,10 @@ export function LineChart({
         {points.map((p, i) => (
           <span
             key={p.label}
-            className="absolute flex -translate-x-1/2 flex-col items-center text-center leading-tight"
+            className="absolute flex -translate-x-1/2 flex-col items-center text-center leading-tight whitespace-nowrap"
             style={{
               left: `${(x(i) / W) * 100}%`,
-              maxWidth: `${Math.max(72, (W - PAD.left - PAD.right) / n)}px`,
+              maxWidth: `${Math.max(88, (W - PAD.left - PAD.right) / n)}px`,
             }}
           >
             <span className="font-landing-mono text-[13px] font-semibold text-gray-900">

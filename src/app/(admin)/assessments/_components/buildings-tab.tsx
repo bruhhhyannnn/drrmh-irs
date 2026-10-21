@@ -3,15 +3,17 @@
 import { useBuildingSummaries } from '@/components/hooks/use-assessments';
 import { percent, recoveryStatus } from '@/lib/assessment-score';
 import type { BuildingScores } from '@/lib/assessment-template';
-import { Eye } from 'lucide-react';
+import { ChartLine, Eye } from 'lucide-react';
 import { useState } from 'react';
 import {
   DataTable,
   FilterSelect,
+  IconAction,
   ListCount,
   ListToolbar,
   MobileCard,
   NameCell,
+  RowActions,
   SearchField,
   TextCell,
   type Column,
@@ -22,6 +24,15 @@ import { formatDate, plural } from '../../_lib/format';
 import { RECOVERY_TEXT, RecoveryCell, ScoreCell } from './score-cell';
 
 const detailHref = (id: string) => `/assessments/details?id=${id}`;
+
+/** The dashboard's Building safety section at this building (its history and A/B compare). */
+const compareHref = (b: BuildingScores) =>
+  `/dashboard?${new URLSearchParams({
+    bs_campus: b.campus.id,
+    bs_cluster: b.cluster.id,
+    bs_unit: b.unit.id,
+    bs_building: b.id,
+  })}#building-safety`;
 
 const PILLAR_COLUMNS = [
   ['prevention-mitigation', 'Prevention'],
@@ -117,6 +128,22 @@ export function BuildingsTab() {
       hideOnTablet: true,
       cell: (b) => <TextCell>{b.latest?.evaluator_name || '—'}</TextCell>,
     },
+    {
+      key: 'actions',
+      header: '',
+      width: '56px',
+      align: 'right',
+      cell: (b) =>
+        b.latest ? (
+          <RowActions>
+            <IconAction
+              label={`Compare ${b.name}'s assessments`}
+              icon={<ChartLine size={18} aria-hidden />}
+              href={compareHref(b)}
+            />
+          </RowActions>
+        ) : null,
+    },
   ];
 
   return (
@@ -183,6 +210,11 @@ export function BuildingsTab() {
                       label: 'Open latest',
                       href: detailHref(b.latest.id),
                       icon: <Eye size={16} aria-hidden />,
+                    },
+                    {
+                      label: 'Compare',
+                      href: compareHref(b),
+                      icon: <ChartLine size={16} aria-hidden />,
                     },
                   ]
                 : undefined

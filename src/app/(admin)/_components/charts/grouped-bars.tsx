@@ -84,15 +84,19 @@ export function GroupedBars({
                   title={`${s.name}, ${group}: ${pctLabel(value)}${previous !== null ? ` (was ${previous}%)` : ''}`}
                   aria-label={`${s.name}, ${group}: ${pctLabel(value)}${previous !== null ? `, previously ${previous}%` : ''}`}
                   className={cn(
-                    'relative flex h-full max-w-10 min-w-0 flex-1 flex-col justify-end rounded-t-[4px]',
+                    'relative h-full max-w-10 min-w-0 flex-1 rounded-t-[4px]',
                     FOCUS_RING
                   )}
                 >
-                  <span className="font-landing-mono pb-1 text-center text-[11px] leading-none font-semibold text-gray-700">
+                  {/* Above the bar and the tick, whichever is higher, so the tick never crosses it. */}
+                  <span
+                    className="font-landing-mono absolute inset-x-0 pb-1 text-center text-[11px] leading-none font-semibold text-gray-700"
+                    style={{ bottom: `${Math.max(value ?? 0, previous ?? 0)}%` }}
+                  >
                     {value === null ? '—' : value}
                   </span>
                   <span
-                    className="block w-full rounded-t-[4px]"
+                    className="absolute inset-x-0 bottom-0 rounded-t-[4px]"
                     style={{ height: `${value ?? 0}%`, background: s.color }}
                   />
                   {previous !== null && (
