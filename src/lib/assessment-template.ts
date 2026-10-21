@@ -4,6 +4,8 @@
 // in assessment-score.ts and the offline cache all share. The checklist itself is seeded from
 // typed data in prisma/data (`ChecklistData`).
 
+import type { Tally } from './assessment-score';
+
 /** Kinds of area a building can have, in pre-screen order. */
 export const AREA_CODES = [
   'corridors',
@@ -167,6 +169,50 @@ export interface AssessmentRecord {
   comments: Record<string, string>;
   /** The version it was answered with. */
   template: AssessmentTemplate;
+}
+
+/* ─── Admin reads (Phase 2) ─── */
+
+export interface Named {
+  id: string;
+  name: string;
+}
+
+/** One submitted assessment's scores, from its stored pillar rows. */
+export interface ScoredAssessment {
+  id: string;
+  ended_at: string;
+  evaluator_name: string;
+  needs_follow_up: boolean;
+  event_name: string | null;
+  overall: Tally;
+  pillars: Record<PillarCode, Tally>;
+}
+
+/** A building with its latest assessment and the one before it. */
+export interface BuildingScores {
+  id: string;
+  name: string;
+  floor_count: number;
+  unit: Named;
+  cluster: Named;
+  campus: Named;
+  assessment_count: number;
+  latest: ScoredAssessment | null;
+  previous: ScoredAssessment | null;
+}
+
+export interface AdminAssessmentRow {
+  id: string;
+  building: Named;
+  unit: Named;
+  cluster: Named;
+  campus: Named;
+  evaluator_name: string;
+  event_name: string | null;
+  ended_at: string;
+  overall: Tally;
+  needs_follow_up: boolean;
 }
 
 /** "III.4.1": the section code, then the item code. How the paper form names an item. */

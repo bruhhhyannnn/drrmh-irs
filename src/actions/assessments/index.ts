@@ -1,6 +1,7 @@
 'use server';
 
 import { checkAssessmentCaller } from '@/lib/assessment-caller';
+import { loadAssessmentRecord, loadVersion } from '@/lib/assessment-records';
 import { prepareAssessmentWrite } from '@/lib/assessment-score';
 import {
   PILLAR_CODES,
@@ -9,7 +10,6 @@ import {
   type AssessmentTemplate,
   type CreateAssessmentResult,
   type MyAssessmentRow,
-  type PillarCode,
 } from '@/lib/assessment-template';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
@@ -30,66 +30,6 @@ const isUniqueViolation = (err: unknown) =>
   err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';
 
 /* ─── Templates ─── */
-
-const versionInclude = {
-  sections: {
-    orderBy: { sort_order: 'asc' },
-    include: {
-      items: { orderBy: { sort_order: 'asc' }, include: { pillar: { select: { code: true } } } },
-    },
-  },
-} satisfies Prisma.AssessmentTemplateVersionInclude;
-
-async function loadVersion(where: Prisma.AssessmentTemplateVersionWhereInput) {
-  const [version, areaTypes] = await Promise.all([
-    prisma.assessmentTemplateVersion.findFirst({
-      where,
-      include: versionInclude,
-      orderBy: { published_at: { sort: 'desc', nulls: 'last' } },
-    }),
-    prisma.buildingAreaType.findMany({
-      where: { is_active: true },
-      orderBy: { sort_order: 'asc' },
-    }),
-  ]);
-  if (!version) return null;
-
-  const template: AssessmentTemplate = {
-    version_id: version.id,
-    label: version.label,
-    area_types: areaTypes.map((a) => ({
-      id: a.id,
-      code: a.code,
-      name_en: a.name_en,
-      name_fil: a.name_fil,
-    })),
-    sections: version.sections.map((s) => ({
-      id: s.id,
-      code: s.code,
-      title_en: s.title_en,
-      title_fil: s.title_fil,
-      area_type_id: s.area_type_id,
-      items: s.items.map((i) => ({
-        id: i.id,
-        section_id: i.section_id,
-        parent_id: i.parent_id,
-        code: i.code,
-        prompt_en: i.prompt_en,
-        prompt_fil: i.prompt_fil,
-        note_en: i.note_en,
-        note_fil: i.note_fil,
-        reference: i.reference,
-        is_scored: i.is_scored,
-        safe_answer: i.safe_answer,
-        area_type_id: i.area_type_id,
-        min_floors: i.min_floors,
-        flag_label: i.flag_label,
-        pillar_code: (i.pillar?.code ?? null) as PillarCode | null,
-      })),
-    })),
-  };
-  return { status: version.status, template };
-}
 
 /** The version new assessments use. */
 export async function getPublishedTemplate(): Promise<AssessmentTemplate | null> {
@@ -372,49 +312,5 @@ export async function getMyAssessment(
   const caller = await requireProfile(token);
   if (!caller.ok) return null;
 
-  const a = await prisma.assessment.findFirst({
-    where: { id, evaluator_id: caller.profile.id },
-    include: {
-      building: {
-        select: {
-          name: true,
-          unit: {
-            select: {
-              name: true,
-              cluster: { select: { name: true, campus: { select: { name: true } } } },
-            },
-          },
-        },
-      },
-      evaluator: { select: { first_name: true, last_name: true } },
-      event: { select: { name: true } },
-      areas: { select: { area_type_id: true } },
-      answers: { select: { item_id: true, answer: true, remarks: true } },
-      comments: { select: { section_id: true, comment: true } },
-    },
-  });
-  if (!a) return null;
-  const version = await loadVersion({ id: a.template_version_id });
-  if (!version) return null;
-
-  return {
-    id: a.id,
-    building_name: a.building.name,
-    unit_name: a.building.unit.name,
-    cluster_name: a.building.unit.cluster.name,
-    campus_name: a.building.unit.cluster.campus.name,
-    evaluator_name: [a.evaluator.first_name, a.evaluator.last_name].filter(Boolean).join(' '),
-    incident_commander: a.incident_commander,
-    event_name: a.event?.name ?? null,
-    started_at: a.started_at.toISOString(),
-    ended_at: a.ended_at.toISOString(),
-    floor_count: a.floor_count,
-    area_type_ids: a.areas.map((r) => r.area_type_id),
-    needs_follow_up: a.needs_follow_up,
-    answers: Object.fromEntries(
-      a.answers.map((r) => [r.item_id, { answer: r.answer, remarks: r.remarks }])
-    ),
-    comments: Object.fromEntries(a.comments.map((c) => [c.section_id, c.comment])),
-    template: version.template,
-  };
+  return loadAssessmentRecord({ id, evaluator_id: caller.profile.id });
 }
