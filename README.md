@@ -23,7 +23,7 @@ ERT members submit status reports through the signed-in `/report` page and check
 
 **For administrators**
 
-- **Dashboard** — Stats and charts on events, reports, and affected personnel, plus an events calendar
+- **Dashboard** — Stats and charts on events, reports, and affected personnel, plus an events calendar, and a Building safety section: MATATAG scores pooled per campus, cluster, unit and building with the change since the previous assessments, drilled down in place, and at a building its history and any two assessments compared
 - **Campus** — Manage campuses and view per-campus clusters, events, and headcount summaries
 - **Events** — Track drills and incidents from creation to completion, and export an event to Excel
 - **Event Details** — Per-cluster headcount board with casualty, missing person, and structural damage breakdowns

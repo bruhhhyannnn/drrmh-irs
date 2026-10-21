@@ -43,7 +43,7 @@ Acceptance criteria:
 - [x] A YES on VI.1.x (visible wall cracks) flags the assessment "Needs structural follow-up".
 - [x] Scores: section %, pillar % and overall %, N/A and pre-screened-out items excluded.
 - [x] Every scored item belongs to exactly one DRRM pillar (Section 4.1), enforced in the database. Pillar 4 (one item) is shown as "Public Service Continuity Plan: In place / Missing / N/A".
-- [ ] Dashboard "Building safety" section (Section 4.3):
+- [x] Dashboard "Building safety" section (Section 4.3):
   - Drills Campus → Cluster → Unit → Building, with a breadcrumb and the level in the URL.
   - Each aggregate level shows the current pooled overall and pillar scores with the like-for-like change since the previous assessments, a chart with one entry per child, a children table, section scores and the most-failed items.
   - The building level shows the history line and an A/B comparison (default #n−1 vs #n; both pickable) of overall, pillar and section scores.
@@ -53,7 +53,7 @@ Acceptance criteria:
 - [x] Admin `/assessments`: Buildings tab (latest score per building) and Assessments tab (all), campus-scoped. Read-only detail page.
 - [ ] Super admin `/assessments/checklist`: edit wording in place; structural changes go into a new draft version that is then published.
 - [x] Question language preference (Both / English / Filipino) in My profile, saved per device.
-- [ ] Light and dark mode; phone, tablet and web layouts.
+- [x] Light and dark mode; phone, tablet and web layouts.
 
 Non-goals (this ticket): photos per item, resuming a draft on another device, score bands/ratings, the Safety Officer position rule (designed for, not switched on).
 
@@ -562,13 +562,13 @@ Three phases, all on `feat/DRRM-015-assessment-form` in this worktree. Each phas
 
 - [x] **Task 9: Admin lists + detail.** Admin read actions with the campus lock (`getAssessmentList`, `getBuildingSummaries`, admin `getAssessment`) and hooks; nav item; `/assessments` (Buildings / Assessments tabs); `/assessments/details?id=` with the pillar breakdown.
 - [x] **Task 9b: Fixing mistakes** (proposed, see Section 8). A **Buildings** tab in Settings, extending the generic `LOOKUPS` / `LookupTable` pattern: rename, move to another unit, set floors, deactivate. Plus Super Admin **Delete assessment** on the detail page, behind the shared confirm dialog.
-- [ ] **Task 10: Dashboard Building safety.**
+- [x] **Task 10: Dashboard Building safety.**
   - `getSafetyRollup`, `getBuildingHistory`, `compareAssessments` with the server-side campus lock.
   - Chart components.
   - The drill-down section (levels, breadcrumb, URL state, tiles, chart, children table, sections, most-failed).
   - Building history + A/B compare.
   - Pillar columns and changes on the Assessments → Buildings tab.
-- [ ] **Docs:** README + CLAUDE.md (admin assessments, dashboard section).
+- [x] **Docs:** README + CLAUDE.md (admin assessments, dashboard section).
 
 **Phase 3: super admins edit the questions**
 
@@ -582,11 +582,11 @@ Three phases, all on `feat/DRRM-015-assessment-form` in this worktree. Each phas
 - [x] `npm run lint`, `npm run type-check`, `npm run test` (25/25), `npm run build`.
 - [x] Seed: 17 sections. Scored items per section: I 12, II 7, III 15, IV 22, V 25, VI 33, VII 7, VIII 8, IX 7, X 3, XI 5, XII 9, XIII 16, XIV 13, XV 5, XVI 4, XVII 20 (= 211). Running the seed twice changes nothing.
 - [x] Pillars: scored items per pillar are 149 / 24 / 37 / 1. No scored item has a null `pillar_id`. Spot-check splits: I.3.3 is Recovery while I.3.1 is Preparedness; V.3 Response; V.6.x Prevention; V.7.x Preparedness; XIII.14 Preparedness.
-- [ ] Pillar math:
+- [x] Pillar math (2026-10-21: one assessment 64/77 from its rows and from its answers; UP Diliman tiles 82 / 83 / 82 / 79% equal the hand sums of each building's latest rows):
   - For one assessment, the sum of the four `assessment_pillar_scores` rows equals the overall counts from its answers.
   - At each dashboard level, the pooled tiles equal a hand sum over each in-scope building's latest rows.
   - A building's older assessments don't count toward the tiles.
-- [ ] Dashboard drill-down, with test data shaped like the requester's example (one campus; two clusters/units; buildings with 1, 2 and 4 assessments), in this worktree's **test database only**. Test assessments never go to production:
+- [x] Dashboard drill-down (2026-10-21, sample data written by a throwaway script; buildings named "Sample …"), with test data shaped like the requester's example (one campus; two clusters/units; buildings with 1, 2 and 4 assessments), in this worktree's **test database only**. Test assessments never go to production:
   - Campus → cluster → unit → building and back via the breadcrumb and the browser Back button. A reload keeps the level.
   - Like-for-like: a building with one assessment raises the current % but not the change, and "_k_ of _m_ re-assessed" is right.
   - Building with 4: default compare is #3 vs #4. Picking #1 vs #4 changes the table. A = B isn't possible.
@@ -608,7 +608,7 @@ Three phases, all on `feat/DRRM-015-assessment-form` in this worktree. Each phas
   - An ERT member → allowed.
   - Flip `canUseAssessment` to the Safety Officer rule locally → the card, switch, page and action all follow. The queued entry failed with "Your account can't submit assessments." and sent with Try again after the revert.
 - [ ] Super admin: a wording edit shows on old and new assessments. A structural edit needs a draft, and old assessments still show their original items after publish.
-- [ ] Language: Both / English / Filipino in My profile changes the stepper and the admin detail. (ERT side checked 2026-10-21; the admin detail comes in Phase 2.)
+- [x] Language: Both / English / Filipino in My profile changes the stepper and the admin detail. (2026-10-21: checked on the ERT view; the admin detail renders the same `AssessmentRecordBody`.)
 - [ ] Production rollout:
   1. Run `DRRM-015-assessment.sql` in the Supabase SQL editor.
   2. Run the seed.

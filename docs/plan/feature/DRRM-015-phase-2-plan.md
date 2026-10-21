@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-- **Status:** `[Draft]`
+- **Status:** `[Done]` (Parts A and B built, checked hands-on and pushed on 2026-10-21)
 - **Branch:** `feat/DRRM-015-assessment-form`, in this worktree (`workspaces/drrmh-irs/Form`) only
 
 **Goal:** Administrators and super admins can list and open every submitted building assessment in their campus scope, fix wrong buildings and assessments, and see on the dashboard how the campus, each cluster, unit and building scores per DRRM pillar against the previous assessments.
@@ -62,24 +62,24 @@
 
 ## File map
 
-| Path                                                                       | Responsibility                                                                                         |
-| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `src/lib/admin-scope.ts` (+ test)                                          | `adminScope`: role and campus an admin caller may read                                                 |
-| `src/lib/server-auth.ts`                                                   | + `requireAdmin(token, requestedCampusId?)`                                                            |
-| `src/lib/assessment-records.ts`                                            | Server-only loaders: template version, `AssessmentRecord`, `BuildingScores` rows                       |
-| `src/lib/building-safety.ts` (+ test)                                      | Pure: pillar rows → scores, change, pooling, children, sections, most-failed, comparison, URL state    |
-| `src/actions/assessment-admin/index.ts`                                    | `getAssessmentList`, `getBuildingSummaries`, `getAssessment`, `deleteAssessment`                       |
-| `src/actions/building-safety/index.ts`                                     | `getSafetyRollup`, `getBuildingHistory`, `compareAssessments`                                          |
-| `src/components/hooks/use-assessments.ts`                                  | + admin and dashboard hooks                                                                            |
-| `src/app/(admin)/_components/shell/nav.ts`                                 | + Assessments item                                                                                     |
-| `src/app/(admin)/assessments/page.tsx` + `_components/`                    | Buildings / Assessments tabs                                                                           |
-| `src/app/(admin)/assessments/details/page.tsx`                             | Read-only detail, Print, Super Admin delete                                                            |
-| `src/app/(print)/assessments/report/page.tsx`                              | Admin A4 print                                                                                         |
-| `src/app/(ert)/assessment/_components/assessment-view.tsx`, `assessment-print.tsx` | Export `AssessmentRecordBody` / `RecordPrint` for reuse                                       |
-| `src/app/(admin)/settings/...`, `src/actions/settings/index.ts`, `src/lib/schemas.ts` | Buildings lookup tab                                                                        |
-| `src/app/globals.css`                                                      | + `--series-1` … `--series-6` (light and dark)                                                         |
-| `src/app/(admin)/_components/charts/`                                      | `GroupedBars`, `RowChart`, `LineChart`, `ChangeBadge`                                                  |
-| `src/app/(admin)/dashboard/_components/building-safety/`                   | The drill-down section                                                                                 |
+| Path                                                                                  | Responsibility                                                                                      |
+| ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `src/lib/admin-scope.ts` (+ test)                                                     | `adminScope`: role and campus an admin caller may read                                              |
+| `src/lib/server-auth.ts`                                                              | + `requireAdmin(token, requestedCampusId?)`                                                         |
+| `src/lib/assessment-records.ts`                                                       | Server-only loaders: template version, `AssessmentRecord`, `BuildingScores` rows                    |
+| `src/lib/building-safety.ts` (+ test)                                                 | Pure: pillar rows → scores, change, pooling, children, sections, most-failed, comparison, URL state |
+| `src/actions/assessment-admin/index.ts`                                               | `getAssessmentList`, `getBuildingSummaries`, `getAssessment`, `deleteAssessment`                    |
+| `src/actions/building-safety/index.ts`                                                | `getSafetyRollup`, `getBuildingHistory`, `compareAssessments`                                       |
+| `src/components/hooks/use-assessments.ts`                                             | + admin and dashboard hooks                                                                         |
+| `src/app/(admin)/_components/shell/nav.ts`                                            | + Assessments item                                                                                  |
+| `src/app/(admin)/assessments/page.tsx` + `_components/`                               | Buildings / Assessments tabs                                                                        |
+| `src/app/(admin)/assessments/details/page.tsx`                                        | Read-only detail, Print, Super Admin delete                                                         |
+| `src/app/(print)/assessments/report/page.tsx`                                         | Admin A4 print                                                                                      |
+| `src/app/(ert)/assessment/_components/assessment-view.tsx`, `assessment-print.tsx`    | Export `AssessmentRecordBody` / `RecordPrint` for reuse                                             |
+| `src/app/(admin)/settings/...`, `src/actions/settings/index.ts`, `src/lib/schemas.ts` | Buildings lookup tab                                                                                |
+| `src/app/globals.css`                                                                 | + `--series-1` … `--series-6` (light and dark)                                                      |
+| `src/app/(admin)/_components/charts/`                                                 | `GroupedBars`, `RowChart`, `LineChart`, `ChangeBadge`                                               |
+| `src/app/(admin)/dashboard/_components/building-safety/`                              | The drill-down section                                                                              |
 
 ---
 
@@ -100,13 +100,17 @@
   - `inScope(scope: AdminScope & { ok: true }, campusId: string): boolean`
   - `requireAdmin(token: string | null | undefined, requestedCampusId?: string | null): Promise<{ ok: true; profile: VerifiedProfile; scope: AdminScope & { ok: true } } | { ok: false }>` in `server-auth.ts`.
 
-- [ ] **Step 1: Write the failing test `src/lib/admin-scope.test.ts`**
+- [x] **Step 1: Write the failing test `src/lib/admin-scope.test.ts`**
 
 ```ts
 test('an administrator always gets their own campus', () => {
   const admin = { user_type: { name: 'Administrator' }, campus_id: 'own' };
   assert.deepEqual(adminScope(admin), { ok: true, role: 'administrator', campusId: 'own' });
-  assert.deepEqual(adminScope(admin, 'other'), { ok: true, role: 'administrator', campusId: 'own' });
+  assert.deepEqual(adminScope(admin, 'other'), {
+    ok: true,
+    role: 'administrator',
+    campusId: 'own',
+  });
   assert.deepEqual(adminScope(admin, null), { ok: true, role: 'administrator', campusId: 'own' });
   assert.deepEqual(adminScope({ ...admin, campus_id: null }), { ok: false });
 });
@@ -132,11 +136,11 @@ test('inScope: all campuses or the same one', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail** — `npm run test` → FAIL, module not found.
-- [ ] **Step 3: Implement `adminScope` and `inScope`** using `USER_TYPES` / `isAdminUserType` from `src/lib/constants.ts` for the role names.
-- [ ] **Step 4: Add `requireAdmin` to `server-auth.ts`**: `requireProfile(token)`, then `adminScope(profile, requestedCampusId)`; `{ ok: false }` when either fails.
-- [ ] **Step 5: Run** `npm run test` and `npm run type-check` → pass.
-- [ ] **Step 6: Commit** `feat(assessment): admin scope check for assessment reads`
+- [x] **Step 2: Run it to see it fail** — `npm run test` → FAIL, module not found.
+- [x] **Step 3: Implement `adminScope` and `inScope`** using `USER_TYPES` / `isAdminUserType` from `src/lib/constants.ts` for the role names.
+- [x] **Step 4: Add `requireAdmin` to `server-auth.ts`**: `requireProfile(token)`, then `adminScope(profile, requestedCampusId)`; `{ ok: false }` when either fails.
+- [x] **Step 5: Run** `npm run test` and `npm run type-check` → pass.
+- [x] **Step 6: Commit** `feat(assessment): admin scope check for assessment reads`
 
 ### Task 2: Shared loaders and score helpers
 
@@ -160,7 +164,7 @@ test('inScope: all campuses or the same one', () => {
   - `scoresFromPillarRows(rows: { code: string; safe_count: number; counted_count: number; na_count: number }[]): { overall: Tally; pillars: Record<PillarCode, Tally> }` — unknown codes ignored, missing pillars zero.
   - `pointsChange(before: Tally | null | undefined, after: Tally | null | undefined): number | null`
 
-- [ ] **Step 1: Write the failing tests in `building-safety.test.ts`**
+- [x] **Step 1: Write the failing tests in `building-safety.test.ts`**
 
 ```ts
 test('pillar rows add up to the overall score', () => {
@@ -183,10 +187,10 @@ test('change is in points, and nothing counted means no change', () => {
 });
 ```
 
-- [ ] **Step 2: Run them to see them fail.**
-- [ ] **Step 3: Implement both helpers**, then move `loadVersion` and the record mapping into `assessment-records.ts`, add `loadBuildingScores`, and make `getMyAssessment` call `loadAssessmentRecord({ id, evaluator_id: caller.profile.id })`.
-- [ ] **Step 4: Run** `npm run test`, `npm run type-check`, `npm run lint` → pass. Open one submitted assessment as the ERT test account on `npm run dev`: the view is unchanged.
-- [ ] **Step 5: Commit** `refactor(assessment): share the record loaders and score helpers`
+- [x] **Step 2: Run them to see them fail.**
+- [x] **Step 3: Implement both helpers**, then move `loadVersion` and the record mapping into `assessment-records.ts`, add `loadBuildingScores`, and make `getMyAssessment` call `loadAssessmentRecord({ id, evaluator_id: caller.profile.id })`.
+- [x] **Step 4: Run** `npm run test`, `npm run type-check`, `npm run lint` → pass. Open one submitted assessment as the ERT test account on `npm run dev`: the view is unchanged.
+- [x] **Step 5: Commit** `refactor(assessment): share the record loaders and score helpers`
 
 ### Task 3: Admin actions and hooks
 
@@ -210,10 +214,10 @@ test('change is in points, and nothing counted means no change', () => {
   - `useDeleteAssessment()`, invalidates `admin-assessments`, `building-summaries`, `building-safety`, `building-history`
 - Scope filter for every query: `building: { unit: { cluster: { campus_id: scope.campusId } } }` when `campusId` is set.
 
-- [ ] **Step 1: Implement the four actions** following `getMyAssessments` for the token handling.
-- [ ] **Step 2: Implement the hooks** following `useMyAssessments` (`await getAccessToken()` inside `queryFn`).
-- [ ] **Step 3: Run** `npm run type-check` and `npm run lint` → pass. (The actions are checked in the browser in Task 7; reading a session token out of the browser for a script is blocked in this environment.)
-- [ ] **Step 4: Commit** `feat(assessment): admin assessment reads with the campus lock`
+- [x] **Step 1: Implement the four actions** following `getMyAssessments` for the token handling.
+- [x] **Step 2: Implement the hooks** following `useMyAssessments` (`await getAccessToken()` inside `queryFn`).
+- [x] **Step 3: Run** `npm run type-check` and `npm run lint` → pass. (The actions are checked in the browser in Task 7; reading a session token out of the browser for a script is blocked in this environment.)
+- [x] **Step 4: Commit** `feat(assessment): admin assessment reads with the campus lock`
 
 ### Task 4: `/assessments` — Buildings and Assessments tabs
 
@@ -227,12 +231,12 @@ test('change is in points, and nothing counted means no change', () => {
 - Consumes: `useBuildingSummaries`, `useAssessmentList` (Task 3); `percent`, `recoveryStatus` from `assessment-score.ts`; `pointsChange` (Task 2); `PILLARS`.
 - Produces: `ChangeBadge({ value }: { value: number | null })` — "▲ 8" green, "▼ 8" red, "0" grey, nothing for `null`. Reused by Part B.
 
-- [ ] **Step 1: Nav item.** `{ key: 'assessments', label: 'Assessments', short: 'Assess', href: '/assessments', icon: ClipboardCheck }` after Bystander reports, not a bottom tab.
-- [ ] **Step 2: The page.** `PageHeader` "Assessments", subtitle "Building safety checklists (MATATAG)"; `ListTabs` Buildings | Assessments kept in `?tab=` (default `buildings`), like `/emergency-reports`.
-- [ ] **Step 3: Buildings tab.** `DataTable` + `MobileCard`. Columns: Building (name, unit under it), Cluster, Overall, Prevention, Preparedness, Response (each `percent` of `latest` with `ChangeBadge` of `pointsChange(previous, latest)`), PSCP (`recoveryStatus` → In place / Missing / N/A), Last assessed, Evaluator, a "Follow-up" `Chip` when `latest.needs_follow_up`. Buildings without assessments show "Not yet assessed" across the score columns. Search by name; Cluster `FilterSelect`. A row opens its latest assessment (`/assessments/details?id=`).
-- [ ] **Step 4: Assessments tab.** Columns: Building (+ unit), Cluster, Date (`ended_at`), Evaluator, Event, Overall, Follow-up. Filters: search, Cluster, Unit (narrowed by the cluster), From / To dates on `ended_at`. Client-side `Pager` like `/reports`. Rows open the detail.
-- [ ] **Step 5: Check** `npm run dev` as the admin test account: both tabs list the Phase 1 test assessments; the campus switcher (super admin) changes both. 390 and 1280 px.
-- [ ] **Step 6: Commit** `feat(assessment): admin assessments list`
+- [x] **Step 1: Nav item.** `{ key: 'assessments', label: 'Assessments', short: 'Assess', href: '/assessments', icon: ClipboardCheck }` after Bystander reports, not a bottom tab.
+- [x] **Step 2: The page.** `PageHeader` "Assessments", subtitle "Building safety checklists (MATATAG)"; `ListTabs` Buildings | Assessments kept in `?tab=` (default `buildings`), like `/emergency-reports`.
+- [x] **Step 3: Buildings tab.** `DataTable` + `MobileCard`. Columns: Building (name, unit under it), Cluster, Overall, Prevention, Preparedness, Response (each `percent` of `latest` with `ChangeBadge` of `pointsChange(previous, latest)`), PSCP (`recoveryStatus` → In place / Missing / N/A), Last assessed, Evaluator, a "Follow-up" `Chip` when `latest.needs_follow_up`. Buildings without assessments show "Not yet assessed" across the score columns. Search by name; Cluster `FilterSelect`. A row opens its latest assessment (`/assessments/details?id=`).
+- [x] **Step 4: Assessments tab.** Columns: Building (+ unit), Cluster, Date (`ended_at`), Evaluator, Event, Overall, Follow-up. Filters: search, Cluster, Unit (narrowed by the cluster), From / To dates on `ended_at`. Client-side `Pager` like `/reports`. Rows open the detail.
+- [x] **Step 5: Check** `npm run dev` as the admin test account: both tabs list the Phase 1 test assessments; the campus switcher (super admin) changes both. 390 and 1280 px.
+- [x] **Step 6: Commit** `feat(assessment): admin assessments list`
 
 ### Task 5: `/assessments/details` and admin print
 
@@ -248,12 +252,12 @@ test('change is in points, and nothing counted means no change', () => {
   - `AssessmentRecordBody({ record }: { record: AssessmentRecord })` exported from `assessment-view.tsx`: the details list, Scores (`ScoreSummary`) and Answers (with the "Not applicable (no …)" line) that `RecordView` renders today. `RecordView` keeps its hero, back link and Print button and renders this body.
   - `RecordPrint({ record, back }: { record: AssessmentRecord; back: React.ReactNode })` exported from `assessment-print.tsx`; `AssessmentPrint` passes its ERT back link.
 
-- [ ] **Step 1: Extract both components**; the ERT view and print page look and behave the same (check `/assessment?view=` and `?print=` as the ERT account).
-- [ ] **Step 2: The detail page** (`/assessments/details?id=`, same `Suspense` + `useSearchParams` pattern as `/events/details`): `PageHeader` with the building name, back to `/assessments`, a "Needs follow-up" chip, actions **Print** (opens `/assessments/report?id=` in a new tab, like Export PDF on events) and, for Super Admin only, **Delete**. Body: `AssessmentRecordBody`. Not found / out of scope → "Assessment not found" card like events.
-- [ ] **Step 3: Delete** behind `ConfirmDialog` (tone `danger`, title "Delete this assessment?", `name` = building and date, body "will be permanently deleted with its answers and scores. This cannot be undone.", confirm "Delete assessment"). On success: toast, `router.push('/assessments')`.
-- [ ] **Step 4: Admin print page** `/assessments/report?id=`: `useAdminAssessment` → `RecordPrint` with a back link to the detail page.
-- [ ] **Step 5: Check** as admin and super admin: detail, print (stub `window.print` as in Phase 1), delete hidden for admin; as super admin delete a Phase 1 test assessment (ask the user which one first).
-- [ ] **Step 6: Commit** `feat(assessment): admin assessment detail, print and delete`
+- [x] **Step 1: Extract both components**; the ERT view and print page look and behave the same (check `/assessment?view=` and `?print=` as the ERT account).
+- [x] **Step 2: The detail page** (`/assessments/details?id=`, same `Suspense` + `useSearchParams` pattern as `/events/details`): `PageHeader` with the building name, back to `/assessments`, a "Needs follow-up" chip, actions **Print** (opens `/assessments/report?id=` in a new tab, like Export PDF on events) and, for Super Admin only, **Delete**. Body: `AssessmentRecordBody`. Not found / out of scope → "Assessment not found" card like events.
+- [x] **Step 3: Delete** behind `ConfirmDialog` (tone `danger`, title "Delete this assessment?", `name` = building and date, body "will be permanently deleted with its answers and scores. This cannot be undone.", confirm "Delete assessment"). On success: toast, `router.push('/assessments')`.
+- [x] **Step 4: Admin print page** `/assessments/report?id=`: `useAdminAssessment` → `RecordPrint` with a back link to the detail page.
+- [x] **Step 5: Check** as admin and super admin: detail, print (stub `window.print` as in Phase 1), delete hidden for admin; as super admin delete a Phase 1 test assessment (ask the user which one first).
+- [x] **Step 6: Commit** `feat(assessment): admin assessment detail, print and delete`
 
 ### Task 6: Settings → Buildings (Task 9b)
 
@@ -269,21 +273,21 @@ test('change is in points, and nothing counted means no change', () => {
   - `buildingSchema = z.object({ name: z.string().trim().min(1).max(120), unit_id: z.string().uuid(), floor_count: z.coerce.number().int().min(1).max(200), is_active: z.boolean() })`, messages in the style of `unitSchema`.
   - `LOOKUPS.buildings = { table: 'buildings', label: 'Buildings', singular: 'building', noun: 'buildings' }`.
 
-- [ ] **Step 1: Actions and schema.**
-- [ ] **Step 2: LookupTable for buildings.** Rows filtered to the scoped campus via `unit.cluster.campus_id`; columns Name, Unit (cluster under it), Floors, Created, Active, actions; Cluster `FilterSelect`; `linkedWarning` counts `assessments` too ("… assessments are linked to it. If it can't be deleted, turn it off instead …"). Drawer: Name, Unit (`SelectField`, campus-scoped active units labelled "Unit · Cluster"), Floors (whole number 1–200), Active.
-- [ ] **Step 3: Check** as admin: rename a building (the new name shows on its assessments), move it to another unit, set floors, turn it off (it disappears from the ERT Details step and from `/assessments` Buildings), try deleting one with assessments (friendly refusal), delete one without (works). Renaming to an existing name in the same unit gives "A building with that value already exists."
-- [ ] **Step 4: Commit** `feat(assessment): manage buildings in settings`
+- [x] **Step 1: Actions and schema.**
+- [x] **Step 2: LookupTable for buildings.** Rows filtered to the scoped campus via `unit.cluster.campus_id`; columns Name, Unit (cluster under it), Floors, Created, Active, actions; Cluster `FilterSelect`; `linkedWarning` counts `assessments` too ("… assessments are linked to it. If it can't be deleted, turn it off instead …"). Drawer: Name, Unit (`SelectField`, campus-scoped active units labelled "Unit · Cluster"), Floors (whole number 1–200), Active.
+- [x] **Step 3: Check** as admin: rename a building (the new name shows on its assessments), move it to another unit, set floors, turn it off (it disappears from the ERT Details step and from `/assessments` Buildings), try deleting one with assessments (friendly refusal), delete one without (works). Renaming to an existing name in the same unit gives "A building with that value already exists."
+- [x] **Step 4: Commit** `feat(assessment): manage buildings in settings`
 
 ### Task 7: Part A check, docs, push
 
-- [ ] **Step 1:** `npm run lint && npm run type-check && npm run test && npm run build`.
-- [ ] **Step 2: Hands-on on a production build** (`npm run build`, then `npx next start -p 3100` with `.env.development.local` exported; port 3000 may be taken):
+- [x] **Step 1:** `npm run lint && npm run type-check && npm run test && npm run build`.
+- [x] **Step 2: Hands-on on a production build** (`npm run build`, then `npx next start -p 3100` with `.env.development.local` exported; port 3000 may be taken):
   - Admin: only their campus everywhere; `/assessments?tab=assessments` filters work; detail and print work; no Delete.
   - Super admin: switcher All / one campus changes both tabs; Delete works and the building returns to "Not yet assessed" when it was its only assessment.
   - ERT member: `/assessments` sends them to `/home` (`ProtectedRoute`).
   - 320 / 390 / 900 / 1280 px, light and dark, on both tabs, the detail and Settings → Buildings.
-- [ ] **Step 3: Docs:** spec Section 6 tick Task 9 and 9b; Section 2 tick "Admin `/assessments` …". CLAUDE.md: admin assessments (actions domain, `requireAdmin`, the Settings → Buildings tab). README feature list: Assessments (admin).
-- [ ] **Step 4: Commit and push** `docs(assessment): admin assessments (phase 2 part A)`.
+- [x] **Step 3: Docs:** spec Section 6 tick Task 9 and 9b; Section 2 tick "Admin `/assessments` …". CLAUDE.md: admin assessments (actions domain, `requireAdmin`, the Settings → Buildings tab). README feature list: Assessments (admin).
+- [x] **Step 4: Commit and push** `docs(assessment): admin assessments (phase 2 part A)`.
 
 ---
 
@@ -317,7 +321,7 @@ test('change is in points, and nothing counted means no change', () => {
   - `interface DashboardScope { campusId: string | null; clusterId: string | null; unitId: string | null; buildingId: string | null; a: string | null; b: string | null }`
   - `scopeFromParams(params: URLSearchParams, opts: { isSuperAdmin: boolean; switcherCampusId: string }): DashboardScope` — reads `bs_campus`, `bs_cluster`, `bs_unit`, `bs_building`, `bs_a`, `bs_b`; an Administrator's `campusId` is always `null` (the server uses their own); a Super Admin's falls back to the switcher (`''` → `null`).
 
-- [ ] **Step 1: Write the failing tests** (building fixtures made with a small `building(id, unit, cluster, latest?, previous?)` helper in the test file):
+- [x] **Step 1: Write the failing tests** (building fixtures made with a small `building(id, unit, cluster, latest?, previous?)` helper in the test file):
 
 ```ts
 test('pooled current counts every latest; the change only re-assessed buildings', () => {
@@ -341,18 +345,39 @@ test('a building older assessment never counts toward the tiles', () => {
 });
 
 test('children follow the level', () => {
-  const bs = [building('A', 'u1', 'c1', s(1, 1)), building('B', 'u2', 'c1'), building('C', 'u3', 'c2')];
-  assert.deepEqual(groupChildren(bs, 'campus').map((c) => [c.kind, c.id, c.buildings]), [
-    ['cluster', 'c1', 2],
-    ['cluster', 'c2', 1],
-  ]);
-  assert.deepEqual(groupChildren(bs, 'unit').map((c) => c.kind), ['building', 'building', 'building']);
+  const bs = [
+    building('A', 'u1', 'c1', s(1, 1)),
+    building('B', 'u2', 'c1'),
+    building('C', 'u3', 'c2'),
+  ];
+  assert.deepEqual(
+    groupChildren(bs, 'campus').map((c) => [c.kind, c.id, c.buildings]),
+    [
+      ['cluster', 'c1', 2],
+      ['cluster', 'c2', 1],
+    ]
+  );
+  assert.deepEqual(
+    groupChildren(bs, 'unit').map((c) => c.kind),
+    ['building', 'building', 'building']
+  );
 });
 
 test('most failed: per pillar, out of the buildings that answered it', () => {
-  const facts = [fact('a1', 'V.4', 'no'), fact('a2', 'V.4', 'no'), fact('a3', 'V.4', 'yes'), fact('a3', 'II.1', 'na')];
+  const facts = [
+    fact('a1', 'V.4', 'no'),
+    fact('a2', 'V.4', 'no'),
+    fact('a3', 'V.4', 'yes'),
+    fact('a3', 'II.1', 'na'),
+  ];
   const [response] = mostFailed(facts, ['a1', 'a2', 'a3']);
-  assert.deepEqual(response.items[0], { label: 'V.4', prompt_en: 'V.4 en', prompt_fil: 'V.4 fil', unsafe: 2, of: 3 });
+  assert.deepEqual(response.items[0], {
+    label: 'V.4',
+    prompt_en: 'V.4 en',
+    prompt_fil: 'V.4 fil',
+    unsafe: 2,
+    of: 3,
+  });
 });
 
 test('compare: a section only in B has no change; different versions are flagged', () => {
@@ -376,15 +401,21 @@ test('compare pair: defaults, and bad picks fall back', () => {
 test('an administrator never picks the campus from the URL', () => {
   const p = new URLSearchParams('bs_campus=other&bs_cluster=c1');
   assert.equal(scopeFromParams(p, { isSuperAdmin: false, switcherCampusId: '' }).campusId, null);
-  assert.equal(scopeFromParams(p, { isSuperAdmin: true, switcherCampusId: 'sw' }).campusId, 'other');
-  assert.equal(scopeFromParams(new URLSearchParams(), { isSuperAdmin: true, switcherCampusId: 'sw' }).campusId, 'sw');
+  assert.equal(
+    scopeFromParams(p, { isSuperAdmin: true, switcherCampusId: 'sw' }).campusId,
+    'other'
+  );
+  assert.equal(
+    scopeFromParams(new URLSearchParams(), { isSuperAdmin: true, switcherCampusId: 'sw' }).campusId,
+    'sw'
+  );
 });
 ```
 
-- [ ] **Step 2: Run them to see them fail.**
-- [ ] **Step 3: Implement.**
-- [ ] **Step 4: Run** `npm run test` → pass.
-- [ ] **Step 5: Commit** `feat(assessment): building safety rollup logic`
+- [x] **Step 2: Run them to see them fail.**
+- [x] **Step 3: Implement.**
+- [x] **Step 4: Run** `npm run test` → pass.
+- [x] **Step 5: Commit** `feat(assessment): building safety rollup logic`
 
 ### Task 9: Dashboard actions and hooks
 
@@ -402,10 +433,10 @@ test('an administrator never picks the campus from the URL', () => {
   - `compareAssessments(token: string | null, aId: string, bId: string): Promise<Comparison | null>` — `null` unless both are in scope and in the same building.
 - Produces (hooks): `useSafetyRollup(scope)` key `['building-safety', scope]`; `useBuildingHistory(buildingId)` key `['building-history', buildingId]`; `useCompareAssessments(aId, bId)` key `['assessment-compare', aId, bId]`, enabled only with both.
 
-- [ ] **Step 1: Implement the actions** (active buildings only; `notAssessed` = in-scope buildings without `latest`).
-- [ ] **Step 2: Implement the hooks.**
-- [ ] **Step 3: Run** `npm run type-check`, `npm run lint` → pass.
-- [ ] **Step 4: Commit** `feat(assessment): building safety rollup, history and compare actions`
+- [x] **Step 1: Implement the actions** (active buildings only; `notAssessed` = in-scope buildings without `latest`).
+- [x] **Step 2: Implement the hooks.**
+- [x] **Step 3: Run** `npm run type-check`, `npm run lint` → pass.
+- [x] **Step 4: Commit** `feat(assessment): building safety rollup, history and compare actions`
 
 ### Task 10: Charts
 
@@ -423,9 +454,9 @@ test('an administrator never picks the campus from the URL', () => {
   - `LineChart({ points, lines, label }: { points: { label: string; sublabel?: string; marker?: string }[]; lines: { id: string; name: string; color: string; values: (number | null)[] }[]; label: string })` — 0–100 y axis; `marker` (linked event name) drawn on the point.
   - Every chart prints its values and labels every colour (like `summary/charts.tsx`): readable without hover and in black and white.
 
-- [ ] **Step 1: Load the `dataviz` skill**, add the tokens, build the three charts.
-- [ ] **Step 2: Check** them on a scratch page under `npm run dev` with fixed data at 320 / 1280 px, light and dark; remove the scratch page.
-- [ ] **Step 3: Commit** `feat(assessment): building safety charts`
+- [x] **Step 1: Load the `dataviz` skill**, add the tokens, build the three charts.
+- [x] **Step 2: Check** them on a scratch page under `npm run dev` with fixed data at 320 / 1280 px, light and dark; remove the scratch page.
+- [x] **Step 3: Commit** `feat(assessment): building safety charts`
 
 ### Task 11: Dashboard "Building safety" section
 
@@ -439,29 +470,29 @@ test('an administrator never picks the campus from the URL', () => {
 - Consumes: Tasks 8–10; `useScopedCampusId`, `useIsSuperAdmin`; `ChangeBadge` (Task 4).
 - Produces: `<BuildingSafety />`, placed in `dashboard/page.tsx` below the reports/events cards and above `MonthCard`.
 
-- [ ] **Step 1: State.** `scopeFromParams(useSearchParams(), …)`; drilling sets the `bs_` params with `router.replace(…, { scroll: false })` and clears the deeper ones; the section's own Suspense boundary. Drilling never touches `useCampusScopeStore`.
-- [ ] **Step 2: Aggregate levels** (`all`, `campus`, `cluster`, `unit`):
+- [x] **Step 1: State.** `scopeFromParams(useSearchParams(), …)`; drilling sets the `bs_` params with `router.replace(…, { scroll: false })` and clears the deeper ones; the section's own Suspense boundary. Drilling never touches `useCampusScopeStore`.
+- [x] **Step 2: Aggregate levels** (`all`, `campus`, `cluster`, `unit`):
   - Breadcrumb (e.g. "UP Manila › Pedro Gil › College of Nursing"); an Administrator's starts at their campus, with no "All campuses".
   - Tiles: Overall, Prevention, Preparedness, Response = `percent(group.current…)` with `ChangeBadge` of the like-for-like pair and the "▲ n pts · k of m buildings re-assessed" line; Recovery = "{n} of {m} buildings have a Public Service Continuity Plan" with the change in n.
   - Chart: `GroupedBars` up to 6 children, else `RowChart` with an Overall / Prevention / Preparedness / Response toggle; clicking drills in.
   - Children table: name, assessed / total, overall, the three pillars with change, PSCP n/m, last assessed; rows drill in. "Not yet assessed ({n})" under it, listing the names at unit level.
   - "By section" in a collapsed `<details>`; "Most-failed items" with the fixed copy.
   - Empty campus (nothing assessed yet): one `EmptyNote`.
-- [ ] **Step 3: Building level:** `LineChart` of overall across #1…#n (labels "#k" + date, the event name as marker), a toggle to add the three pillar lines; A / B pickers listing "#k · date · overall % · event" defaulting through `comparePair`; the comparison table (Overall, four pillars — Recovery as In place / Missing / N/A — and the sections, each A, B, change; "—" when absent), the version note when `versionsDiffer`, and links to each side's detail page. One assessment: show it and "Needs a second assessment to compare".
-- [ ] **Step 4: "Compare"** on a Buildings-tab row links to `/dashboard?bs_campus=…&bs_cluster=…&bs_unit=…&bs_building=…`.
-- [ ] **Step 5: Check** under `npm run dev` with the Task 12 sample data (write the data first if needed), 320 / 390 / 900 / 1280, light and dark.
-- [ ] **Step 6: Commit** `feat(assessment): building safety section on the dashboard`
+- [x] **Step 3: Building level:** `LineChart` of overall across #1…#n (labels "#k" + date, the event name as marker), a toggle to add the three pillar lines; A / B pickers listing "#k · date · overall % · event" defaulting through `comparePair`; the comparison table (Overall, four pillars — Recovery as In place / Missing / N/A — and the sections, each A, B, change; "—" when absent), the version note when `versionsDiffer`, and links to each side's detail page. One assessment: show it and "Needs a second assessment to compare".
+- [x] **Step 4: "Compare"** on a Buildings-tab row links to `/dashboard?bs_campus=…&bs_cluster=…&bs_unit=…&bs_building=…`.
+- [x] **Step 5: Check** under `npm run dev` with the Task 12 sample data (write the data first if needed), 320 / 390 / 900 / 1280, light and dark.
+- [x] **Step 6: Commit** `feat(assessment): building safety section on the dashboard`
 
 ### Task 12: Sample data, Part B check, docs, push
 
-- [ ] **Step 1: Sample data (ask the user first).** A scratchpad script (`npx tsx --tsconfig tsconfig.json --env-file=.env.development.local <scratchpad>/sample-assessments.ts`) that, in one campus, creates buildings named "Sample …" in two clusters / two units — buildings with 1, 2 and 4 assessments, one with Laboratories ticked only in its later assessments, and one unit with 7 buildings — with seeded answers written through `prepareAssessmentWrite` (answers, pillar rows, `needs_follow_up`) and `ended_at` spaced a month apart. It prints what it created; a second run does nothing. Name everything "Sample" so it can be found and removed.
-- [ ] **Step 2: Hands-on (spec Section 7)** on a production build:
+- [x] **Step 1: Sample data (ask the user first).** A scratchpad script (`npx tsx --tsconfig tsconfig.json --env-file=.env.development.local <scratchpad>/sample-assessments.ts`) that, in one campus, creates buildings named "Sample …" in two clusters / two units — buildings with 1, 2 and 4 assessments, one with Laboratories ticked only in its later assessments, and one unit with 7 buildings — with seeded answers written through `prepareAssessmentWrite` (answers, pillar rows, `needs_follow_up`) and `ended_at` spaced a month apart. It prints what it created; a second run does nothing. Name everything "Sample" so it can be found and removed.
+- [x] **Step 2: Hands-on (spec Section 7)** on a production build:
   - Pillar math: for one assessment, the four pillar rows equal its overall; at each level the tiles equal a hand sum over each building's latest rows (print the sums from a scratch script); older assessments don't count.
   - Drill campus → cluster → unit → building and back by the breadcrumb and the browser Back button; a reload keeps the level.
   - Like-for-like: the building with one assessment raises the current % but not the change; "k of m re-assessed" is right.
   - Building with 4: default #3 vs #4; #1 vs #4 changes the table; A = B can't be picked; Labs shows "—" with no change where it applied only in B.
   - The 7-building unit shows the row chart.
   - Administrator: no "All campuses"; a URL with another campus's `bs_campus` still shows their own. Super admin: All campuses → campus works.
-- [ ] **Step 3: Docs:** spec Section 6 tick Task 10 and Docs; Section 2 tick the dashboard criterion and, if all checked, "Light and dark mode; phone, tablet and web layouts"; Section 7 tick Pillar math, Dashboard drill-down and Language. CLAUDE.md: the Building safety section (`building-safety.ts`, `bs_` URL params, `requireAdmin`). README: dashboard Building safety. This plan: status Done.
-- [ ] **Step 4: Run** `npm run lint && npm run type-check && npm run test && npm run build`.
-- [ ] **Step 5: Commit and push** `docs(assessment): document building safety (phase 2)`.
+- [x] **Step 3: Docs:** spec Section 6 tick Task 10 and Docs; Section 2 tick the dashboard criterion and, if all checked, "Light and dark mode; phone, tablet and web layouts"; Section 7 tick Pillar math, Dashboard drill-down and Language. CLAUDE.md: the Building safety section (`building-safety.ts`, `bs_` URL params, `requireAdmin`). README: dashboard Building safety. This plan: status Done.
+- [x] **Step 4: Run** `npm run lint && npm run type-check && npm run test && npm run build`.
+- [x] **Step 5: Commit and push** `docs(assessment): document building safety (phase 2)`.
