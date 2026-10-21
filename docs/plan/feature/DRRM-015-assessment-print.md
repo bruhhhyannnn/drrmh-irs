@@ -1,6 +1,6 @@
 # DRRM-015 Feature Plan: Printable building assessment
 
-- **Status:** In Review
+- **Status:** Done
 - **Target Branch / PR:** `feat/DRRM-015-assessment-form`
 - **Owner / Author:** DevJom
 
@@ -69,4 +69,4 @@
 - [x] Opened a submitted assessment, Print → `?print=<id>`, the dialog opens once; checked page 1,
       the unsafe highlighting and the signature row in the browser.
 - [x] `npm run lint`, `npm run type-check`, `npm run test`, `npm run build`
-- [ ] Print on paper / save as PDF from Chrome on desktop and Android and check page breaks.
+- [x] Print on paper / save as PDF from Chrome on desktop and Android and check page breaks (checked by DevJom, 2026-10-21).
