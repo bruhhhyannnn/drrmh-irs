@@ -167,7 +167,7 @@ export function ScoreSummary({
                 <th scope="col" className="px-2 py-2.5 text-right">
                   Safe
                 </th>
-                <th scope="col" className="py-2.5 pr-4 pl-2 text-right md:pr-5">
+                <th scope="col" className="py-2.5 pr-4 pl-2 text-right max-[359px]:hidden md:pr-5">
                   Count
                 </th>
               </tr>
@@ -182,13 +182,22 @@ export function ScoreSummary({
                         <Mono className="w-9 shrink-0 font-semibold text-gray-500">
                           {section.code}
                         </Mono>
-                        <Bilingual en={section.title_en} fil={section.title_fil} />
+                        {/* Titles like "Services/Maintenance" have no space to wrap at. */}
+                        <Bilingual
+                          en={section.title_en}
+                          fil={section.title_fil}
+                          className="min-w-0 [overflow-wrap:anywhere]"
+                        />
                       </span>
                     </th>
-                    <td className="px-2 py-3 text-right align-top">
+                    <td className="px-2 py-3 text-right align-top max-[359px]:pr-4">
                       <Mono className="font-semibold">{formatPercent(tally)}</Mono>
+                      {/* Below 360px the Count column doesn't fit, so the count sits here. */}
+                      <Mono className="block text-[13px] whitespace-nowrap text-gray-600 min-[360px]:hidden">
+                        {tally.safe} of {tally.counted}
+                      </Mono>
                     </td>
-                    <td className="py-3 pr-4 pl-2 text-right align-top whitespace-nowrap text-gray-600 md:pr-5">
+                    <td className="py-3 pr-4 pl-2 text-right align-top whitespace-nowrap text-gray-600 max-[359px]:hidden md:pr-5">
                       <Mono>
                         {tally.safe} of {tally.counted}
                       </Mono>
