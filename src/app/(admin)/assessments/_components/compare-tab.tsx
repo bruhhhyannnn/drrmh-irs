@@ -7,7 +7,6 @@ import { useState } from 'react';
 import { FilterSelect, ListToolbar } from '../../_components/data-list';
 import { useScopedCampusId } from '../../_components/shell/campus-switcher';
 import { EmptyNote, Skeleton } from '../../_components/ui';
-import { plural } from '../../_lib/format';
 import { BuildingCompareView } from '../../dashboard/_components/building-safety/building-level';
 
 /** Compare a building's assessments (history line + A/B side-by-side) right on /assessments. */
@@ -77,11 +76,7 @@ export function CompareTab() {
             placeholder="Select a building"
             options={buildings.map((b) => ({
               value: b.id,
-              label: `${b.name} · ${b.unit.name} (${plural(
-                b.assessment_count,
-                'assessment',
-                'assessments'
-              )})`,
+              label: `${b.name} (${b.assessment_count})`,
             }))}
           />
         </div>
