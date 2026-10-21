@@ -102,6 +102,8 @@ export function OfflineQueueProvider() {
           n === 1 ? '1 offline assessment submitted' : `${n} offline assessments submitted`
         );
         queryClient.invalidateQueries({ queryKey: ['my-assessments'] });
+        // A building added offline only exists once its assessment lands.
+        queryClient.invalidateQueries({ queryKey: ['assessment-setup'] });
       }
       if (assessmentResult.failed > 0) {
         const n = assessmentResult.failed;
