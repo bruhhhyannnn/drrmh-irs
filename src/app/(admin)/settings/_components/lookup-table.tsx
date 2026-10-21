@@ -33,6 +33,7 @@ import {
   MobileCard,
   NameCell,
   NumberCell,
+  Pager,
   RowActions,
   SearchField,
   TextCell,
@@ -124,6 +125,7 @@ export function LookupTable({
   const remove = useDeleteSetting(table);
   const [query, setQuery] = useState('');
   const [clusterId, setClusterId] = useState('');
+  const [page, setPage] = useState(1);
   // The row stays set while the drawer slides out, so its title doesn't flip to Add.
   const [drawer, setDrawer] = useState<{ open: boolean; row: LookupRow | null }>({
     open: false,
@@ -155,6 +157,9 @@ export function LookupTable({
     if (isBuildings && clusterId && r.unit?.cluster_id !== clusterId) return false;
     return !query.trim() || r.name.toLowerCase().includes(query.trim().toLowerCase());
   });
+  const totalPages = Math.max(1, Math.ceil(rows.length / 10));
+  const current = Math.min(page, totalPages);
+  const shown = rows.slice((current - 1) * 10, current * 10);
 
   const setActive = (row: LookupRow, isActive: boolean) =>
     update.mutate(
@@ -287,14 +292,20 @@ export function LookupTable({
             label={`Search ${noun}`}
             placeholder={`Search ${noun}…`}
             value={query}
-            onChange={setQuery}
+            onChange={(v) => {
+              setQuery(v);
+              setPage(1);
+            }}
           />
           {(isUnits || isBuildings) && (
             <FilterSelect
               label="Cluster"
               allLabel="All clusters"
               value={clusterId}
-              onChange={setClusterId}
+              onChange={(v) => {
+                setClusterId(v);
+                setPage(1);
+              }}
               options={scopedClusters.map((c) => ({ value: c.id, label: c.name }))}
             />
           )}
@@ -305,7 +316,7 @@ export function LookupTable({
         <DataTable
           label={label}
           columns={columns}
-          rows={rows}
+          rows={shown}
           rowKey={(r) => r.id}
           loading={isPending}
           rowClassName={(r) => (r.is_active ? undefined : 'bg-gray-25')}
@@ -348,6 +359,7 @@ export function LookupTable({
             />
           )}
         />
+        <Pager page={current} totalPages={totalPages} onChange={setPage} />
       </ListCard>
 
       <LookupDrawer

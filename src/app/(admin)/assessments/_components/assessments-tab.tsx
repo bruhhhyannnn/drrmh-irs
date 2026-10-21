@@ -24,7 +24,7 @@ import { Chip, EmptyNote } from '../../_components/ui';
 import { formatDate, plural } from '../../_lib/format';
 import { ScoreCell } from './score-cell';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 const detailHref = (id: string) => `/assessments/details?id=${id}`;
 

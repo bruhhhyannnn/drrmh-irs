@@ -13,6 +13,7 @@ import {
   ListToolbar,
   MobileCard,
   NameCell,
+  Pager,
   RowActions,
   SearchField,
   TextCell,
@@ -22,6 +23,8 @@ import { useScopedCampusId } from '../../_components/shell/campus-switcher';
 import { Chip, EmptyNote } from '../../_components/ui';
 import { formatDate, plural } from '../../_lib/format';
 import { RECOVERY_TEXT, RecoveryCell, ScoreCell } from './score-cell';
+
+const PAGE_SIZE = 10;
 
 const detailHref = (id: string) => `/assessments/details?id=${id}`;
 
@@ -40,8 +43,16 @@ export function BuildingsTab() {
   const { data = [], isPending, error } = useBuildingSummaries(campusId);
   const [query, setQuery] = useState('');
   const [clusterId, setClusterId] = useState('');
+  const [page, setPage] = useState(1);
 
   if (error) return <EmptyNote>The buildings couldn&apos;t be loaded: {error.message}</EmptyNote>;
+
+  const reset =
+    <T,>(set: (value: T) => void) =>
+    (value: T) => {
+      set(value);
+      setPage(1);
+    };
 
   const clusters = [...new Map(data.map((b) => [b.cluster.id, b.cluster])).values()].sort((a, b) =>
     a.name.localeCompare(b.name)
@@ -52,6 +63,9 @@ export function BuildingsTab() {
       (!clusterId || b.cluster.id === clusterId) &&
       (!q || b.name.toLowerCase().includes(q) || b.unit.name.toLowerCase().includes(q))
   );
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const current = Math.min(page, totalPages);
+  const shown = rows.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
 
   const notYet = <TextCell>Not yet assessed</TextCell>;
   const columns: Column<BuildingScores>[] = [
@@ -147,13 +161,13 @@ export function BuildingsTab() {
           label="Search buildings"
           placeholder="Search buildings…"
           value={query}
-          onChange={setQuery}
+          onChange={reset(setQuery)}
         />
         <FilterSelect
           label="Cluster"
           allLabel="All clusters"
           value={clusterId}
-          onChange={setClusterId}
+          onChange={reset(setClusterId)}
           options={clusters.map((c) => ({ value: c.id, label: c.name }))}
         />
         <ListCount loading={isPending}>{plural(rows.length, 'building', 'buildings')}</ListCount>
@@ -161,7 +175,7 @@ export function BuildingsTab() {
       <DataTable
         label="Buildings"
         columns={columns}
-        rows={rows}
+        rows={shown}
         rowKey={(b) => b.id}
         loading={isPending}
         empty={
@@ -216,6 +230,7 @@ export function BuildingsTab() {
           />
         )}
       />
+      <Pager page={current} totalPages={totalPages} onChange={setPage} />
     </>
   );
 }
