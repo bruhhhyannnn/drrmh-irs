@@ -215,7 +215,12 @@ function FloorsInput({
         onChange={(e) => setText(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => {
-          if (e.key === 'Enter') e.currentTarget.blur();
+          // preventDefault so the same Enter doesn't also press the set-aside dialog's button,
+          // which takes focus as the blur opens it.
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            e.currentTarget.blur();
+          }
           if (e.key === 'Escape') {
             cancelled.current = true;
             e.currentTarget.blur();
