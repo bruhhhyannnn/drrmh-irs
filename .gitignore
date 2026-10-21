@@ -41,6 +41,9 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# local test accounts (credentials for the test Supabase project)
+test-accounts.local.md
+
 # vercel
 .vercel
 

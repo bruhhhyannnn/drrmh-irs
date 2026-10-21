@@ -604,7 +604,7 @@ Three phases, all on `feat/DRRM-015-assessment-form` in this worktree. Each phas
   - Submit → it queues. Back online → it sends once.
   - Replaying the same `client_ref` → no duplicate.
 - [x] Access (hands-on 2026-10-21):
-  - An Administrator calling `createAssessment` with their token → rejected. Not run as written: the server's refusal was checked through the Safety Officer flip below (same `canUseAssessment` check in the action); an Administrator is sent from `/assessment` to `/dashboard`.
+  - An Administrator calling `createAssessment` with their token → rejected. Accepted as covered rather than run as a token script (DevJom, 2026-10-21): the server's refusal was checked through the Safety Officer flip below (the same `canUseAssessment` check in the action), `access.test.ts` shows the rule refuses Administrator, Super Admin and Bystander, and an Administrator is sent from `/assessment` to `/dashboard`.
   - An ERT member → allowed.
   - Flip `canUseAssessment` to the Safety Officer rule locally → the card, switch, page and action all follow. The queued entry failed with "Your account can't submit assessments." and sent with Try again after the revert.
 - [ ] Super admin: a wording edit shows on old and new assessments. A structural edit needs a draft, and old assessments still show their original items after publish.

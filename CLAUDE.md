@@ -34,6 +34,8 @@ DATABASE_URL="$(grep -E '^DIRECT_URL=' .env.development.local | cut -d= -f2- | t
 > - `npx prisma migrate dev` (DISALLOWED)
 > - `npx prisma migrate reset` (DISALLOWED)
 
+To sign in while testing in a browser, use the test accounts (ERT Member, Administrator, Super Admin) listed in `test-accounts.local.md` at the repo root. It is gitignored and lives only on the developer's machine, so a fresh worktree may not have it — ask the user then, and never copy its contents into committed files.
+
 `npm run test` covers the pure assessment logic in `src/lib` (and the checklist data), not UI or server actions, and CI doesn't run it yet. Verify changes with `npm run lint`, `npm run type-check`, `npm run test`, and `npm run build`.
 
 CI (`.github/workflows/ci.yml`) runs on PRs/pushes to `main`: `npm ci` → `prisma generate` → `npm audit --audit-level=critical` → lint → type-check → build. Pre-commit hook (Husky) runs `lint-staged` (eslint --fix + prettier on staged files).
