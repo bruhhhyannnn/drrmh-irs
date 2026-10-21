@@ -72,7 +72,11 @@ function BuildingSafetyLevel() {
       else p.delete(key);
     }
     const query = p.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    const url = query ? `${pathname}?${query}` : pathname;
+    // A new level is a history entry, so Back walks up; changing the A/B picks is not.
+    const picksOnly = Object.keys(next).every((key) => key === 'bs_a' || key === 'bs_b');
+    if (picksOnly) router.replace(url, { scroll: false });
+    else router.push(url, { scroll: false });
   };
 
   // A new campus in the switcher starts the section over at that campus.

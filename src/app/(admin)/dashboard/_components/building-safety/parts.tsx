@@ -81,8 +81,11 @@ function Tile({
   return (
     <div className="flex min-w-0 flex-col gap-1 rounded-[18px] border border-gray-200 bg-surface px-4.5 py-4">
       <span className="text-[14px] leading-[1.3] font-semibold text-gray-600">{label}</span>
-      <span className="flex items-baseline gap-2">
-        <Mono className="text-[28px] leading-[1.1] font-extrabold text-gray-900">{value}</Mono>
+      {/* The change wraps under the value on a narrow phone. */}
+      <span className="flex flex-wrap items-baseline gap-x-2">
+        <Mono className="text-[28px] leading-[1.1] font-extrabold whitespace-nowrap text-gray-900">
+          {value}
+        </Mono>
         {change !== undefined && change !== null && (
           <span className="flex items-baseline gap-1">
             <ChangeBadge value={change} className="text-[14px]" />
