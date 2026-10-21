@@ -14,7 +14,7 @@ import {
   type TemplateSection,
 } from '@/lib/assessment-template';
 import { useOfflineQueueStore } from '@/store';
-import { ArrowLeft, FileQuestion, WifiOff } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileQuestion, WifiOff } from 'lucide-react';
 import {
   Card,
   DetailList,
@@ -73,6 +73,10 @@ function BackButton() {
 }
 
 const ANSWER_TEXT: Record<AnswerValue, string> = { yes: 'Yes', no: 'No', na: 'N/A' };
+
+function isUnsafe(item: TemplateItem, value: AnswerValue | null | undefined) {
+  return item.is_scored && value != null && value !== 'na' && value !== item.safe_answer;
+}
 
 function RecordView({ record }: { record: AssessmentRecord }) {
   const { template } = record;
@@ -155,37 +159,57 @@ function SectionAnswers({
   record: AssessmentRecord;
 }) {
   const comment = record.comments[section.id];
+  const unsafe = items.filter((item) => isUnsafe(item, record.answers[item.id]?.answer)).length;
   return (
-    <Card className="flex flex-col p-5 md:p-6">
-      <div className="flex items-start gap-3">
-        <Mono className="bg-brand-25 text-brand-500 grid h-7 min-w-7 shrink-0 place-items-center rounded-full px-1.5 text-[14px] font-semibold">
-          {section.code}
-        </Mono>
-        <Bilingual
-          as="h3"
-          en={section.title_en}
-          fil={section.title_fil}
-          className="flex-1 text-[18px] leading-[1.3] font-bold"
-        />
-      </div>
-      <ul className="mt-3 flex flex-col">
-        {items.map((item) => (
-          <ItemAnswer
-            key={item.id}
-            label={itemLabel(section, item)}
-            item={item}
-            answer={record.answers[item.id]}
+    <Card className="p-0">
+      <details className="group flex flex-col">
+        <summary
+          className={cn(
+            'flex cursor-pointer list-none items-start gap-3 rounded-[22px] p-5 select-none md:p-6 [&::-webkit-details-marker]:hidden',
+            FOCUS_RING
+          )}
+        >
+          <Mono className="bg-brand-25 text-brand-500 grid h-7 min-w-7 shrink-0 place-items-center rounded-full px-1.5 text-[14px] font-semibold">
+            {section.code}
+          </Mono>
+          <Bilingual
+            as="h3"
+            en={section.title_en}
+            fil={section.title_fil}
+            className="min-w-0 flex-1 text-[18px] leading-[1.3] font-bold"
           />
-        ))}
-      </ul>
-      {comment && (
-        <div className="mt-3 rounded-2xl border border-line bg-gray-50 px-4 py-3 text-[15px]">
-          <span className="block text-[12px] font-bold tracking-[.08em] text-gray-500 uppercase">
-            Comment
-          </span>
-          {comment}
+          {unsafe > 0 && (
+            <Pill tone="error" icon={<Dot className="bg-error-500" />}>
+              {unsafe} unsafe
+            </Pill>
+          )}
+          <ChevronDown
+            size={20}
+            aria-hidden
+            className="mt-1 shrink-0 text-gray-400 transition-transform duration-150 group-open:rotate-180"
+          />
+        </summary>
+        <div className="flex flex-col px-5 pb-5 md:px-6 md:pb-6">
+          <ul className="flex flex-col">
+            {items.map((item) => (
+              <ItemAnswer
+                key={item.id}
+                label={itemLabel(section, item)}
+                item={item}
+                answer={record.answers[item.id]}
+              />
+            ))}
+          </ul>
+          {comment && (
+            <div className="mt-3 rounded-2xl border border-line bg-gray-50 px-4 py-3 text-[15px]">
+              <span className="block text-[12px] font-bold tracking-[.08em] text-gray-500 uppercase">
+                Comment
+              </span>
+              {comment}
+            </div>
+          )}
         </div>
-      )}
+      </details>
     </Card>
   );
 }
@@ -200,7 +224,7 @@ function ItemAnswer({
   answer?: { answer: AnswerValue | null; remarks: string | null };
 }) {
   const value = answer?.answer ?? null;
-  const unsafe = value !== null && value !== 'na' && value !== item.safe_answer;
+  const unsafe = isUnsafe(item, value);
   return (
     <li
       className={cn(
