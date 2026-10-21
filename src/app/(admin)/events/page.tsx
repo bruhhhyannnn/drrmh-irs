@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ds';
 import { useCampuses } from '@/components/hooks/use-campus';
+import { useDebounced } from '@/components/hooks/use-debounced';
 import { useEvents } from '@/components/hooks/use-events';
 import { Download, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -27,7 +28,6 @@ import { useEventTitle, useScopedCampusId } from '../_components/shell/campus-sw
 import { Card, Chip } from '../_components/ui';
 import { formatDate, formatTime, plural } from '../_lib/format';
 import { capitalize, eventStatusKey, eventTone, type EventStatus } from '../_lib/status';
-import { useDebounced } from '../_lib/use-debounced';
 import { DeleteEventDialog, type DeletableEvent } from './_components/delete-event-dialog';
 import { EventDrawer } from './_components/event-drawer';
 import { exportEventToExcel } from './export-event';
