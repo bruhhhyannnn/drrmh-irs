@@ -47,9 +47,13 @@ async function requireSuperAdmin(token: string | null) {
 }
 
 function revalidateChecklist() {
-  revalidatePath('/assessments/checklist');
-  revalidatePath('/assessments');
-  revalidatePath('/assessment');
+  try {
+    revalidatePath('/assessments/checklist');
+    revalidatePath('/assessments');
+    revalidatePath('/assessment');
+  } catch {
+    // No-op when called outside Next.js request context (e.g. verification script).
+  }
 }
 
 /** Versions with status and assessment counts, all area types, and the chosen version's tree. */
@@ -172,81 +176,96 @@ export async function createDraftVersion(
   if (!source) return fail('The version to copy from could not be found.');
 
   try {
-    const createdId = await prisma.$transaction(async (tx) => {
-      const version = await tx.assessmentTemplateVersion.create({
-        data: {
-          template_id: source.template_id,
-          label: parsed.data.label,
-          status: 'draft',
-          created_by: profile.id,
-        },
-        select: { id: true },
-      });
-
-      for (const section of source.sections) {
-        const createdSection = await tx.assessmentSection.create({
+    const createdId = await prisma.$transaction(
+      async (tx) => {
+        const version = await tx.assessmentTemplateVersion.create({
           data: {
-            version_id: version.id,
-            code: section.code,
-            title_en: section.title_en,
-            title_fil: section.title_fil,
-            sort_order: section.sort_order,
-            area_type_id: section.area_type_id,
+            template_id: source.template_id,
+            label: parsed.data.label,
+            status: 'draft',
+            created_by: profile.id,
           },
           select: { id: true },
         });
 
-        const topItems = section.items.filter((i) => i.parent_id === null);
-        const parentMap = new Map<string, string>();
-        for (const item of topItems) {
-          const createdItem = await tx.assessmentItem.create({
-            data: {
-              section_id: createdSection.id,
-              parent_id: null,
-              code: item.code,
-              prompt_en: item.prompt_en,
-              prompt_fil: item.prompt_fil,
-              note_en: item.note_en,
-              note_fil: item.note_fil,
-              reference: item.reference,
-              is_scored: item.is_scored,
-              safe_answer: item.safe_answer,
-              area_type_id: item.area_type_id,
-              min_floors: item.min_floors,
-              flag_label: item.flag_label,
-              pillar_id: item.pillar_id,
-              sort_order: item.sort_order,
-            },
-            select: { id: true },
-          });
-          parentMap.set(item.id, createdItem.id);
-        }
-
-        const subItems = section.items.filter((i) => i.parent_id !== null);
-        if (subItems.length > 0) {
-          await tx.assessmentItem.createMany({
-            data: subItems.map((item) => ({
-              section_id: createdSection.id,
-              parent_id: parentMap.get(item.parent_id!) ?? null,
-              code: item.code,
-              prompt_en: item.prompt_en,
-              prompt_fil: item.prompt_fil,
-              note_en: item.note_en,
-              note_fil: item.note_fil,
-              reference: item.reference,
-              is_scored: item.is_scored,
-              safe_answer: item.safe_answer,
-              area_type_id: item.area_type_id,
-              min_floors: item.min_floors,
-              flag_label: item.flag_label,
-              pillar_id: item.pillar_id,
-              sort_order: item.sort_order,
+        if (source.sections.length > 0) {
+          const createdSections = await tx.assessmentSection.createManyAndReturn({
+            data: source.sections.map((s) => ({
+              version_id: version.id,
+              code: s.code,
+              title_en: s.title_en,
+              title_fil: s.title_fil,
+              sort_order: s.sort_order,
+              area_type_id: s.area_type_id,
             })),
+            select: { id: true, code: true },
           });
+          const sectionIdByCode = new Map(createdSections.map((s) => [s.code, s.id]));
+          const sectionMap = new Map(
+            source.sections.map((s) => [s.id, sectionIdByCode.get(s.code)!])
+          );
+
+          const topItems = source.sections.flatMap((s) =>
+            s.items.filter((i) => i.parent_id === null)
+          );
+          const parentMap = new Map<string, string>();
+          if (topItems.length > 0) {
+            const createdTop = await tx.assessmentItem.createManyAndReturn({
+              data: topItems.map((item) => ({
+                section_id: sectionMap.get(item.section_id)!,
+                parent_id: null,
+                code: item.code,
+                prompt_en: item.prompt_en,
+                prompt_fil: item.prompt_fil,
+                note_en: item.note_en,
+                note_fil: item.note_fil,
+                reference: item.reference,
+                is_scored: item.is_scored,
+                safe_answer: item.safe_answer,
+                area_type_id: item.area_type_id,
+                min_floors: item.min_floors,
+                flag_label: item.flag_label,
+                pillar_id: item.pillar_id,
+                sort_order: item.sort_order,
+              })),
+              select: { id: true, section_id: true, code: true },
+            });
+            const topIdByKey = new Map(createdTop.map((i) => [`${i.section_id}:${i.code}`, i.id]));
+            for (const old of topItems) {
+              const newSecId = sectionMap.get(old.section_id)!;
+              parentMap.set(old.id, topIdByKey.get(`${newSecId}:${old.code}`)!);
+            }
+          }
+
+          const subItems = source.sections.flatMap((s) =>
+            s.items.filter((i) => i.parent_id !== null)
+          );
+          if (subItems.length > 0) {
+            await tx.assessmentItem.createMany({
+              data: subItems.map((item) => ({
+                section_id: sectionMap.get(item.section_id)!,
+                parent_id: parentMap.get(item.parent_id!) ?? null,
+                code: item.code,
+                prompt_en: item.prompt_en,
+                prompt_fil: item.prompt_fil,
+                note_en: item.note_en,
+                note_fil: item.note_fil,
+                reference: item.reference,
+                is_scored: item.is_scored,
+                safe_answer: item.safe_answer,
+                area_type_id: item.area_type_id,
+                min_floors: item.min_floors,
+                flag_label: item.flag_label,
+                pillar_id: item.pillar_id,
+                sort_order: item.sort_order,
+              })),
+            });
+          }
         }
-      }
-      return version.id;
-    });
+        return version.id;
+      },
+      { timeout: 20_000 }
+    );
     revalidateChecklist();
     return { ok: true, id: createdId };
   } catch (err) {
@@ -508,45 +527,51 @@ export async function upsertItem(
   };
 
   try {
-    const savedId = await prisma.$transaction(async (tx) => {
-      let itemId = input.id;
-      if (itemId) {
-        const current = section.items.find((i) => i.id === itemId);
-        if (!current) throw new Error('This question could not be found.');
-        const hasChildren = section.items.some((i) => i.parent_id === itemId);
-        if (hasChildren && data.is_scored) {
-          throw new Error('Remove its sub-items before making this a scored question.');
+    const savedId = await prisma.$transaction(
+      async (tx) => {
+        let itemId = input.id;
+        if (itemId) {
+          const current = section.items.find((i) => i.id === itemId);
+          if (!current) throw new Error('This question could not be found.');
+          const hasChildren = section.items.some((i) => i.parent_id === itemId);
+          if (hasChildren && data.is_scored) {
+            throw new Error('Remove its sub-items before making this a scored question.');
+          }
+          if (hasChildren && parentId) {
+            throw new Error('A group heading with sub-items cannot become a sub-item.');
+          }
+          await tx.assessmentItem.update({ where: { id: itemId }, data: fields });
+        } else {
+          const created = await tx.assessmentItem.create({
+            data: {
+              section_id: section.id,
+              ...fields,
+              sort_order: section.items.length,
+            },
+            select: { id: true },
+          });
+          itemId = created.id;
         }
-        if (hasChildren && parentId) {
-          throw new Error('A group heading with sub-items cannot become a sub-item.');
-        }
-        await tx.assessmentItem.update({ where: { id: itemId }, data: fields });
-      } else {
-        const created = await tx.assessmentItem.create({
-          data: {
-            section_id: section.id,
-            ...fields,
-            sort_order: section.items.length,
-          },
-          select: { id: true },
-        });
-        itemId = created.id;
-      }
 
-      const allItems = await tx.assessmentItem.findMany({
-        where: { section_id: section.id },
-        orderBy: { sort_order: 'asc' },
-        select: { id: true, parent_id: true, sort_order: true },
-      });
-      const ordered = orderSectionItems(allItems);
-      for (const row of ordered) {
-        await tx.assessmentItem.update({
-          where: { id: row.id },
-          data: { sort_order: row.sort_order },
+        const allItems = await tx.assessmentItem.findMany({
+          where: { section_id: section.id },
+          orderBy: { sort_order: 'asc' },
+          select: { id: true, parent_id: true, sort_order: true },
         });
-      }
-      return itemId!;
-    });
+        const prevOrder = new Map(allItems.map((i) => [i.id, i.sort_order]));
+        const ordered = orderSectionItems(allItems);
+        for (const row of ordered) {
+          if (prevOrder.get(row.id) !== row.sort_order) {
+            await tx.assessmentItem.update({
+              where: { id: row.id },
+              data: { sort_order: row.sort_order },
+            });
+          }
+        }
+        return itemId!;
+      },
+      { timeout: 15_000 }
+    );
 
     revalidateChecklist();
     return { ok: true, id: savedId };
@@ -573,20 +598,26 @@ export async function deleteItem(
   if (item.section.version.status !== 'draft') return fail(DRAFT_ONLY);
 
   try {
-    await prisma.$transaction(async (tx) => {
-      await tx.assessmentItem.delete({ where: { id: itemId } });
-      const remaining = await tx.assessmentItem.findMany({
-        where: { section_id: item.section_id },
-        orderBy: { sort_order: 'asc' },
-        select: { id: true, parent_id: true, sort_order: true },
-      });
-      for (const row of orderSectionItems(remaining)) {
-        await tx.assessmentItem.update({
-          where: { id: row.id },
-          data: { sort_order: row.sort_order },
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.assessmentItem.delete({ where: { id: itemId } });
+        const remaining = await tx.assessmentItem.findMany({
+          where: { section_id: item.section_id },
+          orderBy: { sort_order: 'asc' },
+          select: { id: true, parent_id: true, sort_order: true },
         });
-      }
-    });
+        const prevOrder = new Map(remaining.map((i) => [i.id, i.sort_order]));
+        for (const row of orderSectionItems(remaining)) {
+          if (prevOrder.get(row.id) !== row.sort_order) {
+            await tx.assessmentItem.update({
+              where: { id: row.id },
+              data: { sort_order: row.sort_order },
+            });
+          }
+        }
+      },
+      { timeout: 15_000 }
+    );
   } catch (err) {
     return fail(toFriendlyError(err, 'question').message);
   }

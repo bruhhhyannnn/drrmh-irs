@@ -607,7 +607,7 @@ Three phases, all on `feat/DRRM-015-assessment-form` in this worktree. Each phas
   - An Administrator calling `createAssessment` with their token → rejected. Accepted as covered rather than run as a token script (DevJom, 2026-10-21): the server's refusal was checked through the Safety Officer flip below (the same `canUseAssessment` check in the action), `access.test.ts` shows the rule refuses Administrator, Super Admin and Bystander, and an Administrator is sent from `/assessment` to `/dashboard`.
   - An ERT member → allowed.
   - Flip `canUseAssessment` to the Safety Officer rule locally → the card, switch, page and action all follow. The queued entry failed with "Your account can't submit assessments." and sent with Try again after the revert.
-- [ ] Super admin: a wording edit shows on old and new assessments. A structural edit needs a draft, and old assessments still show their original items after publish.
+- [x] Super admin: a wording edit shows on old and new assessments. A structural edit needs a draft, and old assessments still show their original items after publish. (Verified 2026-10-21 against the test DB: Administrator refused, structural edit on published version refused, wording edit reflected on both old and new assessments, draft version with added item published for new assessments while existing assessment kept its original version, and test DB restored.)
 - [x] Language: Both / English / Filipino in My profile changes the stepper and the admin detail. (2026-10-21: checked on the ERT view; the admin detail renders the same `AssessmentRecordBody`.)
 - [ ] Production rollout:
   1. Run `DRRM-015-assessment.sql` in the Supabase SQL editor.
