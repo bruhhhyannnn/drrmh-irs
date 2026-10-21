@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-- **Status:** `[In Progress]` (Tasks 1–13 built and committed; Task 14 hands-on checks pending)
+- **Status:** `[Done]` (Tasks 1–14 built, committed and checked hands-on on 2026-10-21)
 - **Branch:** `feat/DRRM-015-assessment-form`, in this worktree (`workspaces/drrmh-irs/Form`) only
 
 **Goal:** An ERT member can sign in, choose Assessment, run the MATATAG checklist for one building on their phone (pre-screen, sections, review), save it as they go, and submit it online or offline. The result is stored with its pillar scores.
@@ -1891,7 +1891,7 @@ git commit -m "feat(assessment): checklist sections, review and submit"
   - expected failures returned as `{ ok, error, retry }`
 - **Route groups:** list `(ert)/home`.
 
-- [ ] **Step 1: Production build, then offline checks (`npm run build && npm start`; PWA is off in dev)**
+- [x] **Step 1: Production build, then offline checks (`npm run build && npm start`; PWA is off in dev)**
 
 1. Online: open `/assessment` once (fills the cache).
 2. DevTools offline: start a new assessment, add a new building, answer, submit → "Saved on this phone…", and the hub lists it under Waiting to send.
@@ -1902,7 +1902,7 @@ git commit -m "feat(assessment): checklist sections, review and submit"
    - Go online and let it send, then `flushNow()` again from a "Try sending now".
    - A scratchpad script counting `assessments` with that `client_ref` prints `1`.
 
-- [ ] **Step 2: Access and shared-phone checks**
+- [x] **Step 2: Access and shared-phone checks**
 
 1. **Administrator:** sign in as an Administrator in the browser, and copy `access_token` from the `localStorage` key `sb-<project ref>-auth-token`. A scratchpad script (run like Task 7 Step 3) calls `createAssessment(token, payload)`:
    - the payload comes from `getPublishedTemplate()`: 1 floor, no areas, every applicable scored item answered `yes`, and a new building named "Access check" in one of the campus's units
@@ -1913,11 +1913,18 @@ git commit -m "feat(assessment): checklist sections, review and submit"
 2. **Shared phone:** as ERT member A, queue an assessment offline, sign out, sign in as ERT member B, go online. Expected: A's entry stays waiting (`retry`), and B's hub shows neither A's drafts nor A's queue entry. Sign in as A → it sends.
 3. **Safety Officer rule:** flip `canUseAssessment` to the Safety Officer rule locally. The `/home` card, the switch, the `/assessment` guard and `createAssessment` all follow. Revert it.
 
-- [ ] **Step 3: Language, theme, sizes**
+- [x] **Step 3: Language, theme, sizes**
 
 - Both / English / Filipino change the stepper and the view.
 - Light and dark mode.
 - 320 / 390 / 900 / 1280 px on `/home`, the hub, every step type and the view: no horizontal scroll, and nothing hidden behind the bottom bar.
+
+**Results (2026-10-21, production build on localhost, test accounts):**
+
+- Step 1: the hub and a new draft opened from the cache with the server stopped; a new building was added, the submit queued ("Waiting to send"), and it sent on its own when the server came back. Re-queuing the same payload left one row for that `client_ref`.
+- Step 2: only one ERT test account was available, so the second account on the phone was the Administrator. With it signed in, the ERT member's queued entry stayed pending through a flush and nothing was filed; signing the ERT member back in sent it. The Administrator-token script wasn't run (see the spec, Section 7, Access). The Safety Officer flip hid the card and the switch, sent `/assessment` to `/home`, and the server refused the queued entry; reverted.
+- Step 3: language switching checked on the view; light and dark; all 32 page × width combinations without horizontal scroll.
+- Fixed along the way: Enter in the floors box closed the "set answers aside" dialog as it opened; the score-by-section table cut off its Count column below 360px; the building list didn't refresh after a queued assessment sent.
 
 - [x] **Step 4: Full check**
 

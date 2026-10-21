@@ -594,21 +594,21 @@ Three phases, all on `feat/DRRM-015-assessment-form` in this worktree. Each phas
   - A unit with 7+ buildings switches the chart to rows.
   - Administrator: no "All campuses", and calling `getSafetyRollup` with another campus's id still returns their own campus. Super Admin: All campuses → campus works.
 - [x] Pre-screen counts match Section 3.4 for the three example buildings (`assessment-score.test.ts`).
-- [ ] Backtracking:
+- [x] Backtracking (hands-on 2026-10-21, 4 floors + Laboratories: 77 scored → 49 unticked → 77 again; floors 4 → 2 → 4: 77 → 76 → 77):
   - Answer Labs items, untick Laboratories, and they disappear and aren't scored.
   - Tick it again and the answers are back.
   - Floors 4 → 2 → 4 does the same for the sprinkler items.
 - [x] Reverse items: NO on II.3 counts as safe. YES on VI.1.3 sets "Needs structural follow-up" (`assessment-score.test.ts`; the review banner is in the hands-on check).
-- [ ] Offline (DevTools offline):
+- [x] Offline (hands-on 2026-10-21 on a production build, the server stopped to cut the connection; the DevTools offline toggle itself wasn't used):
   - Start a new assessment with the template from the cache and add a new building.
   - Submit → it queues. Back online → it sends once.
   - Replaying the same `client_ref` → no duplicate.
-- [ ] Access:
-  - An Administrator calling `createAssessment` with their token → rejected.
+- [x] Access (hands-on 2026-10-21):
+  - An Administrator calling `createAssessment` with their token → rejected. Not run as written: the server's refusal was checked through the Safety Officer flip below (same `canUseAssessment` check in the action); an Administrator is sent from `/assessment` to `/dashboard`.
   - An ERT member → allowed.
-  - Flip `canUseAssessment` to the Safety Officer rule locally → the card, switch, page and action all follow.
+  - Flip `canUseAssessment` to the Safety Officer rule locally → the card, switch, page and action all follow. The queued entry failed with "Your account can't submit assessments." and sent with Try again after the revert.
 - [ ] Super admin: a wording edit shows on old and new assessments. A structural edit needs a draft, and old assessments still show their original items after publish.
-- [ ] Language: Both / English / Filipino in My profile changes the stepper and the admin detail.
+- [ ] Language: Both / English / Filipino in My profile changes the stepper and the admin detail. (ERT side checked 2026-10-21; the admin detail comes in Phase 2.)
 - [ ] Production rollout:
   1. Run `DRRM-015-assessment.sql` in the Supabase SQL editor.
   2. Run the seed.
