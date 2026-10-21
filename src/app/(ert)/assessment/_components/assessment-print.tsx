@@ -97,16 +97,22 @@ function RecordPrint({ record }: { record: AssessmentRecord }) {
   const printed = useRef(false);
 
   useEffect(() => {
-    if (printed.current) return;
-    printed.current = true;
+    // The title names the saved PDF, so it is set on every run, not only the first.
     const previous = document.title;
     document.title = `${record.building_name} — Building Safety Assessment`;
-    // Wait for the fonts and logos so the first print isn't missing them.
+    // Wait for the fonts and logos so the first print isn't missing them. Leaving the page
+    // cancels it, even while the fonts are still loading; it prints once.
+    let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     void document.fonts.ready.then(() => {
-      timer = setTimeout(() => window.print(), 400);
+      if (cancelled || printed.current) return;
+      timer = setTimeout(() => {
+        printed.current = true;
+        window.print();
+      }, 400);
     });
     return () => {
+      cancelled = true;
       clearTimeout(timer);
       document.title = previous;
     };
