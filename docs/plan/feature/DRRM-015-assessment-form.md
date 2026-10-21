@@ -50,7 +50,7 @@ Acceptance criteria:
   - Admins are locked to their own campus server-side; super admins can pick any campus or all.
 - [x] Draft autosaves to IndexedDB. Submitting offline queues it; it replays like field reports.
 - [x] Server rejects assessment writes from anyone who isn't allowed (checked server-side, not only in the UI).
-- [ ] Admin `/assessments`: Buildings tab (latest score per building) and Assessments tab (all), campus-scoped. Read-only detail page.
+- [x] Admin `/assessments`: Buildings tab (latest score per building) and Assessments tab (all), campus-scoped. Read-only detail page.
 - [ ] Super admin `/assessments/checklist`: edit wording in place; structural changes go into a new draft version that is then published.
 - [x] Question language preference (Both / English / Filipino) in My profile, saved per device.
 - [ ] Light and dark mode; phone, tablet and web layouts.
@@ -560,8 +560,8 @@ Three phases, all on `feat/DRRM-015-assessment-form` in this worktree. Each phas
 
 **Phase 2: admins see the results**
 
-- [ ] **Task 9: Admin lists + detail.** Admin read actions with the campus lock (`getAssessmentList`, `getBuildingSummaries`, admin `getAssessment`) and hooks; nav item; `/assessments` (Buildings / Assessments tabs); `/assessments/details?id=` with the pillar breakdown.
-- [ ] **Task 9b: Fixing mistakes** (proposed, see Section 8). A **Buildings** tab in Settings, extending the generic `LOOKUPS` / `LookupTable` pattern: rename, move to another unit, set floors, deactivate. Plus Super Admin **Delete assessment** on the detail page, behind the shared confirm dialog.
+- [x] **Task 9: Admin lists + detail.** Admin read actions with the campus lock (`getAssessmentList`, `getBuildingSummaries`, admin `getAssessment`) and hooks; nav item; `/assessments` (Buildings / Assessments tabs); `/assessments/details?id=` with the pillar breakdown.
+- [x] **Task 9b: Fixing mistakes** (proposed, see Section 8). A **Buildings** tab in Settings, extending the generic `LOOKUPS` / `LookupTable` pattern: rename, move to another unit, set floors, deactivate. Plus Super Admin **Delete assessment** on the detail page, behind the shared confirm dialog.
 - [ ] **Task 10: Dashboard Building safety.**
   - `getSafetyRollup`, `getBuildingHistory`, `compareAssessments` with the server-side campus lock.
   - Chart components.

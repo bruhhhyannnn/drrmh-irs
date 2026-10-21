@@ -29,8 +29,9 @@ ERT members submit status reports through the signed-in `/report` page and check
 - **Event Details** — Per-cluster headcount board with casualty, missing person, and structural damage breakdowns
 - **Reports** — View, search, edit, and delete field reports with full headcount details and GPS-pinned location
 - **Bystander Reports** — Review public incident submissions and mark them reviewed, verified, or dismissed
+- **Assessments** — Every building's latest MATATAG score overall and per DRRM pillar with the change since its previous assessment, every submitted assessment (filter by cluster, unit and date), and each one read-only or printed on A4; super admins can delete a wrong one
 - **Users** — Manage accounts, roles, and active status
-- **Settings** — Configure clusters, units, positions, casualty conditions, damage conditions, and per-campus population (headcount) fields
+- **Settings** — Configure clusters, units, buildings (name, unit, floors), positions, casualty conditions, damage conditions, and per-campus population (headcount) fields
 
 **For ERT members and bystanders**
 
@@ -156,7 +157,7 @@ The IRS is a centralized web platform consisting of:
 | Role                 | Access                                                                                                            |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | **Super Admin**      | All admin pages across all campuses, including Campus management. Picks the campus when creating events and users |
-| **Administrator**    | Admin pages (dashboard, events, reports, bystander reports, users, settings) for their campus                     |
+| **Administrator**    | Admin pages (dashboard, events, reports, bystander reports, assessments, users, settings) for their campus        |
 | **ERT Member**       | Signed-in `/report` page: submit one status report per ongoing event, then add missing persons/casualties         |
 | **Public/Bystander** | `/bystander-report`: anonymous incident reporting via QR code, no sign-in                                         |
 
