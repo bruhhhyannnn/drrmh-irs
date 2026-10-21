@@ -214,6 +214,22 @@ export const unitSchema = z.object({
   is_active: z.boolean().default(true),
 });
 
+/** A building assessments are made of (DRRM-015); settings fix its name, unit and floors. */
+export const buildingSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Enter a building name.')
+    .max(120, 'Keep it under 120 characters.'),
+  unit_id: z.string().uuid('Pick a unit.'),
+  floor_count: z.coerce
+    .number({ invalid_type_error: 'Enter the number of floors.' })
+    .int('Enter a whole number of floors.')
+    .min(1, 'A building has at least 1 floor.')
+    .max(200, 'Enter 200 floors or fewer.'),
+  is_active: z.boolean().default(true),
+});
+
 export const positionSchema = z.object({
   name: z.string().trim().min(1, 'Enter a position name.'),
   is_active: z.boolean().default(true),

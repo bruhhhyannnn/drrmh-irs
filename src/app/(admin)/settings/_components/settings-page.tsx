@@ -13,6 +13,7 @@ import { PopulationFields } from './population-fields';
 type SettingsTab =
   | 'clusters'
   | 'units'
+  | 'buildings'
   | 'positions'
   | 'casualty-conditions'
   | 'damage-conditions'
@@ -28,6 +29,7 @@ const LOOKUPS: Record<
 > = {
   clusters: { table: 'clusters', label: 'Clusters', singular: 'cluster', noun: 'clusters' },
   units: { table: 'units', label: 'Units', singular: 'unit', noun: 'units' },
+  buildings: { table: 'buildings', label: 'Buildings', singular: 'building', noun: 'buildings' },
   positions: { table: 'positions', label: 'Positions', singular: 'position', noun: 'positions' },
   'casualty-conditions': {
     table: 'casualty_conditions',
@@ -57,7 +59,7 @@ export function SettingsPage({ tab }: { tab: SettingsTab }) {
     <>
       <PageHeader
         title="Settings"
-        subtitle="Lists used in report, event and user forms."
+        subtitle="Lists used in report, event, user and assessment forms."
         actions={
           lookup && (
             <Button size="sm" onClick={() => setAdding(true)}>
