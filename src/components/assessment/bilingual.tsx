@@ -1,5 +1,6 @@
 'use client';
 
+import type { QuestionLanguage } from '@/lib/question-language';
 import { useQuestionLanguageStore } from '@/store';
 
 /**
@@ -12,6 +13,7 @@ export function Bilingual({
   as: Tag = 'span',
   id,
   className,
+  language: fixed,
 }: {
   en: string;
   fil: string;
@@ -19,8 +21,11 @@ export function Bilingual({
   /** For aria-labelledby, e.g. the answer buttons of a question. */
   id?: string;
   className?: string;
+  /** Ignores the device setting, e.g. 'both' on paper. */
+  language?: QuestionLanguage;
 }) {
-  const language = useQuestionLanguageStore((s) => s.language);
+  const chosen = useQuestionLanguageStore((s) => s.language);
+  const language = fixed ?? chosen;
   const filipino = fil.trim();
 
   if (language === 'en' || !filipino) {

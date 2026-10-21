@@ -7,13 +7,14 @@ import { Suspense } from 'react';
 import { ErtFrame } from '../_components/frame';
 import { useErtAccess } from '../_lib/use-ert-access';
 import { AssessmentHub } from './_components/assessment-hub';
+import { AssessmentPrint } from './_components/assessment-print';
 import { AssessmentStepper } from './_components/assessment-stepper';
 import { AssessmentView } from './_components/assessment-view';
 
 /**
  * The building assessment, one route on purpose (a dynamic segment might not be cached by the
  * service worker offline): the hub, `?draft=<client_ref>` the form, `?view=<id>` a submitted
- * assessment.
+ * assessment and `?print=<id>` that assessment on A4, without the frame.
  */
 export default function AssessmentPage() {
   return (
@@ -29,6 +30,9 @@ function AssessmentRoute() {
 
   if (access.status === 'checking') return <PageLoading label="Checking your access…" />;
   if (access.status === 'setup') return <ProfileSetup />;
+
+  const print = params.get('print');
+  if (print) return <AssessmentPrint key={print} id={print} />;
 
   const view = params.get('view');
   const draft = params.get('draft');

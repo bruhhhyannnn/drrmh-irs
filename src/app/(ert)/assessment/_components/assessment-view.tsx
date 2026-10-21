@@ -14,7 +14,7 @@ import {
   type TemplateSection,
 } from '@/lib/assessment-template';
 import { useOfflineQueueStore } from '@/store';
-import { ArrowLeft, ChevronDown, FileQuestion, WifiOff } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileQuestion, Printer, WifiOff } from 'lucide-react';
 import {
   Card,
   DetailList,
@@ -104,16 +104,22 @@ function RecordView({ record }: { record: AssessmentRecord }) {
       </Hero>
 
       <main className={cn(GUTTER, 'flex flex-col gap-5 py-6 md:py-8')}>
-        <AssessmentLink
-          query=""
-          className={cn(
-            'flex items-center gap-1.5 self-start rounded-lg py-1 text-[15px] font-semibold text-brand-700 hover:underline',
-            FOCUS_RING
-          )}
-        >
-          <ArrowLeft size={18} aria-hidden />
-          Back to assessments
-        </AssessmentLink>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <AssessmentLink
+            query=""
+            className={cn(
+              'flex items-center gap-1.5 rounded-lg py-1 text-[15px] font-semibold text-brand-700 hover:underline',
+              FOCUS_RING
+            )}
+          >
+            <ArrowLeft size={18} aria-hidden />
+            Back to assessments
+          </AssessmentLink>
+          <Button variant="outline" size="sm" onClick={() => goToAssessment(`?print=${record.id}`)}>
+            <Printer size={16} aria-hidden />
+            Print
+          </Button>
+        </div>
 
         <DetailList
           rows={[
