@@ -1,4 +1,10 @@
 import {
+  deleteAssessment,
+  getAssessment,
+  getAssessmentList,
+  getBuildingSummaries,
+} from '@/actions/assessment-admin';
+import {
   createAssessment,
   getAssessmentSetup,
   getMyAssessment,
@@ -166,6 +172,50 @@ export function useSubmitAssessment() {
       queryClient.invalidateQueries({ queryKey: ['assessment-drafts'] });
       queryClient.invalidateQueries({ queryKey: ['assessment-setup'] });
       setPendingCount(await getAllQueuedCount().catch(() => 0));
+    },
+  });
+}
+
+/* ─── Admin pages (Phase 2): campusId from useScopedCampusId(), '' meaning all campuses ─── */
+
+export function useAssessmentList(campusId?: string) {
+  return useQuery({
+    queryKey: ['admin-assessments', campusId || null],
+    queryFn: async () => getAssessmentList(await getAccessToken(), campusId || null),
+  });
+}
+
+export function useBuildingSummaries(campusId?: string) {
+  return useQuery({
+    queryKey: ['building-summaries', campusId || null],
+    queryFn: async () => getBuildingSummaries(await getAccessToken(), campusId || null),
+  });
+}
+
+export function useAdminAssessment(id?: string) {
+  return useQuery({
+    queryKey: ['admin-assessment', id],
+    queryFn: async () => getAssessment(await getAccessToken(), id!),
+    enabled: !!id,
+  });
+}
+
+export function useDeleteAssessment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const result = await deleteAssessment(await getAccessToken(), id);
+      if (!result.ok) throw new Error(result.error);
+    },
+    onSuccess: () => {
+      for (const key of [
+        'admin-assessments',
+        'building-summaries',
+        'building-safety',
+        'building-history',
+      ]) {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      }
     },
   });
 }
