@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { assessmentPayloadSchema } from './schemas';
+import { assessmentPayloadSchema, itemSchema } from './schemas';
 
 const U = '7a0c3b9e-3f5b-4d2a-9c1e-2b8f6d4a1e00';
 const valid = {
@@ -30,4 +30,29 @@ test('assessment payload', () => {
     false
   );
   assert.equal(assessmentPayloadSchema.safeParse({ ...valid, building: { id: U } }).success, true);
+});
+
+test('checklist item schema enforces pillar on scored items and scored on sub-items', () => {
+  const base = {
+    code: '1',
+    prompt_en: 'Fire alarms work',
+    prompt_fil: 'Gumagana ang alarma',
+    note_en: '',
+    note_fil: '',
+    reference: '',
+    parent_id: '',
+    is_scored: true,
+    pillar_code: 'preparedness',
+    safe_answer: 'yes',
+    area_type_id: '',
+    min_floors: '',
+    flag_label: '',
+  };
+  assert.equal(itemSchema.safeParse(base).success, true);
+  assert.equal(itemSchema.safeParse({ ...base, pillar_code: '' }).success, false);
+  assert.equal(itemSchema.safeParse({ ...base, is_scored: false, pillar_code: '' }).success, true);
+  assert.equal(
+    itemSchema.safeParse({ ...base, parent_id: U, is_scored: false, pillar_code: '' }).success,
+    false
+  );
 });

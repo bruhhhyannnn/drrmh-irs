@@ -25,14 +25,8 @@ import { RECOVERY_TEXT, RecoveryCell, ScoreCell } from './score-cell';
 
 const detailHref = (id: string) => `/assessments/details?id=${id}`;
 
-/** The dashboard's Building safety section at this building (its history and A/B compare). */
-const compareHref = (b: BuildingScores) =>
-  `/dashboard?${new URLSearchParams({
-    bs_campus: b.campus.id,
-    bs_cluster: b.cluster.id,
-    bs_unit: b.unit.id,
-    bs_building: b.id,
-  })}#building-safety`;
+/** The Assessments → Compare tab for this building (its history and A/B compare). */
+const compareHref = (b: BuildingScores) => `/assessments?tab=compare&building=${b.id}`;
 
 const PILLAR_COLUMNS = [
   ['prevention-mitigation', 'Prevention'],

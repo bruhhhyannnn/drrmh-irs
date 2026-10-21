@@ -32,6 +32,7 @@ export type PillarCode = (typeof PILLAR_CODES)[number];
 
 export type AnswerValue = 'yes' | 'no' | 'na';
 export type SafeAnswer = 'yes' | 'no';
+export type VersionStatus = 'draft' | 'published' | 'retired';
 
 /** Raised when a VI.1.x item (visible wall cracks) gets its unsafe answer. */
 export const STRUCTURAL_FLAG = 'Needs structural follow-up';
@@ -213,6 +214,110 @@ export interface AdminAssessmentRow {
   ended_at: string;
   overall: Tally;
   needs_follow_up: boolean;
+}
+
+/* ─── Checklist editor (Phase 3) ─── */
+
+export interface TemplateVersionSummary {
+  id: string;
+  label: string;
+  status: VersionStatus;
+  published_at: string | null;
+  created_at: string;
+  assessment_count: number;
+}
+
+export interface EditableAreaType extends TemplateAreaType {
+  sort_order: number;
+  is_active: boolean;
+}
+
+export interface ChecklistEditorData {
+  versions: TemplateVersionSummary[];
+  area_types: EditableAreaType[];
+  version: (AssessmentTemplate & { status: VersionStatus; assessment_count: number }) | null;
+}
+
+export type TemplateActionResult = { ok: true; id?: string } | { ok: false; error: string };
+
+/** Scored questions per DRRM pillar across the template's sections. */
+export function pillarItemCounts(
+  sections: readonly { items: readonly { is_scored: boolean; pillar_code: PillarCode | null }[] }[]
+): Record<PillarCode, number> {
+  const counts = Object.fromEntries(PILLAR_CODES.map((p) => [p, 0])) as Record<PillarCode, number>;
+  for (const s of sections) {
+    for (const i of s.items) {
+      if (i.is_scored && i.pillar_code) counts[i.pillar_code] = (counts[i.pillar_code] ?? 0) + 1;
+    }
+  }
+  return counts;
+}
+
+/**
+ * Keeps a section's items flat in tree order: top-level items in `sort_order`, each followed
+ * immediately by its sub-items in `sort_order`, re-numbered 0…n-1.
+ */
+export function orderSectionItems<
+  T extends { id: string; parent_id: string | null; sort_order: number },
+>(items: readonly T[]): T[] {
+  const sorted = [...items].sort((a, b) => a.sort_order - b.sort_order);
+  const top = sorted.filter((i) => i.parent_id === null);
+  const byParent = new Map<string, T[]>();
+  for (const i of sorted) {
+    if (i.parent_id === null) continue;
+    const list = byParent.get(i.parent_id) ?? [];
+    list.push(i);
+    byParent.set(i.parent_id, list);
+  }
+  return top
+    .flatMap((t) => [t, ...(byParent.get(t.id) ?? [])])
+    .map((item, sort_order) => ({ ...item, sort_order }));
+}
+
+/** Moves a top-level item (with its sub-items) or a sub-item (within its parent) up or down. */
+export function moveItemInSection<
+  T extends { id: string; parent_id: string | null; sort_order: number },
+>(items: readonly T[], itemId: string, direction: 'up' | 'down'): T[] {
+  const ordered = orderSectionItems(items);
+  const target = ordered.find((i) => i.id === itemId);
+  if (!target) return ordered;
+  const siblings = ordered.filter((i) => i.parent_id === target.parent_id);
+  const idx = siblings.findIndex((i) => i.id === itemId);
+  const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+  if (idx < 0 || swapIdx < 0 || swapIdx >= siblings.length) return ordered;
+
+  const swapped = [...siblings];
+  [swapped[idx], swapped[swapIdx]] = [swapped[swapIdx], swapped[idx]];
+  const siblingOrder = new Map(swapped.map((s, k) => [s.id, k]));
+  return orderSectionItems(
+    ordered.map((i) => (siblingOrder.has(i.id) ? { ...i, sort_order: siblingOrder.get(i.id)! } : i))
+  );
+}
+
+/** Checks that a draft version has at least one scored question and every scored question has a pillar. */
+export function canPublishTemplate(
+  sections: readonly {
+    code: string;
+    items: readonly { code: string; is_scored: boolean; pillar_code: PillarCode | null }[];
+  }[]
+): { ok: true } | { ok: false; error: string } {
+  let scored = 0;
+  for (const s of sections) {
+    for (const i of s.items) {
+      if (!i.is_scored) continue;
+      scored += 1;
+      if (!i.pillar_code) {
+        return {
+          ok: false,
+          error: `${itemLabel(s, i)} needs a DRRM pillar before this version can be published.`,
+        };
+      }
+    }
+  }
+  if (scored === 0) {
+    return { ok: false, error: 'Add at least one scored question before publishing.' };
+  }
+  return { ok: true };
 }
 
 /** "III.4.1": the section code, then the item code. How the paper form names an item. */

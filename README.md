@@ -29,7 +29,7 @@ ERT members submit status reports through the signed-in `/report` page and check
 - **Event Details** — Per-cluster headcount board with casualty, missing person, and structural damage breakdowns
 - **Reports** — View, search, edit, and delete field reports with full headcount details and GPS-pinned location
 - **Bystander Reports** — Review public incident submissions and mark them reviewed, verified, or dismissed
-- **Assessments** — Every building's latest MATATAG score overall and per DRRM pillar with the change since its previous assessment, every submitted assessment (filter by cluster, unit and date), and each one read-only or printed on A4; super admins can delete a wrong one
+- **Assessments** — Every building's latest MATATAG score overall and per DRRM pillar with the change since its previous assessment, every submitted assessment (filter by cluster, unit and date), a Compare tab for any building's score history and A/B assessment comparison, and each assessment read-only or printed on A4; super admins can delete a wrong one and edit the checklist questions, versions and area gates at `/assessments/checklist`
 - **Users** — Manage accounts, roles, and active status
 - **Settings** — Configure clusters, units, buildings (name, unit, floors), positions, casualty conditions, damage conditions, and per-campus population (headcount) fields
 

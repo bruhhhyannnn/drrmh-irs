@@ -89,7 +89,7 @@ const NAV: NavItem[] = [
 ];
 
 /** Pages only super admins can open; administrators run one campus. */
-export const SUPER_ADMIN_HREFS = ['/campus'];
+export const SUPER_ADMIN_HREFS = ['/campus', '/assessments/checklist'];
 
 /** The nav for the signed-in role. Without Campus, the Manage group starts at Users. */
 export function navFor(isSuperAdmin: boolean): NavItem[] {

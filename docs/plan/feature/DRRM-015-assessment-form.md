@@ -51,7 +51,7 @@ Acceptance criteria:
 - [x] Draft autosaves to IndexedDB. Submitting offline queues it; it replays like field reports.
 - [x] Server rejects assessment writes from anyone who isn't allowed (checked server-side, not only in the UI).
 - [x] Admin `/assessments`: Buildings tab (latest score per building) and Assessments tab (all), campus-scoped. Read-only detail page.
-- [ ] Super admin `/assessments/checklist`: edit wording in place; structural changes go into a new draft version that is then published.
+- [x] Super admin `/assessments/checklist`: edit wording in place; structural changes go into a new draft version that is then published.
 - [x] Question language preference (Both / English / Filipino) in My profile, saved per device.
 - [x] Light and dark mode; phone, tablet and web layouts.
 
@@ -572,8 +572,8 @@ Three phases, all on `feat/DRRM-015-assessment-form` in this worktree. Each phas
 
 **Phase 3: super admins edit the questions**
 
-- [ ] **Task 11: Checklist editor.** `actions/assessment-templates` + `use-assessment-templates.ts`; `/assessments/checklist`: wording edits, draft versions, pillar per item, publish, area types.
-- [ ] **Docs:** README + CLAUDE.md (template versioning rules).
+- [x] **Task 11: Checklist editor.** `actions/assessment-templates` + `use-assessment-templates.ts`; `/assessments/checklist`: wording edits, draft versions, pillar per item, publish, area types.
+- [x] **Docs:** README + CLAUDE.md (template versioning rules).
 
 ---
 
