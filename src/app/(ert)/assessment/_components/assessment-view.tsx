@@ -79,17 +79,6 @@ function isUnsafe(item: TemplateItem, value: AnswerValue | null | undefined) {
 }
 
 function RecordView({ record }: { record: AssessmentRecord }) {
-  const { template } = record;
-  const answers: AnswerMap = Object.fromEntries(
-    Object.entries(record.answers).map(([itemId, a]) => [itemId, a.answer])
-  );
-  const score = scoreAssessment(template, record.floor_count, record.area_type_ids, answers);
-  const items = applicableItems(template, record.floor_count, record.area_type_ids);
-  const applies = new Set(items.map((i) => i.id));
-  const sections = template.sections.filter((s) => s.items.some((i) => applies.has(i.id)));
-  const ticked = new Set(record.area_type_ids);
-  const notTicked = template.area_types.filter((a) => !ticked.has(a.id)).map((a) => a.name_en);
-
   return (
     <>
       <Hero eyebrow="Building assessment" title={record.building_name}>
@@ -121,36 +110,59 @@ function RecordView({ record }: { record: AssessmentRecord }) {
           </Button>
         </div>
 
-        <DetailList
-          rows={[
-            { label: 'Building', value: record.building_name },
-            { label: 'College or unit', value: record.unit_name },
-            { label: 'Cluster', value: record.cluster_name },
-            { label: 'Evaluator', value: record.evaluator_name || '—' },
-            { label: 'Incident commander', value: record.incident_commander || '—' },
-            { label: 'Event', value: record.event_name ?? 'None' },
-            { label: 'Started', value: <Mono>{formatDateTime(record.started_at)}</Mono> },
-            { label: 'Ended', value: <Mono>{formatDateTime(record.ended_at)}</Mono> },
-            { label: 'Floors', value: <Mono>{record.floor_count}</Mono> },
-          ]}
-        />
-
-        <h2 className="pt-2 text-[22px] font-extrabold">Scores</h2>
-        <ScoreSummary score={score} template={template} />
-
-        <h2 className="pt-2 text-[22px] font-extrabold">Answers</h2>
-        {notTicked.length > 0 && (
-          <p className="text-[15px] text-gray-600">Not applicable (no {notTicked.join(', ')})</p>
-        )}
-        {sections.map((section) => (
-          <SectionAnswers
-            key={section.id}
-            section={section}
-            items={section.items.filter((i) => applies.has(i.id))}
-            record={record}
-          />
-        ))}
+        <AssessmentRecordBody record={record} />
       </main>
+    </>
+  );
+}
+
+/**
+ * The details, scores and every answer of a submitted assessment. Also the body of the admin
+ * detail page (/assessments/details), which wraps it in its own header.
+ */
+export function AssessmentRecordBody({ record }: { record: AssessmentRecord }) {
+  const { template } = record;
+  const answers: AnswerMap = Object.fromEntries(
+    Object.entries(record.answers).map(([itemId, a]) => [itemId, a.answer])
+  );
+  const score = scoreAssessment(template, record.floor_count, record.area_type_ids, answers);
+  const items = applicableItems(template, record.floor_count, record.area_type_ids);
+  const applies = new Set(items.map((i) => i.id));
+  const sections = template.sections.filter((s) => s.items.some((i) => applies.has(i.id)));
+  const ticked = new Set(record.area_type_ids);
+  const notTicked = template.area_types.filter((a) => !ticked.has(a.id)).map((a) => a.name_en);
+
+  return (
+    <>
+      <DetailList
+        rows={[
+          { label: 'Building', value: record.building_name },
+          { label: 'College or unit', value: record.unit_name },
+          { label: 'Cluster', value: record.cluster_name },
+          { label: 'Evaluator', value: record.evaluator_name || '—' },
+          { label: 'Incident commander', value: record.incident_commander || '—' },
+          { label: 'Event', value: record.event_name ?? 'None' },
+          { label: 'Started', value: <Mono>{formatDateTime(record.started_at)}</Mono> },
+          { label: 'Ended', value: <Mono>{formatDateTime(record.ended_at)}</Mono> },
+          { label: 'Floors', value: <Mono>{record.floor_count}</Mono> },
+        ]}
+      />
+
+      <h2 className="pt-2 text-[22px] font-extrabold">Scores</h2>
+      <ScoreSummary score={score} template={template} />
+
+      <h2 className="pt-2 text-[22px] font-extrabold">Answers</h2>
+      {notTicked.length > 0 && (
+        <p className="text-[15px] text-gray-600">Not applicable (no {notTicked.join(', ')})</p>
+      )}
+      {sections.map((section) => (
+        <SectionAnswers
+          key={section.id}
+          section={section}
+          items={section.items.filter((i) => applies.has(i.id))}
+          record={record}
+        />
+      ))}
     </>
   );
 }
