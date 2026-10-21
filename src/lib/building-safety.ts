@@ -348,3 +348,22 @@ export function scopeFromParams(
     b: get('bs_b'),
   };
 }
+
+/* ─── What the dashboard actions return ─── */
+
+export interface SafetyRollup {
+  level: RollupLevel;
+  /** The breadcrumb above the level (an Administrator's starts at their campus). */
+  trail: { campus?: Named; cluster?: Named; unit?: Named };
+  group: RollupGroup;
+  children: ChildRow[];
+  notAssessed: Named[];
+  sections: SectionRow[];
+  mostFailed: { pillar: PillarCode; items: FailedItem[] }[];
+}
+
+export interface BuildingHistory {
+  building: Named & { unit: Named; cluster: Named; campus: Named };
+  /** Oldest first; `number` is #1…#n by when they ended. */
+  assessments: (ScoredAssessment & { number: number; version_label: string })[];
+}

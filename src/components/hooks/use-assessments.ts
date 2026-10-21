@@ -12,6 +12,7 @@ import {
   getPublishedTemplate,
   getTemplateVersion,
 } from '@/actions/assessments';
+import { compareAssessments, getBuildingHistory, getSafetyRollup } from '@/actions/building-safety';
 import { toPayload, type AssessmentDraft } from '@/lib/assessment-draft';
 import type { AssessmentTemplate } from '@/lib/assessment-template';
 import { cachedFetch, withTimeout } from '@/lib/offline-cache';
@@ -217,5 +218,35 @@ export function useDeleteAssessment() {
         queryClient.invalidateQueries({ queryKey: [key] });
       }
     },
+  });
+}
+
+/* ─── Dashboard Building safety ─── */
+
+/** One drill-down level; campusId null leaves the campus to the server (an Administrator's own). */
+export function useSafetyRollup(
+  scope: { campusId: string | null; clusterId: string | null; unitId: string | null },
+  enabled = true
+) {
+  return useQuery({
+    queryKey: ['building-safety', scope.campusId, scope.clusterId, scope.unitId],
+    queryFn: async () => getSafetyRollup(await getAccessToken(), scope),
+    enabled,
+  });
+}
+
+export function useBuildingHistory(buildingId?: string | null) {
+  return useQuery({
+    queryKey: ['building-history', buildingId],
+    queryFn: async () => getBuildingHistory(await getAccessToken(), buildingId!),
+    enabled: !!buildingId,
+  });
+}
+
+export function useCompareAssessments(aId?: string | null, bId?: string | null) {
+  return useQuery({
+    queryKey: ['assessment-compare', aId, bId],
+    queryFn: async () => compareAssessments(await getAccessToken(), aId!, bId!),
+    enabled: !!aId && !!bId && aId !== bId,
   });
 }
