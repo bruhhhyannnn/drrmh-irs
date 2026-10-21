@@ -2,6 +2,7 @@ import { PILLARS, pillarHref } from '@/lib/pillars';
 import {
   CalendarDays,
   ChartNoAxesColumn,
+  ClipboardCheck,
   LayoutGrid,
   Settings,
   TriangleAlert,
@@ -58,6 +59,13 @@ const NAV: NavItem[] = [
     href: '/emergency-reports',
     icon: TriangleAlert,
     tab: true,
+  },
+  {
+    key: 'assessments',
+    label: 'Assessments',
+    short: 'Assess',
+    href: '/assessments',
+    icon: ClipboardCheck,
   },
   {
     key: 'campus',
