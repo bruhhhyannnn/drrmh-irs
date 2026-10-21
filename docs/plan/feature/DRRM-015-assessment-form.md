@@ -55,7 +55,7 @@ Acceptance criteria:
 - [x] Question language preference (Both / English / Filipino) in My profile, saved per device.
 - [ ] Light and dark mode; phone, tablet and web layouts.
 
-Non-goals (this ticket): A4 print/PDF of an assessment, photos per item, resuming a draft on another device, score bands/ratings, the Safety Officer position rule (designed for, not switched on).
+Non-goals (this ticket): photos per item, resuming a draft on another device, score bands/ratings, the Safety Officer position rule (designed for, not switched on).
 
 ---
 
@@ -120,12 +120,15 @@ Section I Crisis plans (12), II Exterior & grounds (7), VIII Exits & corridors (
 ### 3.5 Backtracking while answering
 
 - The assessment is a stepper: **Details → About the building → one step per applicable section → Review**. Back / Next on every step.
-- A **section index** (bottom sheet on phone, side list on web) lists every step with "answered / total", and any step can be opened from it, including the two pre-screen steps.
+- **Answering a section:** below `lg` (phone, tablet) one question at a time, as a flashcard: the section header on top, the question in the middle and large YES | N/A | NO buttons at the bottom that move on to the next question, across sections. From `lg` (web) the whole section is one list in paper-form order.
+- A **section index** (the **Questions** drawer from the bottom bar, on every screen size) lists every step with "answered / total", and any step can be opened from it, including the two pre-screen steps. In the current section, numbered chips jump to a single question.
+  - A search box finds questions by their words in English or Filipino, their label ("III.2.1"), the section title or the group's shared prompt ("doors bathrooms"). Only applicable questions are searched.
+  - Answer filters (All / Not answered / Yes / No / N/A, with counts) list the questions still to do or answered one way. A match opens its question; on web it scrolls into view.
 - **Changing the pre-screen mid-way**
   - _Ticking an area_ adds its items, unanswered. The index shows which sections grew.
   - _Unticking an area that already has answers_ asks first: "12 answers for Laboratories will be set aside. They come back if you tick it again." The answers stay in the draft but aren't shown or scored. On submit, only applicable items are sent.
   - _Floors changed across 3_ works the same way for the sprinkler items.
-- **Review** shows each section's score, the unanswered items (tap → jumps to the item), and any flags. Submit is disabled until nothing is unanswered.
+- **Review** shows any flags and the scores first, then the unanswered items grouped in collapsible sections (tap → jumps to the item). Submit is disabled until nothing is unanswered.
 
 ---
 
@@ -494,16 +497,18 @@ The same file has `applicableItems(template, floors, areaIds)`, used by the form
 - `src/app/(ert)/assessment/page.tsx` → `/assessment`. It is a single route on purpose: a dynamic segment might not be cached by the service worker when offline.
   - No query → the hub: Start new assessment, drafts on this phone, my submitted assessments.
   - `?draft=<client_ref>` → the stepper.
-  - `?view=<id>` → a submitted assessment, read-only.
+  - `?view=<id>` → a submitted assessment, read-only, with collapsible sections (each shows its unsafe count) and a **Print** button.
+  - `?print=<id>` → that assessment on A4, without the frame (`assessment-print`, see `docs/plan/feature/DRRM-015-assessment-print.md`).
 - **Stepper parts**, in `assessment/_components/`:
   - `details-step` and `building-step`: the pre-screen. Area tick boxes show their question counts, and a running total shows "93 questions".
   - `section-step`:
     - Section title and progress.
-    - One card per item with Yes / No / N/A buttons, an "Add remarks" toggle, a collapsible reference and note, and a "Yes here means a hazard" hint on reverse items.
+    - Below `lg`: the flashcard, one scored question at a time (`stepQuestion` in `assessment-draft.ts` walks them across sections); answering moves to the next one.
+    - From `lg`: one card per item with Yes / No / N/A buttons, an "Add remarks" toggle, a collapsible reference and note, and a "Yes here means a hazard" hint on reverse items.
     - Area-matrix items render as one card: the shared question once, then one row per applicable area with its own buttons and remarks.
     - The section comment sits at the bottom.
-  - `section-index` (sheet / side list).
-  - `review-step`: the four pillar scores (Pillar 4 as an indicator), section scores, the unanswered list with jump links, the follow-up flag, and Submit.
+  - `section-index`: the Questions drawer on every screen size, with the question search and answer filters (`searchQuestions`, `answerFilterOf` in `assessment-draft.ts`).
+  - `review-step`: the follow-up flag and the four pillar scores (Pillar 4 as an indicator) with section scores first, then the unanswered list in collapsible sections with jump links, and Submit.
   - Zod schemas in `src/lib/schemas.ts`. `react-hook-form` holds the details step. Answers are plain draft state, because they come from the template, not a fixed form.
 - Guard: same as `/report`: signed out → `/signin`, admin → `/dashboard`, incomplete profile → `ProfileSetup`, and `!canUseAssessment` → back to `/home`.
 
@@ -622,7 +627,7 @@ Three phases, all on `feat/DRRM-015-assessment-form` in this worktree. Each phas
 - Questions live in the database, versioned, and are editable by **Super Admin only**.
 - ERT landing = a home chooser plus a Report | Assessment switch in the top bar.
 - Questions show English with Filipino below by default. English only or Filipino only can be chosen in My profile.
-- Admins get a list and detail view in this phase. Print/PDF comes later.
+- Admins get a list and detail view in this phase. ERT members can print their own submitted assessment on A4 (`docs/plan/feature/DRRM-015-assessment-print.md`); the admin detail page can reuse it in Phase 2.
 - Access is ERT members only for now. Later: ERT member **and** Safety Officer.
 - Each MATATAG item maps to one DRRM pillar (Section 4.1, requester's mapping), and there are metrics per pillar.
 - The admin dashboard gets a Building safety section that drills Campus → Cluster → Unit → Building in place.
