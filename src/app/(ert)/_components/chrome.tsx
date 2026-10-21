@@ -66,6 +66,7 @@ const PILL_TONES = {
   success: 'bg-success-50 text-success-700',
   warning: 'bg-warning-50 text-warning-700',
   error: 'bg-error-50 text-error-700',
+  neutral: 'bg-gray-100 text-gray-600',
 };
 
 /** Small rounded status label, e.g. Ongoing, Submitted, Offline. */

@@ -1,9 +1,11 @@
 import { applicableItems } from './assessment-score';
-import type {
-  AnswerValue,
-  AssessmentTemplate,
-  BuildingOption,
-  TemplateItem,
+import {
+  itemLabel,
+  type AnswerValue,
+  type AssessmentTemplate,
+  type BuildingOption,
+  type TemplateItem,
+  type TemplateSection,
 } from './assessment-template';
 import type { AssessmentPayload } from './schemas';
 
@@ -234,6 +236,68 @@ export function sectionProgress(
     if (draft.answers[item.id]?.answer) section.answered += 1;
   }
   return progress;
+}
+
+export interface QuestionMatch {
+  step: DraftStep;
+  section: TemplateSection;
+  item: TemplateItem;
+  /** The group parent holding the shared prompt, for a sub-item like "Bathrooms". */
+  parent: TemplateItem | undefined;
+}
+
+/** Lower case, accents dropped and spaces collapsed, so "Palikuran" finds "palikuran". */
+const fold = (text: string) =>
+  text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/\s+/g, ' ').trim();
+
+/**
+ * The questions that apply to this draft and contain every word of the query, in form order; a
+ * blank query keeps them all. Each question is searched with its label ("III.2.1"), its section
+ * title and its group's shared prompt, in English and Filipino, so "doors bathrooms" finds the
+ * bathroom row of a doors group.
+ */
+export function searchQuestions(
+  template: AssessmentTemplate,
+  draft: AssessmentDraft,
+  query: string
+): QuestionMatch[] {
+  const words = fold(query).split(' ').filter(Boolean);
+  const matches: QuestionMatch[] = [];
+  for (const step of draftSteps(template, draft)) {
+    if (!step.startsWith('section:')) continue;
+    const sectionId = step.slice('section:'.length);
+    const section = template.sections.find((s) => s.id === sectionId);
+    if (!section) continue;
+    for (const item of sectionScoredItems(template, draft, sectionId)) {
+      const parent = item.parent_id
+        ? section.items.find((p) => p.id === item.parent_id)
+        : undefined;
+      const text = fold(
+        [
+          itemLabel(section, item),
+          section.title_en,
+          section.title_fil,
+          parent?.prompt_en,
+          parent?.prompt_fil,
+          item.prompt_en,
+          item.prompt_fil,
+        ].join(' ')
+      );
+      if (words.every((w) => text.includes(w))) matches.push({ step, section, item, parent });
+    }
+  }
+  return matches;
+}
+
+/** The answer filter in the question list: every question, the ones still to do, or one answer. */
+export type AnswerFilter = 'all' | 'unanswered' | AnswerValue;
+
+/** Which answer filter a question falls under (besides "all"). */
+export function answerFilterOf(
+  draft: AssessmentDraft,
+  itemId: string
+): Exclude<AnswerFilter, 'all'> {
+  return draft.answers[itemId]?.answer ?? 'unanswered';
 }
 
 /** What gets submitted (and queued): only what applies, in template order. */

@@ -21,7 +21,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { CloudOff, FileQuestion, ListChecks } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Card, GUTTER, Hero, NoticeCard } from '../../_components/chrome';
+import { GUTTER, Hero, NoticeCard } from '../../_components/chrome';
 import type { ErtProfile } from '../../_lib/use-ert-access';
 import { goToAssessment } from '../_lib/nav';
 import { BuildingStep } from './building-step';
@@ -330,7 +330,11 @@ function DraftForm({
       steps={steps}
       current={current}
       grown={grown}
-      onOpen={go}
+      onOpen={(step, itemId) => {
+        go(step, itemId);
+        // On desktop the section is a full list, so bring the chosen question into view.
+        if (itemId) setFocusItem(itemId);
+      }}
     />
   );
   const title = draft.building_name || draft.new_building_name.trim() || 'New assessment';
@@ -345,19 +349,10 @@ function DraftForm({
       <div
         className={cn(
           GUTTER,
-          isSectionStep ? 'flex flex-1 flex-col py-4 lg:py-8' : 'flex flex-1 flex-col py-6 md:py-8',
-          'lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-8'
+          isSectionStep ? 'flex flex-1 flex-col py-4 lg:py-8' : 'flex flex-1 flex-col py-6 md:py-8'
         )}
       >
         <main className="flex min-w-0 flex-1 flex-col gap-5">{content}</main>
-        <aside className="hidden lg:sticky lg:top-6 lg:block">
-          <Card className="flex max-h-[calc(100dvh-48px)] flex-col overflow-y-auto p-2">
-            <h2 className="px-3 pt-2 pb-1 text-[12px] font-bold tracking-[.08em] text-gray-500 uppercase">
-              Questions
-            </h2>
-            {index_}
-          </Card>
-        </aside>
       </div>
 
       <div

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { MATATAG_2025_07_25 } from '../../prisma/data/matatag-2025-07-25';
 import {
+  answerFilterOf,
   applyBuildingProfile,
   clampFloors,
   draftFromPayload,
@@ -9,6 +10,7 @@ import {
   newDraft,
   newUuid,
   parseFloors,
+  searchQuestions,
   sectionProgress,
   sectionScoredItems,
   setAsideCount,
@@ -202,4 +204,39 @@ test('flashcard question stepping walks one scored question at a time across sec
     step: 'section:X',
     item_id: secX[secX.length - 1].id,
   });
+});
+
+test('search finds the questions that apply, in form order, by every word of the query', () => {
+  const ids = (d: AssessmentDraft, q: string) => searchQuestions(T, d, q).map((m) => m.item.id);
+  const withBathrooms = draft({ floor_count: 2, area_type_ids: ['bathrooms'] });
+
+  // In form order, and a blank query lists every question that applies.
+  const all = draftSteps(T, withBathrooms).flatMap((s) =>
+    s.startsWith('section:')
+      ? sectionScoredItems(T, withBathrooms, s.slice(8)).map((i) => i.id)
+      : []
+  );
+  assert.deepEqual(ids(withBathrooms, '   '), all);
+  assert.ok(!ids(draft({ floor_count: 2 }), 'bathrooms').includes(id('III.2.1')));
+
+  const bathrooms = ids(withBathrooms, 'bathrooms');
+  assert.ok(bathrooms.includes(id('III.2.1')));
+  assert.deepEqual(
+    bathrooms,
+    all.filter((i) => bathrooms.includes(i))
+  );
+
+  // The group's shared prompt narrows a sub-item down; Filipino, case and the label all match.
+  const doors = ids(withBathrooms, 'doors  BATHROOMS');
+  assert.ok(doors.includes(id('III.2.1')) && doors.length < bathrooms.length);
+  assert.ok(ids(withBathrooms, 'palikuran').includes(id('III.2.1')));
+  assert.ok(ids(withBathrooms, 'iii.2.1').includes(id('III.2.1')));
+});
+
+test('a question falls under its answer filter, or "unanswered" until it has one', () => {
+  const d = draft({ answers: { a: { answer: 'no' }, b: { remarks: 'cracked' } } });
+  assert.deepEqual(
+    ['a', 'b', 'c'].map((i) => answerFilterOf(d, i)),
+    ['no', 'unanswered', 'unanswered']
+  );
 });
