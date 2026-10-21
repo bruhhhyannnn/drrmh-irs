@@ -460,6 +460,7 @@ model AssessmentSection {
   comments     AssessmentSectionComment[]
 
   @@unique([version_id, code], map: "uq_assessment_sections_code")
+  @@index([version_id, sort_order], map: "idx_assessment_sections_version_order")
   @@map("assessment_sections")
 }
 
@@ -553,7 +554,8 @@ model Assessment {
   comments            AssessmentSectionComment[]
 
   @@index([building_id, ended_at(sort: Desc)], map: "idx_assessments_building_ended")
-  @@index([evaluator_id], map: "idx_assessments_evaluator")
+  @@index([ended_at(sort: Desc)], map: "idx_assessments_ended")
+  @@index([evaluator_id, ended_at(sort: Desc)], map: "idx_assessments_evaluator")
   @@map("assessments")
 }
 

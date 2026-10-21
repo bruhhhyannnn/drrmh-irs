@@ -23,8 +23,10 @@ export type CallerCheck =
   /** `profileId`: so a caller can tell the account's own data from someone else's. */
   | { ok: false; reason: 'inactive'; profileId: string };
 
-export async function requireProfile(token: string | null | undefined): Promise<CallerCheck> {
-  if (!token) return { ok: false, reason: 'signed_out' };
+const PROFILE_TTL_MS = 15_000;
+const profileCache = new Map<string, { expires: number; promise: Promise<CallerCheck> }>();
+
+async function verifyCaller(token: string): Promise<CallerCheck> {
   const { data, error } = await supabaseAdmin.auth.getUser(token);
   if (error || !data.user) return { ok: false, reason: 'signed_out' };
 
@@ -35,6 +37,32 @@ export async function requireProfile(token: string | null | undefined): Promise<
   if (!profile) return { ok: false, reason: 'no_profile' };
   if (!profile.is_active) return { ok: false, reason: 'inactive', profileId: profile.id };
   return { ok: true, profile };
+}
+
+export async function requireProfile(token: string | null | undefined): Promise<CallerCheck> {
+  if (!token) return { ok: false, reason: 'signed_out' };
+
+  const now = Date.now();
+  const hit = profileCache.get(token);
+  if (hit && hit.expires > now) return hit.promise;
+
+  if (profileCache.size >= 100) {
+    for (const [k, v] of profileCache) {
+      if (v.expires <= now) profileCache.delete(k);
+    }
+  }
+
+  const promise = verifyCaller(token)
+    .then((res) => {
+      if (!res.ok) profileCache.delete(token);
+      return res;
+    })
+    .catch((err) => {
+      profileCache.delete(token);
+      throw err;
+    });
+  profileCache.set(token, { expires: now + PROFILE_TTL_MS, promise });
+  return promise;
 }
 
 /** An admin caller and the campus they may read (adminScope); `{ ok: false }` for anyone else. */

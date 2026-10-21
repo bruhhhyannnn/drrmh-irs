@@ -1,6 +1,6 @@
 'use server';
 
-import { loadVersion } from '@/lib/assessment-records';
+import { clearVersionCache, loadVersion } from '@/lib/assessment-records';
 import {
   canPublishTemplate,
   moveItemInSection,
@@ -47,6 +47,7 @@ async function requireSuperAdmin(token: string | null) {
 }
 
 function revalidateChecklist() {
+  clearVersionCache();
   try {
     revalidatePath('/assessments/checklist');
     revalidatePath('/assessments');

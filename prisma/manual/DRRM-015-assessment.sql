@@ -281,8 +281,14 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_assessment_items_code
     code
   );
 
+CREATE INDEX IF NOT EXISTS idx_assessment_sections_version_order
+  ON public.assessment_sections (version_id, sort_order);
+
 CREATE INDEX IF NOT EXISTS idx_assessment_items_section_order
   ON public.assessment_items (section_id, sort_order);
+
+CREATE INDEX IF NOT EXISTS idx_buildings_unit
+  ON public.buildings (unit_id);
 
 -- Two people adding "Annex" and "annex" to the same unit get one building.
 CREATE UNIQUE INDEX IF NOT EXISTS uq_buildings_unit_name
@@ -292,8 +298,16 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_buildings_unit_name
 CREATE INDEX IF NOT EXISTS idx_assessments_building_ended
   ON public.assessments (building_id, ended_at DESC);
 
+CREATE INDEX IF NOT EXISTS idx_assessments_ended
+  ON public.assessments (ended_at DESC);
+
 CREATE INDEX IF NOT EXISTS idx_assessments_evaluator
-  ON public.assessments (evaluator_id);
+  ON public.assessments (evaluator_id, ended_at DESC);
+
+-- Covering partial index for dashboard safety rollups (index-only scan, skipping remarks).
+CREATE INDEX IF NOT EXISTS idx_assessment_answers_rollup
+  ON public.assessment_answers (assessment_id, item_id, answer)
+  WHERE answer IS NOT NULL;
 
 -- Row level security ──────────────────────────────────────────────────────────
 

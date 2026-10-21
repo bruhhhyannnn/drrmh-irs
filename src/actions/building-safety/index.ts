@@ -2,13 +2,14 @@
 
 import { inScope } from '@/lib/admin-scope';
 import {
-  loadAssessmentRecord,
   loadBuildingScores,
-  scoredInclude,
+  loadScoredItemMeta,
+  loadVersion,
+  scoredSelect,
   toScoredAssessment,
 } from '@/lib/assessment-records';
 import { scoreAssessment, type AnswerMap } from '@/lib/assessment-score';
-import { itemLabel, type AssessmentRecord, type PillarCode } from '@/lib/assessment-template';
+import { type AssessmentTemplate } from '@/lib/assessment-template';
 import {
   compareScores,
   groupChildren,
@@ -46,7 +47,16 @@ export async function getSafetyRollup(
   const unitId = uuidOrNull(scope.unitId);
   const level: RollupLevel = unitId ? 'unit' : clusterId ? 'cluster' : campusId ? 'campus' : 'all';
 
-  const [campus, cluster, unit] = await Promise.all([
+  const where: Prisma.BuildingWhereInput = {
+    is_active: true,
+    ...(unitId && { unit_id: unitId }),
+    unit: {
+      ...(clusterId && { cluster_id: clusterId }),
+      ...(campusId && { cluster: { campus_id: campusId } }),
+    },
+  };
+
+  const [campus, cluster, unit, buildings, itemMeta] = await Promise.all([
     campusId
       ? prisma.campus.findUnique({ where: { id: campusId }, select: { id: true, name: true } })
       : null,
@@ -66,18 +76,10 @@ export async function getSafetyRollup(
           select: { id: true, name: true },
         })
       : null,
+    loadBuildingScores(where),
+    loadScoredItemMeta(),
   ]);
   if ((clusterId && !cluster) || (unitId && !unit)) return null;
-
-  const where: Prisma.BuildingWhereInput = {
-    is_active: true,
-    ...(unitId && { unit_id: unitId }),
-    unit: {
-      ...(clusterId && { cluster_id: clusterId }),
-      ...(campusId && { cluster: { campus_id: campusId } }),
-    },
-  };
-  const buildings = await loadBuildingScores(where);
 
   const reassessed = buildings.filter((b) => b.latest && b.previous);
   const ids = {
@@ -85,40 +87,32 @@ export async function getSafetyRollup(
     lflCurrent: reassessed.map((b) => b.latest!.id),
     lflPrevious: reassessed.map((b) => b.previous!.id),
   };
-  const rows = await prisma.assessmentAnswerRow.findMany({
-    where: {
-      assessment_id: { in: [...ids.current, ...ids.lflPrevious] },
-      answer: { not: null },
-      item: { is_scored: true },
-    },
-    select: {
-      assessment_id: true,
-      answer: true,
-      item: {
-        select: {
-          code: true,
-          prompt_en: true,
-          prompt_fil: true,
-          safe_answer: true,
-          pillar: { select: { code: true } },
-          section: { select: { code: true, title_en: true, title_fil: true, sort_order: true } },
-        },
-      },
-    },
-  });
-  const facts: AnswerFact[] = rows.map((r) => ({
-    assessment_id: r.assessment_id,
-    section_code: r.item.section.code,
-    section_order: r.item.section.sort_order,
-    section_title_en: r.item.section.title_en,
-    section_title_fil: r.item.section.title_fil,
-    label: itemLabel(r.item.section, r.item),
-    prompt_en: r.item.prompt_en,
-    prompt_fil: r.item.prompt_fil,
-    pillar_code: (r.item.pillar?.code ?? null) as PillarCode | null,
-    answer: r.answer!,
-    safe_answer: r.item.safe_answer,
-  }));
+  const allAssessmentIds = [...ids.current, ...ids.lflPrevious];
+  const rows =
+    allAssessmentIds.length > 0
+      ? await prisma.assessmentAnswerRow.findMany({
+          where: {
+            assessment_id: { in: allAssessmentIds },
+            answer: { not: null },
+          },
+          select: {
+            assessment_id: true,
+            item_id: true,
+            answer: true,
+          },
+        })
+      : [];
+
+  const facts: AnswerFact[] = [];
+  for (const r of rows) {
+    const meta = itemMeta.get(r.item_id);
+    if (!meta || !r.answer) continue;
+    facts.push({
+      assessment_id: r.assessment_id,
+      ...meta,
+      answer: r.answer,
+    });
+  }
 
   return {
     level,
@@ -147,7 +141,9 @@ export async function getBuildingHistory(
 
   const building = await prisma.building.findUnique({
     where: { id },
-    include: {
+    select: {
+      id: true,
+      name: true,
       unit: {
         select: {
           id: true,
@@ -159,7 +155,7 @@ export async function getBuildingHistory(
       },
       assessments: {
         orderBy: { ended_at: 'asc' },
-        include: { ...scoredInclude, version: { select: { label: true } } },
+        select: { ...scoredSelect, version: { select: { label: true } } },
       },
     },
   });
@@ -181,13 +177,6 @@ export async function getBuildingHistory(
   };
 }
 
-function scoreOf(record: AssessmentRecord) {
-  const answers: AnswerMap = Object.fromEntries(
-    Object.entries(record.answers).map(([itemId, a]) => [itemId, a.answer])
-  );
-  return scoreAssessment(record.template, record.floor_count, record.area_type_ids, answers);
-}
-
 /** Two assessments of the same building side by side; null unless both are in scope. */
 export async function compareAssessments(
   token: string | null,
@@ -200,15 +189,46 @@ export async function compareAssessments(
   const caller = await requireAdmin(token);
   if (!caller.ok) return null;
 
-  const [recordA, recordB] = await Promise.all([
-    loadAssessmentRecord({ id: a }),
-    loadAssessmentRecord({ id: b }),
-  ]);
-  if (!recordA || !recordB || recordA.building_id !== recordB.building_id) return null;
-  if (!inScope(caller.scope, recordA.campus_id)) return null;
+  const rows = await prisma.assessment.findMany({
+    where: { id: { in: [a, b] } },
+    select: {
+      id: true,
+      building_id: true,
+      floor_count: true,
+      template_version_id: true,
+      building: {
+        select: { unit: { select: { cluster: { select: { campus_id: true } } } } },
+      },
+      areas: { select: { area_type_id: true } },
+      answers: { where: { answer: { not: null } }, select: { item_id: true, answer: true } },
+    },
+  });
+  const rowA = rows.find((r) => r.id === a);
+  const rowB = rows.find((r) => r.id === b);
+  if (!rowA || !rowB || rowA.building_id !== rowB.building_id) return null;
+  if (!inScope(caller.scope, rowA.building.unit.cluster.campus_id)) return null;
+
+  const [vA, vB] =
+    rowA.template_version_id === rowB.template_version_id
+      ? await loadVersion({ id: rowA.template_version_id }).then((v) => [v, v] as const)
+      : await Promise.all([
+          loadVersion({ id: rowA.template_version_id }),
+          loadVersion({ id: rowB.template_version_id }),
+        ]);
+  if (!vA || !vB) return null;
+
+  const scoreRow = (row: typeof rowA, template: AssessmentTemplate) => {
+    const answerMap: AnswerMap = Object.fromEntries(row.answers.map((r) => [r.item_id, r.answer]));
+    return scoreAssessment(
+      template,
+      row.floor_count,
+      row.areas.map((ar) => ar.area_type_id),
+      answerMap
+    );
+  };
 
   return compareScores(
-    { template: recordA.template, score: scoreOf(recordA) },
-    { template: recordB.template, score: scoreOf(recordB) }
+    { template: vA.template, score: scoreRow(rowA, vA.template) },
+    { template: vB.template, score: scoreRow(rowB, vB.template) }
   );
 }

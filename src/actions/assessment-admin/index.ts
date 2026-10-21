@@ -43,7 +43,10 @@ export async function getAssessmentList(
     where: { building: inCampus(caller.scope.campusId) },
     orderBy: { ended_at: 'desc' },
     take: LIST_LIMIT,
-    include: {
+    select: {
+      id: true,
+      ended_at: true,
+      needs_follow_up: true,
       ...scoredInclude,
       building: {
         select: {

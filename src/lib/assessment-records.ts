@@ -1,9 +1,11 @@
 import type { Prisma } from '@prisma/client';
 import {
+  itemLabel,
   type AssessmentRecord,
   type AssessmentTemplate,
   type BuildingScores,
   type PillarCode,
+  type SafeAnswer,
   type ScoredAssessment,
 } from './assessment-template';
 import { scoresFromPillarRows } from './building-safety';
@@ -13,25 +15,80 @@ import { prisma } from './prisma';
 // one submitted assessment as `AssessmentRecord`, and buildings with their latest two scores.
 // Server only (they use Prisma): import them from server actions, never from components.
 
-const versionInclude = {
+const VERSION_TTL_MS = 60_000;
+
+type LoadedVersion = { status: string; template: AssessmentTemplate };
+export type ScoredItemMeta = {
+  section_code: string;
+  section_order: number;
+  section_title_en: string;
+  section_title_fil: string;
+  label: string;
+  prompt_en: string;
+  prompt_fil: string;
+  pillar_code: PillarCode | null;
+  safe_answer: SafeAnswer;
+};
+
+const versionCache = new Map<string, { expires: number; promise: Promise<LoadedVersion | null> }>();
+let scoredItemMetaCache: { expires: number; promise: Promise<Map<string, ScoredItemMeta>> } | null =
+  null;
+
+/** Clears cached checklist versions and item metadata after any Super Admin template edit. */
+export function clearVersionCache() {
+  versionCache.clear();
+  scoredItemMetaCache = null;
+}
+
+const versionSelect = {
+  id: true,
+  label: true,
+  status: true,
   sections: {
     orderBy: { sort_order: 'asc' },
-    include: {
-      items: { orderBy: { sort_order: 'asc' }, include: { pillar: { select: { code: true } } } },
+    select: {
+      id: true,
+      code: true,
+      title_en: true,
+      title_fil: true,
+      area_type_id: true,
+      items: {
+        orderBy: { sort_order: 'asc' },
+        select: {
+          id: true,
+          section_id: true,
+          parent_id: true,
+          code: true,
+          prompt_en: true,
+          prompt_fil: true,
+          note_en: true,
+          note_fil: true,
+          reference: true,
+          is_scored: true,
+          safe_answer: true,
+          area_type_id: true,
+          min_floors: true,
+          flag_label: true,
+          pillar: { select: { code: true } },
+        },
+      },
     },
   },
-} satisfies Prisma.AssessmentTemplateVersionInclude;
+} satisfies Prisma.AssessmentTemplateVersionSelect;
 
-export async function loadVersion(where: Prisma.AssessmentTemplateVersionWhereInput) {
+async function fetchVersion(
+  where: Prisma.AssessmentTemplateVersionWhereInput
+): Promise<LoadedVersion | null> {
   const [version, areaTypes] = await Promise.all([
     prisma.assessmentTemplateVersion.findFirst({
       where,
-      include: versionInclude,
+      select: versionSelect,
       orderBy: { published_at: { sort: 'desc', nulls: 'last' } },
     }),
     prisma.buildingAreaType.findMany({
       where: { is_active: true },
       orderBy: { sort_order: 'asc' },
+      select: { id: true, code: true, name_en: true, name_fil: true },
     }),
   ]);
   if (!version) return null;
@@ -39,12 +96,7 @@ export async function loadVersion(where: Prisma.AssessmentTemplateVersionWhereIn
   const template: AssessmentTemplate = {
     version_id: version.id,
     label: version.label,
-    area_types: areaTypes.map((a) => ({
-      id: a.id,
-      code: a.code,
-      name_en: a.name_en,
-      name_fil: a.name_fil,
-    })),
+    area_types: areaTypes,
     sections: version.sections.map((s) => ({
       id: s.id,
       code: s.code,
@@ -73,6 +125,66 @@ export async function loadVersion(where: Prisma.AssessmentTemplateVersionWhereIn
   return { status: version.status, template };
 }
 
+export async function loadVersion(where: Prisma.AssessmentTemplateVersionWhereInput) {
+  const key = JSON.stringify(where);
+  const now = Date.now();
+  const hit = versionCache.get(key);
+  if (hit && hit.expires > now) return hit.promise;
+
+  const promise = fetchVersion(where).catch((err) => {
+    versionCache.delete(key);
+    throw err;
+  });
+  versionCache.set(key, { expires: now + VERSION_TTL_MS, promise });
+  return promise;
+}
+
+/** Cached lookup of scored checklist items by id so dashboard rollups don't join item/section/pillar text on every answer row. */
+export async function loadScoredItemMeta(): Promise<Map<string, ScoredItemMeta>> {
+  const now = Date.now();
+  if (scoredItemMetaCache && scoredItemMetaCache.expires > now) {
+    return scoredItemMetaCache.promise;
+  }
+  const promise = prisma.assessmentItem
+    .findMany({
+      where: { is_scored: true },
+      select: {
+        id: true,
+        code: true,
+        prompt_en: true,
+        prompt_fil: true,
+        safe_answer: true,
+        pillar: { select: { code: true } },
+        section: { select: { code: true, title_en: true, title_fil: true, sort_order: true } },
+      },
+    })
+    .then(
+      (rows) =>
+        new Map(
+          rows.map((r) => [
+            r.id,
+            {
+              section_code: r.section.code,
+              section_order: r.section.sort_order,
+              section_title_en: r.section.title_en,
+              section_title_fil: r.section.title_fil,
+              label: itemLabel(r.section, r),
+              prompt_en: r.prompt_en,
+              prompt_fil: r.prompt_fil,
+              pillar_code: (r.pillar?.code ?? null) as PillarCode | null,
+              safe_answer: r.safe_answer,
+            },
+          ])
+        )
+    )
+    .catch((err) => {
+      scoredItemMetaCache = null;
+      throw err;
+    });
+  scoredItemMetaCache = { expires: now + VERSION_TTL_MS, promise };
+  return promise;
+}
+
 const personName = (p: { first_name: string | null; last_name: string | null }) =>
   [p.first_name, p.last_name].filter(Boolean).join(' ');
 
@@ -83,7 +195,15 @@ export async function loadAssessmentRecord(
 ): Promise<(AssessmentRecord & { campus_id: string; building_id: string }) | null> {
   const a = await prisma.assessment.findFirst({
     where,
-    include: {
+    select: {
+      id: true,
+      building_id: true,
+      template_version_id: true,
+      incident_commander: true,
+      started_at: true,
+      ended_at: true,
+      floor_count: true,
+      needs_follow_up: true,
       building: {
         select: {
           name: true,
@@ -145,9 +265,16 @@ export const scoredInclude = {
   event: { select: { name: true } },
 } satisfies Prisma.AssessmentInclude;
 
-/** An assessment row loaded with `scoredInclude`, as scores. */
+export const scoredSelect = {
+  id: true,
+  ended_at: true,
+  needs_follow_up: true,
+  ...scoredInclude,
+} satisfies Prisma.AssessmentSelect;
+
+/** An assessment row loaded with `scoredSelect` or `scoredInclude`, as scores. */
 export function toScoredAssessment(
-  a: Prisma.AssessmentGetPayload<{ include: typeof scoredInclude }>
+  a: Prisma.AssessmentGetPayload<{ select: typeof scoredSelect }>
 ): ScoredAssessment {
   return {
     id: a.id,
@@ -166,7 +293,10 @@ export async function loadBuildingScores(
   const buildings = await prisma.building.findMany({
     where,
     orderBy: { name: 'asc' },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      floor_count: true,
       unit: {
         select: {
           id: true,
@@ -176,7 +306,7 @@ export async function loadBuildingScores(
           },
         },
       },
-      assessments: { orderBy: { ended_at: 'desc' }, take: 2, include: scoredInclude },
+      assessments: { orderBy: { ended_at: 'desc' }, take: 2, select: scoredSelect },
       _count: { select: { assessments: true } },
     },
   });

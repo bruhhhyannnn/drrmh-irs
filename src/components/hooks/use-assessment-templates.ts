@@ -34,6 +34,7 @@ export function useChecklistEditor(versionId?: string | null) {
   return useQuery({
     queryKey: ['checklist-editor', versionId || null],
     queryFn: async () => getTemplateVersions(await getAccessToken(), versionId || null),
+    staleTime: 60_000,
   });
 }
 

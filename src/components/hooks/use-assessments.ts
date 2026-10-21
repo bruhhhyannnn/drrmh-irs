@@ -105,6 +105,7 @@ export function useMyAssessments(userId?: string) {
     queryKey: ['my-assessments', userId],
     queryFn: async () => getMyAssessments(await getAccessToken()),
     enabled: !!userId,
+    staleTime: 60_000,
   });
 }
 
@@ -113,6 +114,7 @@ export function useMyAssessment(id?: string) {
     queryKey: ['my-assessment', id],
     queryFn: async () => getMyAssessment(await getAccessToken(), id!),
     enabled: !!id,
+    staleTime: 60_000,
   });
 }
 
@@ -183,6 +185,7 @@ export function useAssessmentList(campusId?: string) {
   return useQuery({
     queryKey: ['admin-assessments', campusId || null],
     queryFn: async () => getAssessmentList(await getAccessToken(), campusId || null),
+    staleTime: 60_000,
   });
 }
 
@@ -190,6 +193,7 @@ export function useBuildingSummaries(campusId?: string) {
   return useQuery({
     queryKey: ['building-summaries', campusId || null],
     queryFn: async () => getBuildingSummaries(await getAccessToken(), campusId || null),
+    staleTime: 60_000,
   });
 }
 
@@ -198,6 +202,7 @@ export function useAdminAssessment(id?: string) {
     queryKey: ['admin-assessment', id],
     queryFn: async () => getAssessment(await getAccessToken(), id!),
     enabled: !!id,
+    staleTime: 60_000,
   });
 }
 
@@ -232,6 +237,7 @@ export function useSafetyRollup(
     queryKey: ['building-safety', scope.campusId, scope.clusterId, scope.unitId],
     queryFn: async () => getSafetyRollup(await getAccessToken(), scope),
     enabled,
+    staleTime: 60_000,
   });
 }
 
@@ -240,6 +246,7 @@ export function useBuildingHistory(buildingId?: string | null) {
     queryKey: ['building-history', buildingId],
     queryFn: async () => getBuildingHistory(await getAccessToken(), buildingId!),
     enabled: !!buildingId,
+    staleTime: 60_000,
   });
 }
 
@@ -248,5 +255,6 @@ export function useCompareAssessments(aId?: string | null, bId?: string | null) 
     queryKey: ['assessment-compare', aId, bId],
     queryFn: async () => compareAssessments(await getAccessToken(), aId!, bId!),
     enabled: !!aId && !!bId && aId !== bId,
+    staleTime: 60_000,
   });
 }
