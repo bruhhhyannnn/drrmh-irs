@@ -1,4 +1,5 @@
 import type { Prisma } from '@prisma/client';
+import { adminScope, type AdminScope } from './admin-scope';
 import { prisma } from './prisma';
 import { supabaseAdmin } from './supabase-admin';
 
@@ -34,4 +35,18 @@ export async function requireProfile(token: string | null | undefined): Promise<
   if (!profile) return { ok: false, reason: 'no_profile' };
   if (!profile.is_active) return { ok: false, reason: 'inactive', profileId: profile.id };
   return { ok: true, profile };
+}
+
+/** An admin caller and the campus they may read (adminScope); `{ ok: false }` for anyone else. */
+export async function requireAdmin(
+  token: string | null | undefined,
+  requestedCampusId?: string | null
+): Promise<
+  { ok: true; profile: VerifiedProfile; scope: AdminScope & { ok: true } } | { ok: false }
+> {
+  const caller = await requireProfile(token);
+  if (!caller.ok) return { ok: false };
+  const scope = adminScope(caller.profile, requestedCampusId);
+  if (!scope.ok) return { ok: false };
+  return { ok: true, profile: caller.profile, scope };
 }
