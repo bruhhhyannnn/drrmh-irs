@@ -34,25 +34,25 @@ On paper the evaluator flips through every page and marks N/A by hand for whatev
 
 Acceptance criteria:
 
-- [ ] `/home` (ERT landing) shows two cards, Status report and Assessment. The ERT top bar has a Report | Assessment switch. The Assessment entry shows only when `canUseAssessment(profile)` is true.
-- [ ] Pre-screen = building details + floors + one "which areas does this building have?" checklist, pre-filled from the building's last assessment.
-- [ ] Only applicable items show. The live question count updates as areas are ticked.
-- [ ] Back / Next between sections, plus a section index to jump anywhere (pre-screen included). Unticking an area sets its answers aside (kept in the draft). Ticking it again restores them.
-- [ ] Every applicable item needs YES / NO / N/A before submit. The review screen lists missing items and jumps to them.
-- [ ] Reverse-scored items (II.3, VI.1.x, VI.9: marked `*` in the PDF) score NO as the safe answer and say so in the UI.
-- [ ] A YES on VI.1.x (visible wall cracks) flags the assessment "Needs structural follow-up".
-- [ ] Scores: section %, pillar % and overall %, N/A and pre-screened-out items excluded.
-- [ ] Every scored item belongs to exactly one DRRM pillar (Section 4.1), enforced in the database. Pillar 4 (one item) is shown as "Public Service Continuity Plan: In place / Missing / N/A".
+- [x] `/home` (ERT landing) shows two cards, Status report and Assessment. The ERT top bar has a Report | Assessment switch. The Assessment entry shows only when `canUseAssessment(profile)` is true.
+- [x] Pre-screen = building details + floors + one "which areas does this building have?" checklist, pre-filled from the building's last assessment.
+- [x] Only applicable items show. The live question count updates as areas are ticked.
+- [x] Back / Next between sections, plus a section index to jump anywhere (pre-screen included). Unticking an area sets its answers aside (kept in the draft). Ticking it again restores them.
+- [x] Every applicable item needs YES / NO / N/A before submit. The review screen lists missing items and jumps to them.
+- [x] Reverse-scored items (II.3, VI.1.x, VI.9: marked `*` in the PDF) score NO as the safe answer and say so in the UI.
+- [x] A YES on VI.1.x (visible wall cracks) flags the assessment "Needs structural follow-up".
+- [x] Scores: section %, pillar % and overall %, N/A and pre-screened-out items excluded.
+- [x] Every scored item belongs to exactly one DRRM pillar (Section 4.1), enforced in the database. Pillar 4 (one item) is shown as "Public Service Continuity Plan: In place / Missing / N/A".
 - [ ] Dashboard "Building safety" section (Section 4.3):
   - Drills Campus → Cluster → Unit → Building, with a breadcrumb and the level in the URL.
   - Each aggregate level shows the current pooled overall and pillar scores with the like-for-like change since the previous assessments, a chart with one entry per child, a children table, section scores and the most-failed items.
   - The building level shows the history line and an A/B comparison (default #n−1 vs #n; both pickable) of overall, pillar and section scores.
   - Admins are locked to their own campus server-side; super admins can pick any campus or all.
-- [ ] Draft autosaves to IndexedDB. Submitting offline queues it; it replays like field reports.
-- [ ] Server rejects assessment writes from anyone who isn't allowed (checked server-side, not only in the UI).
+- [x] Draft autosaves to IndexedDB. Submitting offline queues it; it replays like field reports.
+- [x] Server rejects assessment writes from anyone who isn't allowed (checked server-side, not only in the UI).
 - [ ] Admin `/assessments`: Buildings tab (latest score per building) and Assessments tab (all), campus-scoped. Read-only detail page.
 - [ ] Super admin `/assessments/checklist`: edit wording in place; structural changes go into a new draft version that is then published.
-- [ ] Question language preference (Both / English / Filipino) in My profile, saved per device.
+- [x] Question language preference (Both / English / Filipino) in My profile, saved per device.
 - [ ] Light and dark mode; phone, tablet and web layouts.
 
 Non-goals (this ticket): A4 print/PDF of an assessment, photos per item, resuming a draft on another device, score bands/ratings, the Safety Officer position rule (designed for, not switched on).

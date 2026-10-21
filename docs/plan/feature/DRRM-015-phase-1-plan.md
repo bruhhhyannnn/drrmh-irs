@@ -101,12 +101,12 @@
 | `Assessment`                | `version`, `building`, `event`, `evaluator` ("AssessmentEvaluator"), `areas`, `answers`, `pillar_scores`, `comments`                                                             |
 | Back-relations              | `Unit.buildings`, `Event.assessments`, `User.assessments`, `User.created_buildings`, `User.published_versions`, `User.created_versions`, `DrrmPillar.items`, `DrrmPillar.scores` |
 
-- [ ] **Step 1: Switch this worktree to the feature branch**
+- [x] **Step 1: Switch this worktree to the feature branch**
 
 Run: `git switch feat/DRRM-015-assessment-form && git status --short`
 Expected: on `feat/DRRM-015-assessment-form`; only `docs/plan/feature/DRRM-015-*.md` untracked.
 
-- [ ] **Step 2: Write `prisma/manual/DRRM-015-assessment.sql`**
+- [x] **Step 2: Write `prisma/manual/DRRM-015-assessment.sql`**
 
 Follow the header style of `prisma/manual/DRRM-011-super-admin-v2.sql`. "HOW TO APPLY" names the test-database command (Step 5) and the Supabase SQL editor for production. The body runs in one `BEGIN … COMMIT`:
 
@@ -144,7 +144,7 @@ Follow the header style of `prisma/manual/DRRM-011-super-admin-v2.sql`. "HOW TO 
 - `ALTER TABLE … ENABLE ROW LEVEL SECURITY` on all 13 tables, with the DRRM-008 comment: Prisma connects as the owning `postgres` role, and no policies keeps the REST API closed.
 - A commented ROLLBACK block that drops the tables in reverse order, then the types.
 
-- [ ] **Step 3: Add the models to `prisma/schema.prisma`**
+- [x] **Step 3: Add the models to `prisma/schema.prisma`**
 
 Follow spec Section 5.4 and the tables above:
 
@@ -154,17 +154,17 @@ Follow spec Section 5.4 and the tables above:
 - No Prisma `@@unique` for the expression and partial indexes. Note them in `///` comments instead.
 - `@@index([building_id, ended_at(sort: Desc)], map: "idx_assessments_building_ended")`.
 
-- [ ] **Step 4: Validate, generate, type-check**
+- [x] **Step 4: Validate, generate, type-check**
 
 Run: `$PRISMA validate && $PRISMA generate && npm run type-check`
 Expected: "The schema at prisma/schema.prisma is valid", "Generated Prisma Client", then no type errors.
 
-- [ ] **Step 5: Apply to the test database (ask the user first)**
+- [x] **Step 5: Apply to the test database (ask the user first)**
 
 Run: `$PRISMA db execute --file prisma/manual/DRRM-015-assessment.sql`, then the same command again.
 Expected: "Script executed successfully." both times (idempotent).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add prisma/manual/DRRM-015-assessment.sql prisma/schema.prisma docs/plan/feature/DRRM-015-assessment-form.md docs/plan/feature/DRRM-015-phase-1-plan.md
@@ -281,11 +281,11 @@ export function itemLabel(section: { code: string }, item: { code: string }): st
 
 Task 7 adds the action result types (`AssessmentSetup`, `BuildingOption`, `MyAssessmentRow`, `AssessmentRecord`, `CreateAssessmentResult`) to this file.
 
-- [ ] **Step 1: Add the test script to `package.json`**
+- [x] **Step 1: Add the test script to `package.json`**
 
 `"test": "tsx --test \"src/**/*.test.ts\" \"prisma/**/*.test.ts\""`
 
-- [ ] **Step 2: Write the failing data test, `prisma/data/matatag-2025-07-25.test.ts`**
+- [x] **Step 2: Write the failing data test, `prisma/data/matatag-2025-07-25.test.ts`**
 
 ```ts
 import {
@@ -525,12 +525,12 @@ test('English and Filipino text everywhere', () => {
 });
 ```
 
-- [ ] **Step 3: Run it to see it fail**
+- [x] **Step 3: Run it to see it fail**
 
 Run: `npm run test`
 Expected: FAIL, cannot find module `@/lib/assessment-template` / `./matatag-2025-07-25`.
 
-- [ ] **Step 4: Implement `src/lib/assessment-template.ts`**
+- [x] **Step 4: Implement `src/lib/assessment-template.ts`**
 
 Types and constants as above. `templateFromData` walks sections → items → `items` (children):
 
@@ -539,7 +539,7 @@ Types and constants as above. `templateFromData` walks sections → items → `i
 - `safe_answer = item.safe ?? 'yes'`, `min_floors = minFloors ?? null`, `flag_label = flag ?? null`, `pillar_code = pillar ?? null`, `reference = reference ?? null`, notes `null`.
 - `area_types` comes from `data.areaTypes` with `id = code`.
 
-- [ ] **Step 5: Generate `prisma/data/matatag-2025-07-25.ts` with a throwaway script**
+- [x] **Step 5: Generate `prisma/data/matatag-2025-07-25.ts` with a throwaway script**
 
 Write the script in the scratchpad, not the repo. It reads `../MATATAG/src/lib/matatag-checklist.json` (sections → `items[]` with `number`, `group`, `id` like `"III-4.1"`) and `../MATATAG/src/lib/matatag-question-content.json` (`sections[code].{en,fil}`, `items[id].{en,fil,reference}`). It writes `export const MATATAG_2025_07_25: ChecklistData = {…}`. Rules:
 
@@ -567,17 +567,17 @@ Write the script in the scratchpad, not the repo. It reads `../MATATAG/src/lib/m
 
 Then run `npx prettier --write prisma/data/matatag-2025-07-25.ts`.
 
-- [ ] **Step 6: Run the tests**
+- [x] **Step 6: Run the tests**
 
 Run: `npm run test`
 Expected: PASS, 7 tests. If a count is off, fix the generator rule (not the test), then regenerate.
 
-- [ ] **Step 7: Spot-check against the PDF**
+- [x] **Step 7: Spot-check against the PDF**
 
 Open `../MATATAG/public/matatag-reference.pdf`. Compare three prompts (I.7, V.4, XVII.13) in English and Filipino, word for word.
 Expected: identical apart from whitespace.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 npm run lint:fix
@@ -599,7 +599,7 @@ git commit -m "feat(assessment): add MATATAG checklist data and template types"
 - Consumes: `MATATAG_2025_07_25`, `ChecklistData`, `PILLAR_CODES`; `PILLARS` (`slug`, `name`) from `@/lib/pillars`.
 - Produces: rows the app reads. Exactly one `published` MATATAG version, labelled "Ver. July 25, 2025".
 
-- [ ] **Step 1: Implement `prisma/seed-matatag.ts`**
+- [x] **Step 1: Implement `prisma/seed-matatag.ts`**
 
 - **Setup:** load env with `config({ path: ['.env.development.local', '.env'], quiet: true })` from `dotenv`. Use its own `PrismaClient` on `DATABASE_URL`, as `prisma/seed.ts` does with its adapter. Print the target host (no credentials) first.
 - **Pillars:** upsert the four `drrm_pillars` by `code`, using `name` from `PILLARS` and `sort_order` from the array index.
@@ -616,12 +616,12 @@ git commit -m "feat(assessment): add MATATAG checklist data and template types"
   - Never delete. Print any extra existing codes as warnings.
 - **Report:** print created / updated / unchanged counts, scored items per section and per pillar, read back from the database, and `fingerprint`: the first 12 hex characters of the SHA-1 of the sorted item ids.
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `npm run type-check`
 Expected: no errors.
 
-- [ ] **Step 3: Run the seed on the test database (ask the user first)**
+- [x] **Step 3: Run the seed on the test database (ask the user first)**
 
 Run: `npm run seed:matatag`
 Expected:
@@ -631,12 +631,12 @@ Expected:
 - "created" ≈ 17 sections + 224 items
 - a fingerprint.
 
-- [ ] **Step 4: Run it again**
+- [x] **Step 4: Run it again**
 
 Run: `npm run seed:matatag`
 Expected: 0 created, 0 updated, and the **same fingerprint** as Step 3.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add package.json prisma/seed-matatag.ts
@@ -719,7 +719,7 @@ Rules:
 - **`unsafe`:** the counted items that aren't safe.
 - **`needsFollowUp`:** some unsafe item has a `flag_label`.
 
-- [ ] **Step 1: Write the failing test, `src/lib/assessment-score.test.ts`**
+- [x] **Step 1: Write the failing test, `src/lib/assessment-score.test.ts`**
 
 ```ts
 import { MATATAG_2025_07_25 } from '../../prisma/data/matatag-2025-07-25';
@@ -874,21 +874,21 @@ test('prepareAssessmentWrite keeps only what applies and counts what is missing'
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npm run test`
 Expected: FAIL, cannot find module `./assessment-score`.
 
-- [ ] **Step 3: Implement `src/lib/assessment-score.ts`**
+- [x] **Step 3: Implement `src/lib/assessment-score.ts`**
 
 Use the signatures and rules above. `applicableItems` resolves parents through one pass in template order: a parent comes before its children, so its applicability is known by then. Then a second pass drops group parents with no applicable child.
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `npm run test`
 Expected: PASS, all data and score tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 npm run lint:fix
@@ -961,7 +961,7 @@ export type AssessmentDetailsFormData = z.infer<typeof assessmentDetailsSchema>;
   - `event_id`: `z.string()`
   - `.refine((d) => d.building_id || d.new_building_name, { path: ['building_id'], message: 'Choose a building or add one' })`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 // src/lib/access.test.ts
@@ -1018,21 +1018,21 @@ test('assessment payload', () => {
 });
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `npm run test`
 Expected: FAIL, cannot find `./access`; `assessmentPayloadSchema` undefined.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Write `access.ts`, `server-auth.ts`, `getAccessToken` (`supabase.auth.getSession()` → `session?.access_token ?? null`) and the two schemas.
 
-- [ ] **Step 4: Run tests and type-check**
+- [x] **Step 4: Run tests and type-check**
 
 Run: `npm run test && npm run type-check`
 Expected: PASS; no type errors.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 npm run lint:fix
@@ -1124,7 +1124,7 @@ export function toPayload(
 - **Event:** `event_id || null`.
 - **Times:** `ended_at = endedAt.toISOString()`.
 
-- [ ] **Step 1: Write the failing test, `src/lib/assessment-draft.test.ts`**
+- [x] **Step 1: Write the failing test, `src/lib/assessment-draft.test.ts`**
 
 ```ts
 import { MATATAG_2025_07_25 } from '../../prisma/data/matatag-2025-07-25';
@@ -1250,21 +1250,21 @@ test('newUuid is a v4 uuid', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npm run test`
 Expected: FAIL, cannot find `./assessment-draft`.
 
-- [ ] **Step 3: Implement `src/lib/assessment-draft.ts`**
+- [x] **Step 3: Implement `src/lib/assessment-draft.ts`**
 
 Use the signatures above, reusing `applicableItems` from Task 4.
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `npm run test`
 Expected: PASS, all suites.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 npm run lint:fix
@@ -1361,16 +1361,16 @@ Dates leave the server as ISO strings.
 
 Unexpected errors still go through `toFriendlyError(err, 'assessment')` and are thrown.
 
-- [ ] **Step 1: Implement the result types and the actions**
+- [x] **Step 1: Implement the result types and the actions**
 
 `getPublishedTemplate` and `getTemplateVersion` share one private `loadTemplate(where)`. It loads the version with its sections, items (with `pillar.code`) ordered by `sort_order`, and the active area types, then maps them to `AssessmentTemplate`.
 
-- [ ] **Step 2: Lint and type-check**
+- [x] **Step 2: Lint and type-check**
 
 Run: `npm run lint && npm run type-check`
 Expected: no errors.
 
-- [ ] **Step 3: Read actions against the test database**
+- [x] **Step 3: Read actions against the test database**
 
 Write a scratchpad script that imports `@/actions/assessments` and prints three things:
 
@@ -1383,7 +1383,7 @@ Get the campus id by printing `prisma.campus.findMany()` in the same script.
 Run: `npx tsx --tsconfig tsconfig.json --env-file=.env.development.local <scratchpad>/check-actions.ts`
 Expected: `Ver. July 25, 2025 17 211`, the same label again, and the campus's clusters with unit counts. The `createAssessment` paths are exercised through the UI in Task 14.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 npm run lint:fix
@@ -1457,20 +1457,20 @@ How the hooks behave:
   - `refreshCount` uses `getAllQueuedCount()`.
 - **Report form:** `saveOffline` sets the count with `getAllQueuedCount()`.
 
-- [ ] **Step 1: Extend `offline-queue.ts`**
+- [x] **Step 1: Extend `offline-queue.ts`**
 
 Bump to v3. `onupgradeneeded` creates each missing store with its keyPath. Add a small private `makeKeyValueStore(storeName)` for drafts and cache.
 
-- [ ] **Step 2: Update the provider and the report-form count**
+- [x] **Step 2: Update the provider and the report-form count**
 
-- [ ] **Step 3: Write `use-assessments.ts`**
+- [x] **Step 3: Write `use-assessments.ts`**
 
-- [ ] **Step 4: Lint and type-check**
+- [x] **Step 4: Lint and type-check**
 
 Run: `npm run lint && npm run type-check && npm run test`
 Expected: no errors; tests still pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 npm run lint:fix
@@ -1523,16 +1523,16 @@ export function formatDate(value: Date | string | number): string; // "Oct 8, 20
     - **Status report:** "Event ongoing — report due" (an ongoing event and no report), "Report sent" (`useMyReport` has data) or "No ongoing event". Uses `useOngoingEvents` + `useMyReport`.
     - **Assessment** (only when `canUseAssessment`): "{n} drafts on this phone", else "Last: {building}, {date}" from `useMyAssessments()[0]`, else "Check a building with the MATATAG checklist".
 
-- [ ] **Step 1: Move the files and fix the imports**
+- [x] **Step 1: Move the files and fix the imports**
 
 Run: `git mv` for the six files, then update the import paths.
 Check: `npm run type-check`, expecting no errors.
 
-- [ ] **Step 2: Add `formatDate`, `useErtAccess`, `useQueuedAssessments`**
+- [x] **Step 2: Add `formatDate`, `useErtAccess`, `useQueuedAssessments`**
 
-- [ ] **Step 3: Top-bar switch, `/home`, redirects**
+- [x] **Step 3: Top-bar switch, `/home`, redirects**
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 Run: `npm run lint && npm run type-check && npm run build`
 Expected: no errors; the build lists `/home`.
@@ -1545,7 +1545,7 @@ Manual check (`npm run dev`, signed in as an ERT member):
 - an Administrator still lands on `/dashboard`
 - 320 px: no horizontal scroll.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 npm run lint:fix
@@ -1587,16 +1587,16 @@ export function QuestionLanguageSetting(): JSX.Element;
   - `fil`: Filipino only, falling back to English when it's empty.
 - **`QuestionLanguageSetting`:** the `AppearanceSetting` layout, with the heading "Checklist language" and a `SegmentedControl` of "English + Filipino" / "English" / "Filipino".
 
-- [ ] **Step 1: Implement the four files and the two modifications**
+- [x] **Step 1: Implement the four files and the two modifications**
 
-- [ ] **Step 2: Verify**
+- [x] **Step 2: Verify**
 
 Run: `npm run lint && npm run type-check`
 Expected: no errors.
 
 Manual: My profile shows "Checklist language" under Appearance. The choice survives a reload, and at 320 px the three options don't overflow (they may wrap).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 npm run lint:fix
@@ -1658,9 +1658,9 @@ The page uses `useErtAccess({ requireAssessment: true })` and wraps every state 
   - Areas that weren't ticked are listed once as "Not applicable (no {area names})".
 - A Back link to `/assessment`.
 
-- [ ] **Step 1: Implement the page, hub, view and score summary (stepper as a placeholder)**
+- [x] **Step 1: Implement the page, hub, view and score summary (stepper as a placeholder)**
 
-- [ ] **Step 2: Verify**
+- [x] **Step 2: Verify**
 
 Run: `npm run lint && npm run type-check`
 Expected: no errors.
@@ -1672,7 +1672,7 @@ Manual:
 - Discard asks first
 - signed in as an Administrator → `/dashboard`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 npm run lint:fix
@@ -1767,11 +1767,11 @@ export function SectionIndex(props: {
 
 The current step is marked `aria-current="step"`.
 
-- [ ] **Step 1: Implement the stepper shell, both pre-screen steps and the index**
+- [x] **Step 1: Implement the stepper shell, both pre-screen steps and the index**
 
 Section steps render a placeholder until Task 13.
 
-- [ ] **Step 2: Verify**
+- [x] **Step 2: Verify**
 
 Run: `npm run lint && npm run type-check && npm run test`
 Expected: no errors.
@@ -1784,7 +1784,7 @@ Manual:
 - Floors 0 or blank → 1.
 - 320 px and 1280 px: the side list shows at `lg`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 npm run lint:fix
@@ -1840,9 +1840,9 @@ export function ReviewStep(
 - `sent` → `router.replace('/assessment?view=' + id)`, toast "Assessment submitted".
 - `queued` → `router.replace('/assessment')`, toast "Saved on this phone — sends when you're back online".
 
-- [ ] **Step 1: Implement the section and review steps, jump and submit**
+- [x] **Step 1: Implement the section and review steps, jump and submit**
 
-- [ ] **Step 2: Verify**
+- [x] **Step 2: Verify**
 
 Run: `npm run lint && npm run type-check && npm run test`
 Expected: no errors.
@@ -1856,7 +1856,7 @@ Manual, online, on the test database:
 5. The hub lists it under Submitted.
 6. Answer some Labs items, untick Laboratories (the confirm shows the count), tick it again, and the answers are back.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 npm run lint:fix
@@ -1919,12 +1919,12 @@ git commit -m "feat(assessment): checklist sections, review and submit"
 - Light and dark mode.
 - 320 / 390 / 900 / 1280 px on `/home`, the hub, every step type and the view: no horizontal scroll, and nothing hidden behind the bottom bar.
 
-- [ ] **Step 4: Full check**
+- [x] **Step 4: Full check**
 
 Run: `npm run lint && npm run type-check && npm run test && npm run build`
 Expected: all pass.
 
-- [ ] **Step 5: Docs and commit**
+- [x] **Step 5: Docs and commit**
 
 ```bash
 npm run lint:fix
