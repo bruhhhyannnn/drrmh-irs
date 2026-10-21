@@ -1,13 +1,132 @@
 'use client';
 
-import { SelectField } from '@/components/ds';
+import { FOCUS_RING } from '@/components/ds';
 import { useBuildingSummaries } from '@/components/hooks/use-assessments';
+import { cn } from '@/lib';
+import type { BuildingScores } from '@/lib/assessment-template';
+import { ChevronDown } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { FilterSelect, ListToolbar } from '../../_components/data-list';
 import { useScopedCampusId } from '../../_components/shell/campus-switcher';
 import { EmptyNote, Skeleton } from '../../_components/ui';
 import { BuildingCompareView } from '../../dashboard/_components/building-safety/building-level';
+
+function BuildingPicker({
+  buildings,
+  selected,
+  onSelect,
+}: {
+  buildings: BuildingScores[];
+  selected: BuildingScores | null;
+  onSelect: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const listId = useId();
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setOpen(false);
+      buttonRef.current?.focus();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open]);
+
+  const pick = (id: string) => {
+    onSelect(id);
+    setOpen(false);
+    buttonRef.current?.focus();
+  };
+
+  return (
+    <div className="relative min-w-0">
+      <button
+        ref={buttonRef}
+        id="compare-building"
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={listId}
+        onClick={() => setOpen((o) => !o)}
+        className={cn(
+          'flex min-h-13 w-full items-center gap-3 rounded-2xl border border-gray-300 bg-surface px-4 py-2 text-left hover:bg-gray-50',
+          FOCUS_RING
+        )}
+      >
+        {selected ? (
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <div className="flex items-center justify-between gap-3">
+              <span className="min-w-0 truncate text-[15px] font-semibold text-gray-900">
+                {selected.name}
+              </span>
+              <span className="font-landing-mono shrink-0 text-[14px] font-semibold text-gray-500">
+                ({selected.assessment_count})
+              </span>
+            </div>
+            <span className="truncate text-[13px] text-gray-500">{selected.unit.name}</span>
+          </div>
+        ) : (
+          <span className="flex-1 text-[15px] text-gray-500">Select a building</span>
+        )}
+        <ChevronDown size={18} aria-hidden className="shrink-0 text-gray-500" />
+      </button>
+
+      {open && (
+        <>
+          <div aria-hidden className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div
+            id={listId}
+            role="listbox"
+            aria-label="Select a building"
+            className="absolute top-[calc(100%+6px)] left-0 z-50 flex max-h-[min(420px,70dvh)] w-full min-w-72 flex-col overflow-y-auto rounded-[18px] border border-gray-200 bg-surface p-1.5 shadow-[0_18px_40px_rgba(16,24,40,.22)]"
+          >
+            {buildings.map((b) => {
+              const on = b.id === selected?.id;
+              return (
+                <button
+                  key={b.id}
+                  type="button"
+                  role="option"
+                  aria-selected={on}
+                  onClick={() => pick(b.id)}
+                  className={cn(
+                    'flex flex-col gap-0.5 rounded-xl px-3 py-2 text-left',
+                    on ? 'bg-brand-25' : 'hover:bg-gray-50',
+                    FOCUS_RING
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span
+                      className={cn(
+                        'min-w-0 truncate text-[15px]',
+                        on ? 'text-brand-500 font-bold' : 'font-semibold text-gray-900'
+                      )}
+                    >
+                      {b.name}
+                    </span>
+                    <span
+                      className={cn(
+                        'font-landing-mono shrink-0 text-[14px] font-semibold',
+                        on ? 'text-brand-500' : 'text-gray-500'
+                      )}
+                    >
+                      ({b.assessment_count})
+                    </span>
+                  </div>
+                  <span className="truncate text-[13px] text-gray-500">{b.unit.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 /** Compare a building's assessments (history line + A/B side-by-side) right on /assessments. */
 export function CompareTab() {
@@ -69,15 +188,10 @@ export function CompareTab() {
     <div className="flex flex-col">
       <ListToolbar>
         <div className="min-w-0 flex-[1_1_260px]">
-          <SelectField
-            id="compare-building"
-            value={selected?.id ?? ''}
-            onChange={(id) => setParams({ building: id })}
-            placeholder="Select a building"
-            options={buildings.map((b) => ({
-              value: b.id,
-              label: `${b.name} (${b.assessment_count})`,
-            }))}
+          <BuildingPicker
+            buildings={buildings}
+            selected={selected}
+            onSelect={(id) => setParams({ building: id })}
           />
         </div>
         <FilterSelect
