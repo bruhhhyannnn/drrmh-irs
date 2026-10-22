@@ -1,3 +1,14 @@
+---
+type: feature
+ticket: DRRM-015
+status: done
+branch: feat/DRRM-015-assessment-form
+modules:
+  - '[[assessments]]'
+  - '[[print]]'
+tags: [plan, feature]
+---
+
 # DRRM-015 Feature Plan: Printable building assessment
 
 - **Status:** Done

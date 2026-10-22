@@ -1,7 +1,17 @@
+---
+type: fix
+ticket: DRRM-002
+status: approved
+branch: fix/emergency-reports-hardening
+modules:
+  - '[[bystander-reports]]'
+tags: [plan, fix]
+---
+
 # [DRRM-002] Fix Plan: Emergency Reports Hardening & Mutation Consistency
 
 - **Status:** `[Approved]`
-- **Related Bugs / Audits:** [`docs/plan/review/2026-09-08-dev-branch-audit.md`](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/review/2026-09-08-dev-branch-audit.md) (§3.1, §5.1, §5.2, §5.3, §9.3)
+- **Related Bugs / Audits:** [`docs/plan/review/2026-09-08-dev-branch-audit.md`](../../plan/review/2026-09-08-dev-branch-audit.md) (§3.1, §5.1, §5.2, §5.3, §9.3)
 - **Target Branch / PR:** `fix/emergency-reports-hardening`
 - **Author:** Antigravity
 
@@ -22,7 +32,7 @@ Harden the Emergency / Bystander Reports server actions against missing seed rec
 
 ### 2.1 Shared Helpers
 
-- [ ] [`src/lib/utils.ts`](file:///C:/Users/jomar/orca/drrmh-irs-dev/src/lib/utils.ts):
+- [ ] [`src/lib/utils.ts`](../../../src/lib/utils.ts):
   - Add a generic helper `serializeCoordinates<T extends { latitude: any; longitude: any }>(record: T): T` to convert Prisma `Decimal` lat/lng values safely to standard JavaScript `number`:
     ```ts
     export function serializeCoordinates<T extends { latitude: unknown; longitude: unknown }>(
@@ -48,7 +58,7 @@ Harden the Emergency / Bystander Reports server actions against missing seed rec
 
 ### 2.2 Server Actions
 
-- [ ] [`src/actions/emergency-reports/index.ts`](file:///C:/Users/jomar/orca/drrmh-irs-dev/src/actions/emergency-reports/index.ts):
+- [ ] [`src/actions/emergency-reports/index.ts`](../../../src/actions/emergency-reports/index.ts):
   - **Seed Check Guard (§5.1):** In `createBystanderReport`, verify `pendingStatus` exists. If not found, throw an informative error instead of inserting a report with `undefined`/null status:
     ```ts
     if (!pendingStatus) {
@@ -68,15 +78,15 @@ Harden the Emergency / Bystander Reports server actions against missing seed rec
 
 ### 2.3 Query Hooks
 
-- [ ] [`src/app/(admin)/emergency-reports/use-bystander-reports.ts`](<file:///C:/Users/jomar/orca/drrmh-irs-dev/src/app/(admin)/emergency-reports/use-bystander-reports.ts>):
+- [ ] [`src/app/(admin)/emergency-reports/use-bystander-reports.ts`](<../../../src/app/(admin)/emergency-reports/use-bystander-reports.ts>):
   - Verify query invalidations match the server action updates and ensure error handling displays friendly error messages from server rejections.
 
 ---
 
 ## 3. Step-by-Step Execution Plan
 
-1. [ ] **Step 1:** Implement `serializeCoordinates` utility in [`src/lib/utils.ts`](file:///C:/Users/jomar/orca/drrmh-irs-dev/src/lib/utils.ts).
-2. [ ] **Step 2:** In [`src/actions/emergency-reports/index.ts`](file:///C:/Users/jomar/orca/drrmh-irs-dev/src/actions/emergency-reports/index.ts), guard `pendingStatus` lookup to throw if missing.
+1. [ ] **Step 1:** Implement `serializeCoordinates` utility in [`src/lib/utils.ts`](../../../src/lib/utils.ts).
+2. [ ] **Step 2:** In [`src/actions/emergency-reports/index.ts`](../../../src/actions/emergency-reports/index.ts), guard `pendingStatus` lookup to throw if missing.
 3. [ ] **Step 3:** Correct `revalidatePath` call in `updateBystanderReportStatus` from `'/bystander-reports'` to `'/emergency-reports'` and add revalidation to `createBystanderReport`.
 4. [ ] **Step 4:** Replace repeated `.toNumber()` mappings with `serializeCoordinates`.
 5. [ ] **Step 5:** Add authorization verification on mutating admin actions (`updateBystanderReportStatus`, `deleteBystanderReport`).

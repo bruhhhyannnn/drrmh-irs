@@ -1,7 +1,18 @@
+---
+type: fix
+ticket: DRRM-005
+status: approved
+branch: fix/settings-hooks-performance
+modules:
+  - '[[settings-lookups]]'
+  - '[[dashboard]]'
+tags: [plan, fix]
+---
+
 # [DRRM-005] Fix Plan: Settings Actions, Query Hooks & Dashboard Performance
 
 - **Status:** `[Approved]`
-- **Related Bugs / Audits:** [`docs/plan/review/2026-09-08-dev-branch-audit.md`](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/review/2026-09-08-dev-branch-audit.md) (§2.3, §3.2, §6.1, §6.2, §6.3, §9.1, §9.4)
+- **Related Bugs / Audits:** [`docs/plan/review/2026-09-08-dev-branch-audit.md`](../../plan/review/2026-09-08-dev-branch-audit.md) (§2.3, §3.2, §6.1, §6.2, §6.3, §9.1, §9.4)
 - **Target Branch / PR:** `fix/settings-hooks-performance`
 - **Author:** Antigravity
 
@@ -22,7 +33,7 @@ Optimize dashboard performance by replacing massive full-table user downloads wi
 
 ### 2.1 Backend / Server Actions
 
-- [ ] [`src/actions/users/index.ts`](file:///C:/Users/jomar/orca/drrmh-irs-dev/src/actions/users/index.ts):
+- [ ] [`src/actions/users/index.ts`](../../../src/actions/users/index.ts):
   - Add lightweight count action (§2.3):
     ```ts
     export async function getUserCount(campusId?: string): Promise<number> {
@@ -32,7 +43,7 @@ Optimize dashboard performance by replacing massive full-table user downloads wi
     }
     ```
 
-- [ ] [`src/actions/settings/index.ts`](file:///C:/Users/jomar/orca/drrmh-irs-dev/src/actions/settings/index.ts):
+- [ ] [`src/actions/settings/index.ts`](../../../src/actions/settings/index.ts):
   - **Type-Safe Model Delegation (§6.1):** Replace `@ts-expect-error` dynamic indexing with a strongly-typed delegate mapping:
     ```ts
     const DELEGATE_MAP = {
@@ -62,7 +73,7 @@ Optimize dashboard performance by replacing massive full-table user downloads wi
 
 ### 2.2 Client Hooks & Dashboard
 
-- [ ] [`src/components/hooks/use-users.ts`](file:///C:/Users/jomar/orca/drrmh-irs-dev/src/components/hooks/use-users.ts):
+- [ ] [`src/components/hooks/use-users.ts`](../../../src/components/hooks/use-users.ts):
   - Add `useUserCount(campusId?: string)` hook invoking `getUserCount(campusId)`.
   - In `useUser(id?: string)`, replace `id!` with an explicit guard to eliminate unsafe non-null assertion (§9.1):
     ```ts
@@ -72,10 +83,10 @@ Optimize dashboard performance by replacing massive full-table user downloads wi
     },
     ```
 
-- [ ] [`src/app/(admin)/dashboard/page.tsx`](<file:///C:/Users/jomar/orca/drrmh-irs-dev/src/app/(admin)/dashboard/page.tsx>):
+- [ ] [`src/app/(admin)/dashboard/page.tsx`](<../../../src/app/(admin)/dashboard/page.tsx>):
   - Replace `const { data: users = [] } = useUsers()` with `const { data: userCount = 0 } = useUserCount(campusId)` (§2.3). Eliminates downloading full user rows and relations solely for the count card.
 
-- [ ] [`src/components/hooks/use-settings.ts`](file:///C:/Users/jomar/orca/drrmh-irs-dev/src/components/hooks/use-settings.ts):
+- [ ] [`src/components/hooks/use-settings.ts`](../../../src/components/hooks/use-settings.ts):
   - **Fix `useCampus` Hook (§9.4):** Provide `useCampuses()` for the full list and `useCampus(campusId)` calling `getCampusById(campusId)` when an ID is supplied.
   - **Multi-Key Invalidation (§3.2):** Ensure campus mutations invalidate both `['campus']` and `['campuses']`.
 
@@ -83,10 +94,10 @@ Optimize dashboard performance by replacing massive full-table user downloads wi
 
 ## 3. Step-by-Step Execution Plan
 
-1. [ ] **Step 1:** Implement `getUserCount` in [`src/actions/users/index.ts`](file:///C:/Users/jomar/orca/drrmh-irs-dev/src/actions/users/index.ts) and `useUserCount` in [`src/components/hooks/use-users.ts`](file:///C:/Users/jomar/orca/drrmh-irs-dev/src/components/hooks/use-users.ts).
-2. [ ] **Step 2:** Refactor [`src/app/(admin)/dashboard/page.tsx`](<file:///C:/Users/jomar/orca/drrmh-irs-dev/src/app/(admin)/dashboard/page.tsx>) to consume `useUserCount`.
-3. [ ] **Step 3:** Fix `singularLabel` and remove `@ts-expect-error` in [`src/actions/settings/index.ts`](file:///C:/Users/jomar/orca/drrmh-irs-dev/src/actions/settings/index.ts).
-4. [ ] **Step 4:** Fix `useCampus` parameter handling and query invalidation in [`src/components/hooks/use-settings.ts`](file:///C:/Users/jomar/orca/drrmh-irs-dev/src/components/hooks/use-settings.ts).
+1. [ ] **Step 1:** Implement `getUserCount` in [`src/actions/users/index.ts`](../../../src/actions/users/index.ts) and `useUserCount` in [`src/components/hooks/use-users.ts`](../../../src/components/hooks/use-users.ts).
+2. [ ] **Step 2:** Refactor [`src/app/(admin)/dashboard/page.tsx`](<../../../src/app/(admin)/dashboard/page.tsx>) to consume `useUserCount`.
+3. [ ] **Step 3:** Fix `singularLabel` and remove `@ts-expect-error` in [`src/actions/settings/index.ts`](../../../src/actions/settings/index.ts).
+4. [ ] **Step 4:** Fix `useCampus` parameter handling and query invalidation in [`src/components/hooks/use-settings.ts`](../../../src/components/hooks/use-settings.ts).
 5. [ ] **Step 5:** Fix non-null assertion in `useUser` hook.
 
 ---

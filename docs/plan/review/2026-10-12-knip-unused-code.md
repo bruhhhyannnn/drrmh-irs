@@ -1,3 +1,14 @@
+---
+type: review
+ticket: REV-2026-10-12
+status: done
+branch: feat/DRRM-012-admin-v2
+modules:
+  - '[[design-system]]'
+  - '[[data-layer]]'
+tags: [plan, review]
+---
+
 # [REV-2026-10-12] Code Review & Audit: Unused code and packages (knip)
 
 - **Review Date:** 2026-10-12

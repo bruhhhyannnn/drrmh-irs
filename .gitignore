@@ -53,3 +53,7 @@ next-env.d.ts
 
 # orca
 orca.yaml
+
+# obsidian (per-user vault state; app.json and core-plugins.json stay tracked)
+docs/.obsidian/workspace*.json
+docs/.obsidian/graph.json

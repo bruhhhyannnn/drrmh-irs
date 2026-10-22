@@ -1,3 +1,17 @@
+---
+type: feature
+ticket: DRRM-015
+status: in-progress
+branch: feat/DRRM-015-assessment-form
+modules:
+  - '[[assessments]]'
+  - '[[assessment-admin]]'
+  - '[[checklist-editor]]'
+  - '[[building-safety]]'
+  - '[[offline-pwa]]'
+tags: [plan, feature]
+---
+
 # [DRRM-015] Feature Plan: MATATAG building assessment
 
 - **Status:** `[In Progress]` (Phase 1 built: `docs/plan/feature/DRRM-015-phase-1-plan.md`)

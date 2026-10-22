@@ -1,3 +1,17 @@
+---
+type: feature
+ticket: DRRM-012
+status: in-review
+branch: feat/DRRM-012-admin-v2
+modules:
+  - '[[campus-scoping]]'
+  - '[[dashboard]]'
+  - '[[events]]'
+  - '[[users]]'
+  - '[[settings-lookups]]'
+tags: [plan, feature]
+---
+
 # [DRRM-012] Feature Plan: Admin v2
 
 - **Status:** `[In Review]`

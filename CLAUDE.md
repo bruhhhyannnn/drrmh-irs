@@ -103,6 +103,7 @@ docs/
 - Use standardized headers: `- **Status:** [Draft | In Review | Approved | In Progress | Done]`.
 - Map git branches 1:1 to their plan file (e.g. branch `bugfix/DRRM-003-...` ↔ `docs/plan/fix/DRRM-003-...`).
 - Templates for new docs are available at `docs/plan/{review,bugs,fix,feature}/TEMPLATE.md`.
+- `docs/` is an Obsidian vault: read `docs/00-index.md` first. It maps `architecture.md`, `conventions.md`, `glossary.md`, `changelog.md`, the module notes (`docs/modules/`), the decision records (`docs/decisions/`) and the plans. Plans carry frontmatter (`type`, `ticket`, `status`, `branch`, `modules: ["[[module]]"]`), described in `docs/conventions.md`.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

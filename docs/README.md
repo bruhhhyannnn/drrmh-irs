@@ -2,10 +2,20 @@
 
 This directory contains engineering plans, architectural designs, code reviews, bug analyses, and feature specifications for the **UPM DRRM-H Incident Reporting System (IRS)**.
 
+It is also an Obsidian vault: open `docs/` itself as the vault. Start at [00-index.md](00-index.md), which links every note, module, decision and plan.
+
 ## Directory Structure
 
 ```text
 docs/
+├── .obsidian/      # Obsidian vault settings (workspace.json and graph.json are gitignored)
+├── 00-index.md     # Start here: map of the vault
+├── architecture.md # Users, route groups, layers, cross-cutting pieces
+├── conventions.md  # Code, database and docs rules, including plan frontmatter
+├── glossary.md     # Domain and tech terms
+├── changelog.md    # What shipped, newest first, by ticket
+├── modules/        # One note per part of the code
+├── decisions/      # Decision records (NNNN-slug.md)
 └── plan/
     ├── review/     # Code reviews, audit findings, security & performance reviews
     ├── fix/        # Resolution & execution plans for bugs, audits, and refactors
@@ -47,11 +57,11 @@ Use lowercase kebab-case with ticket prefixes or ISO dates:
 
 ## Active Execution Plans
 
-| Ticket                                                                                                        | Title                                                 | Wave / Track     | Target Branch                       | Status       |
-| ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | ---------------- | ----------------------------------- | ------------ |
-| [`DRRM-001`](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-001-auth-session-recovery.md)       | Auth Flow & Session Recovery Hardening                | Wave 1 (Track A) | `fix/auth-session-recovery`         | `[Done]`     |
-| [`DRRM-002`](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-002-emergency-reports-hardening.md) | Emergency Reports Hardening & Mutation Consistency    | Wave 1 (Track B) | `fix/emergency-reports-hardening`   | `[Approved]` |
-| [`DRRM-003`](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-003-report-form-atomicity.md)       | Report Form Atomicity & Aggregation Optimization      | Wave 2 (Track C) | `fix/report-form-atomicity`         | `[Approved]` |
-| [`DRRM-004`](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-004-events-dynamic-clusters.md)     | Events, Dynamic Clusters & Query Optimization         | Wave 2 (Track D) | `fix/events-dynamic-clusters`       | `[Approved]` |
-| [`DRRM-005`](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-005-settings-hooks-performance.md)  | Settings Actions, Query Hooks & Dashboard Performance | Wave 2 (Track E) | `fix/settings-hooks-performance`    | `[Approved]` |
-| [`DRRM-006`](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/fix/DRRM-006-schema-dual-write-sunset.md)    | Schema Normalization & Legacy Dual-Write Sunset       | Wave 3 (Track F) | `refactor/schema-dual-write-sunset` | `[Approved]` |
+| Ticket                                                         | Title                                                 | Wave / Track     | Target Branch                       | Status       |
+| -------------------------------------------------------------- | ----------------------------------------------------- | ---------------- | ----------------------------------- | ------------ |
+| [`DRRM-001`](plan/fix/DRRM-001-auth-session-recovery.md)       | Auth Flow & Session Recovery Hardening                | Wave 1 (Track A) | `fix/auth-session-recovery`         | `[Done]`     |
+| [`DRRM-002`](plan/fix/DRRM-002-emergency-reports-hardening.md) | Emergency Reports Hardening & Mutation Consistency    | Wave 1 (Track B) | `fix/emergency-reports-hardening`   | `[Approved]` |
+| [`DRRM-003`](plan/fix/DRRM-003-report-form-atomicity.md)       | Report Form Atomicity & Aggregation Optimization      | Wave 2 (Track C) | `fix/report-form-atomicity`         | `[Approved]` |
+| [`DRRM-004`](plan/fix/DRRM-004-events-dynamic-clusters.md)     | Events, Dynamic Clusters & Query Optimization         | Wave 2 (Track D) | `fix/events-dynamic-clusters`       | `[Approved]` |
+| [`DRRM-005`](plan/fix/DRRM-005-settings-hooks-performance.md)  | Settings Actions, Query Hooks & Dashboard Performance | Wave 2 (Track E) | `fix/settings-hooks-performance`    | `[Approved]` |
+| [`DRRM-006`](plan/fix/DRRM-006-schema-dual-write-sunset.md)    | Schema Normalization & Legacy Dual-Write Sunset       | Wave 3 (Track F) | `refactor/schema-dual-write-sunset` | `[Approved]` |
