@@ -5,7 +5,7 @@ status: done
 branch: feat/DRRM-012-admin-v2
 modules:
   - '[[design-system]]'
-  - '[[data-layer]]'
+  - '[[database]]'
 tags: [plan, review]
 ---
 

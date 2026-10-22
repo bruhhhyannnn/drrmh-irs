@@ -41,7 +41,7 @@ Plans: [[plan/feature/DRRM-015-assessment-form]] · [[plan/feature/DRRM-015-phas
 
 - **DRRM-007 Landing page v2** ([[plan/feature/DRRM-007-landing-page-v2]], [[pillars-and-landing]]): landing page rebuilt from the v2 design, unused `getLandingData` removed.
 - **DRRM-008 Bystander report v2** ([[plan/feature/DRRM-008-bystander-report-v2]], [[bystander-reports]]): form rebuilt; stores contact number, damage photos and headcount (first manual SQL file, [[0002-manual-sql-schema-changes]]); admin details show campus, headcount, photos and contact.
-- **DRRM-009 Auth pages v2** ([[plan/feature/DRRM-009-auth-pages-v2]], [[auth-and-profiles]]): sign-in, password reset and profile setup rebuilt; shared controls moved to `src/components/ds`.
+- **DRRM-009 Auth pages v2** ([[plan/feature/DRRM-009-auth-pages-v2]], [[auth]]): sign-in, password reset and profile setup rebuilt; shared controls moved to `src/components/ds`.
 - **DRRM-010 ERT report v2** ([[plan/feature/DRRM-010-ert-report-v2]], [[field-reports]]): `/report` status report rebuilt; shared people and privacy drawers.
 - **DRRM-011 Super admin v2** ([[plan/feature/DRRM-011-super-admin-v2]]): new admin shell, shared table, drawer and dialog kit, dashboard and campus pages, events with complete-event and multi-campus add, the printable event report ([[print]]), reports, bystander reports and users rebuilt, settings on one tabbed page with field reordering ([[0009-table-driven-settings]]), record who completed an event.
 - **DRRM-012 Admin v2** ([[plan/feature/DRRM-012-admin-v2]], [[campus-scoping]]): Administrators locked to their own campus.
@@ -56,7 +56,7 @@ Plans: [[plan/feature/DRRM-015-assessment-form]] · [[plan/feature/DRRM-015-phas
 - **Event summary with dynamic clusters** (PR #62, [[events]]): one summary per campus, clusters loaded from the DB.
 - **PWA and offline** (PR #58, [[offline-pwa]]): install prompt, offline queues for field and bystander reports, `/~offline` page, `next build --webpack` ([[0003-webpack-build-for-pwa]], [[0004-offline-queue-bundled-create]]).
 - **Population categories** (PR #54, [[field-reports]], [[settings-lookups]]): per-campus population fields and report population counts.
-- **Auth session recovery** (PRs #49, #57, [[plan/fix/DRRM-001-auth-session-recovery]], [[auth-and-profiles]]): Google OAuth linking, stale profile cache, infinite spinner.
+- **Auth session recovery** (PRs #49, #57, [[plan/fix/DRRM-001-auth-session-recovery]], [[auth]]): Google OAuth linking, stale profile cache, infinite spinner.
 - **Report form required fields** (PR #59), settings enhancements (PR #53), sidebar and header polish (PR #55), UI component polish (PR #52), data privacy notice (PR #51).
 - **Docs workflow** (PR #50, 2026-09-08): `docs/plan/` with templates and the dev branch audit ([[plan/review/2026-09-08-dev-branch-audit]]). Fix plans DRRM-002 → DRRM-006 written from it.
 - maplibre-gl 5 → 6, dependency audit fixes.

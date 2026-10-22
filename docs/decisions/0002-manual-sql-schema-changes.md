@@ -4,7 +4,7 @@ id: '0002'
 status: accepted
 date: 2026-10-22
 modules:
-  - '[[data-layer]]'
+  - '[[database]]'
 tags: [decision]
 ---
 

@@ -16,7 +16,7 @@ tags: [module]
 
 How the admin dashboard limits what it shows to one campus, and the Campus pages where Super Admins manage campuses. An Administrator is locked to the campus on their profile. A Super Admin picks a campus (or All campuses) in the top-bar switcher, and every admin list and the dashboard follow it. Assessment and building-safety actions repeat the rule on the server with `adminScope`.
 
-**Related:** [[architecture]] · [[auth-and-profiles]] · [[users]] · [[dashboard]] · [[events]] · [[assessment-admin]] · [[building-safety]] · [[settings-lookups]]
+**Related:** [[architecture]] · [[auth]] · [[users]] · [[dashboard]] · [[events]] · [[assessment-admin]] · [[building-safety]] · [[settings-lookups]]
 
 ## Where it lives
 
@@ -70,7 +70,7 @@ Server-checked scope: `requireAdmin(token, campusId)` in `src/lib/server-auth.ts
 - The dashboard's building-safety drill keeps its own campus in the `bs_campus` URL param and never moves the switcher (see [[building-safety]]).
 - The `/campus` card warns when a campus has no active population fields ("ERT headcount has nothing to fill in").
 - The store is per device and sign-out does not clear it, so the next Super Admin on the same browser starts on the last pick.
-- The seed script puts every cluster and event on one hard-coded campus id (see [[data-layer]]).
+- The seed script puts every cluster and event on one hard-coded campus id (see [[database]]).
 
 ## Decisions
 

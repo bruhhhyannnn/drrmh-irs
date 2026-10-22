@@ -1,6 +1,8 @@
 ---
 type: module
 module: checklist-editor
+updated: 2026-10-22
+verified: true
 paths:
   - src/actions/assessment-templates
   - src/components/hooks/use-assessment-templates.ts
@@ -12,7 +14,16 @@ tags: [module]
 
 Super Admins edit the MATATAG checklist at `/assessments/checklist`. Wording fixes apply in place on any version, so old and new assessments both see them. Structural changes (add, remove, reorder, gating, pillar) only work on a `draft` version, which is then published and retires the previous published one. The same page manages the building area types.
 
-**Related:** [[architecture]] · [[assessments]] · [[assessment-admin]] · [[building-safety]] · [[data-layer]] · [[auth-and-profiles]]
+**Related:** [[architecture]] · [[assessments]] · [[assessment-admin]] · [[building-safety]] · [[database]] · [[auth]]
+
+## Essentials
+
+Read this before changing the checklist editor, or the checklist itself.
+
+- **Where:** `/assessments/checklist` is the Super Admin checklist editor, backed by `src/actions/assessment-templates` and `use-assessment-templates.ts`.
+- **Wording fixes** apply in place on any version, so old and new assessments both see them.
+- **Structural changes** need a `draft` version, which is then published and retires the previous published version. Structural means adding, removing, reordering or re-gating items, or changing an item's DRRM pillar ([[0006-versioned-checklist-template]]).
+- **Building area types** are managed on the same page.
 
 ## Where it lives
 

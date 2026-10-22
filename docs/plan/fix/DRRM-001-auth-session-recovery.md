@@ -4,7 +4,7 @@ ticket: DRRM-001
 status: done
 branch: fix/auth-session-recovery
 modules:
-  - '[[auth-and-profiles]]'
+  - '[[auth]]'
   - '[[users]]'
 tags: [plan, fix]
 ---

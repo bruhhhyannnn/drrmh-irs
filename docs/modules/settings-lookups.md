@@ -1,6 +1,8 @@
 ---
 type: module
 module: settings-lookups
+updated: 2026-10-22
+verified: true
 paths:
   - src/actions/settings/index.ts
   - src/components/hooks/use-settings.ts
@@ -14,7 +16,18 @@ tags: [module]
 
 Settings holds the lists that the report, event, user and assessment forms pick from: clusters, units, buildings, positions, casualty conditions, damage conditions, and each campus's headcount (population) fields. Administrators edit them for their own campus; Super Admins edit them for the campus picked in the top-bar switcher, or all. All the simple lists share one generic table and one set of server actions.
 
-**Related:** [[architecture]] · [[field-reports]] · [[events]] · [[users]] · [[campus-scoping]] · [[assessments]] · [[checklist-editor]] · [[design-system]] · [[data-layer]]
+**Related:** [[architecture]] · [[field-reports]] · [[events]] · [[users]] · [[campus-scoping]] · [[assessments]] · [[checklist-editor]] · [[design-system]] · [[database]]
+
+## Essentials
+
+Read this before adding or changing a lookup table or the Settings page.
+
+- **Generic, table-driven:** the lookup tables share one implementation, the `LOOKUPS` map and `LookupTable` in `src/app/(admin)/settings/_components/` plus `src/actions/settings`, shown as tabs on one Settings page ([[0009-table-driven-settings]]).
+- **The tabs today:** clusters, units, buildings, positions, casualty conditions, damage conditions, and a separate Population fields tab.
+  - There is no locations table: a report's location is free text plus coordinates.
+  - User types and event statuses are seeded tables with getters here, but they have no tab.
+- **New lookup table:** extend this generic pattern instead of writing a bespoke CRUD page. The steps are under Rules and gotchas below.
+- **Buildings** for the MATATAG assessment are fixed on the Buildings tab ([[assessments]]).
 
 ## Where it lives
 

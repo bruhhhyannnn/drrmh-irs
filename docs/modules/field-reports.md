@@ -15,7 +15,7 @@ tags: [module]
 
 A field report (status report) is one ERT team leader's headcount, casualties, missing persons and building damage for one cluster during one event. ERT Members file it from `/report` on their phone, one per member per ongoing event, and it can be queued offline. Administrators and Super Admins see every report in scope on `/reports` and can add, edit or delete reports there.
 
-**Related:** [[architecture]] · [[events]] · [[offline-pwa]] · [[settings-lookups]] · [[auth-and-profiles]] · [[campus-scoping]] · [[bystander-reports]] · [[data-layer]]
+**Related:** [[architecture]] · [[events]] · [[offline-pwa]] · [[settings-lookups]] · [[auth]] · [[campus-scoping]] · [[bystander-reports]] · [[database]]
 
 ## Where it lives
 

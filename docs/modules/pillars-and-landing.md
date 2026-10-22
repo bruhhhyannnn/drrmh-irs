@@ -14,7 +14,7 @@ tags: [module]
 
 Two groups of mostly static pages. The public landing page at `/` introduces the system to anyone and links to the bystander report form and sign-in. The four DRRM pillar pages at `/pillars/<slug>` are placeholders for future pillar apps; Administrators and Super Admins open them in a new tab from the admin sidebar. `src/lib/campus-logo.ts` maps a campus name to its logo file and is used by several modules.
 
-**Related:** [[architecture]] · [[bystander-reports]] · [[auth-and-profiles]] · [[building-safety]] · [[design-system]] · [[print]]
+**Related:** [[architecture]] · [[bystander-reports]] · [[auth]] · [[building-safety]] · [[design-system]] · [[print]]
 
 ## Where it lives
 

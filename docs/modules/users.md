@@ -10,9 +10,9 @@ tags: [module]
 
 # Users
 
-The admin Users page: list, search, add, edit, deactivate and delete user accounts. Administrators manage the users of their own campus; Super Admins see every campus through the campus switcher and are the only ones who can make another Super Admin. The same action file also holds the profile reads and the profile-setup write used by [[auth-and-profiles]].
+The admin Users page: list, search, add, edit, deactivate and delete user accounts. Administrators manage the users of their own campus; Super Admins see every campus through the campus switcher and are the only ones who can make another Super Admin. The same action file also holds the profile reads and the profile-setup write used by [[auth]].
 
-**Related:** [[architecture]] · [[auth-and-profiles]] · [[campus-scoping]] · [[settings-lookups]] · [[data-layer]] · [[design-system]]
+**Related:** [[architecture]] · [[auth]] · [[campus-scoping]] · [[settings-lookups]] · [[database]] · [[design-system]]
 
 ## Where it lives
 
@@ -44,7 +44,7 @@ The admin Users page: list, search, add, edit, deactivate and delete user accoun
 - `completeUserProfile(id, data)`: requires `campus_id`; upserts a `Position` when `custom_position_name` is given; sets `is_profile_complete = true`. Revalidates `/`.
 - `deleteUser(id)`: nulls `reports.user_id`, deletes the row, then deletes the Supabase Auth user. Revalidates `/users`.
 
-Errors from Prisma go through `toFriendlyError(err, 'user')` (see [[data-layer]]).
+Errors from Prisma go through `toFriendlyError(err, 'user')` (see [[database]]).
 
 ## Client side
 
@@ -63,7 +63,7 @@ Errors from Prisma go through `toFriendlyError(err, 'user')` (see [[data-layer]]
 
 - Who may do what is enforced only in the UI. The actions take any id or campus the client sends.
 - `updateUser` does not touch Supabase Auth. Changing the email in Edit user changes the profile, not the sign-in email, and there is no admin password reset here.
-- Deactivating a user does not sign them out or block the client pages; only token-verified actions refuse inactive profiles (see [[auth-and-profiles]]).
+- Deactivating a user does not sign them out or block the client pages; only token-verified actions refuse inactive profiles (see [[auth]]).
 - A user's changes reach their own app only after they sign out, because `AuthProvider` reuses the persisted profile.
 - Deleting a user keeps their reports with `user_id = null`. Events they created (`events.user_id`) and assessments they evaluated (`assessments.evaluator_id`) are `NoAction` foreign keys and are not cleared first, so the delete fails with the friendly "still in use" error. `events.completed_by`, `buildings.created_by` and the template version `created_by` / `published_by` are set to null by the database.
 - `createUser` makes the Auth user first. Keep the rollback (`deleteUser` on the Auth user) if you change the order or add steps.

@@ -14,7 +14,7 @@ tags: [module]
 
 Anyone on campus can report an emergency without signing in, usually by scanning a QR code that opens `/bystander-report`. The form takes the incident type, campus, cluster and map pin, then optional people, damage, headcount, a contact number and up to 3 photos. Administrators and Super Admins triage these reports on `/emergency-reports` (named "Bystander reports" in the nav).
 
-**Related:** [[architecture]] · [[field-reports]] · [[offline-pwa]] · [[dashboard]] · [[campus-scoping]] · [[pillars-and-landing]] · [[data-layer]]
+**Related:** [[architecture]] · [[field-reports]] · [[offline-pwa]] · [[dashboard]] · [[campus-scoping]] · [[pillars-and-landing]] · [[database]]
 
 ## Where it lives
 

@@ -12,7 +12,7 @@ tags: [module]
 
 `/dashboard` is the landing page for Administrators and Super Admins after sign-in. It shows ongoing events with cluster progress, the next upcoming event, record counts, reports by cluster, events by status and a this-month calendar. It follows the top-bar campus switcher. The Building safety section on the same page is its own module ([[building-safety]]).
 
-**Related:** [[architecture]] · [[events]] · [[field-reports]] · [[bystander-reports]] · [[users]] · [[campus-scoping]] · [[building-safety]] · [[auth-and-profiles]]
+**Related:** [[architecture]] · [[events]] · [[field-reports]] · [[bystander-reports]] · [[users]] · [[campus-scoping]] · [[building-safety]] · [[auth]]
 
 ## Where it lives
 

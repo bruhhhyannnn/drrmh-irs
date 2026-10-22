@@ -12,7 +12,7 @@ tags: [module]
 
 Pages laid out as A4 sheets and saved as PDF from the browser's print dialog. Administrators and Super Admins print the event report and a submitted building assessment. ERT Members print their own assessments from `/assessment?print=<id>`. All of them share one A4 frame in `src/components/print/report-sheet.tsx`.
 
-**Related:** [[architecture]] · [[events]] · [[assessments]] · [[assessment-admin]] · [[design-system]] · [[auth-and-profiles]]
+**Related:** [[architecture]] · [[events]] · [[assessments]] · [[assessment-admin]] · [[design-system]] · [[auth]]
 
 ## Where it lives
 

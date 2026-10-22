@@ -4,7 +4,7 @@ ticket: DRRM-006
 status: approved
 branch: refactor/schema-dual-write-sunset
 modules:
-  - '[[data-layer]]'
+  - '[[database]]'
   - '[[field-reports]]'
 tags: [plan, fix]
 ---

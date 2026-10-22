@@ -4,7 +4,7 @@ id: '0007'
 status: accepted
 date: 2026-10-22
 modules:
-  - '[[auth-and-profiles]]'
+  - '[[auth]]'
   - '[[assessments]]'
   - '[[assessment-admin]]'
   - '[[campus-scoping]]'

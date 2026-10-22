@@ -1,6 +1,8 @@
 ---
 type: module
 module: offline-pwa
+updated: 2026-10-22
+verified: true
 paths:
   - src/lib/offline-queue.ts
   - src/lib/offline-flush.ts
@@ -17,7 +19,31 @@ tags: [module]
 
 The app installs as a PWA and keeps working on a weak or missing connection. New field reports, bystander reports and building assessments submitted offline are saved in IndexedDB on the device and sent again when the connection returns. ERT Members and bystanders rely on it most; the admin Add report drawer uses the same field report queue.
 
-**Related:** [[architecture]] · [[field-reports]] · [[bystander-reports]] · [[assessments]] · [[data-layer]] · [[design-system]]
+**Related:** [[architecture]] · [[field-reports]] · [[bystander-reports]] · [[assessments]] · [[database]] · [[design-system]] · [[routes]]
+
+## Essentials
+
+Read this before touching report or assessment submits, the service worker, `next.config.ts` or anything stored on the device.
+
+- **PWA:** `@ducanh2912/next-pwa` in `next.config.ts`, disabled in dev, with the offline fallback page `/~offline`. The production build must stay `next build --webpack`, because next-pwa needs it. Don't switch to Turbopack ([[0003-webpack-build-for-pwa]]).
+- **When to queue:** a new report submitted with no connection, or that fails the way a network failure does (`isNetworkError`), is stored in IndexedDB by `src/lib/offline-queue.ts` (database version 3).
+- **Three queues:**
+  - Field reports: the admin Add report drawer `ReportDrawer` and the ERT `ErtReportForm`, both sending through `createReport`.
+  - Bystander reports: `createBystanderReport`.
+  - Building assessments: `createAssessment`.
+- **Two plain stores** for the assessment form:
+  - `assessment-drafts`: drafts in progress, keyed by `client_ref`.
+  - `assessment-cache`: the checklist and form setup, so the form opens offline.
+- **Pending count:** `getAllQueuedCount()` counts all three queues. The provider, the ERT report form, the assessment hub and `useSubmitAssessment` set the count with it. Two callers don't:
+  - The admin `ReportDrawer` sets bystander + field counts (`report-drawer.tsx`).
+  - The bystander form sets `getQueuedReportCount()` only (`bystander-report-form.tsx`).
+
+  The provider writes `getAllQueuedCount()` again on its next flush.
+
+- **Replay:** `OfflineQueueProvider` (`src/components/pwa/`, mounted in `src/components/providers.tsx`) replays the queues on the `online` event, on mount and every 45 s. A network error stops the flush and leaves entries queued. A server-side rejection marks the entry `failed`, and failed entries are never retried automatically.
+- **State:** connectivity and the pending count live in `useOfflineQueueStore`.
+- **Online only:** editing an existing report.
+- **Bundled creates:** the queue replays a single create payload, so `createReport` takes casualties, missing persons and population counts nested in one call. Keep new-report data bundled that way ([[0004-offline-queue-bundled-create]]).
 
 ## Where it lives
 
@@ -74,7 +100,7 @@ None of its own. The provider replays through other modules' actions:
 - `flushOne` stops at the first network error (the rest stay queued) and continues past a server rejection, which it marks `failed`. Failed entries are never auto-retried and are not counted by `count()`.
 - Only the assessment queue has a way back from `failed` (`retryQueuedAssessment` = `markPending`). Field and bystander queues export no retry.
 - Queued assessments only send for the signed-in account: the `shouldSend` filter compares `payload.evaluator_id` with `useAuthStore` profile id, so a shared phone keeps another member's entries waiting.
-- The pending count everywhere is `getAllQueuedCount()` (all three queues). `ReportDrawer` sets it from bystander + field counts only, so it leaves assessments out until the provider refreshes it.
+- The pending count should be `getAllQueuedCount()` (all three queues). `ReportDrawer` and the bystander form are the exceptions (see Essentials), so the count can be low until the provider's next flush refreshes it.
 - Each queue replays one create payload. Keep new-report data bundled in that payload (casualties, missing persons, population counts nested in `createReport`).
 - Editing an existing report is online-only; only creates are queued.
 - New stores go in `STORES`; `onupgradeneeded` only creates missing stores, so raise `DB_VERSION` when adding one. `onversionchange` closes the old connection so another tab can upgrade.

@@ -6,7 +6,7 @@ branch: feat/DRRM-008-bystander-report-v2
 modules:
   - '[[bystander-reports]]'
   - '[[offline-pwa]]'
-  - '[[data-layer]]'
+  - '[[database]]'
 tags: [plan, feature]
 ---
 

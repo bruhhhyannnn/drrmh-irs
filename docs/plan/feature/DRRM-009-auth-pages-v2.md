@@ -4,7 +4,7 @@ ticket: DRRM-009
 status: in-review
 branch: feat/DRRM-009-auth-pages-v2
 modules:
-  - '[[auth-and-profiles]]'
+  - '[[auth]]'
   - '[[design-system]]'
 tags: [plan, feature]
 ---

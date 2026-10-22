@@ -15,7 +15,7 @@ tags: [module]
 
 Events are the drills and real incidents that field reports are filed against. Administrators create and run events for their own campus; Super Admins can create the same event at several campuses at once and complete it everywhere in one step. ERT Members never edit events, but they can only report while an event at their campus is Ongoing.
 
-**Related:** [[architecture]] · [[field-reports]] · [[dashboard]] · [[campus-scoping]] · [[print]] · [[settings-lookups]] · [[data-layer]]
+**Related:** [[architecture]] · [[field-reports]] · [[dashboard]] · [[campus-scoping]] · [[print]] · [[settings-lookups]] · [[database]]
 
 ## Where it lives
 

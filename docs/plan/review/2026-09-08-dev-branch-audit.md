@@ -4,13 +4,13 @@ ticket: REV-2026-09-08
 status: in-progress
 branch: dev
 modules:
-  - '[[auth-and-profiles]]'
+  - '[[auth]]'
   - '[[events]]'
   - '[[field-reports]]'
   - '[[bystander-reports]]'
   - '[[settings-lookups]]'
   - '[[dashboard]]'
-  - '[[data-layer]]'
+  - '[[database]]'
 tags: [plan, review]
 ---
 

@@ -1,6 +1,8 @@
 ---
 type: module
 module: assessment-admin
+updated: 2026-10-22
+verified: true
 paths:
   - src/actions/assessment-admin
   - src/app/(admin)/assessments
@@ -14,7 +16,20 @@ tags: [module]
 
 Administrators and Super Admins read the building assessments that ERT members submit. `/assessments` has three tabs: Buildings (latest scores per building), Assessments (every submission) and Compare (one building's history and an A/B comparison). An Administrator only ever sees their own campus. Only a Super Admin can delete an assessment or open the checklist editor.
 
-**Related:** [[architecture]] · [[assessments]] · [[building-safety]] · [[checklist-editor]] · [[campus-scoping]] · [[print]] · [[auth-and-profiles]]
+**Related:** [[architecture]] · [[assessments]] · [[building-safety]] · [[checklist-editor]] · [[campus-scoping]] · [[print]] · [[auth]] · [[routes]]
+
+## Essentials
+
+Read this before touching the admin assessment pages or their actions.
+
+- **Actions:** admins read assessments through `src/actions/assessment-admin`: lists, detail, and a Super-Admin-only delete. Each action calls `requireAdmin(token, campusId)` (`src/lib/server-auth.ts` + `adminScope` in `src/lib/admin-scope.ts`). An Administrator gets their own campus whatever the request says, and a Super Admin the one asked for (or all) ([[0007-token-verified-actions]], [[campus-scoping]]).
+- **Shared loaders:** the loaders the ERT and admin actions share are server-only, in `src/lib/assessment-records.ts`: the template version, `AssessmentRecord`, and buildings with their latest two scores. The score arithmetic (pillar rows, change in points) is in `src/lib/building-safety.ts` ([[building-safety]]).
+- **Pages:**
+  - `/assessments`, with Buildings | Assessments | Compare tabs.
+  - `/assessments/details?id=`, reusing the ERT `AssessmentRecordBody`.
+  - `/assessments/report?id=`, the A4 page in the `(print)` group, using the ERT `RecordPrint`.
+  - The Super Admin checklist editor `/assessments/checklist` ([[checklist-editor]]).
+- **Buildings** are fixed on the Settings → Buildings tab, the shared lookup table ([[settings-lookups]]).
 
 ## Where it lives
 

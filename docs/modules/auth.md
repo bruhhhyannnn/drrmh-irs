@@ -1,6 +1,8 @@
 ---
 type: module
-module: auth-and-profiles
+module: auth
+updated: 2026-10-22
+verified: true
 paths:
   - src/actions/auth
   - src/components/auth
@@ -17,7 +19,20 @@ tags: [module]
 
 Sign-in, the signed-in user's profile, and the role checks that decide where a user lands. Supabase Auth is the identity provider; the `users` table holds the app profile, linked by `auth_id`. ERT members sign in with Google (`@up.edu.ph`) and must finish a profile setup before using the app. Administrators and Super Admins usually sign in with email and password, on accounts made in [[users]].
 
-**Related:** [[architecture]] · [[users]] · [[campus-scoping]] · [[data-layer]] · [[assessments]] · [[design-system]]
+**Related:** [[architecture]] · [[users]] · [[campus-scoping]] · [[database]] · [[assessments]] · [[design-system]] · [[routes]]
+
+## Essentials
+
+Read this before touching sign-in, the profile, role checks or the setup gate.
+
+- **Identity:** Supabase Auth is the identity provider. Google OAuth is restricted to `@up.edu.ph` emails: the button passes `hd: 'up.edu.ph'`, and `provisionGoogleUser` refuses other domains. Email + password sign-in also exists (`signInWithPassword` in `src/app/(auth)/signin/sign-in-form.tsx`).
+- **Profile:** the `users` table (Prisma) holds the app profile, linked to the Supabase user by `auth_id`.
+- **Loading the profile:** `AuthProvider` (`src/components/auth/auth-provider.tsx`) listens to `supabase.auth.onAuthStateChange`, then loads the profile through the `getUserByAuthId` server action into `useAuthStore` (Zustand).
+- **First Google sign-in:** `provisionGoogleUser` (`src/actions/auth`) adds the user to `users` with the "ERT Member" user type.
+- **Roles:** `ProtectedRoute` gates admin pages by role. Admin vs. non-admin is decided by `isAdminUserType()` (`src/lib/constants.ts`). "Administrator" and "Super Admin" land on `/dashboard`, everyone else on `/home` ([[routes]]).
+- **Profile setup:** non-admin profiles start with `is_profile_complete = false`. `ProfileSetupGate` / `ProfileSetup` (`src/components/auth/profile-setup.tsx`) show a full-page setup in place of the app until the user sets campus, cluster, unit and position through `completeUserProfile` (`src/actions/users`). New field reports then auto-fill cluster and unit from that profile ([[field-reports]]).
+- **Shared frame:** the auth pages (`(auth)/`) and profile setup share the `AuthShell` frame and the design-system controls in `src/components/ds/` ([[design-system]]).
+- **Token checks:** newer server actions don't trust a client-sent user id. They take the Supabase access token (`getAccessToken()` in `src/lib/supabase.ts`) and verify it with `requireProfile(token)` or `requireAdmin(token, campusId)` from `src/lib/server-auth.ts` ([[0007-token-verified-actions]]).
 
 ## Where it lives
 

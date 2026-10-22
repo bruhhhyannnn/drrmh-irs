@@ -1,13 +1,25 @@
 ---
 type: reference
+updated: 2026-10-22
+verified: true
 tags: [architecture]
 ---
 
 # Architecture
 
-The UPM DRRM-H Incident Reporting System is one Next.js 16 app (App Router) on Supabase. Supabase gives Postgres and Auth. ERT members file field reports and building assessments from their phones, bystanders file reports through a public QR form, and admins run events, read reports and manage the lookup tables. Diagrams of the ER model and use cases are in the repo `README.md` (outside this vault).
+Read this before adding a server action, a hook, a query that filters by campus, or anything that talks to Postgres or Supabase.
 
-**Related:** [[00-index]] · [[conventions]] · [[glossary]] · [[data-layer]]
+**Related:** [[00-index]] · [[conventions]] · [[glossary]] · [[database]] · [[routes]] · [[auth]] · [[campus-scoping]]
+
+## Project
+
+This is the centralized admin web dashboard (Next.js) for the UPM DRRM-H Incident Reporting System, backed by Supabase (PostgreSQL).
+
+- **Field teams (ERT members) and bystanders** submit reports directly through the web app. Bystanders use QR-accessible public forms.
+- **Admins** manage events and drills, view field reports and headcounts, manage users, and configure lookup tables (clusters, units, positions and the rest).
+- **ERT members** also file MATATAG building assessments ([[assessments]]).
+
+The repo's `README.md` (outside this vault) has the full ER diagram, the use-case diagrams and the feature list.
 
 ## Users and where they land
 
@@ -16,11 +28,11 @@ The UPM DRRM-H Incident Reporting System is one Next.js 16 app (App Router) on S
 | Bystander     | No                             | `/`, `/bystander-report`                   | `(public)/` → [[bystander-reports]], [[pillars-and-landing]] |
 | ERT Member    | Google (`@up.edu.ph`) or email | `/home` → `/report`, `/assessment`         | `(ert)/` → [[field-reports]], [[assessments]]                |
 | Administrator | yes                            | `/dashboard` (own campus only)             | `(admin)/`                                                   |
-| Super Admin   | yes                            | `/dashboard` (any campus, campus switcher) | `(admin)/`, plus `/assessments/checklist`                    |
+| Super Admin   | yes                            | `/dashboard` (any campus, campus switcher) | `(admin)/`, plus `/campus` and `/assessments/checklist`      |
 
-Admin vs. non-admin is decided only by `isAdminUserType()` in `src/lib/constants.ts`. See [[auth-and-profiles]].
+Admin vs. non-admin is decided only by `isAdminUserType()` in `src/lib/constants.ts` ([[auth]]). Every route group and page is listed in [[routes]].
 
-## Layers
+## Data flow
 
 ```text
 Browser
@@ -33,35 +45,40 @@ Browser
 Server  src/actions/<domain>/index.ts ('use server')
   ├─ src/lib/prisma.ts          Prisma client via @prisma/adapter-pg   → Postgres
   ├─ src/lib/server-auth.ts     requireProfile / requireAdmin (token checks)
-  └─ src/lib/supabase-admin.ts  service-role client (Auth admin API only)
+  └─ src/lib/supabase-admin.ts  service-role client (Auth admin API, Storage)
 ```
 
-- **Data access goes through server actions only** ([[0001-server-actions-only]]). Components never import Prisma. Mutations call `revalidatePath(...)`, and hooks invalidate their query keys on success.
-- **Three ways in, kept apart:** `src/lib/prisma.ts` (server, all data), `src/lib/supabase.ts` (browser, auth and Realtime only), `src/lib/supabase-admin.ts` (server, privileged Auth calls). Details in [[data-layer]].
-- **Pure logic sits in `src/lib`** with `node:test` tests next to it (assessment scoring, building safety pooling, admin scope, offline flush, schemas). The UI and server actions have no tests.
+- **Data access goes through server actions only** ([[0001-server-actions-only]]).
+  - Every DB read and write is a `'use server'` function in `src/actions/<domain>/index.ts`, using the Prisma client from `src/lib/prisma.ts`.
+  - Components never call Prisma directly.
+  - Mutations that change data call `revalidatePath(...)` for the affected routes.
+- **Client data flow:** `src/components/hooks/use-<domain>.ts` wraps each domain's server actions in TanStack Query (`useQuery` / `useMutation`). There is one hook file per domain: events, users, reports, settings, campus, dashboard, bystander-reports, population-categories, assessments, assessment-templates. `use-debounced.ts` sits in the same folder but is a utility, not a domain. Mutations invalidate the relevant query keys on success. Follow that pattern (see `use-events.ts`) instead of refetching by hand.
+- **Caller checks:** the older actions trust the user and campus ids the client sends. Newer actions take the Supabase access token and verify it on the server (`requireProfile(token)` / `requireAdmin(token, campusId)` in `src/lib/server-auth.ts`). They return expected failures as `{ ok: false, error, retry }` instead of throwing, because thrown messages are hidden in production ([[0007-token-verified-actions]]).
+- **Pure logic sits in `src/lib`**, with `node:test` tests next to it: access, admin scope, assessment caller, draft, score and template, building safety, offline cache and flush, and schemas. The checklist data test is `prisma/data/matatag-2025-07-25.test.ts`. The UI and server actions have no tests.
 
-## Route groups (`src/app/`)
+## The three clients (don't mix them up)
 
-| Group           | What                                                                                | Notes                                                              |
-| --------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `(public)/`     | landing page, bystander form                                                        | no auth → [[pillars-and-landing]], [[bystander-reports]]           |
-| `(auth)/`       | sign-in, forgot/update password                                                     | `AuthShell` frame → [[auth-and-profiles]]                          |
-| `auth/callback` | OAuth callback route                                                                |                                                                    |
-| `(ert)/`        | `/home`, `/report`, `/assessment`                                                   | `useErtAccess` guard → [[field-reports]], [[assessments]]          |
-| `(admin)/`      | dashboard, events, reports, emergency-reports, users, settings, campus, assessments | one shell, campus switcher → [[campus-scoping]], [[design-system]] |
-| `(print)/`      | `/events/report`, assessment reports on A4                                          | no shell → [[print]]                                               |
-| `(pillars)/`    | placeholder page per DRRM pillar                                                    | → [[pillars-and-landing]]                                          |
-| `~offline`      | offline fallback page                                                               | → [[offline-pwa]]                                                  |
+There are two Prisma/Postgres access paths and one Supabase path:
+
+- **`src/lib/prisma.ts`:** the server-side Prisma client (through `@prisma/adapter-pg`), used from server actions for all the admin dashboard's reads and writes ([[database]]).
+- **`src/lib/supabase.ts`:** the browser Supabase SDK. It is used for **auth only** (`AuthProvider`, sign-in and sign-out, `getAccessToken()`), and for Supabase Realtime subscriptions if any are added. None exist today.
+  - The key it uses is `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY`, Supabase's publishable key. The older `CLAUDE.md` called it the "anon key".
+- **`src/lib/supabase-admin.ts`:** the server-side Supabase client with the service role key. It is only for privileged operations Prisma can't do: the Supabase Auth admin API (create and delete users, verifying tokens in `requireProfile`), and the private `bystander-photos` Storage bucket.
+
+## Campus scoping
+
+- **Scoped columns:** most domain models are scoped by `campus_id` / `cluster_id`. `users` has both, `clusters` has `campus_id`, and `reports` and `bystander_reports` have `cluster_id`. Before adding a query, check how existing actions filter, e.g. `getOngoingEvents(campusId)` in `src/actions/events`.
+- **The switcher:** the admin top-bar campus switcher (`useCampusScopeStore`, read through `useScopedCampusId`) scopes every admin list and the dashboard. Pass its campus id to queries instead of adding per-page campus filters ([[campus-scoping]]).
+- **Server-side campus:** token-verified admin actions (`assessment-admin`, `assessment-templates`, `building-safety`) decide the campus on the server with `adminScope` (`src/lib/admin-scope.ts`). An Administrator gets their own campus whatever the request says, and a Super Admin the one asked for (or all).
 
 ## Cross-cutting pieces
 
-- **Auth:** Supabase Auth is the identity provider. The `users` table holds the profile, linked by `auth_id`. `AuthProvider` loads the profile into the auth store, and `ProfileSetupGate` blocks non-admins until campus, cluster, unit and position are set. → [[auth-and-profiles]]
-- **Campus scoping:** the top-bar switcher (`useCampusScopeStore` / `useScopedCampusId`) scopes every admin list. Administrators are locked to their own campus. The newer assessment actions decide the campus on the server (`adminScope`). → [[campus-scoping]], [[0007-token-verified-actions]]
-- **Offline / PWA:** next-pwa service worker (production only) and an IndexedDB queue for new field reports, bystander reports and assessments, replayed on `online`, on mount and every 45 s. → [[offline-pwa]], [[0003-webpack-build-for-pwa]], [[0004-offline-queue-bundled-create]]
-- **Lookup tables:** one generic implementation for clusters, units, positions and the rest. → [[settings-lookups]], [[0009-table-driven-settings]]
-- **MATATAG assessments:** a versioned checklist template in the DB, scored per DRRM pillar, rolled up on the dashboard. → [[assessments]], [[assessment-admin]], [[checklist-editor]], [[building-safety]], [[0005-assessment-single-route]], [[0006-versioned-checklist-template]]
-- **Theme:** tokens in `globals.css` that switch under `.dark`. A4 sheets stay light. → [[design-system]]
+- **Auth:** Supabase Auth plus the `users` profile, the setup gate and role checks → [[auth]]
+- **Offline / PWA:** the next-pwa service worker (production only) and the IndexedDB queues → [[offline-pwa]], [[0003-webpack-build-for-pwa]], [[0004-offline-queue-bundled-create]]
+- **Lookup tables:** one generic implementation → [[settings-lookups]], [[0009-table-driven-settings]]
+- **MATATAG assessments:** a versioned checklist template, scored per DRRM pillar and rolled up on the dashboard → [[assessments]], [[assessment-admin]], [[checklist-editor]], [[building-safety]]
+- **Theme:** tokens in `globals.css` that switch under `.dark`, while A4 sheets stay light → [[conventions]], [[design-system]]
 
-## Build and run
+## Build and CI
 
-`npm run build` is `next build --webpack` (next-pwa needs webpack). CI on PRs to `main` runs `npm ci` → `prisma generate` → `npm audit --audit-level=critical` → lint → type-check → build. `npm run test` runs locally only. See [[conventions]].
+`npm run build` is `next build --webpack`, because next-pwa needs webpack. CI (`.github/workflows/ci.yml`) runs on PRs and pushes to `main`: `npm ci` → `prisma generate` → `npm audit --audit-level=critical` → lint → type-check → build. `npm run test` is commented out in CI, so it only runs locally.

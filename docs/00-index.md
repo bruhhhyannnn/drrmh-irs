@@ -1,29 +1,31 @@
 ---
 type: index
+updated: 2026-10-22
+verified: true
 tags: [index]
 ---
 
 # DRRM-H IRS docs: start here
 
-This vault is the `docs/` folder of the UPM DRRM-H Incident Reporting System repo. Read this note first, then follow the links. Code facts come from the source, and when a note and the code disagree, the code wins and the note should be fixed.
+This vault is the `docs/` folder of the UPM DRRM-H Incident Reporting System repo. `CLAUDE.md` keeps only what every task needs. The area detail lives here. Read this note first, then read only the notes for the area you're about to touch. Code facts come from the source: when a note and the code disagree, the code wins and the note should be fixed.
 
 ## Orientation
 
-- [[README]]: the docs workflow (document → plan → implement → update status) and naming rules
-- [[architecture]]: users, route groups, layers, cross-cutting pieces
-- [[conventions]]: code, theme, database, verification and docs rules (including plan frontmatter)
+- [[README]]: the docs workflow (document → plan → implement → update status), the folder purposes and the naming rules
+- [[architecture]]: the project, data flow, the three clients, campus scoping, build and CI
+- [[conventions]]: Prettier, lint-staged, forms, theme tokens, verification and docs rules (including frontmatter)
 - [[glossary]]: DRRM-H, ERT, MATATAG, pillars, campus / cluster / unit, `client_ref` and other terms
 - [[changelog]]: what shipped, newest first, by ticket
 
 ## Modules
 
-| Area                           | Notes                                                                                   |
-| ------------------------------ | --------------------------------------------------------------------------------------- |
-| People and access              | [[auth-and-profiles]] · [[users]] · [[campus-scoping]]                                  |
-| Incidents                      | [[events]] · [[field-reports]] · [[bystander-reports]] · [[dashboard]]                  |
-| Building assessments (MATATAG) | [[assessments]] · [[assessment-admin]] · [[checklist-editor]] · [[building-safety]]     |
-| Shared                         | [[settings-lookups]] · [[offline-pwa]] · [[print]] · [[design-system]] · [[data-layer]] |
-| Public pages                   | [[pillars-and-landing]]                                                                 |
+| Area                           | Notes                                                                                              |
+| ------------------------------ | -------------------------------------------------------------------------------------------------- |
+| People and access              | [[auth]] · [[users]] · [[campus-scoping]]                                                          |
+| Incidents                      | [[events]] · [[field-reports]] · [[bystander-reports]] · [[dashboard]]                             |
+| Building assessments (MATATAG) | [[assessments]] · [[assessment-admin]] · [[checklist-editor]] · [[building-safety]]                |
+| Shared                         | [[routes]] · [[settings-lookups]] · [[offline-pwa]] · [[print]] · [[design-system]] · [[database]] |
+| Public pages                   | [[pillars-and-landing]]                                                                            |
 
 Each module note lists its paths, data, server actions, client pieces, rules and decisions. The plans that touch a module are in its **Backlinks** pane, because plans link to modules through their `modules:` frontmatter.
 
@@ -49,6 +51,7 @@ Statuses are taken from each plan's frontmatter as of 2026-10-22. Keep this list
 
 | Plan                                                                                                 | Status      | Branch                              |
 | ---------------------------------------------------------------------------------------------------- | ----------- | ----------------------------------- |
+| [[plan/feature/DRRM-017-slim-claude-md\|DRRM-017 Slim CLAUDE.md into the vault]]                     | in-review   | `feat/DRRM-017-slim-claude-md`      |
 | [[plan/feature/DRRM-015-assessment-form\|DRRM-015 MATATAG building assessment]]                      | in-progress | `feat/DRRM-015-assessment-form`     |
 | [[plan/review/2026-09-08-dev-branch-audit\|Dev branch audit (2026-09-08)]]                           | in-progress | `dev`                               |
 | [[plan/feature/DRRM-007-landing-page-v2\|DRRM-007 Landing page v2]]                                  | in-review   | `feat/DRRM-007-landing-page-v2`     |

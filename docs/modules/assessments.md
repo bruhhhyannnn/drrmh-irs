@@ -1,6 +1,8 @@
 ---
 type: module
 module: assessments
+updated: 2026-10-22
+verified: true
 paths:
   - src/app/(ert)/assessment
   - src/app/(ert)/_components
@@ -22,7 +24,33 @@ tags: [module]
 
 ERT members fill in the MATATAG building safety checklist (DRRM-015) on their phones at `/assessment`. A draft lives on the phone until it is submitted; a submit made offline goes to the offline queue. The server re-checks every submit, scores it by DRRM pillar and stores it against the checklist version it was answered with. Admins read the results through [[assessment-admin]] and [[building-safety]].
 
-**Related:** [[architecture]] · [[assessment-admin]] · [[checklist-editor]] · [[building-safety]] · [[offline-pwa]] · [[print]] · [[auth-and-profiles]] · [[data-layer]]
+**Related:** [[architecture]] · [[assessment-admin]] · [[checklist-editor]] · [[building-safety]] · [[offline-pwa]] · [[print]] · [[auth]] · [[database]] · [[routes]]
+
+## Essentials
+
+Read this before touching anything in the MATATAG assessment (DRRM-015). Admin pages: [[assessment-admin]]. Checklist editor: [[checklist-editor]]. Dashboard rollup: [[building-safety]].
+
+- **Template in the database:** the building safety checklist is a versioned template ([[0006-versioned-checklist-template]]):
+  - `assessment_templates` → `assessment_template_versions` → `assessment_sections` → `assessment_items`.
+  - Only one version is `published` at a time, and an assessment keeps the version it was answered with.
+  - Group parents are unscored and hold the shared prompt. Every scored item has one DRRM pillar.
+- **Buildings:** a building belongs to a unit and keeps a profile (floors, `building_areas`) that pre-fills its next assessment. Buildings are fixed on the Settings → Buildings tab, the shared lookup table ([[settings-lookups]]).
+- **Seed:** the checklist text is seeded from `prisma/data/matatag-2025-07-25.ts` by `npm run seed:matatag`. The seed can be re-run safely: it matches by code and never deletes, so item ids stay stable ([[database]]).
+- **Shared pure logic** in `src/lib`, used by the form, the server and the tests:
+  - `assessment-template.ts`: types, and `templateFromData` for tests.
+  - `assessment-score.ts`: which items apply for the floors and areas, scoring, and `prepareAssessmentWrite`, the server's re-check of a submit.
+  - `assessment-draft.ts`: the draft kept on the phone, and its payload.
+- **One route:** `/assessment` is the hub, `?draft=<client_ref>` the stepper, `?view=<id>` the read-only view, and `?print=<id>` that assessment on A4. The print view renders without `ErtFrame` but keeps the ERT guard. Everything stays on one route because the service worker might not cache a dynamic segment for offline use ([[0005-assessment-single-route]], [[routes]]).
+- **A4 frame:** sheets, letterhead and `@page` rules are in `src/components/print/report-sheet.tsx`, shared with the `(print)` event report ([[print]]). On paper, `<Bilingual language="both">` ignores the device setting.
+- **Who can use it:** decided only by `canUseAssessment()` in `src/lib/access.ts`. The `/home` card, the Report | Assessment switch, the page guard and the server action all call it.
+- **Caller check:** unlike the older actions, `src/actions/assessments` doesn't trust a client-sent user id. It takes the Supabase access token (`getAccessToken()` in `src/lib/supabase.ts`), verifies it with `requireProfile(token)` from `src/lib/server-auth.ts`, and uses that profile as the evaluator ([[0007-token-verified-actions]]).
+- **Failures:** expected failures come back as `{ ok: false, error, retry }` instead of being thrown, because thrown messages are hidden in production. `retry: true` (signed out, or another account on the phone) keeps an offline entry pending.
+- **Language:** question text follows the per-device "Checklist language" set in My profile (`useQuestionLanguageStore`, rendered through `<Bilingual>`).
+- **Offline:** drafts live in the IndexedDB `assessment-drafts` store, and the checklist and form setup in `assessment-cache` ([[offline-pwa]]).
+- **Admin side:**
+  - Admins read assessments through `src/actions/assessment-admin`, where each action calls `requireAdmin(token, campusId)` ([[assessment-admin]]).
+  - Shared server-only loaders are in `src/lib/assessment-records.ts`, and the score arithmetic in `src/lib/building-safety.ts` ([[building-safety]]).
+  - The Super Admin edits the checklist at `/assessments/checklist` ([[checklist-editor]]).
 
 ## Where it lives
 

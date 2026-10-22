@@ -6,8 +6,8 @@ branch: feat/DRRM-015-assessment-form
 modules:
   - '[[assessments]]'
   - '[[offline-pwa]]'
-  - '[[auth-and-profiles]]'
-  - '[[data-layer]]'
+  - '[[auth]]'
+  - '[[database]]'
 tags: [plan, feature]
 ---
 

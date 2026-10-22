@@ -1,6 +1,8 @@
 ---
 type: module
 module: building-safety
+updated: 2026-10-22
+verified: true
 paths:
   - src/actions/building-safety
   - src/app/(admin)/dashboard/_components/building-safety
@@ -15,6 +17,15 @@ tags: [module]
 The Building safety section of the admin dashboard pools the latest building assessments and drills Campus → Cluster → Unit → Building in place. Each level shows overall and pillar scores, the like-for-like change, section scores and the most-failed items; the building level shows its history and an A/B comparison. Administrators see their own campus; Super Admins can start from all campuses. The arithmetic is pure code with tests.
 
 **Related:** [[architecture]] · [[dashboard]] · [[assessments]] · [[assessment-admin]] · [[campus-scoping]] · [[design-system]] · [[pillars-and-landing]]
+
+## Essentials
+
+Read this before touching the dashboard's Building safety section, its actions, the score arithmetic or the charts.
+
+- **Where:** the section is in `(admin)/dashboard/_components/building-safety/`, with its actions in `src/actions/building-safety`. It drills Campus → Cluster → Unit → Building.
+- **URL state:** the level is kept in the `bs_campus` / `bs_cluster` / `bs_unit` / `bs_building` / `bs_a` / `bs_b` URL params. Drilling pushes a history entry, and the A/B picks replace it. The section never moves the campus switcher.
+- **Pure functions:** pooling, the like-for-like change, section scores, most-failed items, the A/B comparison and `scopeFromParams` are pure functions in `src/lib/building-safety.ts`, with tests. So is the score arithmetic the admin pages share (pillar rows, change in points).
+- **Charts:** hand-built in `(admin)/_components/charts/`, coloured with the `--series-1…6` tokens from `globals.css`, checked with the dataviz validator, and with every value printed ([[0008-hand-built-charts]]).
 
 ## Where it lives
 
