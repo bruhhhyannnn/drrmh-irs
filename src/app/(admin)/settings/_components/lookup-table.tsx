@@ -10,6 +10,7 @@ import {
   useUpdateSetting,
 } from '@/components/hooks/use-settings';
 import {
+  buildingSchema,
   casualtyConditionSchema,
   clusterSchema,
   damageConditionSchema,
@@ -32,6 +33,7 @@ import {
   MobileCard,
   NameCell,
   NumberCell,
+  Pager,
   RowActions,
   SearchField,
   TextCell,
@@ -59,14 +61,22 @@ interface LookupRow {
   cluster_id?: string;
   campus?: { name: string };
   cluster?: { name: string; campus_id: string };
+  /** Buildings: the unit they belong to, and their floors. */
+  unit_id?: string;
+  floor_count?: number;
+  unit?: { name: string; cluster_id: string; cluster: { name: string; campus_id: string } };
   _count?: Partial<
-    Record<'units' | 'users' | 'reports' | 'casualties' | 'bystander_reports', number>
+    Record<
+      'units' | 'users' | 'reports' | 'casualties' | 'bystander_reports' | 'assessments',
+      number
+    >
   >;
 }
 
 const SCHEMAS = {
   clusters: clusterSchema,
   units: unitSchema,
+  buildings: buildingSchema,
   positions: positionSchema,
   casualty_conditions: casualtyConditionSchema,
   damage_conditions: damageConditionSchema,
@@ -81,6 +91,7 @@ function linkedWarning(row: LookupRow) {
     [c.casualties, 'casualty', 'casualties'],
     [c.reports, 'report', 'reports'],
     [c.bystander_reports, 'bystander report', 'bystander reports'],
+    [c.assessments, 'assessment', 'assessments'],
   ].filter(([n]) => !!n) as [number, string, string][];
   if (!counts.length) return undefined;
   const parts = counts.map(([n, one, many]) => plural(n, one, many));
@@ -114,6 +125,7 @@ export function LookupTable({
   const remove = useDeleteSetting(table);
   const [query, setQuery] = useState('');
   const [clusterId, setClusterId] = useState('');
+  const [page, setPage] = useState(1);
   // The row stays set while the drawer slides out, so its title doesn't flip to Add.
   const [drawer, setDrawer] = useState<{ open: boolean; row: LookupRow | null }>({
     open: false,
@@ -131,6 +143,7 @@ export function LookupTable({
 
   const isClusters = table === 'clusters';
   const isUnits = table === 'units';
+  const isBuildings = table === 'buildings';
   const allCampuses = !campusId;
   const scopedClusters = (clusters as LookupRow[]).filter(
     (c) => !campusId || c.campus_id === campusId
@@ -140,8 +153,13 @@ export function LookupTable({
     if (isClusters && campusId && r.campus_id !== campusId) return false;
     if (isUnits && campusId && r.cluster?.campus_id !== campusId) return false;
     if (isUnits && clusterId && r.cluster_id !== clusterId) return false;
+    if (isBuildings && campusId && r.unit?.cluster.campus_id !== campusId) return false;
+    if (isBuildings && clusterId && r.unit?.cluster_id !== clusterId) return false;
     return !query.trim() || r.name.toLowerCase().includes(query.trim().toLowerCase());
   });
+  const totalPages = Math.max(1, Math.ceil(rows.length / 10));
+  const current = Math.min(page, totalPages);
+  const shown = rows.slice((current - 1) * 10, current * 10);
 
   const setActive = (row: LookupRow, isActive: boolean) =>
     update.mutate(
@@ -153,15 +171,40 @@ export function LookupTable({
     );
 
   const parentOf = (r: LookupRow) =>
-    isClusters ? r.campus?.name : isUnits ? r.cluster?.name : undefined;
+    isClusters
+      ? r.campus?.name
+      : isUnits
+        ? r.cluster?.name
+        : isBuildings && r.unit
+          ? `${r.unit.name} · ${r.unit.cluster.name}`
+          : undefined;
 
   const columns: Column<LookupRow>[] = [
     {
       key: 'name',
       header: 'Name',
-      width: isClusters || isUnits ? 'minmax(0,1.4fr)' : 'minmax(0,2fr)',
+      width: isClusters || isUnits || isBuildings ? 'minmax(0,1.4fr)' : 'minmax(0,2fr)',
       cell: (r) => <NameCell primary={r.name} />,
     },
+    ...(isBuildings
+      ? [
+          {
+            key: 'unit',
+            header: 'Unit',
+            width: 'minmax(0,1.4fr)',
+            cell: (r: LookupRow) => (
+              <NameCell muted primary={r.unit?.name ?? '—'} secondary={r.unit?.cluster.name} />
+            ),
+          },
+          {
+            key: 'floors',
+            header: 'Floors',
+            width: '64px',
+            align: 'right' as const,
+            cell: (r: LookupRow) => <NumberCell value={r.floor_count ?? 1} />,
+          },
+        ]
+      : []),
     ...(isClusters && allCampuses
       ? [
           {
@@ -249,14 +292,20 @@ export function LookupTable({
             label={`Search ${noun}`}
             placeholder={`Search ${noun}…`}
             value={query}
-            onChange={setQuery}
+            onChange={(v) => {
+              setQuery(v);
+              setPage(1);
+            }}
           />
-          {isUnits && (
+          {(isUnits || isBuildings) && (
             <FilterSelect
               label="Cluster"
               allLabel="All clusters"
               value={clusterId}
-              onChange={setClusterId}
+              onChange={(v) => {
+                setClusterId(v);
+                setPage(1);
+              }}
               options={scopedClusters.map((c) => ({ value: c.id, label: c.name }))}
             />
           )}
@@ -267,7 +316,7 @@ export function LookupTable({
         <DataTable
           label={label}
           columns={columns}
-          rows={rows}
+          rows={shown}
           rowKey={(r) => r.id}
           loading={isPending}
           rowClassName={(r) => (r.is_active ? undefined : 'bg-gray-25')}
@@ -286,6 +335,7 @@ export function LookupTable({
                       },
                     ]
                   : []),
+                ...(isBuildings ? [{ label: 'Floors', value: r.floor_count ?? 1 }] : []),
                 { label: 'Created', value: formatDate(r.created_at) },
                 {
                   label: 'Status',
@@ -309,6 +359,7 @@ export function LookupTable({
             />
           )}
         />
+        <Pager page={current} totalPages={totalPages} onChange={setPage} />
       </ListCard>
 
       <LookupDrawer
@@ -345,9 +396,17 @@ export function LookupTable({
   );
 }
 
-type LookupForm = { name: string; is_active: boolean; campus_id?: string; cluster_id?: string };
+type LookupForm = {
+  name: string;
+  is_active: boolean;
+  campus_id?: string;
+  cluster_id?: string;
+  unit_id?: string;
+  floor_count?: number;
+};
 
-/** Add / Edit for any lookup table: a name, the parent for clusters and units, and Active. */
+/** Add / Edit for any lookup table: a name, the parent for clusters, units and buildings, a
+ * building's floors, and Active. */
 function LookupDrawer({
   open,
   onClose,
@@ -432,6 +491,14 @@ function LookupFormBody({
   const { data: campuses = [] } = useCampus();
   const needsCampus = table === 'clusters';
   const needsCluster = table === 'units';
+  const isBuilding = table === 'buildings';
+  const { data: allUnits = [] } = useSettingsTable('units');
+  // A building moves between the campus's units; "Unit · Cluster" tells same-named units apart.
+  const unitOptions = (allUnits as LookupRow[])
+    .filter((u) => !campusId || u.cluster?.campus_id === campusId)
+    .filter((u) => u.is_active || u.id === row?.unit_id)
+    .map((u) => ({ value: u.id, label: `${u.name} · ${u.cluster?.name ?? ''}` }))
+    .sort((a, b) => a.label.localeCompare(b.label));
 
   const {
     register,
@@ -447,6 +514,7 @@ function LookupFormBody({
         campus_id: row?.campus_id ?? campusId,
       }),
       ...(needsCluster && { cluster_id: row?.cluster_id ?? '' }),
+      ...(isBuilding && { unit_id: row?.unit_id ?? '', floor_count: row?.floor_count ?? 1 }),
     },
   });
 
@@ -518,6 +586,51 @@ function LookupFormBody({
                 )}
               />
             </FormField>
+          )}
+          {isBuilding && (
+            <>
+              <FormField
+                id="lookup-unit"
+                label="College / Department / Unit"
+                hint="Required"
+                error={errors.unit_id?.message}
+              >
+                <Controller
+                  control={control}
+                  name="unit_id"
+                  render={({ field }) => (
+                    <SelectField
+                      id="lookup-unit"
+                      value={field.value ?? ''}
+                      onChange={field.onChange}
+                      options={unitOptions}
+                      placeholder="Select unit"
+                      required
+                      invalid={!!errors.unit_id}
+                      describedBy={errors.unit_id ? 'lookup-unit-error' : undefined}
+                    />
+                  )}
+                />
+              </FormField>
+              <FormField
+                id="lookup-floors"
+                label="Floors"
+                hint="Required"
+                error={errors.floor_count?.message}
+              >
+                <TextInput
+                  id="lookup-floors"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={200}
+                  step={1}
+                  invalid={!!errors.floor_count}
+                  aria-describedby={errors.floor_count ? 'lookup-floors-error' : undefined}
+                  {...register('floor_count')}
+                />
+              </FormField>
+            </>
           )}
           <div className="md:col-span-2">
             <Controller

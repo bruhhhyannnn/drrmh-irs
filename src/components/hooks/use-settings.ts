@@ -13,7 +13,18 @@ import {
   SettingsTable,
   updateSettingsItem,
 } from '@/actions/settings';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+
+/** Other lists that show a table's rows: buildings also appear on the assessment pages. */
+const ALSO_SHOWN_IN: Partial<Record<SettingsTable, string[]>> = {
+  buildings: ['building-summaries', 'admin-assessments', 'assessment-setup', 'building-safety'],
+};
+
+function invalidateTable(queryClient: QueryClient, table: SettingsTable) {
+  for (const key of [table, ...(ALSO_SHOWN_IN[table] ?? [])]) {
+    queryClient.invalidateQueries({ queryKey: [key] });
+  }
+}
 
 export function useSettingsTable(table: SettingsTable, filterId?: string) {
   return useQuery({
@@ -26,7 +37,7 @@ export function useCreateSetting(table: SettingsTable) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Record<string, unknown>) => createSettingsItem(table, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [table] }),
+    onSuccess: () => invalidateTable(queryClient, table),
   });
 }
 
@@ -35,7 +46,7 @@ export function useUpdateSetting(table: SettingsTable) {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
       updateSettingsItem(table, id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [table] }),
+    onSuccess: () => invalidateTable(queryClient, table),
   });
 }
 
@@ -43,7 +54,7 @@ export function useDeleteSetting(table: SettingsTable) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteSettingsItem(table, id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [table] }),
+    onSuccess: () => invalidateTable(queryClient, table),
   });
 }
 

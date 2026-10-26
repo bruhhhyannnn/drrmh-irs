@@ -6,6 +6,7 @@ import {
   useUpdateBystanderReportStatus,
   type BystanderStatus,
 } from '@/components/hooks/use-bystander-reports';
+import { useDebounced } from '@/components/hooks/use-debounced';
 import { Check, Eye, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -30,7 +31,6 @@ import { useScopedCampusId } from '../_components/shell/campus-switcher';
 import { Card, Chip } from '../_components/ui';
 import { formatDate, formatTime, plural } from '../_lib/format';
 import { bystanderStatusKey, bystanderTone, capitalize } from '../_lib/status';
-import { useDebounced } from '../_lib/use-debounced';
 import { BystanderDrawer, type BystanderRow } from './_components/bystander-drawer';
 
 type Tab = 'action' | 'verified' | 'dismissed' | 'all';

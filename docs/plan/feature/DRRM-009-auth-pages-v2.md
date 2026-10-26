@@ -1,3 +1,14 @@
+---
+type: feature
+ticket: DRRM-009
+status: in-review
+branch: feat/DRRM-009-auth-pages-v2
+modules:
+  - '[[auth]]'
+  - '[[design-system]]'
+tags: [plan, feature]
+---
+
 # [DRRM-009] Feature Plan: Auth Pages v2
 
 - **Status:** `[In Review]`

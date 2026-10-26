@@ -1,6 +1,7 @@
 'use client';
 
 import { Button, Switch } from '@/components/ds';
+import { useDebounced } from '@/components/hooks/use-debounced';
 import { useUserTypes } from '@/components/hooks/use-settings';
 import { useDeleteUser, useSetUserActive, useUsers } from '@/components/hooks/use-users';
 import { useAuthStore } from '@/store';
@@ -27,7 +28,6 @@ import { useIsSuperAdmin, useScopedCampusId } from '../_components/shell/campus-
 import { Avatar, Card, Chip } from '../_components/ui';
 import { personName, plural } from '../_lib/format';
 import { userTypeLabel, userTypeTone } from '../_lib/status';
-import { useDebounced } from '../_lib/use-debounced';
 import { UserDrawer } from './_components/user-drawer';
 
 type UserRow = NonNullable<ReturnType<typeof useUsers>['data']>[number];

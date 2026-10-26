@@ -1,3 +1,12 @@
+---
+type: feature
+ticket: FEAT-ID
+status: draft
+branch: ''
+modules: []
+tags: [plan, feature]
+---
+
 # [FEAT-ID] Feature RFC / Plan: Short Title
 
 - **Status:** `[Draft | In Review | Approved | In Progress | Completed]`

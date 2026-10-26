@@ -22,3 +22,8 @@ export function formatShortDateTime(value: DateLike) {
   const date = new Date(value);
   return `${SHORT_DATE.format(date)}, ${TIME.format(date)}`;
 }
+
+/** "Oct 8, 2026" */
+export function formatDate(value: DateLike) {
+  return DATE.format(new Date(value));
+}

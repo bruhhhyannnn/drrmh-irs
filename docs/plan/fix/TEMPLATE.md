@@ -1,3 +1,12 @@
+---
+type: fix
+ticket: FIX-ID
+status: draft
+branch: ''
+modules: []
+tags: [plan, fix]
+---
+
 # [FIX-ID] Fix Plan: Short Title
 
 - **Status:** `[Draft | Approved | In Progress | Done]`

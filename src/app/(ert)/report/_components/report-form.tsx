@@ -20,19 +20,24 @@ import { useCampusPopulationCategories } from '@/components/hooks/use-population
 import { useCasualtyConditions, useDamageConditions } from '@/components/hooks/use-settings';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn, type ReportFormData } from '@/lib';
-import {
-  getQueuedFieldReportCount,
-  getQueuedReportCount,
-  isNetworkError,
-  queueFieldReport,
-} from '@/lib/offline-queue';
+import { getAllQueuedCount, isNetworkError, queueFieldReport } from '@/lib/offline-queue';
 import { useAuthStore, useOfflineQueueStore } from '@/store';
 import { useQueryClient } from '@tanstack/react-query';
 import { Check, RotateCcw, Shield, WifiOff } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import {
+  Avatar,
+  Card,
+  Dot,
+  GUTTER,
+  Hero,
+  Mono,
+  personName,
+  Pill,
+  SectionCard,
+} from '../../_components/chrome';
+import { formatTime } from '../../_lib/format';
 import { clearDraft, loadDraft, saveDraft } from '../_lib/draft';
-import { formatTime } from '../_lib/format';
-import { Avatar, Card, Dot, GUTTER, Hero, Mono, personName, Pill, SectionCard } from './chrome';
 import { EventDrawer, type OngoingEvent } from './event-drawer';
 import { LocationSection, type PickedLocation } from './location-section';
 import { PeopleRow } from './people-rows';
@@ -205,11 +210,7 @@ export function ErtReportForm({
         subtitle: place ? `Status report · ${place}` : 'Status report',
       });
       finish();
-      const [bystander, field] = await Promise.all([
-        getQueuedReportCount(),
-        getQueuedFieldReportCount(),
-      ]);
-      setPendingCount(bystander + field);
+      setPendingCount(await getAllQueuedCount());
     };
 
     setSubmitting(true);

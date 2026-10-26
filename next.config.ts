@@ -25,9 +25,29 @@ export default withPWA({
   fallbacks: {
     document: '/~offline',
   },
+  // Keep next-pwa's own defaultCache (fonts, images, JS/CSS chunks, Next data); the rule below
+  // is added in front of it rather than replacing it.
+  extendDefaultRuntimeCaching: true,
   workboxOptions: {
     disableDevLogs: true,
-    // No custom runtimeCaching here — leave next-pwa's own defaultCache in place
-    // (fonts, images, JS/CSS chunks, Next data) rather than replacing it outright.
+    runtimeCaching: [
+      {
+        // The ERT landing page and the building assessment open from the cache with any query
+        // string (?draft=…, ?view=…): the page is the same for all of them and reads the draft
+        // from IndexedDB, so a draft reopened offline, or after the default one-day page cache
+        // has expired, still loads instead of the offline page.
+        urlPattern: ({ request, url, sameOrigin }) =>
+          sameOrigin &&
+          request.mode === 'navigate' &&
+          (url.pathname === '/assessment' || url.pathname === '/home'),
+        handler: 'NetworkFirst',
+        options: {
+          cacheName: 'ert-pages',
+          networkTimeoutSeconds: 5,
+          matchOptions: { ignoreSearch: true },
+          expiration: { maxEntries: 8, maxAgeSeconds: 30 * 24 * 60 * 60 },
+        },
+      },
+    ],
   },
 })(nextConfig);

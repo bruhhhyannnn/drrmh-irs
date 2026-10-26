@@ -4,7 +4,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Centralized admin web dashboard (Next.js) for the UPM DRRM-H Incident Reporting System, backed by Supabase (PostgreSQL). Field teams and bystanders submit reports directly through the web app (including QR-accessible public forms); admins manage events/drills, view field reports and headcounts, manage users, and configure lookup tables (clusters, units, positions, etc.). See `README.md` for the full ER diagram, use-case diagrams, and feature list.
+Centralized admin web dashboard (Next.js) for the UPM DRRM-H Incident Reporting System, backed by Supabase (PostgreSQL). Field teams and bystanders submit reports directly through the web app (including QR-accessible public forms); admins manage events/drills, view field reports and headcounts, manage users, and configure lookup tables (clusters, units, positions, etc.); ERT members also run MATATAG building assessments. See `README.md` for the full ER diagram, use-case diagrams, and feature list.
+
+## Project knowledge
+
+`docs/` is an Obsidian vault. Start with `docs/00-index.md`, then read ONLY the notes for your task:
+
+| Before touching…                                                      | Read                                                                               |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| A server action, a hook, a campus filter, the Prisma/Supabase clients | `docs/architecture.md`                                                             |
+| Sign-in, the profile, roles, profile setup                            | `docs/modules/auth.md`                                                             |
+| A page, a route group, a guard, the admin shell                       | `docs/modules/routes.md`                                                           |
+| Offline submits, IndexedDB, the service worker, `next.config.ts`      | `docs/modules/offline-pwa.md`                                                      |
+| The MATATAG assessment (ERT form, admin pages, checklist editor)      | `docs/modules/assessments.md` (then `assessment-admin.md` / `checklist-editor.md`) |
+| The dashboard's Building safety section, score arithmetic, charts     | `docs/modules/building-safety.md`                                                  |
+| Settings or a lookup table                                            | `docs/modules/settings-lookups.md`                                                 |
+| `schema.prisma`, `prisma/manual/*.sql`, seeds, Prisma config          | `docs/modules/database.md`                                                         |
+| Styling, theme tokens, forms, Prettier, writing docs                  | `docs/conventions.md`                                                              |
+| Anything else (events, reports, users, bystander reports, print, …)   | its note in `docs/modules/`, listed in `docs/00-index.md`                          |
 
 ## Commands
 
@@ -15,8 +32,12 @@ npm run lint          # ESLint on src/**/*.{ts,tsx}
 npm run lint:fix      # ESLint --fix
 npm run type-check    # tsc --noEmit
 npm run seed           # Seed lookup data (tsx prisma/seed.ts)
+npm run seed:matatag   # Seed the MATATAG checklist (idempotent; matches by code, never deletes, item ids stay stable)
+npm run test           # node:test via tsx: src/**/*.test.ts and prisma/**/*.test.ts
 npx prisma generate    # Regenerate Prisma client (also runs automatically via postinstall)
 ```
+
+## NEVER run
 
 > **IMPORTANT / DISALLOWED COMMANDS:**
 > Do NOT execute destructive or direct database modification commands:
@@ -25,71 +46,40 @@ npx prisma generate    # Regenerate Prisma client (also runs automatically via p
 > - `npx prisma migrate dev` (DISALLOWED)
 > - `npx prisma migrate reset` (DISALLOWED)
 
-There is no test suite configured (`npm run test` is commented out in CI). Verify changes with `npm run lint`, `npm run type-check`, and `npm run build`.
+Schema changes ship as idempotent SQL in `prisma/manual/<ticket>.sql` plus the matching `schema.prisma` edit. How to apply one (env, direct connection, the exact `db execute` command): `docs/modules/database.md`.
 
-CI (`.github/workflows/ci.yml`) runs on PRs/pushes to `main`: `npm ci` → `prisma generate` → `npm audit --audit-level=critical` → lint → type-check → build. Pre-commit hook (Husky) runs `lint-staged` (eslint --fix + prettier on staged files).
+## Testing & verification
 
-## Architecture
+- Verify changes with `npm run lint`, `npm run type-check`, `npm run test`, and `npm run build`. `npm run test` covers the pure logic in `src/lib` (assessment, building safety, access, admin scope, offline queue, schemas) and the checklist data, not UI or server actions, and CI doesn't run it yet.
+- CI (`.github/workflows/ci.yml`) runs on PRs/pushes to `main`: `npm ci` → `prisma generate` → `npm audit --audit-level=critical` → lint → type-check → build. Pre-commit hook (Husky) runs `lint-staged` (eslint --fix + prettier on staged files).
+- To sign in while testing in a browser, use the test accounts (ERT Member, Administrator, Super Admin) listed in `test-accounts.local.md` at the repo root. It is gitignored and lives only on the developer's machine, so a fresh worktree may not have it — ask the user then, and never copy its contents into committed files.
 
-**Data access is server-actions-only.** Every DB read/write goes through a `'use server'` function in `src/actions/<domain>/index.ts` using the Prisma client from `src/lib/prisma.ts`. Components never call Prisma directly. Mutations that change data call `revalidatePath(...)` for the affected route(s).
+## Core rules
 
-**Client data flow:** `src/components/hooks/use-<domain>.ts` wraps each domain's server actions in TanStack Query (`useQuery`/`useMutation`), one hook file per domain (events, users, reports, settings, campus, dashboard, bystander-reports, population-categories). Mutations invalidate the relevant query keys on success — follow this pattern (see `use-events.ts`) rather than manual refetching.
-
-**Two Prisma/Postgres access paths + one Supabase path, don't mix them up:**
-
-- `src/lib/prisma.ts` — server-side Prisma client (via `@prisma/adapter-pg`), used from server actions for all admin-dashboard reads/writes.
-- `src/lib/supabase.ts` — client-side Supabase SDK (anon key), used for **auth only** (`AuthProvider`, sign-in/out) and any Supabase Realtime subscriptions.
-- `src/lib/supabase-admin.ts` — server-side Supabase client (service role key), for privileged operations Prisma can't do (e.g. Supabase Auth admin API).
-
-**Auth flow:** Supabase Auth (Google OAuth restricted to `@up.edu.ph` emails) is the identity provider; `users` table (Prisma) holds the app profile, linked via `auth_id`. `AuthProvider` (`src/components/auth/auth-provider.tsx`) listens to `supabase.auth.onAuthStateChange`, then loads the profile via `getUserByAuthId` server action into `useAuthStore` (Zustand). New Google sign-ins are provisioned into `users` by `provisionGoogleUser` (`src/actions/auth`), defaulting to the "ERT Member" user type. `ProtectedRoute` gates admin pages by role. Admin vs. non-admin is decided by `isAdminUserType()` (`src/lib/constants.ts`) — "Administrator"/"Super Admin" land on `/dashboard`, everyone else on `/report`. Non-admin profiles start with `is_profile_complete = false`; `ProfileSetupGate` / `ProfileSetup` (`src/components/auth/profile-setup.tsx`) show a full-page setup in place of the app until the user sets campus/cluster/unit/position via `completeUserProfile` (`src/actions/users`), and new field reports auto-fill cluster/unit from that profile. The auth pages (`(auth)/`, profile setup) share the `AuthShell` frame and the design-system controls in `src/components/ds/`.
-
-**Offline / PWA:** the app is a PWA (`@ducanh2912/next-pwa` in `next.config.ts`, disabled in dev, offline fallback page `/~offline`). New reports submitted with no connection (or on a network-shaped failure — see `isNetworkError`) are persisted to IndexedDB via `src/lib/offline-queue.ts`, which has two separate stores: field reports (the admin Add report drawer `ReportDrawer` and the ERT `ErtReportForm` → `createReport`) and bystander reports (`createBystanderReport`). `OfflineQueueProvider` (`src/components/pwa/`, mounted in `src/components/providers.tsx`) replays them on the `online` event, on mount, and every 45s; network errors stop the flush and leave entries queued, server-side rejections mark the entry `failed` (never auto-retried). Connectivity and pending count live in `useOfflineQueueStore`. Editing an existing report is online-only. Because the queue replays a single create payload, `createReport` takes casualties/missing persons/population counts nested in one call — keep new-report data bundled that way.
-
-**Route groups** under `src/app/`:
-
-- `(admin)/` — protected dashboard pages (dashboard, events, reports, emergency-reports, users, settings, campus) in one shell (`_components/shell`: sidebar on web, icon rail on tablet, bottom tabs on phone). The top-bar campus switcher (`useCampusScopeStore`, read through `useScopedCampusId`) scopes every list and the dashboard — pass its campus id to queries instead of adding per-page campus filters. Shared pieces live in `(admin)/_components` (list table that turns into cards on phone, drawer parts, confirm dialog) and `_lib` (status colours, formatting, the event summary model used by campus details, event details and the report PDF).
-- `(print)/` — `/events/report`, the event report laid out for A4 and saved as PDF from the print dialog (signed-in admins, no shell)
-- `(auth)/` — sign-in
-- `(ert)/` — `/report`, the signed-in ERT member's status-report page (redirects to `/signin` if logged out, admins to `/dashboard`); one report per user per ongoing event (`getMyReportForOngoingEvent`), after which only missing persons/casualties can be edited
-- `(public)/` — landing page and the anonymous QR-accessible bystander report form (no auth)
-- `auth/` — OAuth callback route
-
-**Settings pages are generic/table-driven.** The many lookup tables (clusters, units, locations, positions, user types, event statuses, casualty/damage conditions) share one implementation: the `LOOKUPS` map and `LookupTable` in `src/app/(admin)/settings/_components/` + `src/actions/settings`, shown as tabs on one Settings page. When adding a new lookup table, extend this generic pattern instead of writing a bespoke CRUD page.
-
-**Multi-campus/cluster scoping:** most domain models (`users`, `reports`, `bystander_reports`, `clusters`) are scoped by `campus_id`/`cluster_id`. Check existing action functions (e.g. `getOngoingEvents(campusId)` in `src/actions/events`) for the expected filtering pattern before adding new queries.
-
-**Prisma schema** (`prisma/schema.prisma`) uses `snake_case` DB columns/tables (`@map`/`@@map`) with PascalCase Prisma model names — e.g. model `User` maps to table `users`. IDs are DB-generated UUIDs (`dbgenerated("gen_random_uuid()")`). The generated client is emitted to `src/generated/` — never hand-edit it.
-
-**Prisma config** lives in `prisma.config.ts` (not `package.json`), using `DATABASE_URL` and `SHADOW_DATABASE_URL`.
+- **Server actions only:** every DB read/write is a `'use server'` function in `src/actions/<domain>/index.ts` using `src/lib/prisma.ts`; components never call Prisma; mutations call `revalidatePath(...)` for the affected route(s).
+- **Hooks:** `src/components/hooks/use-<domain>.ts` wraps the actions in TanStack Query; mutations invalidate the relevant query keys on success (see `use-events.ts`) — no manual refetching.
+- **Three clients, don't mix them:** `src/lib/prisma.ts` (server, all data), `src/lib/supabase.ts` (browser, auth only), `src/lib/supabase-admin.ts` (server, service role, only what Prisma can't do).
+- **Campus scope:** admin lists and the dashboard take the switcher's campus id (`useScopedCampusId`) — don't add per-page campus filters.
+- **Lookup tables:** a new one extends `LOOKUPS` / `LookupTable` (`src/app/(admin)/settings/_components/` + `src/actions/settings`), not a bespoke CRUD page.
+- **Bundled creates:** new-report data stays in one `createReport` call (casualties, missing persons, population counts nested), because the offline queue replays a single create payload.
+- **Caller checks:** newer actions take the Supabase token (`getAccessToken()`) and verify it with `requireProfile` / `requireAdmin` (`src/lib/server-auth.ts`), never trust a client-sent user id, and return expected failures as `{ ok: false, error, retry }` instead of throwing.
+- **Hands off:** never hand-edit the generated Prisma client (`npx prisma generate`, imported from `@prisma/client`); don't "fix" lint issues in the vendored `src/components/ui/map.tsx`.
 
 ## Conventions
 
-- Path alias `@/*` → `src/*`.
-- Prettier: single quotes, semicolons, 100 print width, Tailwind class sorting and import organizing run automatically via `prettier-plugin-tailwindcss` / `prettier-plugin-organize-imports` — don't hand-order imports or Tailwind classes.
-- `src/components/ui/map.tsx` is vendored (from mapcn) and excluded from linting — don't "fix" lint issues there.
-- Zod schemas for forms live in `src/lib/schemas.ts`; forms use `react-hook-form` + `@hookform/resolvers`.
-- Light / dark mode: colours are theme tokens in `globals.css` that change under `.dark` on `<html>`, so classes like `text-gray-600` or `text-brand-500` need no `dark:` variant. Use `bg-canvas` for page backgrounds, `bg-surface` (not `bg-white`) for cards, bars, drawers and inputs, `border-line` for hairlines, and `bg-brand-solid` for maroon fills with white text on them. Hex values in class names stay the same in both themes (the maroon heroes). The choice (Light / Dark / Device) is saved per device by `useThemeStore` and set in My profile; `data-theme="light"` keeps a subtree light (the A4 report).
+- Path alias `@/*` → `src/*`. Prettier: single quotes, semicolons, 100 print width; Tailwind classes and imports are sorted by plugins — don't hand-order them.
+- Forms: Zod schemas in `src/lib/schemas.ts`, with `react-hook-form` + `@hookform/resolvers`.
+- Theme tokens, no `dark:` variants: `bg-canvas` pages, `bg-surface` (not `bg-white`) cards/bars/drawers/inputs, `border-line` hairlines, `bg-brand-solid` maroon fills with white text; `data-theme="light"` keeps a subtree light. Detail: `docs/conventions.md`.
 
 ## Documentation & Planning Workflow
 
-All non-trivial tasks, reviews, bug analyses, and feature specifications must be documented under `docs/`:
+All non-trivial tasks, reviews, bug analyses, and feature specifications must be documented under `docs/` (plans in `docs/plan/{review,fix,bugs,feature}/`, described in `docs/README.md`).
 
-```text
-docs/
-├── README.md       # Docs workflow overview & guidelines
-└── plan/
-    ├── review/     # Code audits, PR reviews, security & performance findings
-    ├── fix/        # Step-by-step resolution & refactor execution plans
-    ├── bugs/       # Bug reports, reproduction steps & root-cause analyses (RCA)
-    └── feature/    # Feature specifications, RFCs & task breakdowns
-```
-
-**Conventions:**
-
-- Use kebab-case with ticket/date prefixes (e.g. `docs/plan/fix/DRRM-003-incident-fix.md` or `docs/plan/review/2026-09-08-dev-branch-audit.md`).
-- Use standardized headers: `- **Status:** [Draft | In Review | Approved | In Progress | Done]`.
-- Map git branches 1:1 to their plan file (e.g. branch `bugfix/DRRM-003-...` ↔ `docs/plan/fix/DRRM-003-...`).
-- Templates for new docs are available at `docs/plan/{review,bugs,fix,feature}/TEMPLATE.md`.
+- Use kebab-case with ticket/date prefixes (e.g. `docs/plan/fix/DRRM-003-report-form-atomicity.md` or `docs/plan/review/2026-09-08-dev-branch-audit.md`).
+- Use standardized headers: `- **Status:** [Draft | In Review | Approved | In Progress | Done]`, plus the plan frontmatter described in `docs/conventions.md`.
+- Map git branches 1:1 to their plan file (e.g. branch `feat/DRRM-015-...` ↔ `docs/plan/feature/DRRM-015-...`).
+- Templates for new docs are available at `docs/plan/{review,bugs,fix,feature}/TEMPLATE.md` and `docs/decisions/TEMPLATE.md`.
+- After a task, update the related `docs/modules` note (and its `updated` date).
 
 <!-- BEGIN:nextjs-agent-rules -->
 

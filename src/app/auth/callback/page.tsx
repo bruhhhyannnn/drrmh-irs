@@ -53,7 +53,7 @@ export default function AuthCallbackPage() {
         if (userTypeName === 'Administrator' || userTypeName === 'Super Admin') {
           router.replace('/dashboard');
         } else {
-          router.replace('/report');
+          router.replace('/home');
         }
       } catch (err) {
         if (err instanceof Error && err.message === 'DOMAIN_NOT_ALLOWED') {

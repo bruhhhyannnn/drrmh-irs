@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ds';
+import { useDebounced } from '@/components/hooks/use-debounced';
 import { useEvents } from '@/components/hooks/use-events';
 import { useDeleteReport, useReports } from '@/components/hooks/use-reports';
 import { useSettingsTable } from '@/components/hooks/use-settings';
@@ -32,7 +33,6 @@ import {
 } from '../_components/shell/campus-switcher';
 import { Card, Chip } from '../_components/ui';
 import { formatDate, formatTime, personName, plural } from '../_lib/format';
-import { useDebounced } from '../_lib/use-debounced';
 import { ReportDrawer } from './_components/report-drawer';
 
 type ReportRow = NonNullable<ReturnType<typeof useReports>['data']>['data'][number];
