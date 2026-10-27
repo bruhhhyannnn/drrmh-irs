@@ -1,7 +1,7 @@
 'use client';
 
 import { ButtonLink, TextLink } from '@/app/(public)/_components/primitives';
-import { Button } from '@/components/ds';
+import { Button, RateAppDialog } from '@/components/ds';
 import { cn } from '@/lib';
 import { format } from 'date-fns';
 import { Check, Phone, WifiOff } from 'lucide-react';
@@ -20,7 +20,10 @@ export interface ReportResult {
   photosSaved: number;
 }
 
-/** "Report received" and "Report saved offline" — one layout so they read as one pattern. */
+/**
+ * "Report received" and "Report saved offline" — one layout so they read as one pattern. Rate the
+ * app opens over it once the report has sent.
+ */
 export function ResultScreen({
   result,
   onSendAnother,
@@ -135,6 +138,7 @@ export function ResultScreen({
           </>
         )}
       </PageCard>
+      <RateAppDialog />
     </>
   );
 }

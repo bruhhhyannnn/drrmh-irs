@@ -33,5 +33,6 @@ export {
 } from './people';
 export { PeopleDrawer } from './people-drawer';
 export { PrivacyDrawer } from './privacy-drawer';
+export { RateAppDialog } from './rate-app-dialog';
 export { OTHER_OPTION, OTHER_VALUE, Select, type SelectOption } from './select';
 export { Switch, SwitchField } from './switch';

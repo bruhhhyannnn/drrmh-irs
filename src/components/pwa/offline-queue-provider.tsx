@@ -20,7 +20,7 @@ import {
 } from '@/lib/offline-queue';
 import type { AssessmentPayload } from '@/lib/schemas';
 import { getAccessToken } from '@/lib/supabase';
-import { useAuthStore, useOfflineQueueStore } from '@/store';
+import { useAuthStore, useOfflineQueueStore, useRateAppStore } from '@/store';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
@@ -121,6 +121,8 @@ export function OfflineQueueProvider() {
         toast.success(
           synced === 1 ? '1 offline report submitted' : `${synced} offline reports submitted`
         );
+        // A report saved offline asks to rate the app once it goes through.
+        useRateAppStore.getState().reportSent();
         if (bystanderResult.synced > 0) {
           queryClient.invalidateQueries({ queryKey: ['bystander-reports'] });
         }
