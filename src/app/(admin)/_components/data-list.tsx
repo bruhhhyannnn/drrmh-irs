@@ -601,7 +601,9 @@ export function MobileCard({
         <div className="flex gap-2 border-t border-line pt-3">
           {actions.map((a) => {
             const className = cn(
-              'flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border-[1.5px] px-2.5 text-[16px] font-bold whitespace-nowrap',
+              // Sized to their labels, so a longer one ("Export PDF") fits; under 360px the labels
+              // go without their icons.
+              'flex h-11 min-w-0 flex-auto items-center justify-center gap-1.5 rounded-full border-[1.5px] px-2.5 text-[16px] font-bold whitespace-nowrap max-[359px]:[&>svg]:hidden',
               a.variant === 'primary' && 'border-brand-solid bg-brand-solid text-white',
               a.variant === 'danger' && 'border-error-300 bg-surface text-error-700',
               (!a.variant || a.variant === 'outline') && 'border-gray-300 bg-surface text-gray-700',

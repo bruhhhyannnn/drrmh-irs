@@ -99,35 +99,6 @@ export async function getReport(id: string) {
   return serializeReport(report);
 }
 
-export async function getReportsByEvent(eventId: string) {
-  const reports = await prisma.report.findMany({
-    where: { event_id: eventId },
-    orderBy: { created_at: 'asc' },
-    include: {
-      user: {
-        select: {
-          first_name: true,
-          last_name: true,
-          position: { select: { name: true } },
-        },
-      },
-      cluster: { select: { name: true, campus_id: true } },
-      unit: { select: { name: true } },
-      missing_persons: { select: { name: true, age: true, sex: true } },
-      casualties: {
-        include: { condition: { select: { name: true } } },
-      },
-      damage_conditions: {
-        select: { name: true },
-      },
-      population_counts: {
-        include: { category: { select: { id: true, code: true, name: true } } },
-      },
-    },
-  });
-  return reports.map(serializeReport);
-}
-
 export async function createReport(data: ReportFormData & { user_id?: string }) {
   const { report_missing_persons, report_casualties, population_counts, user_id, ...reportData } =
     data;
