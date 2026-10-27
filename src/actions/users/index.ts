@@ -186,15 +186,40 @@ export async function completeUserProfile(
   return user;
 }
 
-export async function deleteUser(id: string) {
-  const user = await prisma.user.findUnique({ where: { id }, select: { auth_id: true } });
-  if (!user) throw new Error('User not found');
+export type DeleteUserResult = { ok: true } | { ok: false; error: string };
 
-  // Nullify user_id on any reports before deleting to avoid FK constraint violation
-  await prisma.report.updateMany({ where: { user_id: id }, data: { user_id: null } });
+/**
+ * Deletes the profile, then its sign-in. Their reports and the events they created stay, without
+ * a reporter or creator. Someone who evaluated building assessments can't be deleted, since each
+ * assessment keeps its evaluator: that comes back as `ok: false` rather than thrown, because
+ * production hides a thrown message.
+ */
+export async function deleteUser(id: string): Promise<DeleteUserResult> {
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: { auth_id: true, _count: { select: { assessments: true } } },
+  });
+  if (!user) {
+    return {
+      ok: false,
+      error: 'This user was already removed. Refresh the page to update the list.',
+    };
+  }
+  const assessments = user._count.assessments;
+  if (assessments > 0) {
+    return {
+      ok: false,
+      error: `They evaluated ${assessments === 1 ? '1 building assessment' : `${assessments} building assessments`}, which keep their evaluator. Turn off Active instead, so they can no longer sign in.`,
+    };
+  }
 
   try {
-    await prisma.user.delete({ where: { id } });
+    // One transaction, so a failed delete leaves their reports and events as they were.
+    await prisma.$transaction([
+      prisma.report.updateMany({ where: { user_id: id }, data: { user_id: null } }),
+      prisma.event.updateMany({ where: { user_id: id }, data: { user_id: null } }),
+      prisma.user.delete({ where: { id } }),
+    ]);
   } catch (err) {
     throw toFriendlyError(err, 'user');
   }
@@ -204,4 +229,5 @@ export async function deleteUser(id: string) {
   }
 
   revalidatePath('/users');
+  return { ok: true };
 }

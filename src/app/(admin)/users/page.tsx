@@ -50,6 +50,13 @@ export default function UsersPage() {
   const [status, setStatus] = useState('');
   const [drawer, setDrawer] = useState<{ open: boolean; user?: UserRow }>({ open: false });
   const [deleting, setDeleting] = useState<UserRow | null>(null);
+  // Why the last Delete user failed; the dialog stays open and says nothing changed.
+  const [deleteError, setDeleteError] = useState<{ body: string; retry: boolean } | null>(null);
+
+  const askDelete = (u: UserRow) => {
+    setDeleteError(null);
+    setDeleting(u);
+  };
 
   const allCampuses = !campusId;
   const rows = users.filter(
@@ -161,7 +168,7 @@ export default function UsersPage() {
             label="Delete"
             icon={<Trash2 size={18} aria-hidden />}
             disabled={u.id === myId}
-            onClick={() => setDeleting(u)}
+            onClick={() => askDelete(u)}
           />
         </RowActions>
       ),
@@ -266,7 +273,7 @@ export default function UsersPage() {
                         {
                           label: 'Delete',
                           icon: <Trash2 size={16} aria-hidden />,
-                          onClick: () => setDeleting(u),
+                          onClick: () => askDelete(u),
                           variant: 'danger' as const,
                         },
                       ]),
@@ -289,11 +296,19 @@ export default function UsersPage() {
         onConfirm={() =>
           deleting &&
           deleteUser.mutate(deleting.id, {
-            onSuccess: () => {
+            onSuccess: (result) => {
+              if (!result.ok) return setDeleteError({ body: result.error, retry: false });
               toast.success(`${fullName(deleting)} deleted`);
               setDeleting(null);
             },
-            onError: (err) => toast.error(err.message),
+            onError: (err) => {
+              // Production hides the server's message, so the dialog says it in plain words.
+              console.error('Delete user failed', err);
+              setDeleteError({
+                body: 'Something went wrong on our side and nothing was changed. Try again. If it keeps failing, refresh the page and try once more.',
+                retry: true,
+              });
+            },
           })
         }
         loading={deleteUser.isPending}
@@ -303,11 +318,17 @@ export default function UsersPage() {
         name={deleting ? fullName(deleting) : ''}
         body="will be permanently deleted and removed from sign-in. This cannot be undone."
         warning={
-          deleting && deleting._count.reports > 0
+          deleting && !deleteError && deleting._count.reports > 0
             ? `${plural(deleting._count.reports, 'report is', 'reports are')} linked to this user. They stay, without a reporter.`
             : undefined
         }
-        confirmLabel="Delete user"
+        error={
+          deleting && deleteError
+            ? { title: `${fullName(deleting)} was not deleted.`, body: deleteError.body }
+            : undefined
+        }
+        confirmLabel={deleteError?.retry ? 'Try again' : 'Delete user'}
+        confirmDisabled={!!deleteError && !deleteError.retry}
       />
     </>
   );
