@@ -65,7 +65,14 @@ No schema changes. `users.unit_id`, `reports.unit_id` and `bystander_reports.uni
 - `src/lib/lookup-names.ts` (server only): `unitIdForName(clusterId, name)`, `positionIdForName(name)`.
 - `src/actions/users`: `CreateUserInput` gains `custom_unit_name` / `custom_position_name`, resolved by `withNamedAssignment` in `createUser`, `updateUser` and `completeUserProfile` (which also takes `custom_unit_name`). `deleteUser` returns `DeleteUserResult` (`{ ok: true } | { ok: false, error }`).
 - `src/actions/reports`: `reportSchema` gains `unit_name`; `createReport` and `saveReportEdits` resolve it, so an offline-queued report still carries everything in one payload.
-- Removed: `getReportsByEvent`, `sumPopulationCountsByCategory`, `uniquePopulationCategories` (only the Excel export used them). `exceljs` is now unused in `package.json`.
+- Removed: `getReportsByEvent`, `sumPopulationCountsByCategory`, `uniquePopulationCategories` (only the Excel export used them), and the `exceljs` dependency.
+
+### Decisions (agreed 2026-10-27)
+
+- "Other (please specify)" reuses a unit (in that cluster) or position with the same name in any case, or adds it to Settings; no free-text column. New rows can appear in Settings this way.
+- The bystander form gets No unit but no Other: anonymous reporters don't add Settings rows.
+- A user who evaluated building assessments can't be deleted (each assessment keeps its evaluator); the dialog says so and points to turning off Active.
+- Assessment and pillar code is untouched; their selects take the new `Select` through the shared `SelectField` / `FilterSelect`.
 
 ### UI & User Interaction
 
@@ -96,4 +103,4 @@ No schema changes. `users.unit_id`, `reports.unit_id` and `bystander_reports.uni
 - [x] `npm run lint`, `npm run type-check`, `npm run test` (62 pass), `npm run build`.
 - [x] Screens checked in headless Chrome through a temporary preview route (removed): Add user (web, phone, dark, keyboard), Unit list with No unit / Other, profile setup, More page, Users filters, Events at 360 and 320px, Rate the app (web, phone), the delete failure, the bystander campus select, the event report in dark mode on screen and in print media.
 - [ ] Not checked in the browser: the More back link on the real `/users` / `/settings` routes (the preview route isn't one of them), and a real Delete user against the database.
-- [ ] Remove `exceljs` from `package.json` in a follow-up (left so this branch doesn't churn the lockfile).
+- [x] `exceljs` removed from `package.json` and the lockfile (`npm uninstall exceljs --package-lock-only`): it and the 80-odd packages only it needed. No other version changed; `npm ls --package-lock-only` is clean.
