@@ -1,6 +1,7 @@
 'use server';
 
 import { CasualtyFormData, MissingPersonFormData, ReportFormData, reportSchema } from '@/lib';
+import { unitIdForName } from '@/lib/lookup-names';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
 import { mapPopulationCountsToLegacyColumns, totalPopulationCount } from '@/lib/utils';
@@ -99,9 +100,21 @@ export async function getReport(id: string) {
   return serializeReport(report);
 }
 
+/** The unit a report is for: the one picked, or the one typed under "Other (please specify)". */
+async function reportUnitId(clusterId: string, unitId?: string | null, unitName?: string | null) {
+  const name = unitName?.trim();
+  return name ? unitIdForName(clusterId, name) : unitId || null;
+}
+
 export async function createReport(data: ReportFormData & { user_id?: string }) {
-  const { report_missing_persons, report_casualties, population_counts, user_id, ...reportData } =
-    data;
+  const {
+    report_missing_persons,
+    report_casualties,
+    population_counts,
+    user_id,
+    unit_name,
+    ...reportData
+  } = data;
 
   try {
     const report = await prisma.report.create({
@@ -109,7 +122,7 @@ export async function createReport(data: ReportFormData & { user_id?: string }) 
         ...reportData,
         ...mapPopulationCountsToLegacyColumns(population_counts),
         user_id: user_id ?? null,
-        unit_id: reportData.unit_id || null,
+        unit_id: await reportUnitId(reportData.cluster_id, reportData.unit_id, unit_name),
         latitude: reportData.latitude ?? null,
         longitude: reportData.longitude ?? null,
         location_name: reportData.location_name ?? null,
@@ -151,7 +164,7 @@ export async function saveReportEdits(id: string, data: ReportEditData) {
       where: { id },
       data: {
         cluster_id: fields.cluster_id,
-        unit_id: fields.unit_id || null,
+        unit_id: await reportUnitId(fields.cluster_id, fields.unit_id, fields.unit_name),
         damage_condition_id: fields.damage_condition_id || null,
         latitude: fields.latitude ?? null,
         longitude: fields.longitude ?? null,

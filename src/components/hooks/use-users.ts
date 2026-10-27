@@ -10,6 +10,15 @@ import {
 } from '@/actions/users';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+/** A unit or position typed under "Other (please specify)" is new in the Settings lists. */
+function invalidateNamedLookups(
+  queryClient: ReturnType<typeof useQueryClient>,
+  data: UpdateUserInput
+) {
+  if (data.custom_unit_name) queryClient.invalidateQueries({ queryKey: ['units'] });
+  if (data.custom_position_name) queryClient.invalidateQueries({ queryKey: ['positions'] });
+}
+
 /* ─── Users ──────────────────────────────────────────────── */
 export function useUsers(query?: string, campusId?: string) {
   return useQuery({
@@ -30,7 +39,8 @@ export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateUserInput) => createUser(data),
-    onSuccess: () => {
+    onSuccess: (_user, data) => {
+      invalidateNamedLookups(queryClient, data);
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['campuses-overview'] });
@@ -42,7 +52,8 @@ export function useUpdateUser() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateUserInput }) => updateUser(id, data),
-    onSuccess: (_data, { id }) => {
+    onSuccess: (_user, { id, data }) => {
+      invalidateNamedLookups(queryClient, data);
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['user', id] });
     },

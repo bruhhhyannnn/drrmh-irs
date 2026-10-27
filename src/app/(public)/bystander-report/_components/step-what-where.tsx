@@ -155,6 +155,7 @@ export function StepWhatWhere({
             onChange={(value) => onFieldChange('unit_id', value)}
             options={toOptions(units)}
             placeholder={values.cluster_id ? 'Select unit' : 'Select cluster first'}
+            emptyLabel="No unit"
             disabled={!values.cluster_id}
           />
         </div>

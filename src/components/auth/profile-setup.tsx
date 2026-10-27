@@ -1,7 +1,14 @@
 'use client';
 
 import { completeUserProfile } from '@/actions/users';
-import { Button, FieldLabel, SelectField, TextInput } from '@/components/ds';
+import {
+  Button,
+  FieldLabel,
+  OTHER_OPTION,
+  OTHER_VALUE,
+  SelectField,
+  TextInput,
+} from '@/components/ds';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getInitials, supabase } from '@/lib';
 import { useAuthStore } from '@/store';
@@ -13,8 +20,6 @@ import { useCampus, usePositions, useUnits } from '../hooks/use-settings';
 import { AuthShell } from './auth-shell';
 import { AUTH_LINK, AuthBanner, AuthHeading } from './auth-ui';
 
-const OTHER_VALUE = '__other__';
-
 /** Shows profile setup in place of the page until the signed-in user's profile is complete. */
 export function ProfileSetupGate({ children }: { children: React.ReactNode }) {
   const { userProfile, loading } = useAuthStore();
@@ -23,8 +28,9 @@ export function ProfileSetupGate({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * First sign-in setup: campus, cluster, building / unit and position, all required. A full
- * page (in the auth frame) instead of a modal that can't be closed, with "Not you? Sign out".
+ * First sign-in setup: campus, cluster and position, plus building / unit when there is one
+ * (some clusters have none). A full page (in the auth frame) instead of a modal that can't be
+ * closed, with "Not you? Sign out".
  */
 export function ProfileSetup() {
   const router = useRouter();
@@ -34,17 +40,17 @@ export function ProfileSetup() {
   const [unitId, setUnitId] = useState(userProfile?.unit_id ?? '');
   const [positionId, setPositionId] = useState(userProfile?.position_id ?? '');
   const [customPosition, setCustomPosition] = useState('');
+  const [customUnit, setCustomUnit] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
 
   const { data: campus = [], isPending: campusPending } = useCampus();
   const { data: positions = [], isPending: positionsPending } = usePositions();
   const { data: campusClusters = [] } = useCampusClusters(campusId);
-  const { data: units = [], isPending: unitsPending } = useUnits(clusterId, {
-    enabled: !!clusterId,
-  });
+  const { data: units = [] } = useUnits(clusterId, { enabled: !!clusterId });
 
   const isOther = positionId === OTHER_VALUE;
+  const isOtherUnit = unitId === OTHER_VALUE;
 
   const campusOptions = (campus as { id: string; name: string; is_active: boolean }[])
     .filter((c) => c.is_active)
@@ -52,22 +58,19 @@ export function ProfileSetup() {
   const clusterOptions = campusClusters
     .filter((c) => c.is_active)
     .map((c) => ({ value: c.id, label: c.name }));
-  const unitOptions = units.filter((u) => u.is_active).map((u) => ({ value: u.id, label: u.name }));
-  // Building / Unit is required, except in a cluster that has none — otherwise those members
-  // could never finish setup.
-  const clusterHasNoUnits = !!clusterId && !unitsPending && unitOptions.length === 0;
-  const positionOptions = [
-    ...positions.map((p) => ({ value: p.id, label: p.name })),
-    { value: OTHER_VALUE, label: 'Other (please specify)' },
+  const unitOptions = [
+    ...units.filter((u) => u.is_active).map((u) => ({ value: u.id, label: u.name })),
+    OTHER_OPTION,
   ];
+  const positionOptions = [...positions.map((p) => ({ value: p.id, label: p.name })), OTHER_OPTION];
 
   // Save stays off until every field is filled; this line says what's still missing.
   const missing = !campusId
     ? 'Choose your campus to continue.'
     : !clusterId
       ? 'Choose your cluster to continue.'
-      : !unitId && !clusterHasNoUnits
-        ? 'Choose your building or unit to continue.'
+      : isOtherUnit && !customUnit.trim()
+        ? 'Specify your building or unit to continue.'
         : !positionId
           ? 'Choose your position to continue.'
           : isOther && !customPosition.trim()
@@ -85,7 +88,11 @@ export function ProfileSetup() {
           : { position_id: positionId }),
         campus_id: campusId,
         cluster_id: clusterId,
-        ...(unitId ? { unit_id: unitId } : {}),
+        ...(isOtherUnit
+          ? { custom_unit_name: customUnit.trim() }
+          : unitId
+            ? { unit_id: unitId }
+            : {}),
       });
       setUserProfile(updated);
       toast.success('Profile completed!');
@@ -147,6 +154,7 @@ export function ProfileSetup() {
                 setCampusId(value);
                 setClusterId('');
                 setUnitId('');
+                setCustomUnit('');
               }}
               options={campusOptions}
               placeholder="Select your campus"
@@ -164,6 +172,7 @@ export function ProfileSetup() {
               onChange={(value) => {
                 setClusterId(value);
                 setUnitId('');
+                setCustomUnit('');
               }}
               options={clusterOptions}
               placeholder={campusId ? 'Select your cluster' : 'Select a campus first'}
@@ -173,25 +182,38 @@ export function ProfileSetup() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <FieldLabel htmlFor="profile-unit" hint={clusterHasNoUnits ? 'Not needed' : 'Required'}>
+            <FieldLabel htmlFor="profile-unit" hint="Optional">
               Building / Unit
             </FieldLabel>
             <SelectField
               id="profile-unit"
               value={unitId}
-              onChange={setUnitId}
+              onChange={(value) => {
+                setUnitId(value);
+                setCustomUnit('');
+              }}
               options={unitOptions}
-              placeholder={
-                !clusterId
-                  ? 'Select a cluster first'
-                  : clusterHasNoUnits
-                    ? 'No buildings or units in this cluster'
-                    : 'Select your building or unit'
-              }
-              disabled={!clusterId || clusterHasNoUnits}
-              required
+              placeholder={clusterId ? 'No unit' : 'Select a cluster first'}
+              emptyLabel="No unit"
+              disabled={!clusterId}
             />
           </div>
+
+          {isOtherUnit && (
+            <div className="flex flex-col gap-1.5">
+              <FieldLabel htmlFor="profile-custom-unit" hint="Required">
+                Specify unit
+              </FieldLabel>
+              <TextInput
+                id="profile-custom-unit"
+                autoFocus
+                autoComplete="off"
+                placeholder="e.g. Room 500s"
+                value={customUnit}
+                onChange={(e) => setCustomUnit(e.target.value)}
+              />
+            </div>
+          )}
 
           <div className="flex flex-col gap-1.5">
             <FieldLabel htmlFor="profile-position" hint="Required">

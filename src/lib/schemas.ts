@@ -41,6 +41,9 @@ const userBaseSchema = z.object({
   cluster_id: z.string().uuid().optional().nullable(),
   unit_id: z.string().uuid().optional().nullable(),
   position_id: z.string().uuid().optional().nullable(),
+  // "Other (please specify)": names the server adds to Settings when they're new.
+  custom_unit_name: z.string().trim().max(120, 'Keep it under 120 characters').optional(),
+  custom_position_name: z.string().trim().max(120, 'Keep it under 120 characters').optional(),
   user_type_id: z.string().uuid('User type is required'),
   is_active: z.boolean().default(true),
   campus_id: z.string().uuid('Campus is required'),
@@ -104,6 +107,8 @@ export const reportSchema = z.object({
   event_id: z.string().uuid('Event is required'),
   cluster_id: z.string().uuid('Cluster is required'),
   unit_id: z.string().optional().nullable(),
+  /** "Other (please specify)": a unit not listed yet, added to the cluster when the report saves. */
+  unit_name: z.string().trim().max(120).optional().nullable(),
   latitude: z.number().optional().nullable(),
   longitude: z.number().optional().nullable(),
   location_name: z.string().optional().nullable(),
