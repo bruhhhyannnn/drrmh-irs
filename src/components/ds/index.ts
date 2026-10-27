@@ -33,4 +33,5 @@ export {
 } from './people';
 export { PeopleDrawer } from './people-drawer';
 export { PrivacyDrawer } from './privacy-drawer';
+export { OTHER_OPTION, OTHER_VALUE, Select, type SelectOption } from './select';
 export { Switch, SwitchField } from './switch';

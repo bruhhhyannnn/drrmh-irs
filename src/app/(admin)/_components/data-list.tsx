@@ -1,8 +1,8 @@
 'use client';
 
-import { FOCUS_RING } from '@/components/ds';
+import { FOCUS_RING, Select, type SelectOption } from '@/components/ds';
 import { cn } from '@/lib';
-import { ChevronDown, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import Link from 'next/link';
 import { Card, Skeleton } from './ui';
 
@@ -110,7 +110,7 @@ export function SearchField({
   );
 }
 
-/** A list filter ("All events ▾"): a native select, so it works well on phones. */
+/** A list filter ("All events ▾"): the design system's select, with `allLabel` first. */
 export function FilterSelect({
   label,
   value,
@@ -123,31 +123,18 @@ export function FilterSelect({
   value: string;
   onChange: (value: string) => void;
   allLabel: string;
-  options: { value: string; label: string }[];
+  options: SelectOption[];
   className?: string;
 }) {
   return (
-    <div className={cn('relative max-w-full shrink-0', className)}>
-      <select
-        aria-label={label}
+    <div className={cn('max-w-full shrink-0', className)}>
+      <Select
+        variant="filter"
+        label={label}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={cn(
-          'h-11 w-full max-w-60 appearance-none truncate rounded-[14px] border border-gray-300 bg-surface pr-9 pl-3.5 text-[16px] font-medium text-gray-700',
-          FOCUS_RING
-        )}
-      >
-        <option value="">{allLabel}</option>
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-      <ChevronDown
-        size={16}
-        aria-hidden
-        className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-gray-500"
+        onChange={onChange}
+        options={[{ value: '', label: allLabel }, ...options]}
+        className="max-w-60"
       />
     </div>
   );
