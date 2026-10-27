@@ -3,13 +3,11 @@
 import { QuestionLanguageSetting } from '@/components/assessment/question-language-setting';
 import { Button, Drawer } from '@/components/ds';
 import { AppearanceSetting } from '@/components/theme';
-import { cn, getInitials, supabase } from '@/lib';
+import { cn, getInitials } from '@/lib';
 import { useAuthStore } from '@/store';
 import { format } from 'date-fns';
 import { LogOut } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import toast from 'react-hot-toast';
+import { useSignOut } from './use-sign-out';
 
 const BADGE_TONES = {
   maroon: 'bg-brand-25 text-brand-500',
@@ -33,9 +31,8 @@ function Badge({ tone, children }: { tone: keyof typeof BADGE_TONES; children: R
 
 /** My profile: who is signed in, their assignment, and Sign out. Opens from the account button. */
 export function ProfileDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const router = useRouter();
-  const { userProfile, user, reset } = useAuthStore();
-  const [signingOut, setSigningOut] = useState(false);
+  const { userProfile, user } = useAuthStore();
+  const { signOut, signingOut } = useSignOut();
 
   if (!userProfile) return null;
 
@@ -45,15 +42,6 @@ export function ProfileDrawer({ open, onClose }: { open: boolean; onClose: () =>
       .join(' ') ||
     (user?.email?.split('@')[0] ?? 'User');
   const email = userProfile.email ?? user?.email ?? '';
-
-  const signOut = async () => {
-    setSigningOut(true);
-    const toastId = toast.loading('Signing out…');
-    await supabase.auth.signOut();
-    reset();
-    toast.success('Signed out', { id: toastId });
-    router.replace('/signin');
-  };
 
   const rows = [
     { label: 'Username', value: userProfile.username },
