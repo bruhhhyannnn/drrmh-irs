@@ -1,5 +1,6 @@
 ---
 type: module
+updated: 2026-10-27
 module: events
 paths:
   - src/actions/events/index.ts
@@ -23,11 +24,10 @@ Events are the drills and real incidents that field reports are filed against. A
 | ------------------------------------------------------------ | ------------------------------------------------------------------------------ |
 | `src/actions/events/index.ts`                                | All event reads and writes, plus `getEventSummarySource`                       |
 | `src/components/hooks/use-events.ts`                         | TanStack Query wrappers; `invalidateEventViews`                                |
-| `src/app/(admin)/events/page.tsx`                            | `/events` list with status tabs, search, Excel export                          |
+| `src/app/(admin)/events/page.tsx`                            | `/events` list with status tabs, search, Export PDF per row                    |
 | `src/app/(admin)/events/details/page.tsx`                    | `/events/details?id=` summary, Complete event dialog                           |
 | `src/app/(admin)/events/_components/event-drawer.tsx`        | Add / Edit event drawer, `CampusChecklist`                                     |
 | `src/app/(admin)/events/_components/delete-event-dialog.tsx` | Delete confirm that names linked report count                                  |
-| `src/app/(admin)/events/export-event.ts`                     | `exportEventToExcel` (ExcelJS, 5 sheets)                                       |
 | `src/app/(admin)/_lib/summary.ts`                            | Pure event summary model: `buildSummary`, `compareSummaries`, timeline helpers |
 | `src/app/(admin)/_lib/status.ts`                             | `eventStatusKey`, `eventTone`                                                  |
 | `src/app/(admin)/_components/summary/`                       | `EventSummary`, `useSummary`, charts and sections                              |
@@ -64,7 +64,7 @@ Every mutation calls `revalidatePath` on `/events`, `/events/details` and `/dash
 - Mutations invalidate `events`, `event`, `event-summary`, `event-siblings`, `event-compare-options`, `dashboard`, `campus-overview`, `campuses-overview`.
 - Form: `eventSchema` in `src/lib/schemas.ts` (`campus_ids` array, end must be after start).
 - Campus scope comes from `useScopedCampusId()` and `useIsSuperAdmin()` in `(admin)/_components/shell/campus-switcher.tsx`. `useEventTitle()` shows "Name — Campus" to Super Admins only.
-- Export PDF opens `/events/report?id=` (see [[print]]). Export Excel builds Summary, By Cluster, Reports, Casualties and Missing Persons sheets in the browser.
+- Export PDF (event details, and the download icon on each `/events` row and phone card) opens `/events/report?id=` in a new tab (see [[print]]). The Excel export was removed in DRRM-018.
 - The event "calendar" is the This month card on the dashboard (`MonthCard` in `(admin)/dashboard/page.tsx`), fed by `getDashboard`. There is no separate calendar page.
 
 ## Rules and gotchas

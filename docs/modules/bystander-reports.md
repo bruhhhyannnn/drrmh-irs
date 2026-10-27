@@ -1,5 +1,6 @@
 ---
 type: module
+updated: 2026-10-27
 module: bystander-reports
 paths:
   - src/actions/emergency-reports/index.ts
@@ -58,6 +59,7 @@ None of the admin actions check the caller's role or campus.
 ## Client side
 
 - `/bystander-report` (public, no auth). Steps: what and where (required), people and damage (optional), review and send. A single active campus is picked automatically. After sending, the next report keeps the same campus.
+- After a report sends (or a queued one goes through), `ResultScreen` shows `RateAppDialog` until the app is rated on that browser ([[design-system]]). Unit is optional and lists No unit first; there is no Other here, since bystanders are anonymous.
 - `/emergency-reports` (admin). Tabs: Needs action (pending + reviewed), Verified, Dismissed, All. Scoped by `useScopedCampusId()`.
 - `BystanderDrawer` footer: Dismiss, Mark reviewed (pending only), Verify. Verified and dismissed reports only get Close.
 - Hooks: `useBystanderReports`, `usePendingBystanderCount` (refetch every minute), `useUpdateBystanderReportStatus`, `useDeleteBystanderReport`, `useBystanderPhotoUrls` (stale after 50 min), `useGetBystanderIncidentTypes`. Mutations invalidate `bystander-reports`, `bystander-pending`, `dashboard`.

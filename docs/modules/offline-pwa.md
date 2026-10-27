@@ -1,7 +1,7 @@
 ---
 type: module
 module: offline-pwa
-updated: 2026-10-22
+updated: 2026-10-27
 verified: true
 paths:
   - src/lib/offline-queue.ts
@@ -87,6 +87,7 @@ None of its own. The provider replays through other modules' actions:
 ## Client side
 
 - `OfflineQueueProvider` flushes on mount when `navigator.onLine`, on the `online` event, and every 45 s (`RETRY_INTERVAL_MS`) while online. It sets `flushNow` in the store for "Try sending now" buttons.
+- When a queued field or bystander report goes through, it also calls `useRateAppStore.reportSent()`, so the Rate the app popup asks then ([[design-system]]).
 - After a flush it invalidates query keys: `bystander-reports`; `reports`, `my-report`, `my-latest-report` (field); `my-assessments`, `assessment-setup` (assessments). It shows toasts for sent and failed counts.
 - `useOfflineQueueStore`: `isOnline`, `pendingCount`, `isSyncing`, `lastAttemptAt`, `lastFieldSyncAt`, `flushNow`, setters. It starts with `isOnline: true`; the provider corrects it on mount.
 - Callers that queue: `ErtReportForm` (`src/app/(ert)/report/_components/report-form.tsx`), `ReportDrawer` (`src/app/(admin)/reports/_components/report-drawer.tsx`), the bystander form (`src/app/(public)/bystander-report/bystander-report-form.tsx`), and `useSubmitAssessment` in `use-assessments.ts`.

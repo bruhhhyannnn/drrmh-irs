@@ -1,5 +1,6 @@
 ---
 type: module
+updated: 2026-10-27
 module: print
 paths:
   - src/app/(print)
@@ -56,6 +57,7 @@ None of its own. It calls:
 
 ## Rules and gotchas
 
+- The report is white with dark text whatever the app theme: `PrintShell` is a `data-theme="light"` subtree, and `PrintPageStyle` sets `color-scheme: light` on `<html>` (scrollbar, print) and a white page in print.
 - Both report pages open the print dialog by themselves once data is ready, after `document.fonts.ready` plus 400 ms, and only once (`printed` ref). `RecordPrint` cancels it if the page is left first.
 - `document.title` is set before printing because it becomes the saved PDF's file name. `RecordPrint` restores the old title on unmount.
 - The `(print)` layout uses `ProtectedRoute`, which sends ERT Members and Bystanders to `/home`, so `/events/report` and `/assessments/report` are admin-only.

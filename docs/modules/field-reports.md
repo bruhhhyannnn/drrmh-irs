@@ -1,5 +1,6 @@
 ---
 type: module
+updated: 2026-10-27
 module: field-reports
 paths:
   - src/actions/reports/index.ts
@@ -50,9 +51,8 @@ A field report (status report) is one ERT team leader's headcount, casualties, m
 
 - `getReports(page, query?, campusId?, filters)`: 10 per page, search on reporter, cluster, unit, event; filter by `eventId` / `clusterId`; campus via `cluster.campus_id`.
 - `getReport(id)`: full report with people, damage and headcount.
-- `getReportsByEvent(eventId)`: all reports of an event (used by the Excel export).
-- `createReport(data)`: one nested create with missing persons, casualties and population counts. Writes legacy columns through `mapPopulationCountsToLegacyColumns`.
-- `saveReportEdits(id, data)`: validates with `reportSchema` minus `event_id`; replaces headcount, missing and casualty rows in one update.
+- `createReport(data)`: one nested create with missing persons, casualties and population counts. A `unit_name` (Unit → Other (please specify)) becomes the unit in that cluster, added when new (`unitIdForName`), so a queued report still replays as one payload. Writes legacy columns through `mapPopulationCountsToLegacyColumns`.
+- `saveReportEdits(id, data)`: validates with `reportSchema` minus `event_id`; resolves `unit_name` the same way; replaces headcount, missing and casualty rows in one update.
 - `deleteReport(id)`.
 - `getMyReportForOngoingEvent(userId)`: the member's latest report on any Ongoing event.
 - `getMyLatestReport(userId)`: last report on any event, shown when nothing is ongoing.
@@ -63,10 +63,11 @@ A field report (status report) is one ERT team leader's headcount, casualties, m
 ## Client side
 
 - `/reports` (admin). Uses `useReports`, `useDeleteReport`, `useEvents`, `useSettingsTable('clusters')`, scoped by `useScopedCampusId()`.
-- `ReportDrawer` (admin). Add picks an ongoing event from `useOngoingEventOptions`; cluster, units and headcount fields follow that event's campus. Edit uses `useSaveReportEdits`.
+- `ReportDrawer` (admin). Add picks an ongoing event from `useOngoingEventOptions`; cluster, units and headcount fields follow that event's campus. Unit is optional: No unit first, Other (please specify) last, which opens Unit name and sends `unit_name`. Edit uses `useSaveReportEdits`.
 - `/report` (ERT). Shows, in order: `SubmittedReport` if `useMyReport` finds one; `SavedOffline` if a pending queued report for this user exists; `OfflineFirstLoad`; `NoOngoingEvent` (with past report via `getMyLatestReport`); else `ErtReportForm`. Ongoing events are polled every 30 s.
 - `ErtReportForm` saves a draft to `localStorage` key `irs:ert-report-draft:<userId>` after each change and drops it if its event is no longer ongoing.
 - After submit, `SubmittedReport` lets the member add or remove missing persons and casualties through the single-row hooks.
+- A sent report (now, or from the offline queue) calls `useRateAppStore.reportSent()`, so `RateAppDialog` in `ErtFrame` asks to rate the app until the member has opened the form; Rate the app is also in the account menu ([[design-system]]).
 
 ## Rules and gotchas
 
