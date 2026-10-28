@@ -29,8 +29,9 @@ export function ProfileSetupGate({ children }: { children: React.ReactNode }) {
 
 /**
  * First sign-in setup: campus, cluster and position, plus building / unit when there is one
- * (some clusters have none). A full page (in the auth frame) instead of a modal that can't be
- * closed, with "Not you? Sign out".
+ * (some clusters have none). Cluster, unit and position each end with "Other (please specify)"
+ * for a name that isn't listed yet. A full page (in the auth frame) instead of a modal that can't
+ * be closed, with "Not you? Sign out".
  */
 export function ProfileSetup() {
   const router = useRouter();
@@ -40,6 +41,7 @@ export function ProfileSetup() {
   const [unitId, setUnitId] = useState(userProfile?.unit_id ?? '');
   const [positionId, setPositionId] = useState(userProfile?.position_id ?? '');
   const [customPosition, setCustomPosition] = useState('');
+  const [customCluster, setCustomCluster] = useState('');
   const [customUnit, setCustomUnit] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -47,19 +49,25 @@ export function ProfileSetup() {
   const { data: campus = [], isPending: campusPending } = useCampus();
   const { data: positions = [], isPending: positionsPending } = usePositions();
   const { data: campusClusters = [] } = useCampusClusters(campusId);
-  const { data: units = [] } = useUnits(clusterId, { enabled: !!clusterId });
 
   const isOther = positionId === OTHER_VALUE;
+  const isOtherCluster = clusterId === OTHER_VALUE;
   const isOtherUnit = unitId === OTHER_VALUE;
+
+  // A typed cluster is new, so it has no units to list yet: only No unit and Other.
+  const { data: units = [] } = useUnits(clusterId, { enabled: !!clusterId && !isOtherCluster });
 
   const campusOptions = (campus as { id: string; name: string; is_active: boolean }[])
     .filter((c) => c.is_active)
     .map((c) => ({ value: c.id, label: c.name }));
-  const clusterOptions = campusClusters
-    .filter((c) => c.is_active)
-    .map((c) => ({ value: c.id, label: c.name }));
+  const clusterOptions = [
+    ...campusClusters.filter((c) => c.is_active).map((c) => ({ value: c.id, label: c.name })),
+    OTHER_OPTION,
+  ];
   const unitOptions = [
-    ...units.filter((u) => u.is_active).map((u) => ({ value: u.id, label: u.name })),
+    ...(isOtherCluster ? [] : units)
+      .filter((u) => u.is_active)
+      .map((u) => ({ value: u.id, label: u.name })),
     OTHER_OPTION,
   ];
   const positionOptions = [...positions.map((p) => ({ value: p.id, label: p.name })), OTHER_OPTION];
@@ -69,32 +77,40 @@ export function ProfileSetup() {
     ? 'Choose your campus to continue.'
     : !clusterId
       ? 'Choose your cluster to continue.'
-      : isOtherUnit && !customUnit.trim()
-        ? 'Specify your building or unit to continue.'
-        : !positionId
-          ? 'Choose your position to continue.'
-          : isOther && !customPosition.trim()
-            ? 'Specify your position to continue.'
-            : null;
+      : isOtherCluster && !customCluster.trim()
+        ? 'Specify your cluster to continue.'
+        : isOtherUnit && !customUnit.trim()
+          ? 'Specify your building or unit to continue.'
+          : !positionId
+            ? 'Choose your position to continue.'
+            : isOther && !customPosition.trim()
+              ? 'Specify your position to continue.'
+              : null;
 
   const handleSave = async () => {
     if (missing || !userProfile) return;
     setSaving(true);
     setSaveError('');
     try {
-      const updated = await completeUserProfile(userProfile.id, {
+      const result = await completeUserProfile(userProfile.id, {
         ...(isOther
           ? { custom_position_name: customPosition.trim() }
           : { position_id: positionId }),
         campus_id: campusId,
-        cluster_id: clusterId,
+        ...(isOtherCluster
+          ? { custom_cluster_name: customCluster.trim() }
+          : { cluster_id: clusterId }),
         ...(isOtherUnit
           ? { custom_unit_name: customUnit.trim() }
           : unitId
             ? { unit_id: unitId }
             : {}),
       });
-      setUserProfile(updated);
+      if (!result.ok) {
+        setSaveError(result.error);
+        return;
+      }
+      setUserProfile(result.user);
       toast.success('Profile completed!');
     } catch {
       setSaveError("We couldn't save your profile. Please try again.");
@@ -153,6 +169,7 @@ export function ProfileSetup() {
               onChange={(value) => {
                 setCampusId(value);
                 setClusterId('');
+                setCustomCluster('');
                 setUnitId('');
                 setCustomUnit('');
               }}
@@ -171,6 +188,7 @@ export function ProfileSetup() {
               value={clusterId}
               onChange={(value) => {
                 setClusterId(value);
+                setCustomCluster('');
                 setUnitId('');
                 setCustomUnit('');
               }}
@@ -180,6 +198,22 @@ export function ProfileSetup() {
               required
             />
           </div>
+
+          {isOtherCluster && (
+            <div className="flex flex-col gap-1.5">
+              <FieldLabel htmlFor="profile-custom-cluster" hint="Required">
+                Specify cluster
+              </FieldLabel>
+              <TextInput
+                id="profile-custom-cluster"
+                autoFocus
+                autoComplete="off"
+                placeholder="e.g. Padre Faura"
+                value={customCluster}
+                onChange={(e) => setCustomCluster(e.target.value)}
+              />
+            </div>
+          )}
 
           <div className="flex flex-col gap-1.5">
             <FieldLabel htmlFor="profile-unit" hint="Optional">
