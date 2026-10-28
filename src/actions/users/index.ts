@@ -1,7 +1,7 @@
 'use server';
 
 import { isAdminUserType } from '@/lib';
-import { positionIdForName, unitIdForName } from '@/lib/lookup-names';
+import { clusterIdForName, positionIdForName, unitIdForName } from '@/lib/lookup-names';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -154,6 +154,11 @@ export async function setUserActive(id: string, isActive: boolean) {
   }
 }
 
+/**
+ * Profile setup's save. A typed cluster ("Other (please specify)") is found or added on the
+ * campus first, so a typed unit lands in it. A cluster name another campus already has comes
+ * back as `ok: false` rather than thrown, because production hides a thrown message.
+ */
 export async function completeUserProfile(
   id: string,
   data: {
@@ -162,18 +167,32 @@ export async function completeUserProfile(
     first_name?: string;
     last_name?: string;
     cluster_id?: string;
+    custom_cluster_name?: string;
     unit_id?: string;
     custom_unit_name?: string;
     campus_id?: string;
   }
 ) {
-  if (!data.campus_id) {
+  const { custom_cluster_name, ...rest } = data;
+  if (!rest.campus_id) {
     throw new Error('campus_id is required to complete profile');
+  }
+
+  const clusterName = custom_cluster_name?.trim();
+  if (clusterName) {
+    const clusterId = await clusterIdForName(rest.campus_id, clusterName);
+    if (!clusterId) {
+      return {
+        ok: false as const,
+        error: `"${clusterName}" is a cluster on another campus. Check your campus, or add more detail to the cluster name.`,
+      };
+    }
+    rest.cluster_id = clusterId;
   }
 
   const user = await prisma.user.update({
     where: { id },
-    data: { ...(await withNamedAssignment(data)), is_profile_complete: true },
+    data: { ...(await withNamedAssignment(rest)), is_profile_complete: true },
     include: {
       cluster: true,
       unit: { include: { cluster: true } },
@@ -183,7 +202,7 @@ export async function completeUserProfile(
     },
   });
   revalidatePath('/');
-  return user;
+  return { ok: true as const, user };
 }
 
 export type DeleteUserResult = { ok: true } | { ok: false; error: string };

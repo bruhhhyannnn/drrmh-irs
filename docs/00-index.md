@@ -49,27 +49,28 @@ Statuses are taken from each plan's frontmatter as of 2026-10-22. Keep this list
 
 ### Active
 
-| Plan                                                                                                 | Status      | Branch                              |
-| ---------------------------------------------------------------------------------------------------- | ----------- | ----------------------------------- |
-| [[plan/feature/DRRM-019-nsed-report\|DRRM-019 Export NSED report]]                                   | in-review   | `feat/DRRM-019-nsed-report`         |
-| [[plan/feature/DRRM-018-design-review-fixes\|DRRM-018 Design review fixes]]                          | in-review   | `feat/DRRM-018-design-review-fixes` |
-| [[plan/feature/DRRM-017-slim-claude-md\|DRRM-017 Slim CLAUDE.md into the vault]]                     | in-review   | `feat/DRRM-017-slim-claude-md`      |
-| [[plan/feature/DRRM-015-assessment-form\|DRRM-015 MATATAG building assessment]]                      | in-progress | `feat/DRRM-015-assessment-form`     |
-| [[plan/review/2026-09-08-dev-branch-audit\|Dev branch audit (2026-09-08)]]                           | in-progress | `dev`                               |
-| [[plan/feature/DRRM-007-landing-page-v2\|DRRM-007 Landing page v2]]                                  | in-review   | `feat/DRRM-007-landing-page-v2`     |
-| [[plan/feature/DRRM-008-bystander-report-v2\|DRRM-008 Bystander report v2]]                          | in-review   | `feat/DRRM-008-bystander-report-v2` |
-| [[plan/feature/DRRM-009-auth-pages-v2\|DRRM-009 Auth pages v2]]                                      | in-review   | `feat/DRRM-009-auth-pages-v2`       |
-| [[plan/feature/DRRM-010-ert-report-v2\|DRRM-010 ERT report v2]]                                      | in-review   | `feat/DRRM-010-ert-report-v2`       |
-| [[plan/feature/DRRM-011-super-admin-v2\|DRRM-011 Super admin v2]]                                    | in-review   | `feat/DRRM-011-super-admin-v2`      |
-| [[plan/feature/DRRM-012-admin-v2\|DRRM-012 Admin v2]]                                                | in-review   | `feat/DRRM-012-admin-v2`            |
-| [[plan/feature/DRRM-013-ui-polish\|DRRM-013 UI polish]]                                              | in-review   | `feat/DRRM-013-ui-polish`           |
-| [[plan/feature/DRRM-014-drrm-pillars\|DRRM-014 DRRM pillars]]                                        | in-review   | `feat/DRRM-014-drrm-pillars`        |
-| [[plan/fix/DRRM-002-emergency-reports-hardening\|DRRM-002 Emergency reports hardening]]              | approved    | `fix/emergency-reports-hardening`   |
-| [[plan/fix/DRRM-003-report-form-atomicity\|DRRM-003 Report form atomicity]]                          | approved    | `fix/report-form-atomicity`         |
-| [[plan/fix/DRRM-004-events-dynamic-clusters\|DRRM-004 Events and dynamic clusters]]                  | approved    | `fix/events-dynamic-clusters`       |
-| [[plan/fix/DRRM-005-settings-hooks-performance\|DRRM-005 Settings, hooks and dashboard performance]] | approved    | `fix/settings-hooks-performance`    |
-| [[plan/fix/DRRM-006-schema-dual-write-sunset\|DRRM-006 Schema normalization and dual-write sunset]]  | approved    | `refactor/schema-dual-write-sunset` |
-| [[plan/feature/2026-09-09-table-redesign\|Data tables redesign]]                                     | approved    | `feature/table-redesign`            |
+| Plan                                                                                                 | Status      | Branch                                 |
+| ---------------------------------------------------------------------------------------------------- | ----------- | -------------------------------------- |
+| [[plan/feature/DRRM-020-profile-custom-cluster\|DRRM-020 Type your own cluster]]                     | in-review   | `feat/DRRM-020-profile-custom-cluster` |
+| [[plan/feature/DRRM-019-nsed-report\|DRRM-019 Export NSED report]]                                   | in-review   | `feat/DRRM-019-nsed-report`            |
+| [[plan/feature/DRRM-018-design-review-fixes\|DRRM-018 Design review fixes]]                          | in-review   | `feat/DRRM-018-design-review-fixes`    |
+| [[plan/feature/DRRM-017-slim-claude-md\|DRRM-017 Slim CLAUDE.md into the vault]]                     | in-review   | `feat/DRRM-017-slim-claude-md`         |
+| [[plan/feature/DRRM-015-assessment-form\|DRRM-015 MATATAG building assessment]]                      | in-progress | `feat/DRRM-015-assessment-form`        |
+| [[plan/review/2026-09-08-dev-branch-audit\|Dev branch audit (2026-09-08)]]                           | in-progress | `dev`                                  |
+| [[plan/feature/DRRM-007-landing-page-v2\|DRRM-007 Landing page v2]]                                  | in-review   | `feat/DRRM-007-landing-page-v2`        |
+| [[plan/feature/DRRM-008-bystander-report-v2\|DRRM-008 Bystander report v2]]                          | in-review   | `feat/DRRM-008-bystander-report-v2`    |
+| [[plan/feature/DRRM-009-auth-pages-v2\|DRRM-009 Auth pages v2]]                                      | in-review   | `feat/DRRM-009-auth-pages-v2`          |
+| [[plan/feature/DRRM-010-ert-report-v2\|DRRM-010 ERT report v2]]                                      | in-review   | `feat/DRRM-010-ert-report-v2`          |
+| [[plan/feature/DRRM-011-super-admin-v2\|DRRM-011 Super admin v2]]                                    | in-review   | `feat/DRRM-011-super-admin-v2`         |
+| [[plan/feature/DRRM-012-admin-v2\|DRRM-012 Admin v2]]                                                | in-review   | `feat/DRRM-012-admin-v2`               |
+| [[plan/feature/DRRM-013-ui-polish\|DRRM-013 UI polish]]                                              | in-review   | `feat/DRRM-013-ui-polish`              |
+| [[plan/feature/DRRM-014-drrm-pillars\|DRRM-014 DRRM pillars]]                                        | in-review   | `feat/DRRM-014-drrm-pillars`           |
+| [[plan/fix/DRRM-002-emergency-reports-hardening\|DRRM-002 Emergency reports hardening]]              | approved    | `fix/emergency-reports-hardening`      |
+| [[plan/fix/DRRM-003-report-form-atomicity\|DRRM-003 Report form atomicity]]                          | approved    | `fix/report-form-atomicity`            |
+| [[plan/fix/DRRM-004-events-dynamic-clusters\|DRRM-004 Events and dynamic clusters]]                  | approved    | `fix/events-dynamic-clusters`          |
+| [[plan/fix/DRRM-005-settings-hooks-performance\|DRRM-005 Settings, hooks and dashboard performance]] | approved    | `fix/settings-hooks-performance`       |
+| [[plan/fix/DRRM-006-schema-dual-write-sunset\|DRRM-006 Schema normalization and dual-write sunset]]  | approved    | `refactor/schema-dual-write-sunset`    |
+| [[plan/feature/2026-09-09-table-redesign\|Data tables redesign]]                                     | approved    | `feature/table-redesign`               |
 
 DRRM-007 to DRRM-014 were merged to `dev` (PRs #73, #74) but their plans still say "In Review". DRRM-002 to DRRM-006 and the table redesign may be partly or fully done in code. Check before you rely on these statuses.
 
