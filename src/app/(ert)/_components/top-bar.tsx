@@ -4,8 +4,9 @@ import { ProfileDrawer } from '@/components/auth';
 import { FOCUS_RING } from '@/components/ds';
 import { cn, supabase } from '@/lib';
 import { canUseAssessment } from '@/lib/access';
-import { useAuthStore } from '@/store';
-import { ChevronDown, LogOut, User } from 'lucide-react';
+import { RATE_APP_URL } from '@/lib/rate-app';
+import { useAuthStore, useRateAppStore } from '@/store';
+import { ChevronDown, LogOut, Star, User } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -18,7 +19,7 @@ import { WaitingToSend } from './waiting-to-send';
  * Logo and name on the left, linking home; for those who can assess buildings, the
  * Report | Assessment switch (inline from tablet, its own row on phone); on the right, the
  * "waiting to send" chip while something is queued on this phone, and the account button,
- * which holds My profile and Sign out.
+ * which holds My profile, Rate the app and Sign out.
  */
 export function TopBar() {
   const { userProfile } = useAuthStore();
@@ -95,6 +96,7 @@ function ModeSwitch({ className }: { className?: string }) {
 function AccountMenu() {
   const router = useRouter();
   const { user, userProfile, reset } = useAuthStore();
+  const markRated = useRateAppStore((s) => s.markRated);
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -174,6 +176,21 @@ function AccountMenu() {
                 <User size={18} aria-hidden className="text-gray-600" />
                 My profile
               </MenuButton>
+              {/* For anyone who skipped the popup after a report. */}
+              <a
+                href={RATE_APP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => {
+                  setOpen(false);
+                  markRated();
+                }}
+                className={cn(MENU_ITEM, 'text-gray-900 hover:bg-gray-50')}
+              >
+                <Star size={18} aria-hidden className="text-gray-600" />
+                Rate the app
+                <span className="sr-only"> (opens in a new tab)</span>
+              </a>
               <MenuButton tone="danger" onClick={signOut}>
                 <LogOut size={18} aria-hidden />
                 Sign out
@@ -187,6 +204,11 @@ function AccountMenu() {
     </>
   );
 }
+
+const MENU_ITEM = cn(
+  'flex h-12 items-center gap-3 rounded-[14px] px-3 text-left text-[17px] font-semibold',
+  FOCUS_RING
+);
 
 function MenuButton({
   tone,
@@ -202,9 +224,8 @@ function MenuButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'flex h-12 items-center gap-3 rounded-[14px] px-3 text-left text-[17px] font-semibold',
-        tone === 'danger' ? 'hover:bg-error-50 text-error-700' : 'text-gray-900 hover:bg-gray-50',
-        FOCUS_RING
+        MENU_ITEM,
+        tone === 'danger' ? 'hover:bg-error-50 text-error-700' : 'text-gray-900 hover:bg-gray-50'
       )}
     >
       {children}

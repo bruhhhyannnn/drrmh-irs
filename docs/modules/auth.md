@@ -1,7 +1,7 @@
 ---
 type: module
 module: auth
-updated: 2026-10-22
+updated: 2026-10-27
 verified: true
 paths:
   - src/actions/auth
@@ -30,7 +30,7 @@ Read this before touching sign-in, the profile, role checks or the setup gate.
 - **Loading the profile:** `AuthProvider` (`src/components/auth/auth-provider.tsx`) listens to `supabase.auth.onAuthStateChange`, then loads the profile through the `getUserByAuthId` server action into `useAuthStore` (Zustand).
 - **First Google sign-in:** `provisionGoogleUser` (`src/actions/auth`) adds the user to `users` with the "ERT Member" user type.
 - **Roles:** `ProtectedRoute` gates admin pages by role. Admin vs. non-admin is decided by `isAdminUserType()` (`src/lib/constants.ts`). "Administrator" and "Super Admin" land on `/dashboard`, everyone else on `/home` ([[routes]]).
-- **Profile setup:** non-admin profiles start with `is_profile_complete = false`. `ProfileSetupGate` / `ProfileSetup` (`src/components/auth/profile-setup.tsx`) show a full-page setup in place of the app until the user sets campus, cluster, unit and position through `completeUserProfile` (`src/actions/users`). New field reports then auto-fill cluster and unit from that profile ([[field-reports]]).
+- **Profile setup:** non-admin profiles start with `is_profile_complete = false`. `ProfileSetupGate` / `ProfileSetup` (`src/components/auth/profile-setup.tsx`) show a full-page setup in place of the app until the user sets campus, cluster, position and (optionally) unit through `completeUserProfile` (`src/actions/users`). New field reports then auto-fill cluster and unit from that profile ([[field-reports]]).
 - **Shared frame:** the auth pages (`(auth)/`) and profile setup share the `AuthShell` frame and the design-system controls in `src/components/ds/` ([[design-system]]).
 - **Token checks:** newer server actions don't trust a client-sent user id. They take the Supabase access token (`getAccessToken()` in `src/lib/supabase.ts`) and verify it with `requireProfile(token)` or `requireAdmin(token, campusId)` from `src/lib/server-auth.ts` ([[0007-token-verified-actions]]).
 
@@ -57,7 +57,7 @@ Read this before touching sign-in, the profile, role checks or the setup gate.
 
 - `User` (`users`): `auth_id` (unique, Supabase Auth id), `email` and `username` (unique), `user_type_id`, `campus_id`, `cluster_id`, `unit_id`, `position_id`, `is_active`, `is_profile_complete` (default `false`).
 - `UserType` (`user_types`): seeded names are `ERT Member`, `Administrator`, `Super Admin` (`USER_TYPES`).
-- `Position` (`positions`): `completeUserProfile` may upsert a new row by `name` for "Other (please specify)".
+- `Position` (`positions`), `Unit` (`units`): `completeUserProfile` reuses or adds one by name for "Other (please specify)" (`positionIdForName`, `unitIdForName` in `src/lib/lookup-names.ts`).
 
 ## Server actions
 
@@ -81,7 +81,7 @@ Token-verified helpers in `src/lib/server-auth.ts` (used by assessment, checklis
 - `useAuthStore`: `user`, `session`, `userProfile`, `profileError`, `loading`, `reset()`. Persisted in localStorage as `irs-auth`, only `userProfile`.
 - `ProtectedRoute`: no user → `/signin?from=<path>`; `ERT Member` (and a `Bystander` type) → `/home`; `profileError` shows "Account Loading Failed" with Retry and Sign Out.
 - `ProfileSetupGate` wraps the `(admin)` layout; ERT pages get `{ status: 'setup' }` from `useErtAccess` and render `ProfileSetup`. `useErtAccess` sends signed-out users to `/signin`, admins to `/dashboard`, and (with `requireAssessment`) users failing `canUseAssessment` to `/home`.
-- `ProfileSetup` asks for campus, cluster, building/unit (skipped when the cluster has no units) and position (or a custom one), then calls `completeUserProfile` and stores the returned profile.
+- `ProfileSetup` asks for campus, cluster, building / unit (optional, since some clusters have none: No unit first, Other (please specify) last, which opens Specify unit) and position (or a custom one), then calls `completeUserProfile` and stores the returned profile.
 
 ## Rules and gotchas
 

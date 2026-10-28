@@ -25,7 +25,7 @@ ERT members submit status reports through the signed-in `/report` page and check
 
 - **Dashboard** — Stats and charts on events, reports, and affected personnel, plus an events calendar, and a Building safety section: MATATAG scores pooled per campus, cluster, unit and building with the change since the previous assessments, drilled down in place, and at a building its history and any two assessments compared
 - **Campus** — Manage campuses and view per-campus clusters, events, and headcount summaries
-- **Events** — Track drills and incidents from creation to completion, and export an event to Excel
+- **Events** — Track drills and incidents from creation to completion, and export an event report as PDF
 - **Event Details** — Per-cluster headcount board with casualty, missing person, and structural damage breakdowns
 - **Reports** — View, search, edit, and delete field reports with full headcount details and GPS-pinned location
 - **Bystander Reports** — Review public incident submissions and mark them reviewed, verified, or dismissed
@@ -74,7 +74,6 @@ The IRS is a centralized web platform consisting of:
 | **Date Utilities**     | date-fns 4                                     |
 | **Notifications**      | React Hot Toast                                |
 | **Icons**              | Lucide React + HugeIcons                       |
-| **Excel Export**       | ExcelJS 4                                      |
 | **PWA / Offline**      | @ducanh2912/next-pwa + IndexedDB offline queue |
 | **Analytics**          | Vercel Analytics                               |
 

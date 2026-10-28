@@ -12,7 +12,10 @@ import { Printer } from 'lucide-react';
 /** A CSS string literal for `content:`. */
 const cssString = (text: string) => JSON.stringify(text);
 
-/** The @page rules: A4, the running header from page 2, the generated line and page numbers. */
+/**
+ * The @page rules: A4, the running header from page 2, the generated line and page numbers, and
+ * a light page whatever the app theme (the sheets themselves are a `data-theme="light"` subtree).
+ */
 export function PrintPageStyle({
   title,
   running,
@@ -37,6 +40,8 @@ export function PrintPageStyle({
         @top-left { content: none; }
         @top-right { content: none; }
       }
+      /* The report is white with dark text whatever the app theme, scrollbar included. */
+      html { color-scheme: light; }
       @media print {
         html, body { background: #fff !important; }
         * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }

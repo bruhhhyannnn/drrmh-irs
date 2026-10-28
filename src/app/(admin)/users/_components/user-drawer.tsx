@@ -2,6 +2,8 @@
 
 import {
   Drawer,
+  OTHER_OPTION,
+  OTHER_VALUE,
   PasswordInput,
   SegmentedControl,
   SelectField,
@@ -15,7 +17,7 @@ import { cn, userCreateSchema, userEditSchema, type UserCreateFormData } from '@
 import { useAuthStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, Minus } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import {
@@ -150,6 +152,8 @@ function UserForm({
       cluster_id: user?.cluster_id ?? user?.unit?.cluster_id ?? null,
       unit_id: user?.unit_id ?? null,
       position_id: user?.position_id ?? null,
+      custom_unit_name: '',
+      custom_position_name: '',
       user_type_id: user?.user_type_id ?? ertTypeId,
       is_active: user?.is_active ?? true,
     },
@@ -166,6 +170,9 @@ function UserForm({
   const password = useWatch({ control, name: 'password' }) ?? '';
   const { data: clusters = [] } = useCampusClusters(campusId ?? '');
   const { data: units = [] } = useUnits(clusterId || undefined, { enabled: !!clusterId });
+  // "Other (please specify)" picked: a name field opens under the selects.
+  const [unitOther, setUnitOther] = useState(false);
+  const [positionOther, setPositionOther] = useState(false);
 
   const typeOptions = userTypes
     .filter((t) => t.name in TYPE_LABELS && t.is_active)
@@ -183,8 +190,14 @@ function UserForm({
       setError('cluster_id', { message: 'Pick a cluster for an ERT member.' });
       return;
     }
-    if (isErt && !data.unit_id) {
-      setError('unit_id', { message: 'Pick a unit for an ERT member.' });
+    const unitName = unitOther ? data.custom_unit_name?.trim() : '';
+    const positionName = positionOther ? data.custom_position_name?.trim() : '';
+    if (unitOther && !unitName) {
+      setError('custom_unit_name', { message: 'Enter the unit name.' });
+      return;
+    }
+    if (positionOther && !positionName) {
+      setError('custom_position_name', { message: 'Enter the position name.' });
       return;
     }
     const profile = {
@@ -196,8 +209,10 @@ function UserForm({
       username: data.username.trim(),
       campus_id: data.campus_id,
       cluster_id: data.cluster_id || null,
-      unit_id: data.unit_id || null,
-      position_id: data.position_id || null,
+      unit_id: unitOther ? null : data.unit_id || null,
+      position_id: positionOther ? null : data.position_id || null,
+      custom_unit_name: unitName || null,
+      custom_position_name: positionName || null,
       user_type_id: data.user_type_id,
       is_active: data.is_active,
     };
@@ -243,10 +258,19 @@ function UserForm({
             >
               <TextInput
                 id="user-first"
+                placeholder="e.g. Juan"
                 autoComplete="off"
                 invalid={!!errors.first_name}
                 aria-describedby={describedBy('user-first', errors.first_name)}
                 {...register('first_name')}
+              />
+            </FormField>
+            <FormField id="user-middle" label="Middle name" hint="Optional" half>
+              <TextInput
+                id="user-middle"
+                placeholder="e.g. Santos"
+                autoComplete="off"
+                {...register('middle_name')}
               />
             </FormField>
             <FormField
@@ -258,14 +282,12 @@ function UserForm({
             >
               <TextInput
                 id="user-last"
+                placeholder="e.g. Dela Cruz"
                 autoComplete="off"
                 invalid={!!errors.last_name}
                 aria-describedby={describedBy('user-last', errors.last_name)}
                 {...register('last_name')}
               />
-            </FormField>
-            <FormField id="user-middle" label="Middle name" hint="Optional" half>
-              <TextInput id="user-middle" autoComplete="off" {...register('middle_name')} />
             </FormField>
             <FormField id="user-suffix" label="Suffix" hint="Optional" half>
               <TextInput
@@ -284,6 +306,7 @@ function UserForm({
               <TextInput
                 id="user-email"
                 type="email"
+                placeholder="e.g. jdelacruz@up.edu.ph"
                 autoComplete="off"
                 invalid={!!errors.email}
                 aria-describedby={describedBy('user-email', errors.email)}
@@ -298,6 +321,7 @@ function UserForm({
             >
               <TextInput
                 id="user-username"
+                placeholder="e.g. jdelacruz"
                 autoComplete="off"
                 invalid={!!errors.username}
                 aria-describedby={describedBy('user-username', errors.username)}
@@ -315,8 +339,9 @@ function UserForm({
                 >
                   <PasswordInput
                     id="user-password"
+                    placeholder="Create a password"
                     autoComplete="new-password"
-                    className="font-landing-mono"
+                    className="font-landing-mono placeholder:font-landing"
                     invalid={!!errors.password}
                     aria-describedby={
                       describedBy('user-password', errors.password) ?? 'user-password-rules'
@@ -400,6 +425,7 @@ function UserForm({
                         field.onChange(value);
                         setValue('cluster_id', null);
                         setValue('unit_id', null);
+                        setUnitOther(false);
                       }}
                       options={campuses
                         .filter((c) => c.is_active || c.id === field.value)
@@ -430,11 +456,14 @@ function UserForm({
                     onChange={(value) => {
                       field.onChange(value || null);
                       setValue('unit_id', null);
+                      setUnitOther(false);
                     }}
                     options={clusters
                       .filter((c) => c.is_active || c.id === field.value)
                       .map((c) => ({ value: c.id, label: c.name }))}
                     placeholder={campusId ? 'Select cluster' : 'Pick the campus first'}
+                    emptyLabel="No cluster"
+                    required={isErt}
                     disabled={!campusId}
                     invalid={!!errors.cluster_id}
                     describedBy={describedBy('user-cluster', errors.cluster_id)}
@@ -442,28 +471,28 @@ function UserForm({
                 )}
               />
             </FormField>
-            <FormField
-              id="user-unit"
-              label="Unit"
-              hint={isErt ? 'Required' : 'Optional'}
-              half
-              error={errors.unit_id?.message}
-            >
+            {/* Some clusters have no units, so Unit is optional for everyone. */}
+            <FormField id="user-unit" label="Unit" hint="Optional" half>
               <Controller
                 control={control}
                 name="unit_id"
                 render={({ field }) => (
                   <SelectField
                     id="user-unit"
-                    value={field.value ?? ''}
-                    onChange={(value) => field.onChange(value || null)}
-                    options={units
-                      .filter((u) => u.is_active || u.id === field.value)
-                      .map((u) => ({ value: u.id, label: u.name }))}
-                    placeholder={clusterId ? 'Select unit' : 'Pick the cluster first'}
+                    value={unitOther ? OTHER_VALUE : (field.value ?? '')}
+                    onChange={(value) => {
+                      setUnitOther(value === OTHER_VALUE);
+                      field.onChange(value === OTHER_VALUE ? null : value || null);
+                    }}
+                    options={[
+                      ...units
+                        .filter((u) => u.is_active || u.id === field.value)
+                        .map((u) => ({ value: u.id, label: u.name })),
+                      OTHER_OPTION,
+                    ]}
+                    placeholder={clusterId ? 'No unit' : 'Pick the cluster first'}
+                    emptyLabel="No unit"
                     disabled={!clusterId}
-                    invalid={!!errors.unit_id}
-                    describedBy={describedBy('user-unit', errors.unit_id)}
                   />
                 )}
               />
@@ -475,16 +504,59 @@ function UserForm({
                 render={({ field }) => (
                   <SelectField
                     id="user-position"
-                    value={field.value ?? ''}
-                    onChange={(value) => field.onChange(value || null)}
-                    options={positions
-                      .filter((p) => p.is_active || p.id === field.value)
-                      .map((p) => ({ value: p.id, label: p.name }))}
+                    value={positionOther ? OTHER_VALUE : (field.value ?? '')}
+                    onChange={(value) => {
+                      setPositionOther(value === OTHER_VALUE);
+                      field.onChange(value === OTHER_VALUE ? null : value || null);
+                    }}
+                    options={[
+                      ...positions
+                        .filter((p) => p.is_active || p.id === field.value)
+                        .map((p) => ({ value: p.id, label: p.name })),
+                      OTHER_OPTION,
+                    ]}
                     placeholder="Select position"
+                    emptyLabel="No position"
                   />
                 )}
               />
             </FormField>
+            {unitOther && (
+              <FormField
+                id="user-unit-name"
+                label="Unit name"
+                hint="Required"
+                error={errors.custom_unit_name?.message}
+              >
+                <TextInput
+                  id="user-unit-name"
+                  autoFocus
+                  placeholder="e.g. Room 500s"
+                  autoComplete="off"
+                  invalid={!!errors.custom_unit_name}
+                  aria-describedby={describedBy('user-unit-name', errors.custom_unit_name)}
+                  {...register('custom_unit_name')}
+                />
+              </FormField>
+            )}
+            {positionOther && (
+              <FormField
+                id="user-position-name"
+                label="Position name"
+                hint="Required"
+                error={errors.custom_position_name?.message}
+              >
+                <TextInput
+                  id="user-position-name"
+                  autoFocus
+                  placeholder="e.g. Safety Officer"
+                  autoComplete="organization-title"
+                  invalid={!!errors.custom_position_name}
+                  aria-describedby={describedBy('user-position-name', errors.custom_position_name)}
+                  {...register('custom_position_name')}
+                />
+              </FormField>
+            )}
           </FormGrid>
         </DrawerSection>
 

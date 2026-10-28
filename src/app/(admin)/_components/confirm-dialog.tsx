@@ -19,6 +19,8 @@ interface ConfirmDialogProps {
   body: React.ReactNode;
   /** Amber box: what is linked, or what happens next. */
   warning?: React.ReactNode;
+  /** Red box after the action failed: what went wrong, in plain words. */
+  error?: { title: string; body: React.ReactNode };
   /** An optional extra choice under the warning, e.g. "Also complete it at …". */
   checkbox?: {
     label: string;
@@ -28,6 +30,8 @@ interface ConfirmDialogProps {
   };
   confirmLabel: string;
   confirmVariant?: 'destructive' | 'primary';
+  /** Off when trying again can't help (the error explains why). */
+  confirmDisabled?: boolean;
   loading?: boolean;
 }
 
@@ -58,9 +62,11 @@ function DialogPanel({
   name,
   body,
   warning,
+  error,
   checkbox,
   confirmLabel,
   confirmVariant = 'destructive',
+  confirmDisabled,
   loading,
 }: Omit<ConfirmDialogProps, 'open'>) {
   const titleId = useId();
@@ -137,6 +143,18 @@ function DialogPanel({
             <span className="text-pretty">{warning}</span>
           </div>
         )}
+        {error && (
+          <div
+            role="alert"
+            className="bg-error-50 flex items-start gap-2.5 rounded-2xl border border-error-200 px-3.5 py-3 text-[14px] leading-normal"
+          >
+            <AlertTriangle size={18} aria-hidden className="mt-px shrink-0 text-error-600" />
+            <span className="flex min-w-0 flex-col gap-0.5 text-pretty">
+              <strong className="font-bold text-error-700">{error.title}</strong>
+              <span className="text-error-800">{error.body}</span>
+            </span>
+          </div>
+        )}
         {checkbox && (
           <button
             type="button"
@@ -166,7 +184,13 @@ function DialogPanel({
             </Button>
           </div>
           <div className="flex flex-[1_1_140px] flex-col">
-            <Button variant={confirmVariant} fullWidth loading={loading} onClick={onConfirm}>
+            <Button
+              variant={confirmVariant}
+              fullWidth
+              loading={loading}
+              disabled={confirmDisabled}
+              onClick={onConfirm}
+            >
               {confirmLabel}
             </Button>
           </div>

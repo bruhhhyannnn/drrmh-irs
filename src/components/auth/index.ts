@@ -6,3 +6,4 @@ export { AuthShell } from './auth-shell';
 export { ProfileDrawer } from './profile-drawer';
 export { ProfileSetup, ProfileSetupGate } from './profile-setup';
 export { ProtectedRoute } from './protected-route';
+export { useSignOut } from './use-sign-out';

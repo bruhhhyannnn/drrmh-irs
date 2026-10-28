@@ -21,7 +21,7 @@ import { useCasualtyConditions, useDamageConditions } from '@/components/hooks/u
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn, type ReportFormData } from '@/lib';
 import { getAllQueuedCount, isNetworkError, queueFieldReport } from '@/lib/offline-queue';
-import { useAuthStore, useOfflineQueueStore } from '@/store';
+import { useAuthStore, useOfflineQueueStore, useRateAppStore } from '@/store';
 import { useQueryClient } from '@tanstack/react-query';
 import { Check, RotateCcw, Shield, WifiOff } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -227,6 +227,7 @@ export function ErtReportForm({
         return;
       }
       finish();
+      useRateAppStore.getState().reportSent();
       queryClient.invalidateQueries({ queryKey: ['reports'] });
       // The page switches to the submitted report once this comes back.
       await queryClient.invalidateQueries({ queryKey: ['my-report', userId] });

@@ -134,6 +134,7 @@ export function SignInForm() {
           </FieldLabel>
           <PasswordInput
             id="password"
+            placeholder="Enter your password"
             autoComplete="current-password"
             invalid={!!errors.password || banner?.tone === 'error'}
             aria-describedby={errors.password ? 'password-error' : undefined}

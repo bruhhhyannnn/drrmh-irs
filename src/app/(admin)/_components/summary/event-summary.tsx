@@ -1,10 +1,10 @@
 'use client';
 
-import { FOCUS_RING } from '@/components/ds';
+import { FOCUS_RING, Select } from '@/components/ds';
 import { useCampusEventOptions, useEventSummarySource } from '@/components/hooks/use-events';
 import { useCasualtyConditions, useDamageConditions } from '@/components/hooks/use-settings';
 import { cn } from '@/lib';
-import { ChartNoAxesColumn, ChevronDown, X } from 'lucide-react';
+import { ChartNoAxesColumn, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { formatDate, formatDateTime, formatEventWindow } from '../../_lib/format';
 import {
@@ -113,27 +113,17 @@ export function EventSummary({ eventId, before }: { eventId: string; before?: Re
           (compareId ? (
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-[14px] font-semibold text-gray-600">Compared with</span>
-              <div className="relative">
-                <select
-                  aria-label="Compare with event"
+              <div className="max-w-64 min-w-0">
+                <Select
+                  variant="filter"
+                  label="Compare with event"
                   value={compareId}
-                  onChange={(e) => setCompareId(e.target.value)}
-                  className={cn(
-                    'h-10 max-w-64 appearance-none truncate rounded-xl border border-gray-300 bg-surface pr-9 pl-3.5 text-[16px] font-semibold text-gray-900',
-                    FOCUS_RING
-                  )}
-                >
-                  {others.map((o) => (
-                    <option key={o.id} value={o.id}>
-                      {o.name}
-                      {o.started_at ? ` · ${formatDate(o.started_at).replace(/, \d{4}$/, '')}` : ''}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  aria-hidden
-                  className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-gray-500"
+                  onChange={setCompareId}
+                  options={others.map((o) => ({
+                    value: o.id,
+                    label: `${o.name}${o.started_at ? ` · ${formatDate(o.started_at).replace(/, \d{4}$/, '')}` : ''}`,
+                  }))}
+                  className="h-10 rounded-xl font-semibold text-gray-900"
                 />
               </div>
               <button

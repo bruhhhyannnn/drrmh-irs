@@ -1,7 +1,7 @@
 ---
 type: module
 module: settings-lookups
-updated: 2026-10-22
+updated: 2026-10-27
 verified: true
 paths:
   - src/actions/settings/index.ts
@@ -79,6 +79,7 @@ Population field actions are listed in [[field-reports]].
 - `campus` is a `SettingsTable` but has no tab; campuses are managed on `/campus` ([[campus-scoping]]).
 - User types and event statuses are read here but have no Settings tab. Event status names are matched by code (`upcoming`, `ongoing`, `completed`); renaming them breaks [[events]].
 - Most foreign keys to lookups are `NoAction`, so deleting a used row fails with the P2003 friendly message. The UI tells the admin to switch the row off instead.
+- Units and positions also grow from the forms: "Other (please specify)" in Add / Edit user, Edit / Add report and profile setup adds the typed name when no unit in that cluster (or position) has it in any case (`src/lib/lookup-names.ts`). Review new rows here.
 - Deleting a cluster cascades to its units (`Unit.cluster` is `onDelete: Cascade`) if nothing else blocks it.
 - Casualty and damage condition names drive severity colours in the event summary (`(admin)/_lib/summary.ts` regexes). Rename with care.
 - Inactive rows stay in old reports and are still shown when an existing record already uses them.

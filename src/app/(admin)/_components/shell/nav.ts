@@ -20,8 +20,10 @@ export interface NavItem {
   icon: LucideIcon;
   /** Starts a group in the sidebar. */
   group?: string;
-  /** Shown as a bottom tab on phone; the rest sit under More. */
+  /** Shown as a bottom tab on phone; the rest sit on the More page. */
   tab?: boolean;
+  /** Its line on the phone More page. */
+  description?: string;
   /** Opens in a new tab: the DRRM pillars, which will become their own apps. */
   newTab?: boolean;
 }
@@ -66,6 +68,7 @@ const NAV: NavItem[] = [
     short: 'Assess',
     href: '/assessments',
     icon: ClipboardCheck,
+    description: 'MATATAG building safety assessments',
   },
   {
     key: 'campus',
@@ -74,9 +77,24 @@ const NAV: NavItem[] = [
     href: '/campus',
     icon: University,
     group: 'Manage',
+    description: 'Campuses and their details',
   },
-  { key: 'users', label: 'Users', short: 'Users', href: '/users', icon: Users },
-  { key: 'settings', label: 'Settings', short: 'Settings', href: '/settings', icon: Settings },
+  {
+    key: 'users',
+    label: 'Users',
+    short: 'Users',
+    href: '/users',
+    icon: Users,
+    description: 'ERT members and administrators',
+  },
+  {
+    key: 'settings',
+    label: 'Settings',
+    short: 'Settings',
+    href: '/settings',
+    icon: Settings,
+    description: 'Clusters, units, positions and fields',
+  },
   ...PILLARS.map((pillar, i) => ({
     key: `pillar-${pillar.slug}`,
     label: pillar.label,
@@ -84,6 +102,7 @@ const NAV: NavItem[] = [
     href: pillarHref(pillar.slug),
     icon: pillar.icon,
     newTab: true,
+    description: 'Opens in a new tab',
     ...(i === 0 && { group: 'DRRM pillars' }),
   })),
 ];
@@ -97,6 +116,28 @@ export function navFor(isSuperAdmin: boolean): NavItem[] {
   return NAV.filter((n) => !SUPER_ADMIN_HREFS.includes(n.href)).map((n) =>
     n.key === 'users' ? { ...n, group: 'Manage' } : n
   );
+}
+
+/** The phone More page, which lists every page that isn't a bottom tab. */
+export const MORE_HREF = '/more';
+
+/** The pages that aren't bottom tabs, under their sidebar group titles, for the More page. */
+export function moreGroups(nav: NavItem[]) {
+  const groups: { title: string; items: NavItem[] }[] = [];
+  let title = '';
+  for (const item of nav) {
+    if (item.group) title = item.group;
+    if (item.tab) continue;
+    const last = groups[groups.length - 1];
+    if (last?.title === title) last.items.push(item);
+    else groups.push({ title, items: [item] });
+  }
+  return groups;
+}
+
+/** A page opened from the More page, which gets a "More" back link on phone. */
+export function isMorePage(nav: NavItem[], pathname: string) {
+  return nav.some((n) => !n.tab && !n.newTab && n.href === pathname);
 }
 
 export function isActivePath(pathname: string, href: string) {

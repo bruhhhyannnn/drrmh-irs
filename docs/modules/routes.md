@@ -1,7 +1,7 @@
 ---
 type: module
 module: routes
-updated: 2026-10-22
+updated: 2026-10-27
 verified: true
 paths:
   - src/app
@@ -21,6 +21,7 @@ Every page lives under `src/app/` in a route group, and the group decides the fr
   - The top-bar campus switcher (`useCampusScopeStore`, read through `useScopedCampusId`) scopes every list and the dashboard. Pass its campus id to queries instead of adding per-page campus filters ([[campus-scoping]]).
   - Shared pieces live in `(admin)/_components`: the list table that turns into cards on phone (`data-list.tsx`), drawer parts (`drawer-parts.tsx`), the confirm dialog (`confirm-dialog.tsx`), `page-header.tsx`, `charts/` and `summary/`.
   - `(admin)/_lib` holds status colours (`status.ts`), formatting (`format.ts`) and the event summary model (`summary.ts`), which campus details, event details and the report PDF use ([[events]]).
+- **`/more`** (inside `(admin)/`): the phone More page, reached from the fifth bottom tab. It lists the pages that are not tabs, My profile, Appearance and Sign out; the pages it opens show a More back link on phone (see [[design-system]]).
 - **`(print)/`**: pages laid out for A4 and saved as PDF from the print dialog, for signed-in admins, with no shell. The layout wraps them in `ProtectedRoute`.
   - `/events/report`: the event report ([[print]]).
   - `/assessments/report?id=`: one assessment, using the ERT `RecordPrint` ([[assessment-admin]]).

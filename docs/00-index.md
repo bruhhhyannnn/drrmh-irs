@@ -51,6 +51,7 @@ Statuses are taken from each plan's frontmatter as of 2026-10-22. Keep this list
 
 | Plan                                                                                                 | Status      | Branch                              |
 | ---------------------------------------------------------------------------------------------------- | ----------- | ----------------------------------- |
+| [[plan/feature/DRRM-018-design-review-fixes\|DRRM-018 Design review fixes]]                          | in-review   | `feat/DRRM-018-design-review-fixes` |
 | [[plan/feature/DRRM-017-slim-claude-md\|DRRM-017 Slim CLAUDE.md into the vault]]                     | in-review   | `feat/DRRM-017-slim-claude-md`      |
 | [[plan/feature/DRRM-015-assessment-form\|DRRM-015 MATATAG building assessment]]                      | in-progress | `feat/DRRM-015-assessment-form`     |
 | [[plan/review/2026-09-08-dev-branch-audit\|Dev branch audit (2026-09-08)]]                           | in-progress | `dev`                               |
