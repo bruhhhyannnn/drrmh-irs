@@ -25,6 +25,9 @@ export default withPWA({
   fallbacks: {
     document: '/~offline',
   },
+  // Everything in public/ is precached, on every phone, unless excluded. The NSED report
+  // template is only fetched by admins exporting a report, online.
+  publicExcludes: ['!noprecache/**/*', '!templates/**/*'],
   // Keep next-pwa's own defaultCache (fonts, images, JS/CSS chunks, Next data); the rule below
   // is added in front of it rather than replacing it.
   extendDefaultRuntimeCaching: true,
