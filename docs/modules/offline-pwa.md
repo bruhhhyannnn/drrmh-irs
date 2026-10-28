@@ -1,7 +1,7 @@
 ---
 type: module
 module: offline-pwa
-updated: 2026-10-27
+updated: 2026-10-28
 verified: true
 paths:
   - src/lib/offline-queue.ts
@@ -40,7 +40,7 @@ Read this before touching report or assessment submits, the service worker, `nex
 
   The provider writes `getAllQueuedCount()` again on its next flush.
 
-- **Replay:** `OfflineQueueProvider` (`src/components/pwa/`, mounted in `src/components/providers.tsx`) replays the queues on the `online` event, on mount and every 45 s. A network error stops the flush and leaves entries queued. A server-side rejection marks the entry `failed`, and failed entries are never retried automatically.
+- **Replay:** `OfflineQueueProvider` (`src/components/pwa/`, mounted in `src/components/providers.tsx`) replays the queues on the `online` event, on mount and every 45 s. A network error stops the flush and leaves entries queued. A server-side rejection marks the entry `failed`, and failed entries are never retried automatically. `flushOne` passes `submit` the entry too; field reports replay with `sent_at: entry.createdAt`, so `Report.submitted_at` is when the report was sent on the phone.
 - **State:** connectivity and the pending count live in `useOfflineQueueStore`.
 - **Online only:** editing an existing report.
 - **Bundled creates:** the queue replays a single create payload, so `createReport` takes casualties, missing persons and population counts nested in one call. Keep new-report data bundled that way ([[0004-offline-queue-bundled-create]]).

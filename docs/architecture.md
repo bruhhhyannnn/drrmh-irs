@@ -1,6 +1,6 @@
 ---
 type: reference
-updated: 2026-10-22
+updated: 2026-10-28
 verified: true
 tags: [architecture]
 ---
@@ -54,7 +54,7 @@ Server  src/actions/<domain>/index.ts ('use server')
   - Mutations that change data call `revalidatePath(...)` for the affected routes.
 - **Client data flow:** `src/components/hooks/use-<domain>.ts` wraps each domain's server actions in TanStack Query (`useQuery` / `useMutation`). There is one hook file per domain: events, users, reports, settings, campus, dashboard, bystander-reports, population-categories, assessments, assessment-templates. `use-debounced.ts` sits in the same folder but is a utility, not a domain. Mutations invalidate the relevant query keys on success. Follow that pattern (see `use-events.ts`) instead of refetching by hand.
 - **Caller checks:** the older actions trust the user and campus ids the client sends. Newer actions take the Supabase access token and verify it on the server (`requireProfile(token)` / `requireAdmin(token, campusId)` in `src/lib/server-auth.ts`). They return expected failures as `{ ok: false, error, retry }` instead of throwing, because thrown messages are hidden in production ([[0007-token-verified-actions]]).
-- **Pure logic sits in `src/lib`**, with `node:test` tests next to it: access, admin scope, assessment caller, draft, score and template, building safety, offline cache and flush, and schemas. The checklist data test is `prisma/data/matatag-2025-07-25.test.ts`. The UI and server actions have no tests.
+- **Pure logic sits in `src/lib`**, with `node:test` tests next to it: access, admin scope, assessment caller, draft, score and template, building safety, offline cache and flush, and schemas. The NSED report's builder and template fill are tested next to them in `src/app/(admin)/_lib/nsed-report.test.ts`. The checklist data test is `prisma/data/matatag-2025-07-25.test.ts`. The UI and server actions have no tests.
 
 ## The three clients (don't mix them up)
 

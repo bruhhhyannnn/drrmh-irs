@@ -106,13 +106,22 @@ async function reportUnitId(clusterId: string, unitId?: string | null, unitName?
   return name ? unitIdForName(clusterId, name) : unitId || null;
 }
 
-export async function createReport(data: ReportFormData & { user_id?: string }) {
+/**
+ * When a report was sent: `sent_at` (ms) from the offline queue, so a report saved offline keeps
+ * the time it was sent on the phone. Never later than now; unset means now.
+ */
+function sentAt(sent_at?: number) {
+  return Number.isFinite(sent_at) ? new Date(Math.min(sent_at!, Date.now())) : undefined;
+}
+
+export async function createReport(data: ReportFormData & { user_id?: string; sent_at?: number }) {
   const {
     report_missing_persons,
     report_casualties,
     population_counts,
     user_id,
     unit_name,
+    sent_at,
     ...reportData
   } = data;
 
@@ -121,6 +130,7 @@ export async function createReport(data: ReportFormData & { user_id?: string }) 
       data: {
         ...reportData,
         ...mapPopulationCountsToLegacyColumns(population_counts),
+        submitted_at: sentAt(sent_at),
         user_id: user_id ?? null,
         unit_id: await reportUnitId(reportData.cluster_id, reportData.unit_id, unit_name),
         latitude: reportData.latitude ?? null,

@@ -1,6 +1,6 @@
 ---
 type: module
-updated: 2026-10-27
+updated: 2026-10-28
 module: events
 paths:
   - src/actions/events/index.ts
@@ -8,6 +8,9 @@ paths:
   - src/app/(admin)/events
   - src/app/(admin)/_lib/summary.ts
   - src/app/(admin)/_lib/status.ts
+  - src/app/(admin)/_lib/nsed-report.ts
+  - src/app/(admin)/_lib/nsed-docx.ts
+  - public/templates/nsed-report.docx
   - src/app/(admin)/_components/summary
 tags: [module]
 ---
@@ -30,6 +33,9 @@ Events are the drills and real incidents that field reports are filed against. A
 | `src/app/(admin)/events/_components/delete-event-dialog.tsx` | Delete confirm that names linked report count                                  |
 | `src/app/(admin)/_lib/summary.ts`                            | Pure event summary model: `buildSummary`, `compareSummaries`, timeline helpers |
 | `src/app/(admin)/_lib/status.ts`                             | `eventStatusKey`, `eventTone`                                                  |
+| `src/app/(admin)/_lib/nsed-report.ts`                        | `buildNsedReport`: the NSED report's fields from the summary source (tested)   |
+| `src/app/(admin)/_lib/nsed-docx.ts`                          | `fillNsedTemplate`, `downloadNsedReport`: docxtemplater fill and download      |
+| `public/templates/nsed-report.docx`                          | The UP Manila office's NSED report template (letterhead, wording, tags)        |
 | `src/app/(admin)/_components/summary/`                       | `EventSummary`, `useSummary`, charts and sections                              |
 
 ## Data
@@ -65,6 +71,7 @@ Every mutation calls `revalidatePath` on `/events`, `/events/details` and `/dash
 - Form: `eventSchema` in `src/lib/schemas.ts` (`campus_ids` array, end must be after start).
 - Campus scope comes from `useScopedCampusId()` and `useIsSuperAdmin()` in `(admin)/_components/shell/campus-switcher.tsx`. `useEventTitle()` shows "Name — Campus" to Super Admins only.
 - Export PDF (event details, and the download icon on each `/events` row and phone card) opens `/events/report?id=` in a new tab (see [[print]]). The Excel export was removed in DRRM-018.
+- Export NSED report (event details only, when the event is completed and its campus is UP Manila, `isUpManila`): the office's quarterly NSED report as a Word file. `downloadNsedReport` is imported on click, fetches `public/templates/nsed-report.docx`, fills it with `buildNsedReport(source)` through docxtemplater + pizzip and saves `NSED Report Q1 2026.docx`. The app fills what it records (date and times, headcount per cluster, the timeline, the summary, one breakdown and note per cluster, headcount by category); the rest are yellow `[Add …]` blanks for the office. Tags and rules: [[plan/feature/DRRM-019-nsed-report]].
 - The event "calendar" is the This month card on the dashboard (`MonthCard` in `(admin)/dashboard/page.tsx`), fed by `getDashboard`. There is no separate calendar page.
 
 ## Rules and gotchas
@@ -77,7 +84,9 @@ Every mutation calls `revalidatePath` on `/events`, `/events/details` and `/dash
 - Deleting an event deletes all its field reports. The dialog warns with the count.
 - The Complete dialog lists clusters that have not reported yet (from `useSummary`). Once Completed, ERT Members cannot send or edit reports for it.
 - `summary.ts` reads casualty and damage severity from condition wording with regexes. Renaming a condition in Settings can change its colour and rank.
-- `getEventSummarySource` is shared by campus details, event details and the print report. Changing its `select` affects all three.
+- `getEventSummarySource` is shared by campus details, event details, the print report and the NSED report. Changing its `select` affects all four.
+- The NSED report's fixed wording lives in the template, not the code: edit `public/templates/nsed-report.docx` in Word and keep the `{…}` tags. The headcount-by-category table is raw XML from `nsed-docx.ts` (`{@categoryTable}`), because its columns are the clusters. `public/templates/` is left out of the service worker's precache (`publicExcludes` in `next.config.ts`).
+- The NSED report lists clusters Pedro Gil, Padre Faura, Taft, PGH (the office's order), then others by name; a cluster made of numbered zones is listed by zone.
 
 ## Decisions
 

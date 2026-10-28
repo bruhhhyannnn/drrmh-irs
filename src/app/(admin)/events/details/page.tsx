@@ -9,7 +9,7 @@ import {
 } from '@/components/hooks/use-events';
 import { useAuthStore } from '@/store';
 import { format } from 'date-fns';
-import { Check, Download, Pencil, Trash2 } from 'lucide-react';
+import { Check, Download, FileText, Pencil, Trash2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -23,6 +23,7 @@ import {
 import { EventSummary, useSummary } from '../../_components/summary/event-summary';
 import { Card, Chip, Skeleton } from '../../_components/ui';
 import { formatEventWindow } from '../../_lib/format';
+import { isUpManila } from '../../_lib/nsed-report';
 import { capitalize, eventStatusKey, eventTone } from '../../_lib/status';
 import { DeleteEventDialog, type DeletableEvent } from '../_components/delete-event-dialog';
 import { EventDrawer } from '../_components/event-drawer';
@@ -105,6 +106,9 @@ function EventDetails() {
               <Download size={16} aria-hidden />
               Export PDF
             </Button>
+            {status === 'completed' && isUpManila(event.campus.name) && (
+              <ExportNsedButton eventId={event.id} />
+            )}
             <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
               <Pencil size={16} aria-hidden />
               Edit
@@ -148,6 +152,36 @@ function EventDetails() {
         eventName={event.name}
       />
     </>
+  );
+}
+
+/**
+ * Export NSED report: the UP Manila office's quarterly report as a Word file, filled from this
+ * event's reports in the browser. docxtemplater loads on the first click.
+ */
+function ExportNsedButton({ eventId }: { eventId: string }) {
+  const { data: source } = useEventSummarySource(eventId);
+  const [exporting, setExporting] = useState(false);
+
+  const exportNsed = async () => {
+    if (!source) return;
+    setExporting(true);
+    try {
+      const { downloadNsedReport } = await import('../../_lib/nsed-docx');
+      await downloadNsedReport(source);
+    } catch (err) {
+      console.error(err);
+      toast.error('Couldn’t make the NSED report. Please try again.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  return (
+    <Button size="sm" variant="outline" onClick={exportNsed} loading={exporting} disabled={!source}>
+      {!exporting && <FileText size={16} aria-hidden />}
+      Export NSED report
+    </Button>
   );
 }
 
