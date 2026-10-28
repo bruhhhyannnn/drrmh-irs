@@ -1,3 +1,14 @@
+---
+type: feature
+ticket: DRRM-014
+status: in-review
+branch: feat/DRRM-014-drrm-pillars
+modules:
+  - '[[pillars-and-landing]]'
+  - '[[design-system]]'
+tags: [plan, feature]
+---
+
 # [DRRM-014] Feature Plan: DRRM pillars in the admin sidebar
 
 - **Status:** `[In Review]`

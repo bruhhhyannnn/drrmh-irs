@@ -1,4 +1,6 @@
 import type { BystanderReportFormData, ReportFormData } from '@/lib';
+import type { AssessmentDraft } from '@/lib/assessment-draft';
+import type { AssessmentPayload } from '@/lib/schemas';
 
 // Client-side queue for reports submitted while offline. Server actions are RPC calls over
 // the network, so they simply can't run without connectivity — the only way to let someone
@@ -6,15 +8,29 @@ import type { BystanderReportFormData, ReportFormData } from '@/lib';
 // IndexedDB (not localStorage) is used because entries carry nested missing-person/casualty
 // arrays and photo Blobs, and there's no hard size ceiling to worry about.
 //
-// Two independent stores share one database: bystander reports (public, anonymous) and field
-// reports (logged-in ERT members via ReportForm). Kept separate because they replay through
-// different server actions and invalidate different query keys.
+// Three independent queues share one database: bystander reports (public, anonymous), field
+// reports (logged-in ERT members via ReportForm) and building assessments. Kept separate because
+// they replay through different server actions and invalidate different query keys. Two more
+// stores hold what the assessment form needs offline: drafts in progress, and a cache of the
+// checklist and form setup (see use-assessments.ts).
 
 const DB_NAME = 'irs-offline-queue';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 const BYSTANDER_STORE = 'bystander-reports';
 const FIELD_REPORT_STORE = 'reports';
+const ASSESSMENT_STORE = 'assessments';
+const ASSESSMENT_DRAFT_STORE = 'assessment-drafts';
+const ASSESSMENT_CACHE_STORE = 'assessment-cache';
+
+/** Every store and its key. Missing ones are created on upgrade, so older databases keep their data. */
+const STORES: [name: string, keyPath: string][] = [
+  [BYSTANDER_STORE, 'id'],
+  [FIELD_REPORT_STORE, 'id'],
+  [ASSESSMENT_STORE, 'id'],
+  [ASSESSMENT_DRAFT_STORE, 'client_ref'],
+  [ASSESSMENT_CACHE_STORE, 'key'],
+];
 
 /** What a "waiting to send" list shows for an entry, e.g. the event name and cluster. */
 export interface QueuedSummary {
@@ -35,6 +51,7 @@ export interface QueuedEntry<TPayload> {
 }
 
 export type QueuedFieldReport = QueuedEntry<ReportFormData & { user_id?: string }>;
+export type QueuedAssessment = QueuedEntry<AssessmentPayload>;
 
 function isSupported() {
   return typeof window !== 'undefined' && 'indexedDB' in window;
@@ -61,13 +78,18 @@ function openDb(): Promise<IDBDatabase> {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
     request.onupgradeneeded = () => {
       const db = request.result;
-      for (const store of [BYSTANDER_STORE, FIELD_REPORT_STORE]) {
+      for (const [store, keyPath] of STORES) {
         if (!db.objectStoreNames.contains(store)) {
-          db.createObjectStore(store, { keyPath: 'id' });
+          db.createObjectStore(store, { keyPath });
         }
       }
     };
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      const db = request.result;
+      // Lets a newer version of the app (another tab) upgrade the database instead of waiting.
+      db.onversionchange = () => db.close();
+      resolve(db);
+    };
     request.onerror = () => reject(request.error);
   });
 }
@@ -143,11 +165,79 @@ function makeQueue<TPayload>(storeName: string) {
     });
   }
 
-  return { add, getAll, count, remove, markFailed };
+  /** A failed entry back to pending, for a "Try again" button. */
+  async function markPending(id: string): Promise<void> {
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(storeName, 'readwrite');
+      const store = tx.objectStore(storeName);
+      const getReq = store.get(id);
+      getReq.onsuccess = () => {
+        const record = getReq.result as QueuedEntry<TPayload> | undefined;
+        if (!record) return;
+        const { errorMessage: _dropped, ...rest } = record;
+        store.put({ ...rest, status: 'pending' });
+      };
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  return { add, getAll, count, remove, markFailed, markPending };
+}
+
+/** Plain records by key: assessment drafts and the assessment cache. */
+function makeKeyValueStore<TRecord>(storeName: string) {
+  async function put(record: TRecord): Promise<void> {
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(storeName, 'readwrite');
+      tx.objectStore(storeName).put(record);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  async function get(key: string): Promise<TRecord | undefined> {
+    if (!isSupported()) return undefined;
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const request = db.transaction(storeName, 'readonly').objectStore(storeName).get(key);
+      request.onsuccess = () => resolve(request.result as TRecord | undefined);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async function getAll(): Promise<TRecord[]> {
+    if (!isSupported()) return [];
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const request = db.transaction(storeName, 'readonly').objectStore(storeName).getAll();
+      request.onsuccess = () => resolve((request.result as TRecord[]) ?? []);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async function remove(key: string): Promise<void> {
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(storeName, 'readwrite');
+      tx.objectStore(storeName).delete(key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  return { put, get, getAll, remove };
 }
 
 const bystanderQueue = makeQueue<BystanderReportFormData>(BYSTANDER_STORE);
 const fieldReportQueue = makeQueue<ReportFormData & { user_id?: string }>(FIELD_REPORT_STORE);
+const assessmentQueue = makeQueue<AssessmentPayload>(ASSESSMENT_STORE);
+const draftStore = makeKeyValueStore<AssessmentDraft>(ASSESSMENT_DRAFT_STORE);
+const cacheStore = makeKeyValueStore<{ key: string; value: unknown; savedAt: number }>(
+  ASSESSMENT_CACHE_STORE
+);
 
 export const queueBystanderReport = bystanderQueue.add;
 export const getQueuedReports = bystanderQueue.getAll;
@@ -160,3 +250,33 @@ export const getQueuedFieldReports = fieldReportQueue.getAll;
 export const getQueuedFieldReportCount = fieldReportQueue.count;
 export const removeQueuedFieldReport = fieldReportQueue.remove;
 export const markQueuedFieldReportFailed = fieldReportQueue.markFailed;
+
+export const queueAssessment = assessmentQueue.add;
+export const getQueuedAssessments = assessmentQueue.getAll;
+export const getQueuedAssessmentCount = assessmentQueue.count;
+export const removeQueuedAssessment = assessmentQueue.remove;
+export const markQueuedAssessmentFailed = assessmentQueue.markFailed;
+export const retryQueuedAssessment = assessmentQueue.markPending;
+
+/** Everything waiting to send on this phone: bystander reports, field reports and assessments. */
+export async function getAllQueuedCount(): Promise<number> {
+  const counts = await Promise.all([
+    bystanderQueue.count(),
+    fieldReportQueue.count(),
+    assessmentQueue.count(),
+  ]);
+  return counts.reduce((sum, n) => sum + n, 0);
+}
+
+export const saveAssessmentDraft = (draft: AssessmentDraft) => draftStore.put(draft);
+export const getAssessmentDraft = (clientRef: string) => draftStore.get(clientRef);
+export const getAssessmentDrafts = () => draftStore.getAll();
+export const deleteAssessmentDraft = (clientRef: string) => draftStore.remove(clientRef);
+
+export async function putAssessmentCache<T>(key: string, value: T): Promise<void> {
+  await cacheStore.put({ key, value, savedAt: Date.now() });
+}
+
+export async function getAssessmentCache<T>(key: string): Promise<T | undefined> {
+  return (await cacheStore.get(key))?.value as T | undefined;
+}

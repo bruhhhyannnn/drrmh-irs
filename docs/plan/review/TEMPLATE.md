@@ -1,3 +1,12 @@
+---
+type: review
+ticket: REV-YYYY-MM-DD
+status: draft
+branch: ''
+modules: []
+tags: [plan, review]
+---
+
 # [REV-YYYY-MM-DD] Code Review & Audit: Short Title
 
 - **Review Date:** YYYY-MM-DD

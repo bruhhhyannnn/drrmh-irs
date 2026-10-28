@@ -2,11 +2,11 @@
 
 import { Button } from '@/components/ds';
 import { useCampuses } from '@/components/hooks/use-campus';
+import { useDebounced } from '@/components/hooks/use-debounced';
 import { useEvents } from '@/components/hooks/use-events';
 import { Download, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
 import {
   DataTable,
   IconAction,
@@ -27,10 +27,8 @@ import { useEventTitle, useScopedCampusId } from '../_components/shell/campus-sw
 import { Card, Chip } from '../_components/ui';
 import { formatDate, formatTime, plural } from '../_lib/format';
 import { capitalize, eventStatusKey, eventTone, type EventStatus } from '../_lib/status';
-import { useDebounced } from '../_lib/use-debounced';
 import { DeleteEventDialog, type DeletableEvent } from './_components/delete-event-dialog';
 import { EventDrawer } from './_components/event-drawer';
-import { exportEventToExcel } from './export-event';
 
 type EventRow = NonNullable<ReturnType<typeof useEvents>['data']>[number];
 type Tab = 'all' | EventStatus;
@@ -55,7 +53,6 @@ function Events() {
   const [tab, setTab] = useState<Tab>('all');
   const [drawer, setDrawer] = useState<{ open: boolean; eventId?: string }>({ open: false });
   const [deleting, setDeleting] = useState<DeletableEvent | null>(null);
-  const [exportingId, setExportingId] = useState('');
 
   // The dashboard's Add event lands here with ?add=1.
   useEffect(() => {
@@ -74,18 +71,9 @@ function Events() {
   }
   const rows = tab === 'all' ? events : events.filter((e) => eventStatusKey(e.status.name) === tab);
 
-  const exportExcel = async (event: EventRow) => {
-    setExportingId(event.id);
-    const toastId = toast.loading('Preparing the Excel file…');
-    try {
-      await exportEventToExcel(event.id);
-      toast.success('Excel file downloaded', { id: toastId });
-    } catch {
-      toast.error('The event could not be exported. Please try again.', { id: toastId });
-    } finally {
-      setExportingId('');
-    }
-  };
+  // The same report as Export PDF on event details: it opens the print dialog to save as PDF.
+  const exportPdf = (event: EventRow) =>
+    window.open(`/events/report?id=${event.id}`, '_blank', 'noopener');
 
   const askDelete = (e: EventRow) =>
     setDeleting({ id: e.id, name: e.name, campus: e.campus.name, reports: e._count.reports });
@@ -159,10 +147,9 @@ function Events() {
             className="md:hidden lg:inline-flex"
           />
           <IconAction
-            label="Export to Excel"
+            label="Export PDF"
             icon={<Download size={18} aria-hidden />}
-            disabled={exportingId === e.id}
-            onClick={() => exportExcel(e)}
+            onClick={() => exportPdf(e)}
           />
           <IconAction
             label="Edit"
@@ -264,9 +251,9 @@ function Events() {
                     href: `/events/details?id=${e.id}`,
                   },
                   {
-                    label: 'Export',
+                    label: 'Export PDF',
                     icon: <Download size={16} aria-hidden />,
-                    onClick: () => exportExcel(e),
+                    onClick: () => exportPdf(e),
                   },
                   {
                     label: 'Edit',

@@ -1,10 +1,9 @@
 'use client';
 
-import { Button, FOCUS_RING } from '@/components/ds';
+import { Button, Select } from '@/components/ds';
 import { useCampusOverview, useDeleteCampus } from '@/components/hooks/use-campus';
 import { useCampusEventOptions } from '@/components/hooks/use-events';
-import { cn } from '@/lib';
-import { ChevronDown, Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -124,26 +123,17 @@ function CampusDetails() {
               <label htmlFor="campus-event" className="text-[16px] font-semibold text-gray-600">
                 Showing
               </label>
-              <div className="relative max-w-110 min-w-0 flex-[1_1_240px]">
-                <select
+              <div className="max-w-110 min-w-0 flex-[1_1_240px]">
+                <Select
                   id="campus-event"
+                  variant="filter"
                   value={selected.id}
-                  onChange={(e) => setPickedId(e.target.value)}
-                  className={cn(
-                    'h-11 w-full appearance-none truncate rounded-[14px] border border-gray-300 bg-surface pr-10 pl-3.5 text-[16px] font-semibold text-gray-900',
-                    FOCUS_RING
-                  )}
-                >
-                  {events.map((e) => (
-                    <option key={e.id} value={e.id}>
-                      {e.name} · {capitalize(e.status.name)}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  aria-hidden
-                  className="pointer-events-none absolute top-1/2 right-3.5 -translate-y-1/2 text-gray-500"
+                  onChange={setPickedId}
+                  options={events.map((e) => ({
+                    value: e.id,
+                    label: `${e.name} · ${capitalize(e.status.name)}`,
+                  }))}
+                  className="font-semibold text-gray-900"
                 />
               </div>
               <Chip tone={eventTone(selected.status.name)} dot>

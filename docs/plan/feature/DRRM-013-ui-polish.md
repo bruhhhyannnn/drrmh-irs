@@ -1,3 +1,15 @@
+---
+type: feature
+ticket: DRRM-013
+status: in-review
+branch: feat/DRRM-013-ui-polish
+modules:
+  - '[[design-system]]'
+  - '[[offline-pwa]]'
+  - '[[events]]'
+tags: [plan, feature]
+---
+
 # [DRRM-013] Feature Plan: UI polish after the first run
 
 - **Status:** `[In Review]`

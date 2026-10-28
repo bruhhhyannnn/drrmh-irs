@@ -6,7 +6,13 @@ import { toFriendlyError } from '@/lib/prisma-error';
 import { revalidatePath } from 'next/cache';
 
 export type SettingsTable =
-  'clusters' | 'units' | 'positions' | 'casualty_conditions' | 'campus' | 'damage_conditions';
+  | 'clusters'
+  | 'units'
+  | 'positions'
+  | 'casualty_conditions'
+  | 'campus'
+  | 'damage_conditions'
+  | 'buildings';
 
 const MODEL_MAP = {
   clusters: 'cluster',
@@ -15,6 +21,7 @@ const MODEL_MAP = {
   casualty_conditions: 'casualtyCondition',
   damage_conditions: 'damageCondition',
   campus: 'campus',
+  buildings: 'building',
 } as const;
 
 const TITLE_MAP: Record<SettingsTable, string> = {
@@ -24,6 +31,7 @@ const TITLE_MAP: Record<SettingsTable, string> = {
   casualty_conditions: 'Casualty Conditions',
   campus: 'Campus',
   damage_conditions: 'Damage Conditions',
+  buildings: 'Buildings',
 };
 
 // What each table's rows carry besides their own columns: the parent shown in the table, and
@@ -40,6 +48,16 @@ const INCLUDE_MAP: Partial<Record<SettingsTable, object>> = {
   positions: { _count: { select: { users: true } } },
   casualty_conditions: { _count: { select: { casualties: true } } },
   damage_conditions: { _count: { select: { reports: true, bystander_reports: true } } },
+  buildings: {
+    unit: {
+      select: {
+        name: true,
+        cluster_id: true,
+        cluster: { select: { name: true, campus_id: true } },
+      },
+    },
+    _count: { select: { assessments: true } },
+  },
 };
 
 function revalidateTable(table: SettingsTable) {

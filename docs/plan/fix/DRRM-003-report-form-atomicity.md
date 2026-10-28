@@ -1,7 +1,18 @@
+---
+type: fix
+ticket: DRRM-003
+status: approved
+branch: fix/report-form-atomicity
+modules:
+  - '[[field-reports]]'
+  - '[[offline-pwa]]'
+tags: [plan, fix]
+---
+
 # [DRRM-003] Fix Plan: Report Form Atomicity & Aggregation Optimization
 
 - **Status:** `[Approved]`
-- **Related Bugs / Audits:** [`docs/plan/review/2026-09-08-dev-branch-audit.md`](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/review/2026-09-08-dev-branch-audit.md) (§2.1, §3.4, §7.1, §7.2, §7.3)
+- **Related Bugs / Audits:** [`docs/plan/review/2026-09-08-dev-branch-audit.md`](../../plan/review/2026-09-08-dev-branch-audit.md) (§2.1, §3.4, §7.1, §7.2, §7.3)
 - **Target Branch / PR:** `fix/report-form-atomicity`
 - **Author:** Antigravity
 
@@ -22,7 +33,7 @@ Eliminate partial-save vulnerabilities during report submission by converting th
 
 ### 2.1 Backend / Server Actions
 
-- [ ] [`src/actions/reports/index.ts`](file:///C:/Users/jomar/orca/drrmh-irs-dev/src/actions/reports/index.ts):
+- [ ] [`src/actions/reports/index.ts`](../../../src/actions/reports/index.ts):
   - **Atomic Nested Updates in `updateReport` (§7.1):** Update `updateReport` to accept nested casualties, missing persons, and population counts, and wrap them in a Prisma transaction (`deleteMany` + `create`):
     ```ts
     export async function updateReport(id: string, data: UpdateReportInput) {
@@ -82,7 +93,7 @@ Eliminate partial-save vulnerabilities during report submission by converting th
 
 ### 2.2 Frontend / Form Components
 
-- [ ] [`src/app/(admin)/reports/report-form.tsx`](<file:///C:/Users/jomar/orca/drrmh-irs-dev/src/app/(admin)/reports/report-form.tsx>):
+- [ ] [`src/app/(admin)/reports/report-form.tsx`](<../../../src/app/(admin)/reports/report-form.tsx>):
   - **Remove Profile Override (§7.2):** Change:
     ```ts
     cluster_id: profileClusterId ?? data.cluster_id,
@@ -97,17 +108,17 @@ Eliminate partial-save vulnerabilities during report submission by converting th
   - **Single Mutation Submission (§7.1):** Remove the 4 subsequent mutation calls (`deleteCasualtyMutation`, `createCasualtyMutation`, `deleteMissingPersonMutation`, `createMissingPersonMutation`). Pass all casualties and missing persons directly inside the payload to `createReportMutation` or `updateReportMutation`.
   - **Clean Up Orphan Pre-Creation (§7.3):** Remove direct pre-submission invocation of `upsertDamageCondition` from the client submit handler.
 
-- [ ] [`src/app/(ert)/report/page.tsx`](<file:///C:/Users/jomar/orca/drrmh-irs-dev/src/app/(ert)/report/page.tsx>):
+- [ ] [`src/app/(ert)/report/page.tsx`](<../../../src/app/(ert)/report/page.tsx>):
   - **Typo Fix (§3.4):** Change `"No Damage reported"` in casualty and missing person empty states to `"No Casualties reported"` and `"No Missing Persons reported"` respectively.
 
 ---
 
 ## 3. Step-by-Step Execution Plan
 
-1. [ ] **Step 1:** Fix UI text typos in [`src/app/(ert)/report/page.tsx`](<file:///C:/Users/jomar/orca/drrmh-irs-dev/src/app/(ert)/report/page.tsx>).
-2. [ ] **Step 2:** Refactor `getReportClusterSummary` in [`src/actions/reports/index.ts`](file:///C:/Users/jomar/orca/drrmh-irs-dev/src/actions/reports/index.ts) to push report grouping to Postgres.
-3. [ ] **Step 3:** Extend `updateReport` in [`src/actions/reports/index.ts`](file:///C:/Users/jomar/orca/drrmh-irs-dev/src/actions/reports/index.ts) to execute casualty, missing persons, and population count updates atomically inside `prisma.$transaction`.
-4. [ ] **Step 4:** Refactor [`src/app/(admin)/reports/report-form.tsx`](<file:///C:/Users/jomar/orca/drrmh-irs-dev/src/app/(admin)/reports/report-form.tsx>) submit handler: eliminate multi-RPC promises, pass children in single payload, and respect form cluster selection.
+1. [ ] **Step 1:** Fix UI text typos in [`src/app/(ert)/report/page.tsx`](<../../../src/app/(ert)/report/page.tsx>).
+2. [ ] **Step 2:** Refactor `getReportClusterSummary` in [`src/actions/reports/index.ts`](../../../src/actions/reports/index.ts) to push report grouping to Postgres.
+3. [ ] **Step 3:** Extend `updateReport` in [`src/actions/reports/index.ts`](../../../src/actions/reports/index.ts) to execute casualty, missing persons, and population count updates atomically inside `prisma.$transaction`.
+4. [ ] **Step 4:** Refactor [`src/app/(admin)/reports/report-form.tsx`](<../../../src/app/(admin)/reports/report-form.tsx>) submit handler: eliminate multi-RPC promises, pass children in single payload, and respect form cluster selection.
 5. [ ] **Step 5:** Invalidate queries and verify server responses.
 
 ---

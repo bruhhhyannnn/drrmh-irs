@@ -9,3 +9,9 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     autoRefreshToken: true,
   },
 });
+
+/** The signed-in user's access token (refreshed when needed), or null. */
+export async function getAccessToken(): Promise<string | null> {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token ?? null;
+}

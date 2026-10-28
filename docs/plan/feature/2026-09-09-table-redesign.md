@@ -1,3 +1,16 @@
+---
+type: feature
+ticket: FEAT-UI-TABLES
+status: approved
+branch: feature/table-redesign
+modules:
+  - '[[design-system]]'
+  - '[[users]]'
+  - '[[events]]'
+  - '[[settings-lookups]]'
+tags: [plan, feature]
+---
+
 # [FEAT-UI-TABLES] Feature RFC / Plan: Data Tables Redesign & UI/UX Modernization
 
 - **Status:** `Approved`

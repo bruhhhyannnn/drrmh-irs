@@ -538,6 +538,7 @@ function FieldForm({
           <FormField id="field-name" label="Name" hint="Required" error={errors.name?.message}>
             <TextInput
               id="field-name"
+              placeholder="e.g. Dormitory residents"
               autoComplete="off"
               invalid={!!errors.name}
               aria-describedby={errors.name ? 'field-name-error' : undefined}
@@ -552,6 +553,7 @@ function FieldForm({
           >
             <TextInput
               id="field-code"
+              placeholder="e.g. dormitory_residents"
               disabled
               className="font-landing-mono"
               {...register('code')}

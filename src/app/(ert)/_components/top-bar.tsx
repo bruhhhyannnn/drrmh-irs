@@ -3,45 +3,100 @@
 import { ProfileDrawer } from '@/components/auth';
 import { FOCUS_RING } from '@/components/ds';
 import { cn, supabase } from '@/lib';
-import { useAuthStore } from '@/store';
-import { ChevronDown, LogOut, User } from 'lucide-react';
+import { canUseAssessment } from '@/lib/access';
+import { RATE_APP_URL } from '@/lib/rate-app';
+import { useAuthStore, useRateAppStore } from '@/store';
+import { ChevronDown, LogOut, Star, User } from 'lucide-react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useId, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Avatar, GUTTER, personName } from './chrome';
 import { WaitingToSend } from './waiting-to-send';
 
 /**
- * Logo and name on the left; on the right, the "waiting to send" chip while a report is queued
- * on this phone, and the account button, which holds My profile and Sign out.
+ * Logo and name on the left, linking home; for those who can assess buildings, the
+ * Report | Assessment switch (inline from tablet, its own row on phone); on the right, the
+ * "waiting to send" chip while something is queued on this phone, and the account button,
+ * which holds My profile, Rate the app and Sign out.
  */
 export function TopBar() {
   const { userProfile } = useAuthStore();
+  const showSwitch = canUseAssessment(userProfile);
   return (
     <header className="border-b border-line bg-surface">
       <div className={cn(GUTTER, 'relative flex h-16 items-center gap-2.5 md:h-18')}>
-        <Image
-          src="/irs-logo.png"
-          alt="IRS logo"
-          width={32}
-          height={32}
-          className="size-6.5 shrink-0 object-contain md:size-8"
-        />
-        <span className="text-[17px] leading-[1.2] font-extrabold whitespace-nowrap">
-          DRRM-H IRS
-        </span>
+        <Link
+          href="/home"
+          aria-label="DRRM-H IRS home"
+          className={cn('-mx-1 flex items-center gap-2.5 rounded-lg px-1 py-1', FOCUS_RING)}
+        >
+          <Image
+            src="/irs-logo.png"
+            alt=""
+            width={32}
+            height={32}
+            className="size-6.5 shrink-0 object-contain md:size-8"
+          />
+          <span className="text-[17px] leading-[1.2] font-extrabold whitespace-nowrap">
+            DRRM-H IRS
+          </span>
+        </Link>
+        {showSwitch && <ModeSwitch className="ml-3 hidden md:flex" />}
         <div className="flex-1" />
         {userProfile && <WaitingToSend />}
         {userProfile && <AccountMenu />}
       </div>
+      {showSwitch && (
+        <div className={cn(GUTTER, 'pb-3 md:hidden')}>
+          <ModeSwitch className="flex" />
+        </div>
+      )}
     </header>
+  );
+}
+
+const MODES = [
+  { href: '/report', label: 'Report' },
+  { href: '/assessment', label: 'Assessment' },
+];
+
+/** Looks like SegmentedControl, but each option is a link to its page. */
+function ModeSwitch({ className }: { className?: string }) {
+  const pathname = usePathname();
+  return (
+    <nav
+      aria-label="Report or assessment"
+      className={cn('gap-1 rounded-full bg-gray-100 p-1', className)}
+    >
+      {MODES.map((mode) => {
+        const on = pathname === mode.href || pathname.startsWith(`${mode.href}/`);
+        return (
+          <Link
+            key={mode.href}
+            href={mode.href}
+            aria-current={on ? 'page' : undefined}
+            className={cn(
+              'flex h-11 flex-1 items-center justify-center rounded-full px-4 text-[15px] large-text:text-[16px] transition-colors md:flex-none',
+              FOCUS_RING,
+              on
+                ? 'bg-surface font-bold text-gray-900 shadow-[0_1px_3px_rgba(16,24,40,.12)] dark:bg-gray-300'
+                : 'font-semibold text-gray-600 hover:text-gray-900'
+            )}
+          >
+            {mode.label}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
 
 function AccountMenu() {
   const router = useRouter();
   const { user, userProfile, reset } = useAuthStore();
+  const markRated = useRateAppStore((s) => s.markRated);
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -121,6 +176,21 @@ function AccountMenu() {
                 <User size={18} aria-hidden className="text-gray-600" />
                 My profile
               </MenuButton>
+              {/* For anyone who skipped the popup after a report. */}
+              <a
+                href={RATE_APP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => {
+                  setOpen(false);
+                  markRated();
+                }}
+                className={cn(MENU_ITEM, 'text-gray-900 hover:bg-gray-50')}
+              >
+                <Star size={18} aria-hidden className="text-gray-600" />
+                Rate the app
+                <span className="sr-only"> (opens in a new tab)</span>
+              </a>
               <MenuButton tone="danger" onClick={signOut}>
                 <LogOut size={18} aria-hidden />
                 Sign out
@@ -134,6 +204,11 @@ function AccountMenu() {
     </>
   );
 }
+
+const MENU_ITEM = cn(
+  'flex h-12 items-center gap-3 rounded-[14px] px-3 text-left text-[17px] font-semibold',
+  FOCUS_RING
+);
 
 function MenuButton({
   tone,
@@ -149,9 +224,8 @@ function MenuButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'flex h-12 items-center gap-3 rounded-[14px] px-3 text-left text-[17px] font-semibold',
-        tone === 'danger' ? 'hover:bg-error-50 text-error-700' : 'text-gray-900 hover:bg-gray-50',
-        FOCUS_RING
+        MENU_ITEM,
+        tone === 'danger' ? 'hover:bg-error-50 text-error-700' : 'text-gray-900 hover:bg-gray-50'
       )}
     >
       {children}

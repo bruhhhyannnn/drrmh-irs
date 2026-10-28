@@ -9,9 +9,12 @@ import {
   LocationPicker,
   missingPersonsMeta,
   OptionTile,
+  OTHER_OPTION,
+  OTHER_VALUE,
   PeopleDrawer,
   SelectField,
   Stepper,
+  TextInput,
   type CasualtyEntry,
   type PersonEntry,
   type PersonSex,
@@ -144,6 +147,8 @@ function ReportForm({
 
   const [clusterId, setClusterId] = useState(report?.cluster_id ?? '');
   const [unitId, setUnitId] = useState(report?.unit_id ?? '');
+  // "Other (please specify)": a unit not listed yet, added to the cluster when this saves.
+  const [unitName, setUnitName] = useState('');
   const [location, setLocation] = useState<PickedLocation | null>(
     report?.latitude != null && report?.longitude != null
       ? { lat: report.latitude, lng: report.longitude, name: report.location_name }
@@ -198,6 +203,7 @@ function ReportForm({
     const next: Record<string, string> = {};
     if (!report && !eventId) next.event = 'Pick the event this report is for.';
     if (!clusterId) next.cluster = 'Pick a cluster.';
+    if (unitId === OTHER_VALUE && !unitName.trim()) next.unitName = 'Enter the unit name.';
     if (!location) next.location = 'Drop a pin on the map.';
     if (!damageId) next.damage = 'Pick the structural damage.';
     setErrors(next);
@@ -205,7 +211,8 @@ function ReportForm({
 
     const payload = {
       cluster_id: clusterId,
-      unit_id: unitId || null,
+      unit_id: unitId === OTHER_VALUE ? null : unitId || null,
+      unit_name: unitId === OTHER_VALUE ? unitName.trim() : null,
       latitude: location!.lat,
       longitude: location!.lng,
       location_name: location!.name,
@@ -261,6 +268,8 @@ function ReportForm({
           }
         }
       }
+      // A unit typed under Other is new in the unit lists.
+      if (payload.unit_name) queryClient.invalidateQueries({ queryKey: ['units'] });
       onDone();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'The report could not be saved.');
@@ -337,14 +346,43 @@ function ReportForm({
               <SelectField
                 id="report-unit"
                 value={unitId}
-                onChange={setUnitId}
-                options={units
-                  .filter((u) => u.is_active || u.id === unitId)
-                  .map((u) => ({ value: u.id, label: u.name }))}
-                placeholder={clusterId ? 'Select unit' : 'Pick the cluster first'}
+                onChange={(value) => {
+                  setUnitId(value);
+                  setErrors((er) => ({ ...er, unitName: '' }));
+                }}
+                options={[
+                  ...units
+                    .filter((u) => u.is_active || u.id === unitId)
+                    .map((u) => ({ value: u.id, label: u.name })),
+                  OTHER_OPTION,
+                ]}
+                placeholder={clusterId ? 'No unit' : 'Pick the cluster first'}
+                emptyLabel="No unit"
                 disabled={!clusterId}
               />
             </FormField>
+            {unitId === OTHER_VALUE && (
+              <FormField
+                id="report-unit-name"
+                label="Unit name"
+                hint="Required"
+                error={errors.unitName}
+              >
+                <TextInput
+                  id="report-unit-name"
+                  autoFocus
+                  placeholder="e.g. Room 500s"
+                  autoComplete="off"
+                  value={unitName}
+                  onChange={(e) => {
+                    setUnitName(e.target.value);
+                    setErrors((er) => ({ ...er, unitName: '' }));
+                  }}
+                  invalid={!!errors.unitName}
+                  aria-describedby={errors.unitName ? 'report-unit-name-error' : undefined}
+                />
+              </FormField>
+            )}
             <div className="flex flex-col gap-1.5 md:col-span-2">
               <span
                 id="report-location-label"

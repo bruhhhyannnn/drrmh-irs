@@ -1,7 +1,18 @@
+---
+type: fix
+ticket: DRRM-006
+status: approved
+branch: refactor/schema-dual-write-sunset
+modules:
+  - '[[database]]'
+  - '[[field-reports]]'
+tags: [plan, fix]
+---
+
 # [DRRM-006] Fix Plan: Schema Normalization & Legacy Dual-Write Sunset
 
 - **Status:** `[Approved]`
-- **Related Bugs / Audits:** [`docs/plan/review/2026-09-08-dev-branch-audit.md`](file:///C:/Users/jomar/orca/drrmh-irs-dev/docs/plan/review/2026-09-08-dev-branch-audit.md) (§4.1, §4.2, §4.3, §4.4, §9.2, §10)
+- **Related Bugs / Audits:** [`docs/plan/review/2026-09-08-dev-branch-audit.md`](../../plan/review/2026-09-08-dev-branch-audit.md) (§4.1, §4.2, §4.3, §4.4, §9.2, §10)
 - **Target Branch / PR:** `refactor/schema-dual-write-sunset`
 - **Author:** Antigravity
 
@@ -21,7 +32,7 @@ Standardize the Prisma schema conventions (PascalCase model names with `@@map`, 
 
 ### 2.1 Database Schema & Migrations
 
-- [ ] [`prisma/schema.prisma`](file:///C:/Users/jomar/orca/drrmh-irs-dev/prisma/schema.prisma):
+- [ ] [`prisma/schema.prisma`](../../../prisma/schema.prisma):
   - **PascalCase Model Naming (§4.1):**
     - `model campus` → `model Campus` with `@@map("campuses")`
     - `model bystander_reports` → `model BystanderReport` with `@@map("bystander_reports")`
@@ -51,10 +62,10 @@ Standardize the Prisma schema conventions (PascalCase model names with `@@map`, 
 - [ ] **Audit Read Paths (§10):**
   - Verify every component and server action reads exclusively from `report_population_counts`.
   - Update any remaining export utilities to aggregate from `population_counts` instead of flat fields.
-- [ ] [`src/lib/utils.ts`](file:///C:/Users/jomar/orca/drrmh-irs-dev/src/lib/utils.ts):
+- [ ] [`src/lib/utils.ts`](../../../src/lib/utils.ts):
   - Delete `mapPopulationCountsToLegacyColumns`.
   - Remove invocation of `mapPopulationCountsToLegacyColumns` in `createReport` and `updateReport`.
-- [ ] [`src/lib/constants.ts`](file:///C:/Users/jomar/orca/drrmh-irs-dev/src/lib/constants.ts):
+- [ ] [`src/lib/constants.ts`](../../../src/lib/constants.ts):
   - Remove deprecated `HEADCOUNT_FIELDS` array.
 
 ### 2.3 Codebase Prisma Client Updates
@@ -70,7 +81,7 @@ Standardize the Prisma schema conventions (PascalCase model names with `@@map`, 
 ## 3. Step-by-Step Execution Plan
 
 1. [ ] **Step 1:** Audit and update all remaining flat-column read paths across the codebase.
-2. [ ] **Step 2:** Update [`prisma/schema.prisma`](file:///C:/Users/jomar/orca/drrmh-irs-dev/prisma/schema.prisma) with PascalCase models, `@@map`, indexes, and timestamps.
+2. [ ] **Step 2:** Update [`prisma/schema.prisma`](../../../prisma/schema.prisma) with PascalCase models, `@@map`, indexes, and timestamps.
 3. [ ] **Step 3:** Remove the 12 flat columns from `model Report` in `schema.prisma`.
 4. [ ] **Step 4:** Generate migration via `npx prisma migrate dev --name schema_normalization_and_dual_write_sunset`.
 5. [ ] **Step 5:** Append SQL CHECK constraints to the generated migration file.

@@ -21,7 +21,7 @@ import {
   type BystanderReportFormData,
 } from '@/lib';
 import { getQueuedReportCount, isNetworkError, queueBystanderReport } from '@/lib/offline-queue';
-import { useOfflineQueueStore } from '@/store';
+import { useOfflineQueueStore, useRateAppStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { WifiOff } from 'lucide-react';
@@ -271,6 +271,7 @@ export function BystanderReportForm() {
       if (!navigator.onLine) return await saveOffline();
       const saved = await createBystanderReport(payload, toBystanderPhotoFormData(blobs));
       queryClient.invalidateQueries({ queryKey: ['bystander-reports'] });
+      useRateAppStore.getState().reportSent();
       setResult({ kind: 'sent', at: saved.submittedAt, photosSaved: saved.photoCount, ...summary });
     } catch (err) {
       // Connection dropped mid-send: keep the report instead of losing it.

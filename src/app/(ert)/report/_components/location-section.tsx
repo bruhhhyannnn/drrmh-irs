@@ -1,5 +1,5 @@
 import { LocationPicker, type PickedLocation } from '@/components/ds';
-import { SectionCard } from './chrome';
+import { SectionCard } from '../../_components/chrome';
 
 export type { PickedLocation };
 

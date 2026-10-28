@@ -1,8 +1,11 @@
-import { figtree, splineSansMono } from '@/components/ds';
+import { figtree, RateAppDialog, splineSansMono } from '@/components/ds';
 import { cn } from '@/lib';
 import { TopBar } from './top-bar';
 
-/** Solid white top bar over a light grey page, in Figtree. */
+/**
+ * Solid white top bar over a light grey page, in Figtree. Rate the app asks here after a report
+ * sends.
+ */
 export function ErtFrame({ children }: { children: React.ReactNode }) {
   return (
     <div
@@ -15,6 +18,7 @@ export function ErtFrame({ children }: { children: React.ReactNode }) {
     >
       <TopBar />
       {children}
+      <RateAppDialog inAccountMenu />
     </div>
   );
 }

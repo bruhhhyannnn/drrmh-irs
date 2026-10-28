@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PILLAR_CODES } from './assessment-template';
 
 /* ─── Auth ─── */
 export const signInSchema = z.object({
@@ -40,6 +41,9 @@ const userBaseSchema = z.object({
   cluster_id: z.string().uuid().optional().nullable(),
   unit_id: z.string().uuid().optional().nullable(),
   position_id: z.string().uuid().optional().nullable(),
+  // "Other (please specify)": names the server adds to Settings when they're new.
+  custom_unit_name: z.string().trim().max(120, 'Keep it under 120 characters').optional(),
+  custom_position_name: z.string().trim().max(120, 'Keep it under 120 characters').optional(),
   user_type_id: z.string().uuid('User type is required'),
   is_active: z.boolean().default(true),
   campus_id: z.string().uuid('Campus is required'),
@@ -103,6 +107,8 @@ export const reportSchema = z.object({
   event_id: z.string().uuid('Event is required'),
   cluster_id: z.string().uuid('Cluster is required'),
   unit_id: z.string().optional().nullable(),
+  /** "Other (please specify)": a unit not listed yet, added to the cluster when the report saves. */
+  unit_name: z.string().trim().max(120).optional().nullable(),
   latitude: z.number().optional().nullable(),
   longitude: z.number().optional().nullable(),
   location_name: z.string().optional().nullable(),
@@ -214,6 +220,22 @@ export const unitSchema = z.object({
   is_active: z.boolean().default(true),
 });
 
+/** A building assessments are made of (DRRM-015); settings fix its name, unit and floors. */
+export const buildingSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Enter a building name.')
+    .max(120, 'Keep it under 120 characters.'),
+  unit_id: z.string().uuid('Pick a unit.'),
+  floor_count: z.coerce
+    .number({ invalid_type_error: 'Enter the number of floors.' })
+    .int('Enter a whole number of floors.')
+    .min(1, 'A building has at least 1 floor.')
+    .max(200, 'Enter 200 floors or fewer.'),
+  is_active: z.boolean().default(true),
+});
+
 export const positionSchema = z.object({
   name: z.string().trim().min(1, 'Enter a position name.'),
   is_active: z.boolean().default(true),
@@ -244,6 +266,148 @@ export const populationCategorySchema = z.object({
   is_active: z.boolean().default(true),
 });
 
+/* ─── Building assessment ─── */
+const uuid = z.string().uuid();
+
+// One submitted assessment, as the form sends it and the offline queue replays it. The server
+// re-checks it against the template (prepareAssessmentWrite) and takes the evaluator from the
+// caller's token, not from `evaluator_id`.
+export const assessmentPayloadSchema = z.object({
+  client_ref: uuid,
+  evaluator_id: uuid,
+  template_version_id: uuid,
+  building: z.union([
+    z.object({ id: uuid }),
+    z.object({ new: z.object({ unit_id: uuid, name: z.string().trim().min(1).max(120) }) }),
+  ]),
+  event_id: uuid.nullable(),
+  incident_commander: z.string().trim().max(200),
+  floor_count: z.number().int().min(1).max(200),
+  area_type_ids: z.array(uuid).max(50),
+  started_at: z.string().datetime(),
+  ended_at: z.string().datetime(),
+  answers: z
+    .array(
+      z.object({
+        item_id: uuid,
+        answer: z.enum(['yes', 'no', 'na']).nullable(),
+        remarks: z.string().max(2000).nullable(),
+      })
+    )
+    .max(1000),
+  comments: z
+    .array(z.object({ section_id: uuid, comment: z.string().trim().min(1).max(2000) }))
+    .max(100),
+});
+
+// The Details step: where the building is and who is in charge.
+export const assessmentDetailsSchema = z
+  .object({
+    cluster_id: z.string().min(1, 'Choose a cluster'),
+    unit_id: z.string().min(1, 'Choose a college or unit'),
+    building_id: z.string(),
+    new_building_name: z.string().trim().max(120),
+    incident_commander: z.string().trim().max(200),
+    event_id: z.string(),
+  })
+  .refine((d) => d.building_id || d.new_building_name, {
+    path: ['building_id'],
+    message: 'Choose a building or add one',
+  });
+
+/* ─── Checklist editor (DRRM-015 Phase 3, Super Admin) ─── */
+
+export const draftVersionSchema = z.object({
+  from_version_id: uuid,
+  label: z
+    .string()
+    .trim()
+    .min(1, 'Enter a version label.')
+    .max(120, 'Keep it under 120 characters.'),
+});
+
+export const sectionWordingSchema = z.object({
+  title_en: z
+    .string()
+    .trim()
+    .min(1, 'Enter the English title.')
+    .max(240, 'Keep it under 240 characters.'),
+  title_fil: z.string().trim().max(240, 'Keep it under 240 characters.').default(''),
+});
+
+export const sectionSchema = sectionWordingSchema.extend({
+  code: z.string().trim().min(1, 'Enter a section code.').max(20, 'Keep it under 20 characters.'),
+  area_type_id: z.preprocess(emptyToNull, uuid.nullable().optional()),
+});
+
+export const itemWordingSchema = z.object({
+  prompt_en: z
+    .string()
+    .trim()
+    .min(1, 'Enter the question in English.')
+    .max(1000, 'Keep it under 1,000 characters.'),
+  prompt_fil: z.string().trim().max(1000, 'Keep it under 1,000 characters.').default(''),
+  note_en: z.preprocess(
+    emptyToNull,
+    z.string().trim().max(1000, 'Keep it under 1,000 characters.').nullable().optional()
+  ),
+  note_fil: z.preprocess(
+    emptyToNull,
+    z.string().trim().max(1000, 'Keep it under 1,000 characters.').nullable().optional()
+  ),
+  reference: z.preprocess(
+    emptyToNull,
+    z.string().trim().max(500, 'Keep it under 500 characters.').nullable().optional()
+  ),
+});
+
+export const itemSchema = itemWordingSchema
+  .extend({
+    code: z.string().trim().min(1, 'Enter an item code.').max(30, 'Keep it under 30 characters.'),
+    parent_id: z.preprocess(emptyToNull, uuid.nullable().optional()),
+    is_scored: z.boolean().default(true),
+    pillar_code: z.preprocess(emptyToNull, z.enum(PILLAR_CODES).nullable().optional()),
+    safe_answer: z.enum(['yes', 'no']).default('yes'),
+    area_type_id: z.preprocess(emptyToNull, uuid.nullable().optional()),
+    min_floors: z.preprocess(
+      (v) => (v === '' || v === null || v === undefined ? null : v),
+      z.coerce
+        .number({ invalid_type_error: 'Enter a whole number of floors.' })
+        .int('Enter a whole number of floors.')
+        .min(1, 'Minimum floors must be at least 1.')
+        .max(200, 'Enter 200 floors or fewer.')
+        .nullable()
+    ),
+    flag_label: z.preprocess(
+      emptyToNull,
+      z.string().trim().max(200, 'Keep it under 200 characters.').nullable().optional()
+    ),
+  })
+  .refine((d) => !d.parent_id || d.is_scored, {
+    path: ['is_scored'],
+    message: 'Sub-items are always scored.',
+  })
+  .refine((d) => !d.is_scored || !!d.pillar_code, {
+    path: ['pillar_code'],
+    message: 'Choose a DRRM pillar for this question.',
+  });
+
+export const areaTypeSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .min(1, 'Enter a code.')
+    .max(40, 'Keep it under 40 characters.')
+    .regex(/^[a-z0-9_]+$/, 'Use lowercase letters, numbers and underscores.'),
+  name_en: z
+    .string()
+    .trim()
+    .min(1, 'Enter the English name.')
+    .max(120, 'Keep it under 120 characters.'),
+  name_fil: z.string().trim().max(120, 'Keep it under 120 characters.').default(''),
+  is_active: z.boolean().default(true),
+});
+
 /* ─── Inferred types ─── */
 export type SignInFormData = z.infer<typeof signInSchema>;
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
@@ -260,3 +424,11 @@ export type BystanderReportFormData = z.infer<typeof bystanderReportSchema>;
 export type BystanderFormValues = z.input<typeof bystanderFormSchema>;
 export type BystanderMissingPerson = z.infer<typeof bystanderMissingPersonSchema>;
 export type BystanderCasualty = z.infer<typeof bystanderCasualtySchema>;
+export type AssessmentPayload = z.infer<typeof assessmentPayloadSchema>;
+export type AssessmentDetailsFormData = z.infer<typeof assessmentDetailsSchema>;
+export type DraftVersionFormData = z.infer<typeof draftVersionSchema>;
+export type SectionWordingFormData = z.infer<typeof sectionWordingSchema>;
+export type SectionFormData = z.infer<typeof sectionSchema>;
+export type ItemWordingFormData = z.infer<typeof itemWordingSchema>;
+export type ItemFormData = z.infer<typeof itemSchema>;
+export type AreaTypeFormData = z.infer<typeof areaTypeSchema>;

@@ -41,6 +41,7 @@ import {
 } from '../_components/ui';
 import { formatDate, formatEventWindow, formatTime, plural } from '../_lib/format';
 import { capitalize, eventTone } from '../_lib/status';
+import { BuildingSafety } from './_components/building-safety/building-safety';
 
 type Dashboard = NonNullable<ReturnType<typeof useDashboard>['data']>;
 
@@ -70,6 +71,7 @@ export default function DashboardPage() {
             <ReportsByCluster data={data} />
             <EventsByStatus data={data} />
           </div>
+          <BuildingSafety />
           <MonthCard data={data} />
         </>
       )}

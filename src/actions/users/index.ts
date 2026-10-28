@@ -1,6 +1,7 @@
 'use server';
 
 import { isAdminUserType } from '@/lib';
+import { positionIdForName, unitIdForName } from '@/lib/lookup-names';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -20,9 +21,26 @@ export type CreateUserInput = {
   user_type_id: string;
   is_active?: boolean;
   campus_id: string;
+  /** "Other (please specify)": a unit in `cluster_id` or a position not in the list yet. */
+  custom_unit_name?: string | null;
+  custom_position_name?: string | null;
 };
 
 export type UpdateUserInput = Omit<Partial<CreateUserInput>, 'password'>;
+
+/** Swaps typed unit / position names for ids, adding the unit or position when it's new. */
+async function withNamedAssignment<T extends UpdateUserInput>(data: T) {
+  const { custom_unit_name, custom_position_name, ...rest } = data;
+  const unitName = custom_unit_name?.trim();
+  const positionName = custom_position_name?.trim();
+  return {
+    ...rest,
+    ...(unitName && rest.cluster_id
+      ? { unit_id: await unitIdForName(rest.cluster_id, unitName) }
+      : {}),
+    ...(positionName ? { position_id: await positionIdForName(positionName) } : {}),
+  };
+}
 
 export async function getUsers(query?: string, campusId?: string) {
   return prisma.user.findMany({
@@ -78,7 +96,8 @@ export async function getUserByAuthId(authId: string) {
 }
 
 export async function createUser(data: CreateUserInput) {
-  const { password, ...profileData } = data;
+  const { password, ...named } = data;
+  const profileData = await withNamedAssignment(named);
 
   const userType = await prisma.userType.findUnique({
     where: { id: profileData.user_type_id },
@@ -112,7 +131,7 @@ export async function updateUser(id: string, data: UpdateUserInput) {
   try {
     const user = await prisma.user.update({
       where: { id },
-      data,
+      data: await withNamedAssignment(data),
     });
     revalidatePath('/users');
     return user;
@@ -144,6 +163,7 @@ export async function completeUserProfile(
     last_name?: string;
     cluster_id?: string;
     unit_id?: string;
+    custom_unit_name?: string;
     campus_id?: string;
   }
 ) {
@@ -151,22 +171,9 @@ export async function completeUserProfile(
     throw new Error('campus_id is required to complete profile');
   }
 
-  let positionId = data.position_id;
-
-  if (data.custom_position_name) {
-    const position = await prisma.position.upsert({
-      where: { name: data.custom_position_name },
-      update: {},
-      create: { name: data.custom_position_name },
-    });
-    positionId = position.id;
-  }
-
-  const { position_id: _, custom_position_name: __, ...rest } = data;
-
   const user = await prisma.user.update({
     where: { id },
-    data: { ...rest, position_id: positionId, is_profile_complete: true },
+    data: { ...(await withNamedAssignment(data)), is_profile_complete: true },
     include: {
       cluster: true,
       unit: { include: { cluster: true } },
@@ -179,15 +186,40 @@ export async function completeUserProfile(
   return user;
 }
 
-export async function deleteUser(id: string) {
-  const user = await prisma.user.findUnique({ where: { id }, select: { auth_id: true } });
-  if (!user) throw new Error('User not found');
+export type DeleteUserResult = { ok: true } | { ok: false; error: string };
 
-  // Nullify user_id on any reports before deleting to avoid FK constraint violation
-  await prisma.report.updateMany({ where: { user_id: id }, data: { user_id: null } });
+/**
+ * Deletes the profile, then its sign-in. Their reports and the events they created stay, without
+ * a reporter or creator. Someone who evaluated building assessments can't be deleted, since each
+ * assessment keeps its evaluator: that comes back as `ok: false` rather than thrown, because
+ * production hides a thrown message.
+ */
+export async function deleteUser(id: string): Promise<DeleteUserResult> {
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: { auth_id: true, _count: { select: { assessments: true } } },
+  });
+  if (!user) {
+    return {
+      ok: false,
+      error: 'This user was already removed. Refresh the page to update the list.',
+    };
+  }
+  const assessments = user._count.assessments;
+  if (assessments > 0) {
+    return {
+      ok: false,
+      error: `They evaluated ${assessments === 1 ? '1 building assessment' : `${assessments} building assessments`}, which keep their evaluator. Turn off Active instead, so they can no longer sign in.`,
+    };
+  }
 
   try {
-    await prisma.user.delete({ where: { id } });
+    // One transaction, so a failed delete leaves their reports and events as they were.
+    await prisma.$transaction([
+      prisma.report.updateMany({ where: { user_id: id }, data: { user_id: null } }),
+      prisma.event.updateMany({ where: { user_id: id }, data: { user_id: null } }),
+      prisma.user.delete({ where: { id } }),
+    ]);
   } catch (err) {
     throw toFriendlyError(err, 'user');
   }
@@ -197,4 +229,5 @@ export async function deleteUser(id: string) {
   }
 
   revalidatePath('/users');
+  return { ok: true };
 }

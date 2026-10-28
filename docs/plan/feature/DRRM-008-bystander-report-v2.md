@@ -1,3 +1,15 @@
+---
+type: feature
+ticket: DRRM-008
+status: in-review
+branch: feat/DRRM-008-bystander-report-v2
+modules:
+  - '[[bystander-reports]]'
+  - '[[offline-pwa]]'
+  - '[[database]]'
+tags: [plan, feature]
+---
+
 # [DRRM-008] Feature Plan: Bystander Report v2
 
 - **Status:** `[In Review]`

@@ -2,10 +2,12 @@ import { FOCUS_RING } from '@/components/ds';
 import { cn } from '@/lib';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { BACK_LINK, MoreBackLink } from './shell/more-back-link';
 
 /**
- * Page title row: an optional Back link above, the campus logo, the title with a status chip,
- * one line under it, and the page's actions on the right (wrapping under on narrow screens).
+ * Page title row: an optional Back link above (on phone, "More" on the pages the More tab
+ * opens), the campus logo, the title with a status chip, one line under it, and the page's
+ * actions on the right (wrapping under on narrow screens).
  */
 export function PageHeader({
   title,
@@ -24,17 +26,13 @@ export function PageHeader({
 }) {
   return (
     <div className="flex flex-col gap-3">
-      {back && (
-        <Link
-          href={back.href}
-          className={cn(
-            '-ml-1 flex h-8 items-center gap-1.5 self-start rounded-lg px-1 text-[16px] font-bold text-gray-600 hover:text-gray-900',
-            FOCUS_RING
-          )}
-        >
+      {back ? (
+        <Link href={back.href} className={cn(BACK_LINK, FOCUS_RING)}>
           <ArrowLeft size={16} aria-hidden />
           {back.label}
         </Link>
+      ) : (
+        <MoreBackLink />
       )}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex min-w-0 flex-[1_1_300px] items-center gap-4">

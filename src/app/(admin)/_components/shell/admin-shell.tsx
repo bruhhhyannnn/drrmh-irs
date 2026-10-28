@@ -9,10 +9,10 @@ import { ArrowUpRight, ChevronDown, Menu } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import packageJson from '../../../../../package.json';
 import { CampusLabel, CampusSwitcher, useIsSuperAdmin, useScopedCampusId } from './campus-switcher';
-import { isActivePath, navFor, SUPER_ADMIN_HREFS, type NavItem } from './nav';
+import { isActivePath, MORE_HREF, navFor, SUPER_ADMIN_HREFS, type NavItem } from './nav';
 
 const { version } = packageJson;
 
@@ -235,126 +235,57 @@ function Rail() {
 function BottomTabs() {
   const pathname = usePathname();
   const pending = usePendingBadge();
-  const [moreOpen, setMoreOpen] = useState(false);
   const nav = navFor(useIsSuperAdmin());
   const tabs = nav.filter((n) => n.tab);
-  const more = nav.filter((n) => !n.tab);
-  const moreActive = more.some((n) => isActivePath(pathname, n.href));
-
-  useEffect(() => setMoreOpen(false), [pathname]);
+  // The More page and the pages it opens (Campus, Users, Settings…) light up More.
+  const moreActive =
+    isActivePath(pathname, MORE_HREF) || nav.some((n) => !n.tab && isActivePath(pathname, n.href));
 
   return (
-    <>
-      {moreOpen && (
-        <MoreSheet items={more} pathname={pathname} onClose={() => setMoreOpen(false)} />
-      )}
-      <nav
-        aria-label="Main"
-        data-bottom-bar
-        className="fixed inset-x-0 bottom-0 z-40 grid h-17 grid-cols-5 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden"
+    <nav
+      aria-label="Main"
+      data-bottom-bar
+      className="fixed inset-x-0 bottom-0 z-40 grid h-17 grid-cols-5 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden"
+    >
+      {tabs.map((item) => {
+        const on = isActivePath(pathname, item.href);
+        return (
+          <Link
+            key={item.key}
+            href={item.href}
+            aria-current={on ? 'page' : undefined}
+            className={cn(
+              'relative flex flex-col items-center justify-center gap-1 text-[11px]',
+              on ? 'text-brand-500 font-bold' : 'font-medium text-gray-600',
+              FOCUS_RING,
+              'focus-visible:-outline-offset-3'
+            )}
+          >
+            <item.icon size={20} aria-hidden />
+            <span>{item.short}</span>
+            {item.key === 'bystander' && pending > 0 && (
+              <>
+                <BadgeDot className="top-2.5 left-[calc(50%+6px)]" />
+                <span className="sr-only">, {pending} pending</span>
+              </>
+            )}
+          </Link>
+        );
+      })}
+      <Link
+        href={MORE_HREF}
+        aria-current={pathname === MORE_HREF ? 'page' : undefined}
+        className={cn(
+          'flex flex-col items-center justify-center gap-1 text-[11px]',
+          moreActive ? 'text-brand-500 font-bold' : 'font-medium text-gray-600',
+          FOCUS_RING,
+          'focus-visible:-outline-offset-3'
+        )}
       >
-        {tabs.map((item) => {
-          const on = isActivePath(pathname, item.href);
-          return (
-            <Link
-              key={item.key}
-              href={item.href}
-              aria-current={on ? 'page' : undefined}
-              className={cn(
-                'relative flex flex-col items-center justify-center gap-1 text-[11px]',
-                on ? 'text-brand-500 font-bold' : 'font-medium text-gray-600',
-                FOCUS_RING,
-                'focus-visible:-outline-offset-3'
-              )}
-            >
-              <item.icon size={20} aria-hidden />
-              <span>{item.short}</span>
-              {item.key === 'bystander' && pending > 0 && (
-                <>
-                  <BadgeDot className="top-2.5 left-[calc(50%+6px)]" />
-                  <span className="sr-only">, {pending} pending</span>
-                </>
-              )}
-            </Link>
-          );
-        })}
-        <button
-          type="button"
-          aria-expanded={moreOpen}
-          onClick={() => setMoreOpen((o) => !o)}
-          className={cn(
-            'flex flex-col items-center justify-center gap-1 text-[11px]',
-            moreActive || moreOpen ? 'text-brand-500 font-bold' : 'font-medium text-gray-600',
-            FOCUS_RING,
-            'focus-visible:-outline-offset-3'
-          )}
-        >
-          <Menu size={20} aria-hidden />
-          <span>More</span>
-        </button>
-      </nav>
-    </>
-  );
-}
-
-/** Campus (super admins), Users, Settings and the DRRM pillars on phone, above the bottom tabs. */
-function MoreSheet({
-  items,
-  pathname,
-  onClose,
-}: {
-  items: NavItem[];
-  pathname: string;
-  onClose: () => void;
-}) {
-  const sheetRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    sheetRef.current?.querySelector<HTMLElement>('a')?.focus();
-    const onKeyDown = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [onClose]);
-  return (
-    <div className="fixed inset-0 z-40 md:hidden">
-      <div aria-hidden className="absolute inset-0 bg-[rgba(16,24,40,.35)]" onClick={onClose} />
-      <div
-        ref={sheetRef}
-        className="absolute inset-x-3 bottom-[calc(68px+12px+env(safe-area-inset-bottom))] flex max-h-[calc(100dvh-104px-env(safe-area-inset-bottom))] flex-col overflow-y-auto rounded-[22px] border border-gray-200 bg-surface p-1.5 shadow-[0_18px_40px_rgba(16,24,40,.22)]"
-      >
-        {items.map((item) => {
-          const on = isActivePath(pathname, item.href);
-          return (
-            <Fragment key={item.key}>
-              {item.group && (
-                <span className="px-3 pt-3 pb-1 text-[11px] font-bold tracking-[.08em] text-gray-500 uppercase">
-                  {item.group}
-                </span>
-              )}
-              <Link
-                href={item.href}
-                {...newTabProps(item)}
-                aria-current={on ? 'page' : undefined}
-                className={cn(
-                  'flex h-12 shrink-0 items-center gap-3 rounded-[14px] px-3 text-[15px]',
-                  on ? 'bg-brand-25 text-brand-500 font-bold' : 'font-semibold text-gray-900',
-                  FOCUS_RING
-                )}
-              >
-                <item.icon size={20} aria-hidden />
-                <span className="min-w-0 flex-1">{item.label}</span>
-                {item.newTab && (
-                  <>
-                    <ArrowUpRight size={16} aria-hidden className="shrink-0 text-gray-400" />
-                    {NEW_TAB_NOTE}
-                  </>
-                )}
-              </Link>
-            </Fragment>
-          );
-        })}
-        <p className="px-3 pt-2 pb-1.5 text-[12px] text-gray-500">DRRM-H IRS · Version {version}</p>
-      </div>
-    </div>
+        <Menu size={20} aria-hidden />
+        <span>More</span>
+      </Link>
+    </nav>
   );
 }
 

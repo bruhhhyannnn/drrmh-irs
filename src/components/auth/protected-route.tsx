@@ -8,8 +8,8 @@ import { Button } from '../ui/button';
 import { Loader } from '../ui/loader';
 
 const REDIRECT_USER_TYPES: Record<string, string> = {
-  'ERT Member': '/report',
-  Bystander: '/report',
+  'ERT Member': '/home',
+  Bystander: '/home',
 };
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {

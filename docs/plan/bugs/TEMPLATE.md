@@ -1,3 +1,12 @@
+---
+type: bug
+ticket: BUG-ID
+status: draft
+branch: ''
+modules: []
+tags: [plan, bug]
+---
+
 # [BUG-ID] Short Bug Title
 
 - **Status:** `[Open | In Progress | Resolved]`

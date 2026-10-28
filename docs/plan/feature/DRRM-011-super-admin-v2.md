@@ -1,3 +1,21 @@
+---
+type: feature
+ticket: DRRM-011
+status: in-review
+branch: feat/DRRM-011-super-admin-v2
+modules:
+  - '[[dashboard]]'
+  - '[[events]]'
+  - '[[field-reports]]'
+  - '[[bystander-reports]]'
+  - '[[users]]'
+  - '[[settings-lookups]]'
+  - '[[campus-scoping]]'
+  - '[[print]]'
+  - '[[design-system]]'
+tags: [plan, feature]
+---
+
 # [DRRM-011] Feature Plan: Super Admin v2
 
 - **Status:** `[In Review]`

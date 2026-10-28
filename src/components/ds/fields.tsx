@@ -1,11 +1,12 @@
 'use client';
 
 import { cn } from '@/lib';
-import { Check, ChevronDown } from 'lucide-react';
+import { Check } from 'lucide-react';
 import Link from 'next/link';
 import { forwardRef, useState } from 'react';
 import { Spinner } from '../ui/spinner';
 import { FOCUS_RING } from './focus';
+import { Select, type SelectOption } from './select';
 
 // Form controls from the design system: 48px fields with a 16px radius, 52px pill buttons,
 // neutral grey "Required" marks and red only for errors.
@@ -139,9 +140,9 @@ export const TextArea = forwardRef<
 });
 
 /**
- * Native select (best on phones) styled as a design-system field. `leading` sits inside the
- * field on the left, e.g. the campus logo. The placeholder option stays selectable for
- * optional fields so a choice can be cleared.
+ * A form select (the design system's `Select`) for a `<label for>`. `leading` sits inside the
+ * field on the left, e.g. the campus logo. An optional field's list starts with an empty
+ * choice, `emptyLabel` (the placeholder by default, e.g. "No unit"), so a choice can be cleared.
  */
 export function SelectField({
   id,
@@ -149,6 +150,7 @@ export function SelectField({
   onChange,
   options,
   placeholder,
+  emptyLabel,
   required,
   disabled,
   invalid,
@@ -158,8 +160,9 @@ export function SelectField({
   id: string;
   value: string;
   onChange: (value: string) => void;
-  options: { value: string; label: string }[];
+  options: SelectOption[];
   placeholder: string;
+  emptyLabel?: string;
   required?: boolean;
   disabled?: boolean;
   invalid?: boolean;
@@ -167,44 +170,18 @@ export function SelectField({
   describedBy?: string;
 }) {
   return (
-    <div className="relative">
-      {leading && (
-        <span className="pointer-events-none absolute top-1/2 left-2.5 flex -translate-y-1/2">
-          {leading}
-        </span>
-      )}
-      <select
-        id={id}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        disabled={disabled}
-        aria-invalid={invalid || undefined}
-        aria-required={required || undefined}
-        aria-describedby={describedBy}
-        className={cn(
-          CONTROL,
-          'h-12 appearance-none truncate pr-11',
-          leading ? 'pl-12' : 'pl-4',
-          !value && 'text-gray-500',
-          controlBorder(invalid),
-          FOCUS_RING
-        )}
-      >
-        <option value="" disabled={required}>
-          {placeholder}
-        </option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value} className="text-gray-900">
-            {option.label}
-          </option>
-        ))}
-      </select>
-      <ChevronDown
-        size={18}
-        aria-hidden
-        className="pointer-events-none absolute top-1/2 right-3.5 -translate-y-1/2 text-gray-500"
-      />
-    </div>
+    <Select
+      id={id}
+      value={value}
+      onChange={onChange}
+      options={required ? options : [{ value: '', label: emptyLabel ?? placeholder }, ...options]}
+      placeholder={placeholder}
+      required={required}
+      disabled={disabled}
+      invalid={invalid}
+      leading={leading}
+      describedBy={describedBy}
+    />
   );
 }
 

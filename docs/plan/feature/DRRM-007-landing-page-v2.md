@@ -1,3 +1,14 @@
+---
+type: feature
+ticket: DRRM-007
+status: in-review
+branch: feat/DRRM-007-landing-page-v2
+modules:
+  - '[[pillars-and-landing]]'
+  - '[[design-system]]'
+tags: [plan, feature]
+---
+
 # [DRRM-007] Feature Plan: Landing Page v2
 
 - **Status:** `[In Review]`

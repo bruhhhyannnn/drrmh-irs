@@ -5,9 +5,9 @@ import { useMyLatestReport } from '@/components/hooks/use-reports';
 import type { QueuedFieldReport } from '@/lib/offline-queue';
 import { useOfflineQueueStore } from '@/store';
 import { Calendar, WifiOff } from 'lucide-react';
-import { formatDateTime } from '../_lib/format';
-import { queuedHeadcount } from '../_lib/use-field-queue';
-import { DetailList, Dot, Hero, Mono, NoticeCard, Pill } from './chrome';
+import { DetailList, Dot, Hero, Mono, NoticeCard, Pill } from '../../_components/chrome';
+import { formatDateTime } from '../../_lib/format';
+import { queuedHeadcount } from '../../_lib/use-field-queue';
 
 /**
  * Shown when the campus has no ongoing event, instead of an empty event picker. The page

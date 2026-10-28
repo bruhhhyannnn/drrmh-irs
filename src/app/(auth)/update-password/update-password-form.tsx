@@ -117,6 +117,7 @@ export function UpdatePasswordForm() {
           <FieldLabel htmlFor="password">New password</FieldLabel>
           <PasswordInput
             id="password"
+            placeholder="Create a new password"
             autoComplete="new-password"
             invalid={!!errors.password}
             aria-describedby={errors.password ? 'password-error' : undefined}
@@ -130,6 +131,7 @@ export function UpdatePasswordForm() {
           <TextInput
             id="confirmPassword"
             type="password"
+            placeholder="Retype your new password"
             autoComplete="new-password"
             invalid={!!errors.confirmPassword}
             aria-describedby={errors.confirmPassword ? 'confirm-password-error' : undefined}

@@ -153,6 +153,15 @@
     --surface: #ffffff;
     --line: #eaecf0;
 
+    /* Chart series, in fixed order (building safety). Checked with the dataviz validator on
+       this surface; values are always printed, since slots 3-5 are under 3:1 on white. */
+    --series-1: #2a78d6;
+    --series-2: #eb6834;
+    --series-3: #1baf7a;
+    --series-4: #eda100;
+    --series-5: #e87ba4;
+    --series-6: #008300;
+
     --gray-25: #fcfcfd;
     --gray-50: #f9fafb;
     --gray-100: #f2f4f7;
@@ -205,6 +214,13 @@
     --canvas: #0c111d;
     --surface: #161b26;
     --line: #262c38;
+
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --series-6: #008300;
 
     --gray-25: #191e2a;
     --gray-50: #1d2331;

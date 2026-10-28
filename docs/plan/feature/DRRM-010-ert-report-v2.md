@@ -1,3 +1,15 @@
+---
+type: feature
+ticket: DRRM-010
+status: in-review
+branch: feat/DRRM-010-ert-report-v2
+modules:
+  - '[[field-reports]]'
+  - '[[offline-pwa]]'
+  - '[[design-system]]'
+tags: [plan, feature]
+---
+
 # [DRRM-010] Feature Plan: ERT Report v2
 
 - **Status:** `[In Review]`
