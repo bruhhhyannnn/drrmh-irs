@@ -1,7 +1,7 @@
 ---
 type: module
 module: auth
-updated: 2026-10-27
+updated: 2026-10-28
 verified: true
 paths:
   - src/actions/auth
@@ -57,7 +57,7 @@ Read this before touching sign-in, the profile, role checks or the setup gate.
 
 - `User` (`users`): `auth_id` (unique, Supabase Auth id), `email` and `username` (unique), `user_type_id`, `campus_id`, `cluster_id`, `unit_id`, `position_id`, `is_active`, `is_profile_complete` (default `false`).
 - `UserType` (`user_types`): seeded names are `ERT Member`, `Administrator`, `Super Admin` (`USER_TYPES`).
-- `Position` (`positions`), `Unit` (`units`): `completeUserProfile` reuses or adds one by name for "Other (please specify)" (`positionIdForName`, `unitIdForName` in `src/lib/lookup-names.ts`).
+- `Cluster` (`clusters`), `Position` (`positions`), `Unit` (`units`): `completeUserProfile` reuses or adds one by name for "Other (please specify)" (`clusterIdForName`, `positionIdForName`, `unitIdForName` in `src/lib/lookup-names.ts`). Cluster names are unique across campuses, so a name another campus has is refused (DRRM-020).
 
 ## Server actions
 
@@ -81,7 +81,7 @@ Token-verified helpers in `src/lib/server-auth.ts` (used by assessment, checklis
 - `useAuthStore`: `user`, `session`, `userProfile`, `profileError`, `loading`, `reset()`. Persisted in localStorage as `irs-auth`, only `userProfile`.
 - `ProtectedRoute`: no user → `/signin?from=<path>`; `ERT Member` (and a `Bystander` type) → `/home`; `profileError` shows "Account Loading Failed" with Retry and Sign Out.
 - `ProfileSetupGate` wraps the `(admin)` layout; ERT pages get `{ status: 'setup' }` from `useErtAccess` and render `ProfileSetup`. `useErtAccess` sends signed-out users to `/signin`, admins to `/dashboard`, and (with `requireAssessment`) users failing `canUseAssessment` to `/home`.
-- `ProfileSetup` asks for campus, cluster, building / unit (optional, since some clusters have none: No unit first, Other (please specify) last, which opens Specify unit) and position (or a custom one), then calls `completeUserProfile` and stores the returned profile.
+- `ProfileSetup` asks for campus, cluster (or Other (please specify), which opens Specify cluster), building / unit (optional, since some clusters have none: No unit first, Other (please specify) last, which opens Specify unit; a typed cluster lists only those two) and position (or a custom one), then calls `completeUserProfile`. It stores the returned profile, or shows the `ok: false` message (a typed cluster name another campus has) in the page banner.
 
 ## Rules and gotchas
 

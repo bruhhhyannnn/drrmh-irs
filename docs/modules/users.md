@@ -1,6 +1,6 @@
 ---
 type: module
-updated: 2026-10-27
+updated: 2026-10-28
 module: users
 paths:
   - src/actions/users
@@ -31,7 +31,7 @@ The admin Users page: list, search, add, edit, deactivate and delete user accoun
 - `User` (`users`): name parts (`first_name`, `middle_name`, `last_name`, `suffix`), `email` and `username` (unique), `auth_id` (unique), `user_type_id`, `campus_id`, `cluster_id`, `unit_id`, `position_id`, `is_active`, `is_profile_complete`.
 - Reads include `user_type`, `position`, `campus`, `cluster`, `unit` (with its `cluster`). `getUsers` also counts `reports`.
 - `Report` (`reports`) and `Event` (`events`): `deleteUser` sets `user_id` to null on the user's reports and the events they created.
-- `Unit`, `Position`: a name typed under "Other (please specify)" reuses the unit in that cluster (or the position) with the same name in any case, or adds one.
+- `Unit`, `Position`: a name typed under "Other (please specify)" reuses the unit in that cluster (or the position) with the same name in any case, or adds one. Profile setup does the same for `Cluster` on the chosen campus, refusing a name another campus has.
 - Supabase Auth users (through `supabaseAdmin.auth.admin`): created and deleted alongside the `users` row.
 
 ## Server actions
@@ -44,7 +44,7 @@ The admin Users page: list, search, add, edit, deactivate and delete user accoun
 - `createUser(data)`: resolves `custom_unit_name` / `custom_position_name` to ids (`withNamedAssignment`), then creates the Supabase Auth user (`email_confirm: true`) with the password, then the `users` row. `is_profile_complete` is `true` only for admin user types. If the row insert fails, the Auth user is deleted. Revalidates `/users`.
 - `updateUser(id, data)`: resolves the typed names the same way, then updates the `users` row only. Revalidates `/users`.
 - `setUserActive(id, isActive)`: the Active switch and its Undo. Revalidates `/users`.
-- `completeUserProfile(id, data)`: requires `campus_id`; resolves `custom_unit_name` / `custom_position_name`; sets `is_profile_complete = true`. Revalidates `/`.
+- `completeUserProfile(id, data)`: requires `campus_id`; resolves `custom_cluster_name` first (so a typed unit lands in it), then `custom_unit_name` / `custom_position_name`; sets `is_profile_complete = true`. Returns `{ ok: true, user }`, or `{ ok: false, error }` when the typed cluster name belongs to another campus. Revalidates `/`.
 - `deleteUser(id)`: returns `DeleteUserResult`. `{ ok: false, error }` when the user is gone or evaluated building assessments (each keeps its evaluator, so Active should be turned off instead). Otherwise nulls `reports.user_id` and `events.user_id` and deletes the row in one transaction, then deletes the Supabase Auth user. Revalidates `/users`.
 
 Errors from Prisma go through `toFriendlyError(err, 'user')` (see [[database]]).
