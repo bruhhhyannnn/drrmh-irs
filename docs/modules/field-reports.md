@@ -1,6 +1,6 @@
 ---
 type: module
-updated: 2026-10-27
+updated: 2026-10-28
 module: field-reports
 paths:
   - src/actions/reports/index.ts
@@ -51,7 +51,7 @@ A field report (status report) is one ERT team leader's headcount, casualties, m
 
 - `getReports(page, query?, campusId?, filters)`: 10 per page, search on reporter, cluster, unit, event; filter by `eventId` / `clusterId`; campus via `cluster.campus_id`.
 - `getReport(id)`: full report with people, damage and headcount.
-- `createReport(data)`: one nested create with missing persons, casualties and population counts. A `unit_name` (Unit → Other (please specify)) becomes the unit in that cluster, added when new (`unitIdForName`), so a queued report still replays as one payload. Writes legacy columns through `mapPopulationCountsToLegacyColumns`.
+- `createReport(data)`: one nested create with missing persons, casualties and population counts. A `unit_name` (Unit → Other (please specify)) becomes the unit in that cluster, added when new (`unitIdForName`), so a queued report still replays as one payload. An optional `sent_at` (ms, capped at now) sets `submitted_at`: the offline queue passes the time the report was queued, so a report sent offline keeps its real time. Writes legacy columns through `mapPopulationCountsToLegacyColumns`.
 - `saveReportEdits(id, data)`: validates with `reportSchema` minus `event_id`; resolves `unit_name` the same way; replaces headcount, missing and casualty rows in one update.
 - `deleteReport(id)`.
 - `getMyReportForOngoingEvent(userId)`: the member's latest report on any Ongoing event.

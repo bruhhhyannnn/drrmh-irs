@@ -83,7 +83,8 @@ export function OfflineQueueProvider() {
           getQueuedFieldReports,
           removeQueuedFieldReport,
           markQueuedFieldReportFailed,
-          (payload) => createReport(payload)
+          // The report's time is when it was sent on the phone, not when it got through.
+          (payload, _photos, entry) => createReport({ ...payload, sent_at: entry.createdAt })
         ),
         // Only the signed-in account's own: on a shared phone another member's entry waits
         // for them instead of blocking (or being refused for) whoever is signed in now.
