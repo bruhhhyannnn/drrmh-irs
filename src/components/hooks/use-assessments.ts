@@ -70,7 +70,10 @@ export function useAssessmentTemplate() {
 export function useTemplateVersion(versionId?: string) {
   return useQuery({
     queryKey: ['assessment-template-version', versionId],
-    queryFn: () => withOfflineCache(`template:${versionId}`, () => getTemplateVersion(versionId!)),
+    queryFn: () =>
+      withOfflineCache(`template:${versionId}`, async () =>
+        getTemplateVersion(await getAccessToken(), versionId!)
+      ),
     enabled: !!versionId,
     networkMode: 'always',
   });
@@ -80,7 +83,10 @@ export function useTemplateVersion(versionId?: string) {
 export function useAssessmentSetup(campusId?: string) {
   return useQuery({
     queryKey: ['assessment-setup', campusId],
-    queryFn: () => withOfflineCache(`setup:${campusId}`, () => getAssessmentSetup(campusId!)),
+    queryFn: () =>
+      withOfflineCache(`setup:${campusId}`, async () =>
+        getAssessmentSetup(await getAccessToken(), campusId!)
+      ),
     enabled: !!campusId,
     networkMode: 'always',
   });
