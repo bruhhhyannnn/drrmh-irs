@@ -36,18 +36,31 @@ export async function getPublishedTemplate(): Promise<AssessmentTemplate | null>
   return (await loadVersion({ status: 'published' }))?.template ?? null;
 }
 
-/** Any version by id: a draft on the phone may have been started on one that has since changed. */
-export async function getTemplateVersion(versionId: string): Promise<AssessmentTemplate | null> {
+/** A non-draft version by id: a draft on the phone may have been started on one that has since
+ * changed. Unpublished (draft) versions stay with the admin checklist editor. */
+export async function getTemplateVersion(
+  token: string | null,
+  versionId: string
+): Promise<AssessmentTemplate | null> {
   if (!isUuid(versionId)) return null;
-  return (await loadVersion({ id: versionId }))?.template ?? null;
+  const caller = await requireProfile(token);
+  if (!caller.ok) return null;
+  return (await loadVersion({ id: versionId, status: { not: 'draft' } }))?.template ?? null;
 }
 
 /* ─── Form setup ─── */
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
-export async function getAssessmentSetup(campusId: string): Promise<AssessmentSetup> {
-  if (!isUuid(campusId)) return { clusters: [], buildings: [], events: [] };
+/** The caller's own campus only; empty for any other campus or an unverified caller. */
+export async function getAssessmentSetup(
+  token: string | null,
+  campusId: string
+): Promise<AssessmentSetup> {
+  const none: AssessmentSetup = { clusters: [], buildings: [], events: [] };
+  if (!isUuid(campusId)) return none;
+  const caller = await requireProfile(token);
+  if (!caller.ok || caller.profile.campus_id !== campusId) return none;
 
   const statusIs = (name: string): Prisma.EventWhereInput => ({
     status: { name: { equals: name, mode: 'insensitive' } },

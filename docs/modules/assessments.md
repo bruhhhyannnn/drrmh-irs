@@ -1,7 +1,7 @@
 ---
 type: module
 module: assessments
-updated: 2026-10-22
+updated: 2026-10-28
 verified: true
 paths:
   - src/app/(ert)/assessment
@@ -84,8 +84,8 @@ Read this before touching anything in the MATATAG assessment (DRRM-015). Admin p
 `src/actions/assessments/index.ts`:
 
 - `getPublishedTemplate()`: the version new assessments use.
-- `getTemplateVersion(versionId)`: any version by id, for drafts started on an older one.
-- `getAssessmentSetup(campusId)`: active clusters with units, active buildings with profile and last assessed date, and events that are ongoing or completed in the last 30 days.
+- `getTemplateVersion(token, versionId)`: any non-draft version by id, for drafts started on an older one. Signed-in callers only.
+- `getAssessmentSetup(token, campusId)`: only for the caller's own campus (empty otherwise). Active clusters with units, active buildings with profile and last assessed date, and events that are ongoing or completed in the last 30 days.
 - `createAssessment(token, payload)`: verifies the token with `requireProfile`, then `checkAssessmentCaller` (owner, `canUseAssessment`, has campus). Validates with `assessmentPayloadSchema`, returns the existing id when `client_ref` already landed, refuses draft versions, re-checks with `prepareAssessmentWrite`, resolves or creates the building in the caller's campus, then writes the assessment, its rows and pillar scores in one transaction and replaces the building's profile.
 - `getMyAssessments(token)`: the caller's last 50, newest first.
 - `getMyAssessment(token, id)`: one of the caller's own, via `loadAssessmentRecord`.
