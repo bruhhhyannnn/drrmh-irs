@@ -12,7 +12,10 @@ interface ReportDraft {
   counts: Record<string, number>;
   damageId: string;
   missingPersons: PersonEntry[];
+  /** Without their photos: blobs don't fit in localStorage. */
   casualties: CasualtyEntry[];
+  /** How many photos the form had, so a restored draft can say they need adding again. */
+  photoCount?: number;
   savedAt: number;
 }
 

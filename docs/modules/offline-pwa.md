@@ -1,7 +1,7 @@
 ---
 type: module
 module: offline-pwa
-updated: 2026-10-28
+updated: 2026-10-29
 verified: true
 paths:
   - src/lib/offline-queue.ts
@@ -66,7 +66,7 @@ No Prisma models of its own. It holds client-side copies of what later becomes `
 
 IndexedDB stores (`STORES` in `offline-queue.ts`):
 
-- `reports` (key `id`): queued field reports, payload `ReportFormData & { user_id? }`.
+- `reports` (key `id`): queued field reports, payload `ReportFormData & { user_id? }`, with photo `File`s in `attachments` (named `damage-1.jpg`, `casualty-<i>-1.jpg`; [[field-reports]]).
 - `bystander-reports` (key `id`): queued bystander reports, with photo `Blob`s in `attachments`.
 - `assessments` (key `id`): queued assessments, payload `AssessmentPayload`.
 - `assessment-drafts` (key `client_ref`): assessment drafts in progress.
@@ -80,7 +80,7 @@ A queued entry is `QueuedEntry<TPayload>`: `id`, `createdAt`, `payload`, optiona
 
 None of its own. The provider replays through other modules' actions:
 
-- `createReport(payload)` in `src/actions/reports` (field reports).
+- `createReport(payload, toReportPhotoFormData(photos))` in `src/actions/reports` (field reports).
 - `createBystanderReport(payload, toBystanderPhotoFormData(photos))` in `src/actions/emergency-reports`.
 - `createAssessment(await getAccessToken(), payload)` in `src/actions/assessments`. It answers `{ ok, error, retry }` instead of throwing; `submitQueuedAssessment` turns `retry: true` into a `TypeError` so the entry stays pending, and any other refusal into a normal `Error` so it is marked failed. Each send is capped at 30 s by `withTimeout`.
 
@@ -110,7 +110,7 @@ None of its own. The provider replays through other modules' actions:
 - `/assessment` and `/home` navigations use the `ert-pages` cache (`NetworkFirst`, 5 s timeout, `ignoreSearch: true`, 30 days), so `?draft=` and `?view=` URLs open offline.
 - The service worker is off in `npm run dev`; test offline behaviour on a production build.
 - Generated files (`public/sw.js`, `workbox-*.js`, `swe-worker-*.js`, `fallback-*.js`) are gitignored.
-- The 8 MB server action body limit exists for bystander photos (up to 3, about 1 MB each after resizing).
+- The 8 MB server action body limit exists for bystander photos (up to 3, about 1 MB each after resizing). Vercel still refuses a body over 4.5 MB, so a field report caps its photos at `REPORT_PHOTO_BUDGET_BYTES` (3.5 MB).
 
 ## Decisions
 

@@ -3,6 +3,7 @@
 import {
   FOCUS_RING,
   PeopleDrawer,
+  plural,
   type CasualtyEntry,
   type PersonEntry,
   type PersonSex,
@@ -89,8 +90,10 @@ export function SubmittedReport({
       condition_id: c.condition_id,
       condition: c.condition?.name ?? '',
       diagnosis: c.diagnosis,
+      photoCount: c.photo_paths.length,
     })
   );
+  const damagePhotoCount = report.damage_photo_paths.length;
 
   // Headcount in the campus's field order; fields added later go last.
   const order = new Map(campusCategories.map((cc, i) => [cc.category_id, i]));
@@ -122,23 +125,31 @@ export function SubmittedReport({
     }
   };
 
+  // Casualties can only be added or removed here, so saved ones are kept as they are, with
+  // their photos: removes the ones taken off, then adds the new ones.
   const saveCasualties = async (people: CasualtyEntry[]) => {
     setSaving(true);
     try {
+      const kept = new Set(people.map((c) => c.id));
       await Promise.all(
-        casualtyRows.map((c) => deleteCasualty.mutateAsync({ id: c.id, reportId }))
+        casualtyRows
+          .filter((c) => !kept.has(c.id))
+          .map((c) => deleteCasualty.mutateAsync({ id: c.id, reportId }))
       );
       await Promise.all(
-        people.map((c) =>
-          createCasualty.mutateAsync({
-            report_id: reportId,
-            condition_id: c.condition_id,
-            name: c.name,
-            age: c.age,
-            sex: c.sex,
-            diagnosis: c.diagnosis ?? null,
-          })
-        )
+        people
+          .filter((c) => !c.id)
+          .map((c) =>
+            createCasualty.mutateAsync({
+              report_id: reportId,
+              condition_id: c.condition_id,
+              name: c.name,
+              age: c.age,
+              sex: c.sex,
+              diagnosis: c.diagnosis ?? null,
+              photos: c.photos?.map((p) => p.blob),
+            })
+          )
       );
       toast.success('Casualties saved');
     } catch {
@@ -208,6 +219,11 @@ export function SubmittedReport({
                 <span className="text-[19px] leading-[1.3] font-extrabold text-balance">
                   {report.damage_conditions?.name ?? 'Not given'}
                 </span>
+                {damagePhotoCount > 0 && (
+                  <span className="mt-1 block text-[14px] font-medium text-gray-500">
+                    {plural(damagePhotoCount, 'photo', 'photos')}
+                  </span>
+                )}
               </StatTile>
             </dl>
           </Card>
@@ -314,6 +330,7 @@ export function SubmittedReport({
         conditions={casualtyConditions.filter((c) => c.is_active)}
         subtitle="Changes save straight to your submitted report."
         doneLabel="Save changes"
+        photos={{}}
       />
     </>
   );

@@ -1,6 +1,6 @@
 ---
 type: module
-updated: 2026-10-28
+updated: 2026-10-29
 module: events
 paths:
   - src/actions/events/index.ts
@@ -54,7 +54,7 @@ Events are the drills and real incidents that field reports are filed against. A
 - `createEvents(data, campusIds)`: one event per ticked campus in a single `$transaction` (all or nothing).
 - `updateEvent(id, data)`: plain update.
 - `completeEvents(ids, userId)`: sets status Completed, `ended_at` now, `completed_by`. Throws if the Completed status is missing.
-- `deleteEvent(id)`: deletes the event; its reports go with it (cascade).
+- `deleteEvent(id)`: deletes the event; its reports go with it (cascade), and their photos are deleted from Storage after it ([[field-reports]]).
 - `getOngoingEvents(campusId)`: ongoing events at one campus (ERT `/home` and `/report`).
 - `getOngoingEventOptions(campusId?)`: ongoing events for the admin Add report drawer.
 - `getSiblingOngoingEvents(eventId)`: same-name ongoing events at other campuses.
