@@ -51,6 +51,7 @@ Statuses are taken from each plan's frontmatter as of 2026-10-22. Keep this list
 
 | Plan                                                                                                 | Status      | Branch                                 |
 | ---------------------------------------------------------------------------------------------------- | ----------- | -------------------------------------- |
+| [[plan/review/2026-10-29-pr-89-report-photos\|PR #89 report photos review (2026-10-29)]]             | in-review   | `feat/DRRM-022-report-photos`          |
 | [[plan/feature/DRRM-020-profile-custom-cluster\|DRRM-020 Type your own cluster]]                     | in-review   | `feat/DRRM-020-profile-custom-cluster` |
 | [[plan/feature/DRRM-019-nsed-report\|DRRM-019 Export NSED report]]                                   | in-review   | `feat/DRRM-019-nsed-report`            |
 | [[plan/feature/DRRM-018-design-review-fixes\|DRRM-018 Design review fixes]]                          | in-review   | `feat/DRRM-018-design-review-fixes`    |
