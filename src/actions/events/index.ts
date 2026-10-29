@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
+import { removeReportPhotos, reportPhotoPaths } from '@/lib/report-photos';
 import type { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
@@ -96,9 +97,12 @@ export async function completeEvents(ids: string[], userId: string | null) {
   }
 }
 
+/** Deletes the event; its reports cascade, so their photos are deleted after it. */
 export async function deleteEvent(id: string) {
   try {
+    const photoPaths = await reportPhotoPaths({ event_id: id });
     await prisma.event.delete({ where: { id: id } });
+    await removeReportPhotos(photoPaths);
     revalidateEvents();
   } catch (err) {
     throw toFriendlyError(err, 'event');

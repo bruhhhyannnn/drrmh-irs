@@ -9,12 +9,14 @@ import {
   getReport,
   getReportCasualties,
   getReportMissingPersons,
+  getReportPhotoUrls,
   getReports,
   saveReportEdits,
   type ReportEditData,
   type ReportListFilters,
 } from '@/actions/reports';
-import { CasualtyFormData, MissingPersonFormData } from '@/lib';
+import { CasualtyFormData, MissingPersonFormData, toReportPhotoFormData } from '@/lib';
+import { getAccessToken } from '@/lib/supabase';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export function useReports(
@@ -49,7 +51,19 @@ export function useSaveReportEdits() {
       queryClient.invalidateQueries({ queryKey: ['report', id] });
       queryClient.invalidateQueries({ queryKey: ['report-casualties', id] });
       queryClient.invalidateQueries({ queryKey: ['report-missing-persons', id] });
+      queryClient.invalidateQueries({ queryKey: ['report-photo-urls', id] });
     },
+  });
+}
+
+/** Signed links to a report's photos, for admins; fetched when the report is opened. */
+export function useReportPhotoUrls(reportId: string | undefined, hasPhotos: boolean) {
+  return useQuery({
+    queryKey: ['report-photo-urls', reportId],
+    queryFn: async () => getReportPhotoUrls(await getAccessToken(), reportId!),
+    enabled: !!reportId && hasPhotos,
+    // The links last an hour.
+    staleTime: 1000 * 60 * 50,
   });
 }
 
@@ -94,9 +108,11 @@ export function useReportCasualties(reportId?: string) {
 export function useCreateReportCasualty() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: CasualtyFormData & { report_id: string }) => createReportCasualty(data),
+    mutationFn: ({ photos, ...data }: CasualtyFormData & { report_id: string; photos?: Blob[] }) =>
+      createReportCasualty(data, toReportPhotoFormData(photos)),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['report-casualties', variables.report_id] });
+      queryClient.invalidateQueries({ queryKey: ['report-photo-urls', variables.report_id] });
     },
   });
 }
@@ -107,6 +123,7 @@ export function useDeleteReportCasualty() {
     mutationFn: ({ id }: { id: string; reportId: string }) => deleteReportCasualty(id),
     onSuccess: (_data, { reportId }) => {
       queryClient.invalidateQueries({ queryKey: ['report-casualties', reportId] });
+      queryClient.invalidateQueries({ queryKey: ['report-photo-urls', reportId] });
     },
   });
 }

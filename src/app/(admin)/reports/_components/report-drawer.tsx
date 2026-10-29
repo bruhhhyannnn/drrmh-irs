@@ -53,6 +53,7 @@ import {
 import { useEventTitle } from '../../_components/shell/campus-switcher';
 import { Avatar, Skeleton } from '../../_components/ui';
 import { formatDateTime, personName } from '../../_lib/format';
+import { ReportPhotos } from './report-photos';
 
 type Report = NonNullable<ReturnType<typeof useReport>['data']>;
 
@@ -162,11 +163,14 @@ function ReportForm({
   );
   const [casualties, setCasualties] = useState<CasualtyEntry[]>(
     (report?.casualties ?? []).map((c) => ({
+      // The id keeps the casualty's photos with it when the report saves.
+      id: c.id,
       name: c.name,
       age: c.age,
       sex: toSex(c.sex),
       condition_id: c.condition_id,
       diagnosis: c.diagnosis,
+      photoCount: c.photo_paths.length,
     }))
   );
   const [damageId, setDamageId] = useState(report?.damage_condition_id ?? '');
@@ -224,6 +228,7 @@ function ReportForm({
       })),
       report_missing_persons: missing.map((p) => ({ name: p.name, age: p.age, sex: p.sex })),
       report_casualties: casualties.map((c) => ({
+        ...(c.id && { id: c.id }),
         condition_id: c.condition_id,
         name: c.name,
         age: c.age,
@@ -519,6 +524,14 @@ function ReportForm({
           </div>
           <FieldError id="report-damage-error">{errors.damage}</FieldError>
         </DrawerSection>
+
+        {report && (
+          <ReportPhotos
+            reportId={report.id}
+            damageCount={report.damage_photo_paths.length}
+            casualtyCount={report.casualties.reduce((n, c) => n + c.photo_paths.length, 0)}
+          />
+        )}
       </DrawerBody>
 
       {/* Over the report drawer, outside its sliding panel. A new key per open starts fresh. */}

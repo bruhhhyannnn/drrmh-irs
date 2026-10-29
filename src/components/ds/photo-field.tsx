@@ -1,11 +1,12 @@
 'use client';
 
-import { FieldError, FieldLabel, FOCUS_RING } from '@/components/ds';
 import { Spinner } from '@/components/ui/spinner';
 import { BYSTANDER_MAX_PHOTOS, cn } from '@/lib';
 import { Camera, ShieldCheck, X } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { preparePhoto } from '../_lib/prepare-photo';
+import { FieldError, FieldLabel } from './fields';
+import { FOCUS_RING } from './focus';
+import { preparePhoto } from './prepare-photo';
 
 export interface PhotoItem {
   id: string;
@@ -19,16 +20,43 @@ interface PhotoFieldProps {
   photos: PhotoItem[];
   onAdd: (photos: PhotoItem[]) => void;
   onRemove: (id: string) => void;
+  /** Prefix for the element ids, when more than one field can be on the page. */
+  id?: string;
+  label?: string;
+  /** What the photos show, for their alt text: "Photo 1 of the damage". */
+  subject?: string;
+  /** The line under the photos, after the shield icon. */
+  note?: React.ReactNode;
+  max?: number;
+  /** Longest edge, in px, the photos are scaled to. */
+  maxEdge?: number;
+  /** Bytes still free when the photos share one limit with other fields (a report's). */
+  roomBytes?: number;
 }
+
+/** How many bytes the photos take, for a limit shared by several fields. */
+export const photoBytes = (photos: PhotoItem[] = []) =>
+  photos.reduce((sum, photo) => sum + photo.blob.size, 0);
 
 let nextPhotoId = 0;
 
-/** Up to 3 photos of the damage, from the camera or the gallery. */
-export function PhotoField({ photos, onAdd, onRemove }: PhotoFieldProps) {
+/** Up to 3 photos, from the camera or the gallery. Defaults are the bystander form's. */
+export function PhotoField({
+  photos,
+  onAdd,
+  onRemove,
+  id = 'photos',
+  label = 'Photos of the damage',
+  subject = 'the damage',
+  note = 'Avoid faces, name tags and IDs. Location data saved in the photo is removed before it is sent.',
+  max = BYSTANDER_MAX_PHOTOS,
+  maxEdge,
+  roomBytes = Infinity,
+}: PhotoFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isPreparing, setIsPreparing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const room = BYSTANDER_MAX_PHOTOS - photos.length;
+  const room = max - photos.length;
 
   const onFiles = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -37,9 +65,16 @@ export function PhotoField({ photos, onAdd, onRemove }: PhotoFieldProps) {
     const picked = [...files].slice(0, room);
     const prepared: PhotoItem[] = [];
     let failed = 0;
+    let bytesLeft = roomBytes;
+    let overBudget = false;
     for (const file of picked) {
       try {
-        const blob = await preparePhoto(file);
+        const blob = await preparePhoto(file, maxEdge);
+        if (blob.size > bytesLeft) {
+          overBudget = true;
+          break;
+        }
+        bytesLeft -= blob.size;
         prepared.push({ id: `photo-${(nextPhotoId += 1)}`, blob, url: URL.createObjectURL(blob) });
       } catch {
         failed += 1;
@@ -47,23 +82,25 @@ export function PhotoField({ photos, onAdd, onRemove }: PhotoFieldProps) {
     }
     setIsPreparing(false);
     if (prepared.length) onAdd(prepared);
-    if (failed) {
+    if (overBudget) {
+      setError('This report has no room for more photos. Remove a photo to add another.');
+    } else if (failed) {
       setError(
         failed === 1
           ? 'One photo couldn’t be opened. Try a JPG or PNG.'
           : 'Some photos couldn’t be opened. Try JPG or PNG files.'
       );
     } else if (files.length > picked.length) {
-      setError(`Only ${BYSTANDER_MAX_PHOTOS} photos can be added.`);
+      setError(`Only ${max} photos can be added.`);
     }
   };
 
   return (
     <div className="flex flex-col gap-2">
-      <FieldLabel id="photos-label" hint={`Optional · up to ${BYSTANDER_MAX_PHOTOS}`}>
-        Photos of the damage
+      <FieldLabel id={`${id}-label`} hint={`Optional · up to ${max}`}>
+        {label}
       </FieldLabel>
-      <div role="group" aria-labelledby="photos-label" className="grid grid-cols-3 gap-2">
+      <div role="group" aria-labelledby={`${id}-label`} className="grid grid-cols-3 gap-2">
         {photos.map((photo, i) => (
           <div
             key={photo.id}
@@ -71,7 +108,7 @@ export function PhotoField({ photos, onAdd, onRemove }: PhotoFieldProps) {
           >
             <img
               src={photo.url}
-              alt={`Photo ${i + 1} of the damage`}
+              alt={`Photo ${i + 1} of ${subject}`}
               className="block size-full object-cover"
             />
             <button
@@ -121,10 +158,7 @@ export function PhotoField({ photos, onAdd, onRemove }: PhotoFieldProps) {
       />
       <p className="flex items-start gap-2 text-[14px] leading-[1.45] text-gray-600">
         <ShieldCheck size={14} aria-hidden className="mt-0.5 shrink-0" />
-        <span className="text-pretty">
-          Avoid faces, name tags and IDs. Location data saved in the photo is removed before it is
-          sent.
-        </span>
+        <span className="text-pretty">{note}</span>
       </p>
       <FieldError>{error}</FieldError>
     </div>
