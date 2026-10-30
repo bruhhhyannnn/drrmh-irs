@@ -27,11 +27,13 @@ export {
   casualtiesMeta,
   missingPersonsMeta,
   personMeta,
+  plural,
   type CasualtyEntry,
   type PersonEntry,
   type PersonSex,
 } from './people';
 export { PeopleDrawer } from './people-drawer';
+export { PhotoField, photoBytes, type PhotoItem } from './photo-field';
 export { PrivacyDrawer } from './privacy-drawer';
 export { RateAppDialog } from './rate-app-dialog';
 export { OTHER_OPTION, OTHER_VALUE, Select, type SelectOption } from './select';

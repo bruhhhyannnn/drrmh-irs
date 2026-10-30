@@ -51,7 +51,12 @@ export function PeopleRow({
 export function PeopleList({
   people,
 }: {
-  people: (PersonEntry & { id: string; condition?: string; diagnosis?: string | null })[];
+  people: (PersonEntry & {
+    id: string;
+    condition?: string;
+    diagnosis?: string | null;
+    photoCount?: number;
+  })[];
 }) {
   if (!people.length) return null;
   return (

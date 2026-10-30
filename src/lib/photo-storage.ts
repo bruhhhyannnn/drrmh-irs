@@ -1,0 +1,121 @@
+import { randomUUID } from 'crypto';
+import { supabaseAdmin } from './supabase-admin';
+
+// Server-only: report photos live in private Storage buckets and are reached only through the
+// service-role client. Kept out of `src/lib/index.ts` so it never lands in a client bundle.
+// `bystander-photos.ts` and `report-photos.ts` bind it to their buckets.
+
+const SIGNED_URL_TTL_SECONDS = 60 * 60;
+
+/** Most paths one Storage delete request takes. */
+const REMOVE_CHUNK = 1000;
+
+/** `items` in runs of at most `size`, in order. */
+function chunks<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+}
+
+/**
+ * Returns the JPEG without its metadata: every APPn segment except APP0 (JFIF) and APP2 (ICC
+ * colour profile), and every comment. That drops Exif (including GPS), XMP and IPTC. The forms
+ * already re-encode photos through a canvas, which removes them; this is the server-side
+ * backstop for a client that skips that step. Returns null when the bytes aren't a JPEG.
+ */
+function stripJpegMetadata(input: Uint8Array): Uint8Array | null {
+  if (input.length < 4 || input[0] !== 0xff || input[1] !== 0xd8) return null;
+
+  const kept: Uint8Array[] = [input.subarray(0, 2)];
+  let i = 2;
+  while (i + 1 < input.length) {
+    if (input[i] !== 0xff) return null;
+    const marker = input[i + 1];
+
+    // Fill byte — any number of 0xFF may pad the space before a marker.
+    if (marker === 0xff) {
+      i += 1;
+      continue;
+    }
+    // TEM and RSTn stand alone, with no length.
+    if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
+      kept.push(input.subarray(i, i + 2));
+      i += 2;
+      continue;
+    }
+    if (i + 3 >= input.length) return null;
+
+    const end = i + 2 + ((input[i + 2] << 8) | input[i + 3]);
+    if (end > input.length || end < i + 4) return null;
+
+    // Start of scan: everything from here on is image data.
+    if (marker === 0xda) {
+      kept.push(input.subarray(i));
+      return Buffer.concat(kept);
+    }
+
+    const isMetadata = (marker >= 0xe1 && marker <= 0xef && marker !== 0xe2) || marker === 0xfe;
+    if (!isMetadata) kept.push(input.subarray(i, end));
+    i = end;
+  }
+  return null;
+}
+
+/** Upload, cleanup and signed URLs for one private photo bucket. */
+export function photoBucket(bucket: string, maxBytes: number) {
+  /**
+   * Uploads the photos under `<folder>/` and returns their object paths, in the order they
+   * were sent. A photo that isn't a JPEG, is larger than `maxBytes` or fails to upload is
+   * skipped: a photo problem must never block a report. Never throws, so the photos that did
+   * upload are always returned for the caller to keep or clean up.
+   */
+  async function upload(folder: string, photos: Blob[]): Promise<string[]> {
+    const paths = await Promise.all(
+      photos.map(async (photo) => {
+        if (photo.size === 0 || photo.size > maxBytes) return null;
+        const path = `${folder}/${randomUUID()}.jpg`;
+        try {
+          const stripped = stripJpegMetadata(new Uint8Array(await photo.arrayBuffer()));
+          if (!stripped) return null;
+
+          const { error } = await supabaseAdmin.storage
+            .from(bucket)
+            .upload(path, stripped, { contentType: 'image/jpeg', upsert: false });
+          if (error) {
+            console.error(`[${bucket}] upload failed for ${path}: ${error.message}`);
+            return null;
+          }
+          return path;
+        } catch (err) {
+          console.error(`[${bucket}] upload failed for ${path}: ${String(err)}`);
+          return null;
+        }
+      })
+    );
+    return paths.filter((path): path is string => path !== null);
+  }
+
+  /** Best-effort delete, for photos whose row was never saved or has been deleted. */
+  async function remove(paths: string[]): Promise<void> {
+    for (const chunk of chunks(paths, REMOVE_CHUNK)) {
+      const { error } = await supabaseAdmin.storage.from(bucket).remove(chunk);
+      if (error) console.error(`[${bucket}] cleanup failed: ${error.message}`);
+    }
+  }
+
+  /** One-hour signed URLs by object path, for showing photos to an admin. */
+  async function sign(paths: string[]): Promise<Map<string, string>> {
+    if (paths.length === 0) return new Map();
+    const { data, error } = await supabaseAdmin.storage
+      .from(bucket)
+      .createSignedUrls(paths, SIGNED_URL_TTL_SECONDS);
+    if (error) throw new Error('Could not load the photos for this report.');
+    return new Map(
+      data.flatMap((entry) =>
+        entry.path && entry.signedUrl ? [[entry.path, entry.signedUrl] as const] : []
+      )
+    );
+  }
+
+  return { upload, remove, sign };
+}
