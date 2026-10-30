@@ -152,8 +152,9 @@ export type CreateReportResult = { ok: true; id: string; photoCount: number } | 
 /**
  * Creates a report with its people and headcount in one write, as the caller (`token`): the
  * payload's `user_id` only says whose it is, and another account's answers `retry` (a shared
- * phone). `id` is made once on the phone and kept by the offline queue, so a replay of a
- * report that already landed is a no-op; older queued entries have none and get a new one.
+ * phone). `id` is made once on the phone and kept by the offline queue, so a replay of the
+ * caller's own report that already landed is a no-op (an id that is someone else's report is
+ * refused); older queued entries have none and get a new one.
  * `photos` carries the damage and casualty photos, named by `reportPhotoFiles`. They are
  * uploaded first so the rows can hold their paths, and removed again only if the row wasn't
  * created. `photoCount` is how many were saved.
@@ -185,11 +186,26 @@ export async function createReport(
   }
 
   const id = clientId ?? randomUUID();
+  const profileId = caller.profile.id;
+  // A report already saved under this id: the caller's own is a replay and counts as saved;
+  // anyone else's is refused without saying anything about it. Null when there is none.
+  const replayOf = async (): Promise<CreateReportResult | null> => {
+    const row = await prisma.report.findUnique({
+      where: { id },
+      select: { user_id: true, ...REPORT_PHOTO_SELECT },
+    });
+    if (!row) return null;
+    if (row.user_id !== profileId) {
+      return { ok: false, error: 'This report could not be saved.', retry: false };
+    }
+    return { ok: true, id, photoCount: reportPhotoPaths([row]).length };
+  };
+
   const uploaded: string[] = [];
   let created = false;
   try {
-    const already = await prisma.report.findUnique({ where: { id }, select: REPORT_PHOTO_SELECT });
-    if (already) return { ok: true, id, photoCount: reportPhotoPaths([already]).length };
+    const already = await replayOf();
+    if (already) return already;
 
     const grouped = groupReportPhotos(photoFiles(photos), report_casualties.length);
     const [damagePhotoPaths, ...casualtyPhotoPaths] = await Promise.all(
@@ -237,11 +253,8 @@ export async function createReport(
     if (!created) await removeReportPhotos(uploaded);
     // A replay of the same report that landed in between: it's already saved.
     if (!created && isUniqueViolation(err)) {
-      const existing = await prisma.report.findUnique({
-        where: { id },
-        select: REPORT_PHOTO_SELECT,
-      });
-      if (existing) return { ok: true, id, photoCount: reportPhotoPaths([existing]).length };
+      const existing = await replayOf();
+      if (existing) return existing;
     }
     throw toFriendlyError(err, 'report');
   }
