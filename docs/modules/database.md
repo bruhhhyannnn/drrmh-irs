@@ -39,7 +39,7 @@ Read this before changing `prisma/schema.prisma`, writing a `prisma/manual/*.sql
 
 Schema changes ship as idempotent SQL in `prisma/manual/<ticket>.sql`, plus the matching `schema.prisma` edit ([[0002-manual-sql-schema-changes]]).
 
-`prisma.config.ts` reads `.env`. A worktree that only has `.env.development.local` must pass the env in. Apply the file over the direct connection, because the pooler on :6543 hangs on `db execute`:
+`prisma.config.ts` reads `.env.development.local`, then `.env.local`, then `.env` (the first file that sets a variable wins, and variables already in the shell win over all of them). Apply the file over the direct connection, because the pooler on :6543 hangs on `db execute`:
 
 ```bash
 DATABASE_URL="$(grep -E '^DIRECT_URL=' .env.development.local | cut -d= -f2- | tr -d '"')" \

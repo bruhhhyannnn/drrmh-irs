@@ -26,16 +26,20 @@ import {
   cn,
   REPORT_MAX_PHOTOS,
   REPORT_PHOTO_BUDGET_BYTES,
+  REPORT_PHOTO_MAX_BYTES,
   REPORT_PHOTO_MAX_EDGE,
   reportPhotoFiles,
   toReportPhotoFormData,
   type ReportFormData,
 } from '@/lib';
+import { newUuid } from '@/lib/assessment-draft';
 import { getAllQueuedCount, isNetworkError, queueFieldReport } from '@/lib/offline-queue';
+import { getAccessToken } from '@/lib/supabase';
 import { useAuthStore, useOfflineQueueStore, useRateAppStore } from '@/store';
 import { useQueryClient } from '@tanstack/react-query';
-import { Check, RotateCcw, Shield, WifiOff } from 'lucide-react';
+import { Check, RotateCcw, Shield, TriangleAlert, WifiOff } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import {
   Avatar,
   Card,
@@ -113,6 +117,8 @@ export function ErtReportForm({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const finishedRef = useRef(false);
+  /** The report's id, made before the first try and kept for retries, so it saves only once. */
+  const reportIdRef = useRef<string | null>(null);
 
   const touch = () => setSavedAt(Date.now());
 
@@ -167,6 +173,7 @@ export function ErtReportForm({
 
   const startOver = () => {
     clearDraft(userId);
+    reportIdRef.current = null;
     setEventId(defaultEventId);
     setLocation(null);
     setCounts({});
@@ -207,7 +214,9 @@ export function ErtReportForm({
       return;
     }
 
-    const payload: ReportFormData & { user_id: string } = {
+    reportIdRef.current ??= newUuid();
+    const payload: ReportFormData & { id: string; user_id: string } = {
+      id: reportIdRef.current,
       event_id: selectedEvent.id,
       cluster_id: clusterId,
       unit_id: profile.unit_id ?? null,
@@ -237,6 +246,7 @@ export function ErtReportForm({
 
     const finish = () => {
       finishedRef.current = true;
+      reportIdRef.current = null;
       clearDraft(userId);
     };
 
@@ -256,14 +266,21 @@ export function ErtReportForm({
         await saveOffline();
         return;
       }
+      let result;
       try {
-        await createReport(payload, toReportPhotoFormData(photos));
+        result = await createReport(await getAccessToken(), payload, toReportPhotoFormData(photos));
       } catch (err) {
         if (!isNetworkError(err)) throw err;
         await saveOffline();
         return;
       }
+      if (!result.ok) throw new Error(result.error);
       finish();
+      if (result.photoCount < photos.length) {
+        toast(`Only ${result.photoCount} of ${photos.length} photos were saved with the report.`, {
+          icon: <TriangleAlert size={18} className="shrink-0 text-warning-700" aria-hidden />,
+        });
+      }
       useRateAppStore.getState().reportSent();
       queryClient.invalidateQueries({ queryKey: ['reports'] });
       // The page switches to the submitted report once this comes back.
@@ -484,6 +501,7 @@ export function ErtReportForm({
                   <PhotoField
                     id="damage-photos"
                     max={REPORT_MAX_PHOTOS}
+                    maxBytes={REPORT_PHOTO_MAX_BYTES}
                     maxEdge={REPORT_PHOTO_MAX_EDGE}
                     roomBytes={
                       REPORT_PHOTO_BUDGET_BYTES -

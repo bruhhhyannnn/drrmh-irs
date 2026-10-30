@@ -109,7 +109,7 @@ The IRS is a centralized web platform consisting of:
    cp .env.local.example .env
    ```
 
-   Use `.env` rather than `.env.local`: the Prisma CLI loads variables through `dotenv` (see `prisma.config.ts`), and `dotenv` only reads `.env`. Next.js reads `.env` as well.
+   `.env`, `.env.local` or `.env.development.local` all work: `prisma.config.ts` loads the same files `next dev` does.
 
    ```env
    # Supabase: auth and the client-side SDK

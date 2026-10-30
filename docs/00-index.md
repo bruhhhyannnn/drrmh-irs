@@ -1,6 +1,6 @@
 ---
 type: index
-updated: 2026-10-29
+updated: 2026-10-30
 verified: true
 tags: [index]
 ---
@@ -51,6 +51,7 @@ Statuses are taken from each plan's frontmatter as of 2026-10-22. Keep this list
 
 | Plan                                                                                                 | Status      | Branch                                 |
 | ---------------------------------------------------------------------------------------------------- | ----------- | -------------------------------------- |
+| [[plan/review/2026-10-29-pr-89-report-photos\|PR #89 report photos review (2026-10-29)]]             | in-progress | `feat/DRRM-022-report-photos`          |
 | [[plan/feature/DRRM-022-report-photos\|DRRM-022 Photos on field reports]]                            | in-review   | `feat/DRRM-022-report-photos`          |
 | [[plan/feature/DRRM-021-landing-partners\|DRRM-021 Landing: turning campus, partners]]               | in-review   | `feat/DRRM-021-landing-partners`       |
 | [[plan/feature/DRRM-020-profile-custom-cluster\|DRRM-020 Type your own cluster]]                     | in-review   | `feat/DRRM-020-profile-custom-cluster` |

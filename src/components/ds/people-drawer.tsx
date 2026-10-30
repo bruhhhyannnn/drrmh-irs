@@ -1,6 +1,6 @@
 'use client';
 
-import { cn, REPORT_MAX_PHOTOS, REPORT_PHOTO_MAX_EDGE } from '@/lib';
+import { cn, REPORT_MAX_PHOTOS, REPORT_PHOTO_MAX_BYTES, REPORT_PHOTO_MAX_EDGE } from '@/lib';
 import { User, X } from 'lucide-react';
 import { useState } from 'react';
 import { Drawer } from './drawer';
@@ -68,6 +68,17 @@ const EMPTY_DRAFT: Draft = {
 
 type Person = PersonEntry | CasualtyEntry;
 
+/** Releases the photos' preview URLs, once nothing shows them any more. */
+const revokePhotos = (person: Person | Draft) => {
+  if ('photos' in person) person.photos?.forEach((photo) => URL.revokeObjectURL(photo.url));
+};
+
+/**
+ * What `onSave` returns. The drawer closes once it has saved; `false` or a rejection keeps it
+ * open with the list as it is, for another try.
+ */
+type SaveResult = void | boolean | Promise<void | boolean>;
+
 type PeopleDrawerProps = {
   open: boolean;
   onClose: () => void;
@@ -83,15 +94,16 @@ type PeopleDrawerProps = {
    */
   photos?: { budgetBytes?: number };
 } & (
-  | { kind: 'missing'; people: PersonEntry[]; onSave: (people: PersonEntry[]) => void }
-  | { kind: 'casualty'; people: CasualtyEntry[]; onSave: (people: CasualtyEntry[]) => void }
+  | { kind: 'missing'; people: PersonEntry[]; onSave: (people: PersonEntry[]) => SaveResult }
+  | { kind: 'casualty'; people: CasualtyEntry[]; onSave: (people: CasualtyEntry[]) => SaveResult }
 );
 
 /**
  * Lists the people added so far and takes one more: a name, an age or an estimate, sex in one
  * tap — plus condition and diagnosis for casualties. Cancel discards this visit's changes;
  * Done keeps them, including a filled draft that wasn't added to the list yet. Mount with a
- * fresh `key` per open.
+ * fresh `key` per open. Photos added in this visit are released when they are discarded; the
+ * ones on the people passed in belong to the parent until a save takes those people off.
  */
 export function PeopleDrawer(props: PeopleDrawerProps) {
   const { kind, open, onClose, conditions, audience = 'bystander' } = props;
@@ -102,6 +114,8 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
   const [people, setPeople] = useState<Person[]>(props.people);
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const [errors, setErrors] = useState<{ name?: string; age?: string; condition?: string }>({});
+  const [saving, setSaving] = useState(false);
+  const isPassedIn = (person: Person) => (props.people as Person[]).includes(person);
 
   const conditionName = (id: string) => conditions.find((c) => c.id === id)?.name ?? '';
   const isDraftFilled =
@@ -145,33 +159,61 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
     setDraft(EMPTY_DRAFT);
   };
 
-  const done = () => {
+  const removePerson = (index: number) => {
+    const person = people[index];
+    if (!isPassedIn(person)) revokePhotos(person);
+    setPeople((list) => list.filter((_, idx) => idx !== index));
+  };
+
+  const cancel = () => {
+    revokePhotos(draft);
+    people.filter((person) => !isPassedIn(person)).forEach(revokePhotos);
+    onClose();
+  };
+
+  const done = async () => {
     let list = people;
     if (isDraftFilled) {
       const person = draftToPerson();
       if (!person) return;
       list = [...people, person];
+      // Kept in the list, so a failed save can be tried again without adding it twice.
+      setPeople(list);
+      setDraft(EMPTY_DRAFT);
     }
-    if (props.kind === 'casualty') props.onSave(list as CasualtyEntry[]);
-    else props.onSave(list as PersonEntry[]);
+    setSaving(true);
+    let saved: boolean;
+    try {
+      const result =
+        props.kind === 'casualty'
+          ? await props.onSave(list as CasualtyEntry[])
+          : await props.onSave(list as PersonEntry[]);
+      saved = result !== false;
+    } catch {
+      saved = false;
+    } finally {
+      setSaving(false);
+    }
+    if (!saved) return;
+    props.people.filter((person) => !list.includes(person)).forEach(revokePhotos);
     onClose();
   };
 
   return (
     <Drawer
       open={open}
-      onClose={onClose}
+      onClose={cancel}
       title={kindCopy.title}
       subtitle={props.subtitle ?? copy[kind]}
       footer={
         <div className="flex flex-wrap-reverse gap-3">
           <div className="flex flex-[1_1_120px] flex-col">
-            <Button variant="outline" fullWidth onClick={onClose}>
+            <Button variant="outline" fullWidth onClick={cancel}>
               Cancel
             </Button>
           </div>
           <div className="flex flex-[1_1_120px] flex-col">
-            <Button fullWidth onClick={done}>
+            <Button fullWidth onClick={done} loading={saving} disabled={saving}>
               {props.doneLabel ?? `Done${people.length > 0 ? ` (${people.length})` : ''}`}
             </Button>
           </div>
@@ -213,7 +255,7 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
                   <button
                     type="button"
                     aria-label={`Remove ${name}`}
-                    onClick={() => setPeople((list) => list.filter((_, idx) => idx !== i))}
+                    onClick={() => removePerson(i)}
                     className={cn(
                       'hover:bg-error-50 grid size-10 shrink-0 place-items-center rounded-full text-gray-500 transition-colors hover:text-error-700',
                       FOCUS_RING
@@ -347,6 +389,7 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
             note="Photograph the injury, not the face, where you can. Only DRRM-H admins can see these photos."
             max={REPORT_MAX_PHOTOS}
             maxEdge={REPORT_PHOTO_MAX_EDGE}
+            maxBytes={REPORT_PHOTO_MAX_BYTES}
             roomBytes={photoRoomBytes}
             photos={draft.photos}
             onAdd={(added) => setDraft((d) => ({ ...d, photos: [...d.photos, ...added] }))}

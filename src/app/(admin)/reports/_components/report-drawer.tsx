@@ -29,16 +29,18 @@ import {
   useDamageConditions,
   useUnits,
 } from '@/components/hooks/use-settings';
+import { newUuid } from '@/lib/assessment-draft';
 import {
   getQueuedFieldReportCount,
   getQueuedReportCount,
   isNetworkError,
   queueFieldReport,
 } from '@/lib/offline-queue';
+import { getAccessToken } from '@/lib/supabase';
 import { useAuthStore, useOfflineQueueStore } from '@/store';
 import { useQueryClient } from '@tanstack/react-query';
 import { UserRound, Users } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import {
@@ -173,6 +175,10 @@ function ReportForm({
       photoCount: c.photo_paths.length,
     }))
   );
+  // Saving takes off only the casualties removed here, so one added since the form opened stays.
+  const [loadedCasualtyIds] = useState(() => (report?.casualties ?? []).map((c) => c.id));
+  /** A new report's id, made before the first try and kept for retries, so it saves only once. */
+  const newReportIdRef = useRef<string | null>(null);
   const [damageId, setDamageId] = useState(report?.damage_condition_id ?? '');
   const [people, setPeople] = useState<'missing' | 'casualty' | null>(null);
   const [peopleKey, setPeopleKey] = useState(0);
@@ -240,10 +246,18 @@ function ReportForm({
     onSaving(true);
     try {
       if (report) {
-        await saveEdits.mutateAsync({ id: report.id, data: payload });
+        const kept = new Set(casualties.map((c) => c.id));
+        const removed_casualty_ids = loadedCasualtyIds.filter((id) => !kept.has(id));
+        await saveEdits.mutateAsync({ id: report.id, data: { ...payload, removed_casualty_ids } });
         toast.success('Report updated');
       } else {
-        const create = { ...payload, event_id: eventId, user_id: userProfile?.id };
+        newReportIdRef.current ??= newUuid();
+        const create = {
+          ...payload,
+          id: newReportIdRef.current,
+          event_id: eventId,
+          user_id: userProfile?.id,
+        };
         const saveOffline = async () => {
           await queueFieldReport(create, undefined, {
             title: event?.name ?? 'Status report',
@@ -262,7 +276,8 @@ function ReportForm({
           await saveOffline();
         } else {
           try {
-            await createReport(create);
+            const result = await createReport(await getAccessToken(), create);
+            if (!result.ok) throw new Error(result.error);
             for (const key of ['reports', 'event-summary', 'dashboard', 'events']) {
               queryClient.invalidateQueries({ queryKey: [key] });
             }

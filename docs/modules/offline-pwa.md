@@ -1,7 +1,7 @@
 ---
 type: module
 module: offline-pwa
-updated: 2026-10-29
+updated: 2026-10-30
 verified: true
 paths:
   - src/lib/offline-queue.ts
@@ -47,18 +47,18 @@ Read this before touching report or assessment submits, the service worker, `nex
 
 ## Where it lives
 
-| Path                                            | What it holds                                                                                                                                                                                                 |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `next.config.ts`                                | `withPWA(...)` from `@ducanh2912/next-pwa`: service worker to `public/`, disabled in development, `fallbacks.document: '/~offline'`, the `ert-pages` runtime cache rule, `serverActions.bodySizeLimit: '8mb'` |
-| `public/manifest.json`                          | PWA manifest (name, `display: standalone`, 192 and 512 icons). Linked from `src/app/layout.tsx` metadata                                                                                                      |
-| `src/lib/offline-queue.ts`                      | IndexedDB database `irs-offline-queue` (version 3), the three queues, the draft and cache stores, `isNetworkError`, `getAllQueuedCount`                                                                       |
-| `src/lib/offline-flush.ts`                      | `flushOne`: replays one queue (pure, tested in `offline-flush.test.ts`)                                                                                                                                       |
-| `src/lib/offline-cache.ts`                      | `withTimeout`, `cachedFetch`: read through the local cache when offline or slow (tested in `offline-cache.test.ts`)                                                                                           |
-| `src/components/pwa/offline-queue-provider.tsx` | `OfflineQueueProvider`: tracks connectivity, keeps the count, flushes all queues                                                                                                                              |
-| `src/components/pwa/install-prompt.tsx`         | `InstallPrompt`: the install card (native `beforeinstallprompt`, or Add to Home Screen steps on iOS)                                                                                                          |
-| `src/components/providers.tsx`                  | Mounts `InstallPrompt` and `OfflineQueueProvider` inside `AuthProvider`                                                                                                                                       |
-| `src/store/offline-queue.store.ts`              | `useOfflineQueueStore` (Zustand)                                                                                                                                                                              |
-| `src/app/~offline/page.tsx`                     | Fallback page shown by the service worker for an uncached page                                                                                                                                                |
+| Path                                            | What it holds                                                                                                                                                                                                                          |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `next.config.ts`                                | `withPWA(...)` from `@ducanh2912/next-pwa`: service worker to `public/`, disabled in development, `fallbacks.document: '/~offline'`, the photo `NetworkOnly` and `ert-pages` runtime cache rules, `serverActions.bodySizeLimit: '8mb'` |
+| `public/manifest.json`                          | PWA manifest (name, `display: standalone`, 192 and 512 icons). Linked from `src/app/layout.tsx` metadata                                                                                                                               |
+| `src/lib/offline-queue.ts`                      | IndexedDB database `irs-offline-queue` (version 3), the three queues, the draft and cache stores, `isNetworkError`, `getAllQueuedCount`                                                                                                |
+| `src/lib/offline-flush.ts`                      | `flushOne`: replays one queue (pure, tested in `offline-flush.test.ts`)                                                                                                                                                                |
+| `src/lib/offline-cache.ts`                      | `withTimeout`, `cachedFetch`: read through the local cache when offline or slow (tested in `offline-cache.test.ts`)                                                                                                                    |
+| `src/components/pwa/offline-queue-provider.tsx` | `OfflineQueueProvider`: tracks connectivity, keeps the count, flushes all queues                                                                                                                                                       |
+| `src/components/pwa/install-prompt.tsx`         | `InstallPrompt`: the install card (native `beforeinstallprompt`, or Add to Home Screen steps on iOS)                                                                                                                                   |
+| `src/components/providers.tsx`                  | Mounts `InstallPrompt` and `OfflineQueueProvider` inside `AuthProvider`                                                                                                                                                                |
+| `src/store/offline-queue.store.ts`              | `useOfflineQueueStore` (Zustand)                                                                                                                                                                                                       |
+| `src/app/~offline/page.tsx`                     | Fallback page shown by the service worker for an uncached page                                                                                                                                                                         |
 
 ## Data
 
@@ -74,13 +74,13 @@ IndexedDB stores (`STORES` in `offline-queue.ts`):
 
 A queued entry is `QueuedEntry<TPayload>`: `id`, `createdAt`, `payload`, optional `attachments`, optional `summary` (`title`, `subtitle` for "waiting to send" lists), `status` (`pending` | `failed`), `errorMessage`.
 
-`Assessment.client_ref` is unique in the schema, so a replayed assessment that already landed is not inserted twice.
+`Assessment.client_ref` is unique in the schema, so a replayed assessment that already landed is not inserted twice. A queued field report carries its own `id` (made with `newUuid` before the first online try), which `createReport` uses as the report id, so a replay of a report that already landed is a no-op. Entries queued before that have no `id` and get a server-made one.
 
 ## Server actions
 
 None of its own. The provider replays through other modules' actions:
 
-- `createReport(payload, toReportPhotoFormData(photos))` in `src/actions/reports` (field reports).
+- `createReport(await getAccessToken(), payload, toReportPhotoFormData(photos))` in `src/actions/reports` (field reports), through `submitQueuedFieldReport`. Like `createAssessment` it answers `{ ok, error, retry }`: `retry: true` (signed out, another account) is thrown as a `TypeError` so the entry stays pending.
 - `createBystanderReport(payload, toBystanderPhotoFormData(photos))` in `src/actions/emergency-reports`.
 - `createAssessment(await getAccessToken(), payload)` in `src/actions/assessments`. It answers `{ ok, error, retry }` instead of throwing; `submitQueuedAssessment` turns `retry: true` into a `TypeError` so the entry stays pending, and any other refusal into a normal `Error` so it is marked failed. Each send is capped at 30 s by `withTimeout`.
 
@@ -100,7 +100,7 @@ None of its own. The provider replays through other modules' actions:
 - Queue only on no connection (`!navigator.onLine`) or a network-shaped error (`isNetworkError`: `TypeError`, or a message matching fetch/network/connection). Any other error is a real rejection and is shown to the user, not queued.
 - `flushOne` stops at the first network error (the rest stay queued) and continues past a server rejection, which it marks `failed`. Failed entries are never auto-retried and are not counted by `count()`.
 - Only the assessment queue has a way back from `failed` (`retryQueuedAssessment` = `markPending`). Field and bystander queues export no retry.
-- Queued assessments only send for the signed-in account: the `shouldSend` filter compares `payload.evaluator_id` with `useAuthStore` profile id, so a shared phone keeps another member's entries waiting.
+- Queued assessments only send for the signed-in account: the `shouldSend` filter compares `payload.evaluator_id` with `useAuthStore` profile id, so a shared phone keeps another member's entries waiting. Queued field reports do the same with `payload.user_id` (an entry without one is sent).
 - The pending count should be `getAllQueuedCount()` (all three queues). `ReportDrawer` and the bystander form are the exceptions (see Essentials), so the count can be low until the provider's next flush refreshes it.
 - Each queue replays one create payload. Keep new-report data bundled in that payload (casualties, missing persons, population counts nested in `createReport`).
 - Editing an existing report is online-only; only creates are queued.
@@ -108,6 +108,7 @@ None of its own. The provider replays through other modules' actions:
 - IndexedDB missing (private mode, old browser): `getAll`/`count` return empty and the queue is a no-op.
 - `reloadOnOnline: false` on purpose: a reload would lose an in-progress form. The provider handles syncing.
 - `/assessment` and `/home` navigations use the `ert-pages` cache (`NetworkFirst`, 5 s timeout, `ignoreSearch: true`, 30 days), so `?draft=` and `?view=` URLs open offline.
+- Signed Supabase Storage URLs (path `/storage/v1/object/sign/`, report and bystander photos) are `NetworkOnly`, ahead of next-pwa's defaults, so the catch-all cross-origin `NetworkFirst` rule never stores photos in Cache Storage. Casualty photos are health information and admin PCs are shared.
 - The service worker is off in `npm run dev`; test offline behaviour on a production build.
 - Generated files (`public/sw.js`, `workbox-*.js`, `swe-worker-*.js`, `fallback-*.js`) are gitignored.
 - The 8 MB server action body limit exists for bystander photos (up to 3, about 1 MB each after resizing). Vercel still refuses a body over 4.5 MB, so a field report caps its photos at `REPORT_PHOTO_BUDGET_BYTES` (3.5 MB).

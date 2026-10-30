@@ -166,6 +166,12 @@ export const REPORT_MAX_PHOTOS = 3;
 export const REPORT_PHOTO_MAX_EDGE = 1280;
 
 /**
+ * Largest one field report photo may be. The phone sends ~1280px JPEGs well under this; the
+ * form doesn't add a larger one and the server drops it.
+ */
+export const REPORT_PHOTO_MAX_BYTES = 1.5 * 1024 * 1024;
+
+/**
  * Most photo bytes one `createReport` call carries. Vercel turns away a request body over
  * 4.5 MB whatever `bodySizeLimit` allows, and the report rides along. About a dozen ~1280px
  * photos fit.
