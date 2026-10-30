@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
-import { removeReportPhotos, reportPhotoPaths } from '@/lib/report-photos';
+import { removeReportPhotos, REPORT_PHOTO_SELECT, reportPhotoPaths } from '@/lib/report-photos';
 import type { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
@@ -97,11 +97,23 @@ export async function completeEvents(ids: string[], userId: string | null) {
   }
 }
 
-/** Deletes the event; its reports cascade, so their photos are deleted after it. */
+/**
+ * Deletes the event; its reports cascade, so their photos are deleted after it. The event and
+ * its reports are locked first, so no report or casualty is added between reading the photos
+ * and the delete.
+ */
 export async function deleteEvent(id: string) {
   try {
-    const photoPaths = await reportPhotoPaths({ event_id: id });
-    await prisma.event.delete({ where: { id: id } });
+    const photoPaths = await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM events WHERE id = ${id}::uuid FOR UPDATE`;
+      await tx.$queryRaw`SELECT id FROM reports WHERE event_id = ${id}::uuid FOR UPDATE`;
+      const reports = await tx.report.findMany({
+        where: { event_id: id },
+        select: REPORT_PHOTO_SELECT,
+      });
+      await tx.event.delete({ where: { id: id } });
+      return reportPhotoPaths(reports);
+    });
     await removeReportPhotos(photoPaths);
     revalidateEvents();
   } catch (err) {

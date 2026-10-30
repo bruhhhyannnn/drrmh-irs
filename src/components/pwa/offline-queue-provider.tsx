@@ -18,7 +18,7 @@ import {
   removeQueuedFieldReport,
   removeQueuedReport,
 } from '@/lib/offline-queue';
-import type { AssessmentPayload } from '@/lib/schemas';
+import type { AssessmentPayload, ReportFormData } from '@/lib/schemas';
 import { getAccessToken } from '@/lib/supabase';
 import { useAuthStore, useOfflineQueueStore, useRateAppStore } from '@/store';
 import { useQueryClient } from '@tanstack/react-query';
@@ -39,6 +39,23 @@ async function submitQueuedAssessment(payload: AssessmentPayload) {
   const result = await withTimeout(
     createAssessment(await getAccessToken(), payload),
     ASSESSMENT_SEND_TIMEOUT_MS
+  );
+  if (result.ok) return;
+  if (result.retry) throw new TypeError(result.error);
+  throw new Error(result.error);
+}
+
+/** Like submitQueuedAssessment, for a field report. `sentAt` is when it was queued: the
+ * report's time is when it was sent on the phone, not when it got through. */
+async function submitQueuedFieldReport(
+  payload: ReportFormData & { id?: string; user_id?: string },
+  photos: Blob[] | undefined,
+  sentAt: number
+) {
+  const result = await createReport(
+    await getAccessToken(),
+    { ...payload, sent_at: sentAt },
+    toReportPhotoFormData(photos)
   );
   if (result.ok) return;
   if (result.retry) throw new TypeError(result.error);
@@ -83,9 +100,11 @@ export function OfflineQueueProvider() {
           getQueuedFieldReports,
           removeQueuedFieldReport,
           markQueuedFieldReportFailed,
-          // The report's time is when it was sent on the phone, not when it got through.
-          (payload, photos, entry) =>
-            createReport({ ...payload, sent_at: entry.createdAt }, toReportPhotoFormData(photos))
+          (payload, photos, entry) => submitQueuedFieldReport(payload, photos, entry.createdAt),
+          // Another member's report on a shared phone waits for them, as assessments do.
+          (entry) =>
+            !entry.payload.user_id ||
+            entry.payload.user_id === useAuthStore.getState().userProfile?.id
         ),
         // Only the signed-in account's own: on a shared phone another member's entry waits
         // for them instead of blocking (or being refused for) whoever is signed in now.

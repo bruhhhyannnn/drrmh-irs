@@ -21,7 +21,7 @@ export function ReportPhotos({
   casualtyCount: number;
 }) {
   const count = damageCount + casualtyCount;
-  const { data, isPending } = useReportPhotoUrls(reportId, count > 0);
+  const { data, error, isPending } = useReportPhotoUrls(reportId, count > 0);
   if (count === 0) return null;
 
   return (
@@ -32,9 +32,9 @@ export function ReportPhotos({
             <Skeleton key={i} className="aspect-4/3 rounded-[14px]" />
           ))}
         </PhotoGrid>
-      ) : !data?.ok ? (
+      ) : !data ? (
         <p className="text-[14px] font-semibold text-error-700">
-          {data?.error ?? 'The photos could not be loaded.'}
+          {error?.message || 'The photos could not be loaded.'}
         </p>
       ) : (
         <div className="flex flex-col gap-4">

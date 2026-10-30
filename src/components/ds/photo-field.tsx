@@ -32,6 +32,8 @@ interface PhotoFieldProps {
   maxEdge?: number;
   /** Bytes still free when the photos share one limit with other fields (a report's). */
   roomBytes?: number;
+  /** Largest one prepared photo may be; a larger one isn't added. */
+  maxBytes?: number;
 }
 
 /** How many bytes the photos take, for a limit shared by several fields. */
@@ -52,6 +54,7 @@ export function PhotoField({
   max = BYSTANDER_MAX_PHOTOS,
   maxEdge,
   roomBytes = Infinity,
+  maxBytes = Infinity,
 }: PhotoFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isPreparing, setIsPreparing] = useState(false);
@@ -65,11 +68,16 @@ export function PhotoField({
     const picked = [...files].slice(0, room);
     const prepared: PhotoItem[] = [];
     let failed = 0;
+    let tooLarge = 0;
     let bytesLeft = roomBytes;
     let overBudget = false;
     for (const file of picked) {
       try {
         const blob = await preparePhoto(file, maxEdge);
+        if (blob.size > maxBytes) {
+          tooLarge += 1;
+          continue;
+        }
         if (blob.size > bytesLeft) {
           overBudget = true;
           break;
@@ -84,6 +92,12 @@ export function PhotoField({
     if (prepared.length) onAdd(prepared);
     if (overBudget) {
       setError('This report has no room for more photos. Remove a photo to add another.');
+    } else if (tooLarge) {
+      setError(
+        tooLarge === 1
+          ? 'One photo is too large to send. Try another photo.'
+          : 'Some photos are too large to send. Try other photos.'
+      );
     } else if (failed) {
       setError(
         failed === 1

@@ -21,8 +21,8 @@ import {
 import { useCasualtyConditions } from '@/components/hooks/use-settings';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn, totalPopulationCount } from '@/lib';
-import { ArrowLeft, Check } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeft, Check, TriangleAlert } from 'lucide-react';
+import { useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Card, GUTTER, Hero, HeroSkeleton, Mono, Pill } from '../../_components/chrome';
 import { formatDateTime } from '../../_lib/format';
@@ -62,6 +62,8 @@ export function SubmittedReport({
   const [drawer, setDrawer] = useState<'missing' | 'casualty' | null>(null);
   const [drawerKey, setDrawerKey] = useState(0);
   const [saving, setSaving] = useState(false);
+  /** New casualties already saved by an earlier try, so trying again doesn't add them twice. */
+  const savedCasualtyIds = useRef(new WeakMap<CasualtyEntry, string>());
 
   if (isLoading) return <SubmittedReportSkeleton />;
   if (!report) {
@@ -126,34 +128,54 @@ export function SubmittedReport({
   };
 
   // Casualties can only be added or removed here, so saved ones are kept as they are, with
-  // their photos: removes the ones taken off, then adds the new ones.
+  // their photos: removes the ones taken off, then adds the new ones. Every request is waited
+  // for, so a retry after a partial failure starts from what actually saved. Returns whether
+  // all of it saved; the drawer stays open otherwise.
   const saveCasualties = async (people: CasualtyEntry[]) => {
     setSaving(true);
+    const idOf = (c: CasualtyEntry) => c.id ?? savedCasualtyIds.current.get(c);
+    const added = people.filter((c) => !idOf(c));
     try {
-      const kept = new Set(people.map((c) => c.id));
-      await Promise.all(
+      const kept = new Set(people.map(idOf));
+      const deletes = await Promise.allSettled(
         casualtyRows
           .filter((c) => !kept.has(c.id))
           .map((c) => deleteCasualty.mutateAsync({ id: c.id, reportId }))
       );
-      await Promise.all(
-        people
-          .filter((c) => !c.id)
-          .map((c) =>
-            createCasualty.mutateAsync({
-              report_id: reportId,
-              condition_id: c.condition_id,
-              name: c.name,
-              age: c.age,
-              sex: c.sex,
-              diagnosis: c.diagnosis ?? null,
-              photos: c.photos?.map((p) => p.blob),
-            })
-          )
+      const creates = await Promise.allSettled(
+        added.map(async (c) => {
+          const saved = await createCasualty.mutateAsync({
+            report_id: reportId,
+            condition_id: c.condition_id,
+            name: c.name,
+            age: c.age,
+            sex: c.sex,
+            diagnosis: c.diagnosis ?? null,
+            photos: c.photos?.map((p) => p.blob),
+          });
+          savedCasualtyIds.current.set(c, saved.id);
+          return (c.photos?.length ?? 0) - saved.photoCount;
+        })
       );
+      const failed = [...deletes, ...creates].find((r) => r.status === 'rejected');
+      if (failed) throw failed.reason;
+
+      const dropped = creates.reduce((sum, r) => sum + (r.status === 'fulfilled' ? r.value : 0), 0);
+      if (dropped > 0) {
+        toast(
+          dropped === 1
+            ? '1 photo couldn’t be saved with the casualties.'
+            : `${dropped} photos couldn’t be saved with the casualties.`,
+          { icon: <TriangleAlert size={18} className="shrink-0 text-warning-700" aria-hidden /> }
+        );
+      }
+      // Saved: the previews of the new casualties' photos aren't shown any more.
+      added.forEach((c) => c.photos?.forEach((p) => URL.revokeObjectURL(p.url)));
       toast.success('Casualties saved');
+      return true;
     } catch {
       toast.error('Couldn’t save casualties. Please try again.');
+      return false;
     } finally {
       setSaving(false);
     }
@@ -326,7 +348,7 @@ export function SubmittedReport({
         open={drawer === 'casualty'}
         onClose={() => setDrawer(null)}
         people={casualties}
-        onSave={(people) => void saveCasualties(people)}
+        onSave={saveCasualties}
         conditions={casualtyConditions.filter((c) => c.is_active)}
         subtitle="Changes save straight to your submitted report."
         doneLabel="Save changes"
