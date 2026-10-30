@@ -22,12 +22,13 @@ tags: [plan, review]
 
 ## 1. Executive Summary
 
-PR #89 adds photos to field reports: damage photos on the report and injury photos on each casualty. They go into the private `report-photos` bucket and admins see them through signed URLs. The review found 15 issues. Four should block the merge:
+PR #89 adds photos to field reports: damage photos on the report and injury photos on each casualty. They go into the private `report-photos` bucket and admins see them through signed URLs. The review found 16 issues. Five should block the merge:
 
 - the photo actions have no caller check
 - a stale admin edit permanently deletes casualty photos
 - a lost response makes the offline queue create a duplicate report
 - the service worker caches health photos on admin devices
+- six other report actions have no caller check, so anyone with a report id can read, edit or delete it
 
 The review only read the code, in a temporary worktree. Lint, type-check, tests and the build were not run. Two points are inferred and not checked against Supabase: the 1000-path limit on Storage deletes (3.2.1) and that photo `<img>` requests land in next-pwa's `cross-origin` cache (3.1.4).
 
@@ -79,6 +80,13 @@ Line numbers refer to `43679f3`. Some of the files exist only on the PR branch.
   - **Impact:** On a shared DRRM-H office PC, each photo is stored in Cache Storage under its signed URL. Expiry is lazy, so the photos stay on disk after the URL expires and after sign-out, readable by anyone using that browser profile. This goes against the PR's own "health information" note.
   - **Suggested Fix:** Add a `NetworkOnly` runtime-caching rule for the Supabase Storage origin ahead of the defaults in `next.config.ts`.
   - **Resolution:** Fixed. `next.config.ts` has a `NetworkOnly` rule for `/storage/v1/object/sign/`, registered ahead of next-pwa's defaults (checked in the built `public/sw.js`). Confirmed on 2026-10-30 against `next start` in headless Chrome: with the service worker controlling the page, a signed `/storage/v1/object/sign/...` image left the `cross-origin` cache empty, while a control `/storage/v1/object/public/...` request was cached there. The app only signs with `createSignedUrls` (no transforms), so every photo URL takes the `/object/sign/` path.
+
+- **Issue 5:** `No caller check on the remaining report actions`
+  - **Location:** `src/actions/reports/index.ts` (`getReport`, `saveReportEdits`, `deleteReport`, `getReportCasualties`, `createReportMissingPerson`, `deleteReportMissingPerson`)
+  - **Problem:** Issue 1 checked only the photo actions. These six took no token and checked nothing.
+  - **Impact:** Anyone with a report id could read the report and its casualties, edit it, add or remove missing persons, or delete it. Deleting a report also erased its injury photos from Storage.
+  - **Suggested Fix:** Take the Supabase token and check it with `checkReportCaller` (owner or in-scope admin), as `createReportCasualty` does, returning `{ ok: false, error, retry }`.
+  - **Resolution:** Fixed on `DevJom/factory-004-caller-checks-remaining`. The six actions take `token` first, verify it with `requireProfile` and run `checkReportCaller` against the report's owner and campus before any other read or write (`deleteReportMissingPerson` looks up the row's `report_id` first, as `deleteReportCasualty` does). They return `{ ok: true, ... }` or the `ReportRefusal`; a `saveReportEdits` schema failure is now `{ ok: false, retry: false }` instead of a throw. `createReportMissingPerson` parses its payload with `missingPersonSchema` and writes only `name`, `age`, `sex` and the checked `report_id`, so a caller can't set `bystander_report_id` and attach a person to someone else's bystander report. The hooks pass `getAccessToken()` and throw on `ok: false`, so the components are unchanged. Still unchecked: `getReports`, `getReportMissingPersons`, `getMyReportForOngoingEvent(userId)` and `getMyLatestReport(userId)`.
 
 ---
 
@@ -151,6 +159,7 @@ Line numbers refer to `43679f3`. Some of the files exist only on the PR branch.
 ## 4. Action Checklist & Next Steps
 
 - [x] Fix 3.1.1–3.1.4 before merge (on `DevJom/factory-002-address-findings-review`, which merges `feat/DRRM-022-report-photos`).
+- [x] Fix 3.1.5: caller checks on the six remaining report actions (on `DevJom/factory-004-caller-checks-remaining`). `getReports`, `getReportMissingPersons`, `getMyReportForOngoingEvent` and `getMyLatestReport` remain unchecked.
 - [x] Fix or ticket 3.2.1–3.2.7 (all fixed; 3.3.1 and 3.3.3 fixed, 3.3.2 and 3.3.4 deferred).
 - [x] Confirm the two inferred points: Storage's per-request delete limit, and the `cross-origin` cache entries in DevTools → Application → Cache Storage after opening a report (both confirmed 2026-10-30; see 3.1.4 and 3.2.1).
 - [x] Run verification (`npm run lint`, `npm run type-check`, `npm run test`, `npm run build`).
