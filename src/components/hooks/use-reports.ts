@@ -35,7 +35,11 @@ export function useReports(
 export function useReport(id?: string) {
   return useQuery({
     queryKey: ['report', id],
-    queryFn: () => getReport(id!),
+    queryFn: async () => {
+      const result = await getReport(await getAccessToken(), id!);
+      if (!result.ok) throw new Error(result.error);
+      return result.report;
+    },
     enabled: !!id,
   });
 }
@@ -43,7 +47,11 @@ export function useReport(id?: string) {
 export function useSaveReportEdits() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: ReportEditData }) => saveReportEdits(id, data),
+    mutationFn: async ({ id, data }: { id: string; data: ReportEditData }) => {
+      const result = await saveReportEdits(await getAccessToken(), id, data);
+      if (!result.ok) throw new Error(result.error);
+      return result.report;
+    },
     onSuccess: (_data, { id }) => {
       for (const key of ['reports', 'event-summary', 'dashboard']) {
         queryClient.invalidateQueries({ queryKey: [key] });
@@ -77,7 +85,10 @@ export function useReportPhotoUrls(reportId: string | undefined, hasPhotos: bool
 export function useDeleteReport() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => deleteReport(id),
+    mutationFn: async (id: string) => {
+      const result = await deleteReport(await getAccessToken(), id);
+      if (!result.ok) throw new Error(result.error);
+    },
     onSuccess: () => {
       for (const key of ['reports', 'event-summary', 'dashboard', 'events']) {
         queryClient.invalidateQueries({ queryKey: [key] });
@@ -106,7 +117,11 @@ export function useMyLatestReport(userId?: string, options?: { enabled?: boolean
 export function useReportCasualties(reportId?: string) {
   return useQuery({
     queryKey: ['report-casualties', reportId],
-    queryFn: () => getReportCasualties(reportId!),
+    queryFn: async () => {
+      const result = await getReportCasualties(await getAccessToken(), reportId!);
+      if (!result.ok) throw new Error(result.error);
+      return result.casualties;
+    },
     enabled: !!reportId,
     staleTime: Infinity,
   });
@@ -161,8 +176,11 @@ export function useReportMissingPersons(reportId?: string) {
 export function useCreateReportMissingPerson() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: MissingPersonFormData & { report_id: string }) =>
-      createReportMissingPerson(data),
+    mutationFn: async (data: MissingPersonFormData & { report_id: string }) => {
+      const result = await createReportMissingPerson(await getAccessToken(), data);
+      if (!result.ok) throw new Error(result.error);
+      return result.missingPerson;
+    },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ['report-missing-persons', variables.report_id],
@@ -174,7 +192,10 @@ export function useCreateReportMissingPerson() {
 export function useDeleteReportMissingPerson() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id }: { id: string; reportId: string }) => deleteReportMissingPerson(id),
+    mutationFn: async ({ id }: { id: string; reportId: string }) => {
+      const result = await deleteReportMissingPerson(await getAccessToken(), id);
+      if (!result.ok) throw new Error(result.error);
+    },
     onSuccess: (_data, { reportId }) => {
       queryClient.invalidateQueries({ queryKey: ['report-missing-persons', reportId] });
     },

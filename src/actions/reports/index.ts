@@ -91,7 +91,9 @@ export async function getReports(
   return { data: data.map(serializeReport), total, perPage: PER_PAGE };
 }
 
-export async function getReport(id: string) {
+/** A report with its people, headcount and damage. Only its owner or an in-scope admin may. */
+export async function getReport(token: string | null, id: string) {
+  const caller = await requireProfile(token);
   const report = await prisma.report.findUnique({
     where: { id },
     include: {
@@ -118,8 +120,13 @@ export async function getReport(id: string) {
       },
     },
   });
-  if (!report) return null;
-  return serializeReport(report);
+  const check = checkReportCaller(
+    caller,
+    report && { user_id: report.user_id, campus_id: report.cluster.campus_id }
+  );
+  if (!check.ok) return check;
+  // A missing report is refused above.
+  return { ok: true as const, report: serializeReport(report!) };
 }
 
 /** The unit a report is for: the one picked, or the one typed under "Other (please specify)". */
@@ -279,12 +286,18 @@ const lockReport = (tx: Prisma.TransactionClient, id: string) =>
  * Edit report: where, headcount, people and damage in one write, so a failure leaves the
  * report as it was. Headcount and missing persons are replaced; casualties that keep their id
  * are updated in place, new ones added, and only `removed_casualty_ids` are deleted, with their
- * photos once the write has committed.
+ * photos once the write has committed. Only the report's owner or an in-scope admin may.
  */
-export async function saveReportEdits(id: string, data: ReportEditData) {
+export async function saveReportEdits(token: string | null, id: string, data: ReportEditData) {
+  const caller = checkReportCaller(await requireProfile(token), await reportOwner(id));
+  if (!caller.ok) return caller;
   const parsed = reportEditSchema.safeParse(data);
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0]?.message ?? 'This report is incomplete.');
+    return {
+      ok: false as const,
+      error: parsed.error.issues[0]?.message ?? 'This report is incomplete.',
+      retry: false,
+    };
   }
   const {
     population_counts,
@@ -331,14 +344,22 @@ export async function saveReportEdits(id: string, data: ReportEditData) {
     });
     await removeReportPhotos(photoPaths);
     revalidatePath('/reports');
-    return serializeReport(report);
+    return { ok: true as const, report: serializeReport(report) };
   } catch (err) {
     throw toFriendlyError(err, 'report');
   }
 }
 
-/** Deletes the report (people and headcount cascade), then its photos. */
-export async function deleteReport(id: string) {
+/**
+ * Deletes the report (people and headcount cascade), then its photos. Only the report's owner
+ * or an in-scope admin may.
+ */
+export async function deleteReport(
+  token: string | null,
+  id: string
+): Promise<{ ok: true } | ReportRefusal> {
+  const caller = checkReportCaller(await requireProfile(token), await reportOwner(id));
+  if (!caller.ok) return caller;
   try {
     const photoPaths = await prisma.$transaction(async (tx) => {
       await lockReport(tx, id);
@@ -348,6 +369,7 @@ export async function deleteReport(id: string) {
     });
     await removeReportPhotos(photoPaths);
     revalidatePath('/reports');
+    return { ok: true };
   } catch (err) {
     throw toFriendlyError(err, 'report');
   }
@@ -466,12 +488,16 @@ export async function getMyLatestReport(userId: string) {
 }
 
 // Report Casualties
-export async function getReportCasualties(reportId: string) {
-  return prisma.reportCasualty.findMany({
+/** A report's casualties. Only the report's owner or an in-scope admin may see them. */
+export async function getReportCasualties(token: string | null, reportId: string) {
+  const caller = checkReportCaller(await requireProfile(token), await reportOwner(reportId));
+  if (!caller.ok) return caller;
+  const casualties = await prisma.reportCasualty.findMany({
     where: { report_id: reportId },
     include: { condition: { select: { name: true } } },
     orderBy: { condition: { name: 'asc' } },
   });
+  return { ok: true as const, casualties };
 }
 
 /** The report's owner and campus, for `checkReportCaller`; null when it is gone. */
@@ -550,15 +576,32 @@ export async function getReportMissingPersons(reportId: string) {
   });
 }
 
+/** Adds a missing person to a report. Only the report's owner or an in-scope admin may. */
 export async function createReportMissingPerson(
+  token: string | null,
   data: MissingPersonFormData & { report_id: string }
 ) {
-  const result = await prisma.reportMissingPerson.create({ data });
+  const caller = checkReportCaller(await requireProfile(token), await reportOwner(data.report_id));
+  if (!caller.ok) return caller;
+  const missingPerson = await prisma.reportMissingPerson.create({ data });
   revalidatePath('/reports');
-  return result;
+  return { ok: true as const, missingPerson };
 }
 
-export async function deleteReportMissingPerson(id: string) {
+/** Removes a missing person. Only the report's owner or an in-scope admin may. */
+export async function deleteReportMissingPerson(
+  token: string | null,
+  id: string
+): Promise<{ ok: true } | ReportRefusal> {
+  const person = await prisma.reportMissingPerson.findUnique({
+    where: { id },
+    select: { report_id: true },
+  });
+  const owner = person?.report_id ? await reportOwner(person.report_id) : null;
+  const caller = checkReportCaller(await requireProfile(token), owner);
+  if (!caller.ok) return caller;
+
   await prisma.reportMissingPerson.delete({ where: { id } });
   revalidatePath('/reports');
+  return { ok: true };
 }
