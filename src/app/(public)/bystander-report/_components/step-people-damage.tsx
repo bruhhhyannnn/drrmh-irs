@@ -5,17 +5,18 @@ import {
   Button,
   FieldError,
   FieldLabel,
+  PhotoField,
   SelectField,
   Stepper,
   TextArea,
   TextInput,
+  type PhotoItem,
 } from '@/components/ds';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn, type BystanderFormValues } from '@/lib';
 import { User, Users, type LucideIcon } from 'lucide-react';
 import type { UseFormRegister } from 'react-hook-form';
 import { FooterSlot, StepFooter, StepHeader, StepTitle } from './chrome';
-import { PhotoField, type PhotoItem } from './photo-field';
 
 interface StepPeopleDamageProps {
   titleRef: React.Ref<HTMLHeadingElement>;

@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '@/lib';
+import { cn, REPORT_MAX_PHOTOS, REPORT_PHOTO_MAX_EDGE } from '@/lib';
 import { User, X } from 'lucide-react';
 import { useState } from 'react';
 import { Drawer } from './drawer';
@@ -13,6 +13,7 @@ import {
   type PersonEntry,
   type PersonSex,
 } from './people';
+import { photoBytes, PhotoField, type PhotoItem } from './photo-field';
 
 const SEX_OPTIONS = [
   { value: 'male', label: 'Male' },
@@ -53,9 +54,17 @@ interface Draft {
   sex: PersonSex;
   condition_id: string;
   diagnosis: string;
+  photos: PhotoItem[];
 }
 
-const EMPTY_DRAFT: Draft = { name: '', age: '', sex: 'unknown', condition_id: '', diagnosis: '' };
+const EMPTY_DRAFT: Draft = {
+  name: '',
+  age: '',
+  sex: 'unknown',
+  condition_id: '',
+  diagnosis: '',
+  photos: [],
+};
 
 type Person = PersonEntry | CasualtyEntry;
 
@@ -68,6 +77,11 @@ type PeopleDrawerProps = {
   subtitle?: string;
   /** Replaces "Done (n)", e.g. "Save changes" when edits go straight to the server. */
   doneLabel?: string;
+  /**
+   * Casualties only: lets each one carry photos of the injury. `budgetBytes` caps the photos
+   * of everyone in the drawer together, when they all go up in one report.
+   */
+  photos?: { budgetBytes?: number };
 } & (
   | { kind: 'missing'; people: PersonEntry[]; onSave: (people: PersonEntry[]) => void }
   | { kind: 'casualty'; people: CasualtyEntry[]; onSave: (people: CasualtyEntry[]) => void }
@@ -93,7 +107,11 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
   const isDraftFilled =
     !!draft.name.trim() ||
     !!draft.age.trim() ||
-    (isCasualty && (!!draft.condition_id || !!draft.diagnosis.trim()));
+    (isCasualty && (!!draft.condition_id || !!draft.diagnosis.trim() || !!draft.photos.length));
+  const photoRoomBytes =
+    (props.photos?.budgetBytes ?? Infinity) -
+    photoBytes(draft.photos) -
+    people.reduce((sum, p) => sum + ('photos' in p ? photoBytes(p.photos) : 0), 0);
 
   /** Validates the draft; returns the person to add, or null after showing the errors. */
   const draftToPerson = (): Person | null => {
@@ -111,7 +129,12 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
 
     const person = { name: draft.name.trim(), age, sex: draft.sex };
     return isCasualty
-      ? { ...person, condition_id: draft.condition_id, diagnosis: draft.diagnosis.trim() || null }
+      ? {
+          ...person,
+          condition_id: draft.condition_id,
+          diagnosis: draft.diagnosis.trim() || null,
+          ...(draft.photos.length && { photos: draft.photos }),
+        }
       : person;
   };
 
@@ -314,6 +337,25 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
               onChange={(e) => setDraft((d) => ({ ...d, diagnosis: e.target.value }))}
             />
           </div>
+        )}
+
+        {isCasualty && props.photos && (
+          <PhotoField
+            id="casualty-photos"
+            label="Photos of the injury"
+            subject="the injury"
+            note="Photograph the injury, not the face, where you can. Only DRRM-H admins can see these photos."
+            max={REPORT_MAX_PHOTOS}
+            maxEdge={REPORT_PHOTO_MAX_EDGE}
+            roomBytes={photoRoomBytes}
+            photos={draft.photos}
+            onAdd={(added) => setDraft((d) => ({ ...d, photos: [...d.photos, ...added] }))}
+            onRemove={(id) => {
+              const photo = draft.photos.find((p) => p.id === id);
+              if (photo) URL.revokeObjectURL(photo.url);
+              setDraft((d) => ({ ...d, photos: d.photos.filter((p) => p.id !== id) }));
+            }}
+          />
         )}
 
         <Button variant="outline" fullWidth onClick={addDraft}>

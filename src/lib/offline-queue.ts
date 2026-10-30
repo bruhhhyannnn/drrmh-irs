@@ -42,7 +42,7 @@ export interface QueuedEntry<TPayload> {
   id: string;
   createdAt: number;
   payload: TPayload;
-  /** Files sent alongside the payload (bystander damage photos). Absent on older entries. */
+  /** Files sent alongside the payload: photos, on bystander and field reports. Absent on older entries. */
   attachments?: Blob[];
   /** Display text for the entry. Absent on older entries. */
   summary?: QueuedSummary;

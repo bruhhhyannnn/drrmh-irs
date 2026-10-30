@@ -156,3 +156,21 @@ export const BYSTANDER_MAX_PHOTOS = 3;
 
 /** FormData field the photos travel in to `createBystanderReport`. */
 export const BYSTANDER_PHOTO_FIELD = 'photos';
+
+/* ─── Field report photos ─── */
+
+/** Most photos of the structural damage, and of each casualty, on a field report (also DB CHECK constraints). */
+export const REPORT_MAX_PHOTOS = 3;
+
+/** Longest edge, in px, of field report photos: smaller than a bystander's, as a report carries more. */
+export const REPORT_PHOTO_MAX_EDGE = 1280;
+
+/**
+ * Most photo bytes one `createReport` call carries. Vercel turns away a request body over
+ * 4.5 MB whatever `bodySizeLimit` allows, and the report rides along. About a dozen ~1280px
+ * photos fit.
+ */
+export const REPORT_PHOTO_BUDGET_BYTES = 3.5 * 1024 * 1024;
+
+/** FormData field the photos travel in to `createReport` and `createReportCasualty`. */
+export const REPORT_PHOTO_FIELD = 'photos';

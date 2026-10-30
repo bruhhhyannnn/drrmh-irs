@@ -1,12 +1,18 @@
 'use client';
 
 import { TEXT_BUTTON } from '@/app/(public)/_components/primitives';
-import { Button, FieldError, FieldHelp, FieldLabel, FOCUS_RING } from '@/components/ds';
+import {
+  Button,
+  FieldError,
+  FieldHelp,
+  FieldLabel,
+  FOCUS_RING,
+  type PhotoItem,
+} from '@/components/ds';
 import { cn, type BystanderFormValues } from '@/lib';
 import { ShieldCheck } from 'lucide-react';
 import type { UseFormRegister } from 'react-hook-form';
 import { FooterSlot, StepFooter, StepHeader, StepTitle } from './chrome';
-import type { PhotoItem } from './photo-field';
 
 interface StepReviewProps {
   titleRef: React.Ref<HTMLHeadingElement>;

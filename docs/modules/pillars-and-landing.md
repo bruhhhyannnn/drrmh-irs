@@ -1,5 +1,6 @@
 ---
 type: module
+updated: 2026-10-29
 module: pillars-and-landing
 paths:
   - src/app/(pillars)
@@ -18,19 +19,19 @@ Two groups of mostly static pages. The public landing page at `/` introduces the
 
 ## Where it lives
 
-| Path                                                   | What it holds                                                                                                                                                                                                      |
-| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `src/app/(public)/page.tsx`                            | `LandingPage`: Hero, PartnersBar, AudienceSection, SummaryPreview, HowItWorks, PrivacySection, QuoteSection, VisionMission, HotlinesSection, AccessCta, SiteFooter                                                 |
-| `src/app/(public)/layout.tsx`                          | Pass-through layout, no auth                                                                                                                                                                                       |
-| `src/app/(public)/_components/content.ts`              | All landing copy as constants: `ROUTES`, `CONTACT`, `NAV_LINKS`, `HERO_IMAGES`, `PARTNERS`, `AUDIENCES`, `SAMPLE_SUMMARY`, `STEPS`, `PRIVACY_POINTS`, `QUOTE`, `VISION`, `MISSION`, `NATIONAL_HOTLINE`, `HOTLINES` |
-| `src/app/(public)/_components/primitives.tsx`          | Landing building blocks: `Section`, `Container`, `SectionHeading`, `Eyebrow`, `Lead`, `CheckItem`, `SmartLink`, `ButtonLink`, `TextLink`, `ArrowLink`, `TEXT_BUTTON`, `FOCUS_RING`                                 |
-| `src/app/(public)/_components/privacy-notice-lead.tsx` | The only client component here: opens `DataPrivacyContent` in a `Modal`                                                                                                                                            |
-| `src/app/(public)/_components/index.ts`                | Barrel; also re-exports `figtree`, `splineSansMono` from `src/components/ds/fonts`                                                                                                                                 |
-| `src/app/(pillars)/layout.tsx`                         | Wraps pillar pages in `ProtectedRoute`; no IRS shell                                                                                                                                                               |
-| `src/app/(pillars)/pillars/[pillar]/page.tsx`          | `PillarPage`: one placeholder per pillar, statically generated                                                                                                                                                     |
-| `src/lib/pillars.ts`                                   | `PILLARS` and `pillarHref(slug)` (shared with [[building-safety]] and [[checklist-editor]])                                                                                                                        |
-| `src/lib/campus-logo.ts`                               | `campusLogo(name)`, `ownCampusLogo(name)`                                                                                                                                                                          |
-| `public/`                                              | Logos (`up-<campus>-logo.png`, `up-logo.png`, `irs-logo.png`, `upm-drrmh-logo.png`) and hero photos `upm-drrmh-background-1..4.jpg`                                                                                |
+| Path                                                   | What it holds                                                                                                                                                                                                                                             |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/app/(public)/page.tsx`                            | `LandingPage`: Hero, PartnersBar, AudienceSection, SummaryPreview, HowItWorks, PrivacySection, QuoteSection, VisionMission, HotlinesSection, AccessCta, SiteFooter                                                                                        |
+| `src/app/(public)/layout.tsx`                          | Pass-through layout, no auth                                                                                                                                                                                                                              |
+| `src/app/(public)/_components/content.ts`              | All landing copy as constants: `ROUTES`, `CONTACT`, `NAV_LINKS`, `HERO_IMAGES`, `HERO_CAMPUSES`, `PARTNERS`, `PARTNER_INSTITUTES`, `AUDIENCES`, `SAMPLE_SUMMARY`, `STEPS`, `PRIVACY_POINTS`, `QUOTE`, `VISION`, `MISSION`, `NATIONAL_HOTLINE`, `HOTLINES` |
+| `src/app/(public)/_components/primitives.tsx`          | Landing building blocks: `Section`, `Container`, `SectionHeading`, `Eyebrow`, `Lead`, `CheckItem`, `SmartLink`, `ButtonLink`, `TextLink`, `ArrowLink`, `TEXT_BUTTON`, `FOCUS_RING`                                                                        |
+| `src/app/(public)/_components/privacy-notice-lead.tsx` | The only client component here: opens `DataPrivacyContent` in a `Modal`                                                                                                                                                                                   |
+| `src/app/(public)/_components/index.ts`                | Barrel; also re-exports `figtree`, `splineSansMono` from `src/components/ds/fonts`                                                                                                                                                                        |
+| `src/app/(pillars)/layout.tsx`                         | Wraps pillar pages in `ProtectedRoute`; no IRS shell                                                                                                                                                                                                      |
+| `src/app/(pillars)/pillars/[pillar]/page.tsx`          | `PillarPage`: one placeholder per pillar, statically generated                                                                                                                                                                                            |
+| `src/lib/pillars.ts`                                   | `PILLARS` and `pillarHref(slug)` (shared with [[building-safety]] and [[checklist-editor]])                                                                                                                                                               |
+| `src/lib/campus-logo.ts`                               | `campusLogo(name)`, `ownCampusLogo(name)`                                                                                                                                                                                                                 |
+| `public/`                                              | Logos (`up-<campus>-logo.png`, `up-logo.png`, `irs-logo.png`, `upm-drrmh-logo.png`, `upri-logo.png`, `noah-logo.png`) and hero photos `upm-drrmh-background-1..4.jpg`                                                                                     |
 
 ## Data
 
@@ -48,6 +49,8 @@ None.
 - Calls to action: `ROUTES.report` = `/bystander-report` (bystanders), `ROUTES.signIn` = `/signin` (ERT Members and admins), `tel:` hotline links, and `mailto:` the contact email.
 - `SmartLink` renders a Next.js `Link` for in-app paths and a plain `<a>` for `tel:`, `mailto:` and `#` links.
 - Hero photos cross-fade with the `--animate-hero-fade` animation (16 s loop) defined in `globals.css`.
+- The hero heading's campus takes turns through `HERO_CAMPUSES` (UP Manila, PGH, UP Diliman, UP System) with `--animate-campus-turn` (12 s loop, 3 s each). The names are `aria-hidden`; the `h1`'s `aria-label` reads all four. With reduced motion only UP Manila shows (DRRM-021).
+- The partners bar has two groups: "Developed under the DRRM-H Program" with UP Manila and DRRM-H Center, then, after a divider shown on `lg` only, the UP Resilience Institute and the NOAH wordmark. NOAH sits on a `data-theme="light"` chip so its black letters read on the dark theme.
 - `/pillars/<slug>`: header with "IRS dashboard" back button, "Pillar n of 4", name, summary, a "Coming soon" note, example activities from RA 10121, and a nav to the other three pillars.
 - The admin sidebar builds the pillar items from `PILLARS` in `src/app/(admin)/_components/shell/nav.ts` with `newTab: true` and the group label "DRRM pillars"; `admin-shell.tsx` adds `target="_blank"`.
 - Campus logos: `ownCampusLogo` returns `/up-<slug>-logo.png` when the campus is in `CAMPUS_LOGOS` (baguio, cebu, diliman, losbanos, manila, mindanao, openuniversity, tacloban, visayas), else `null`. `campusLogo` falls back to `/up-logo.png`. Used by the print `Letterhead`, the admin `CampusMark` (shows initials when `null`), and the bystander form's campus step.
