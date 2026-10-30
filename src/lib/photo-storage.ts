@@ -7,6 +7,16 @@ import { supabaseAdmin } from './supabase-admin';
 
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
 
+/** Most paths one Storage delete request takes. */
+const REMOVE_CHUNK = 1000;
+
+/** `items` in runs of at most `size`, in order. */
+function chunks<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+}
+
 /**
  * Returns the JPEG without its metadata: every APPn segment except APP0 (JFIF) and APP2 (ICC
  * colour profile), and every comment. That drops Exif (including GPS), XMP and IPTC. The forms
@@ -56,24 +66,30 @@ export function photoBucket(bucket: string, maxBytes: number) {
   /**
    * Uploads the photos under `<folder>/` and returns their object paths, in the order they
    * were sent. A photo that isn't a JPEG, is larger than `maxBytes` or fails to upload is
-   * skipped: a photo problem must never block a report.
+   * skipped: a photo problem must never block a report. Never throws, so the photos that did
+   * upload are always returned for the caller to keep or clean up.
    */
   async function upload(folder: string, photos: Blob[]): Promise<string[]> {
     const paths = await Promise.all(
       photos.map(async (photo) => {
         if (photo.size === 0 || photo.size > maxBytes) return null;
-        const stripped = stripJpegMetadata(new Uint8Array(await photo.arrayBuffer()));
-        if (!stripped) return null;
-
         const path = `${folder}/${randomUUID()}.jpg`;
-        const { error } = await supabaseAdmin.storage
-          .from(bucket)
-          .upload(path, stripped, { contentType: 'image/jpeg', upsert: false });
-        if (error) {
-          console.error(`[${bucket}] upload failed for ${path}: ${error.message}`);
+        try {
+          const stripped = stripJpegMetadata(new Uint8Array(await photo.arrayBuffer()));
+          if (!stripped) return null;
+
+          const { error } = await supabaseAdmin.storage
+            .from(bucket)
+            .upload(path, stripped, { contentType: 'image/jpeg', upsert: false });
+          if (error) {
+            console.error(`[${bucket}] upload failed for ${path}: ${error.message}`);
+            return null;
+          }
+          return path;
+        } catch (err) {
+          console.error(`[${bucket}] upload failed for ${path}: ${String(err)}`);
           return null;
         }
-        return path;
       })
     );
     return paths.filter((path): path is string => path !== null);
@@ -81,9 +97,10 @@ export function photoBucket(bucket: string, maxBytes: number) {
 
   /** Best-effort delete, for photos whose row was never saved or has been deleted. */
   async function remove(paths: string[]): Promise<void> {
-    if (paths.length === 0) return;
-    const { error } = await supabaseAdmin.storage.from(bucket).remove(paths);
-    if (error) console.error(`[${bucket}] cleanup failed: ${error.message}`);
+    for (const chunk of chunks(paths, REMOVE_CHUNK)) {
+      const { error } = await supabaseAdmin.storage.from(bucket).remove(chunk);
+      if (error) console.error(`[${bucket}] cleanup failed: ${error.message}`);
+    }
   }
 
   /** One-hour signed URLs by object path, for showing photos to an admin. */
