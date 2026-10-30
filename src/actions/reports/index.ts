@@ -4,6 +4,7 @@ import {
   CasualtyFormData,
   casualtySchema,
   MissingPersonFormData,
+  missingPersonSchema,
   REPORT_PHOTO_FIELD,
   ReportFormData,
   reportSchema,
@@ -583,7 +584,18 @@ export async function createReportMissingPerson(
 ) {
   const caller = checkReportCaller(await requireProfile(token), await reportOwner(data.report_id));
   if (!caller.ok) return caller;
-  const missingPerson = await prisma.reportMissingPerson.create({ data });
+  // Write only the parsed fields, so a client can't set bystander_report_id or id.
+  const parsed = missingPersonSchema.safeParse(data);
+  if (!parsed.success) {
+    return {
+      ok: false as const,
+      error: parsed.error.issues[0]?.message ?? 'Check the missing person.',
+      retry: false,
+    };
+  }
+  const missingPerson = await prisma.reportMissingPerson.create({
+    data: { ...parsed.data, report_id: data.report_id },
+  });
   revalidatePath('/reports');
   return { ok: true as const, missingPerson };
 }
