@@ -78,7 +78,7 @@ Line numbers refer to `43679f3`. Some of the files exist only on the PR branch.
   - **Problem:** Signed Supabase URLs are loaded as cross-origin `<img>`s and links. next-pwa's `defaultCache` ends with a catch-all `({ sameOrigin }) => !sameOrigin` NetworkFirst rule (cache `cross-origin`, 32 entries, 1 hour). _Inferred, not checked in a browser._
   - **Impact:** On a shared DRRM-H office PC, each photo is stored in Cache Storage under its signed URL. Expiry is lazy, so the photos stay on disk after the URL expires and after sign-out, readable by anyone using that browser profile. This goes against the PR's own "health information" note.
   - **Suggested Fix:** Add a `NetworkOnly` runtime-caching rule for the Supabase Storage origin ahead of the defaults in `next.config.ts`.
-  - **Resolution:** Fixed. `next.config.ts` has a `NetworkOnly` rule for `/storage/v1/object/sign/`, registered ahead of next-pwa's defaults (checked in the built `public/sw.js`). Not yet checked in DevTools Cache Storage on a running build.
+  - **Resolution:** Fixed. `next.config.ts` has a `NetworkOnly` rule for `/storage/v1/object/sign/`, registered ahead of next-pwa's defaults (checked in the built `public/sw.js`). Confirmed on 2026-10-30 against `next start` in headless Chrome: with the service worker controlling the page, a signed `/storage/v1/object/sign/...` image left the `cross-origin` cache empty, while a control `/storage/v1/object/public/...` request was cached there. The app only signs with `createSignedUrls` (no transforms), so every photo URL takes the `/object/sign/` path.
 
 ---
 
@@ -86,7 +86,7 @@ Line numbers refer to `43679f3`. Some of the files exist only on the PR branch.
 
 - **Issue 1:** `Deleting a large event can leave every photo in Storage`
   - **Location:** `src/actions/events/index.ts:105`
-  - **Problem:** `deleteEvent` passes every photo path of every report in the event to one Storage `remove()` call. The delete endpoint caps a request at 1000 prefixes (_inferred, not checked_), and `remove()` only logs the error.
+  - **Problem:** `deleteEvent` passes every photo path of every report in the event to one Storage `remove()` call. The delete endpoint caps a request at 1000 objects (confirmed in supabase/storage `src/storage/limits.ts`: `MAX_OBJECTS_PER_REQUEST = 1000`, the default per-tenant limit, enforced by `enforceDeleteObjectsLimit` when request hard limits are on), and `remove()` only logs the error.
   - **Impact:** A campus-wide drill with about 250 reports and their damage and casualty photos goes past 1000 paths. The event and reports are deleted, the error goes to `console.error`, and every photo stays in Storage with nothing pointing to it.
   - **Suggested Fix:** Remove paths in chunks of 1000.
   - **Resolution:** Fixed. `photoBucket().remove` deletes in chunks of 1000 paths (`photo-storage.test.ts`).
@@ -152,6 +152,6 @@ Line numbers refer to `43679f3`. Some of the files exist only on the PR branch.
 
 - [x] Fix 3.1.1–3.1.4 before merge (on `DevJom/factory-002-address-findings-review`, which merges `feat/DRRM-022-report-photos`).
 - [x] Fix or ticket 3.2.1–3.2.7 (all fixed; 3.3.1 and 3.3.3 fixed, 3.3.2 and 3.3.4 deferred).
-- [ ] Confirm the two inferred points: Storage's per-request delete limit, and the `cross-origin` cache entries in DevTools → Application → Cache Storage after opening a report.
+- [x] Confirm the two inferred points: Storage's per-request delete limit, and the `cross-origin` cache entries in DevTools → Application → Cache Storage after opening a report (both confirmed 2026-10-30; see 3.1.4 and 3.2.1).
 - [x] Run verification (`npm run lint`, `npm run type-check`, `npm run test`, `npm run build`).
 - [ ] Re-review and sign off.
