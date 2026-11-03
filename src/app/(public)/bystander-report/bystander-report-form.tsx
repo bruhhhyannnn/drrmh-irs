@@ -1,7 +1,7 @@
 'use client';
 
 import { createBystanderReport } from '@/actions/emergency-reports';
-import { PeopleDrawer, PrivacyDrawer } from '@/components/ds';
+import { PeopleDrawer, PrivacyDrawer, type PhotoItem } from '@/components/ds';
 import { useGetBystanderIncidentTypes } from '@/components/hooks/use-bystander-reports';
 import { useCampuses } from '@/components/hooks/use-campus';
 import { useCampusPopulationCategories } from '@/components/hooks/use-population-categories';
@@ -29,7 +29,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm, type FieldErrors } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { HeroBand, PageCard } from './_components/chrome';
-import type { PhotoItem } from './_components/photo-field';
 import { ResultScreen, type ReportResult } from './_components/result-screen';
 import { StepPeopleDamage } from './_components/step-people-damage';
 import { StepReview } from './_components/step-review';

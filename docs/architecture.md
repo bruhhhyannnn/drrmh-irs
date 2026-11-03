@@ -1,6 +1,6 @@
 ---
 type: reference
-updated: 2026-10-28
+updated: 2026-10-29
 verified: true
 tags: [architecture]
 ---
@@ -63,7 +63,7 @@ There are two Prisma/Postgres access paths and one Supabase path:
 - **`src/lib/prisma.ts`:** the server-side Prisma client (through `@prisma/adapter-pg`), used from server actions for all the admin dashboard's reads and writes ([[database]]).
 - **`src/lib/supabase.ts`:** the browser Supabase SDK. It is used for **auth only** (`AuthProvider`, sign-in and sign-out, `getAccessToken()`), and for Supabase Realtime subscriptions if any are added. None exist today.
   - The key it uses is `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY`, Supabase's publishable key. The older `CLAUDE.md` called it the "anon key".
-- **`src/lib/supabase-admin.ts`:** the server-side Supabase client with the service role key. It is only for privileged operations Prisma can't do: the Supabase Auth admin API (create and delete users, verifying tokens in `requireProfile`), and the private `bystander-photos` Storage bucket.
+- **`src/lib/supabase-admin.ts`:** the server-side Supabase client with the service role key. It is only for privileged operations Prisma can't do: the Supabase Auth admin API (create and delete users, verifying tokens in `requireProfile`), and the private `bystander-photos` and `report-photos` Storage buckets (`src/lib/photo-storage.ts`).
 
 ## Campus scoping
 

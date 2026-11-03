@@ -1,12 +1,12 @@
 // Photos are prepared on the device before they are kept or sent: scaled to at most 1600px on
-// the long edge and re-encoded as JPEG through a canvas. Re-encoding drops all metadata,
-// including the GPS location a phone camera writes into the file. The server strips JPEG
-// metadata again (src/lib/bystander-photos.ts) in case a client skips this step.
+// the long edge (1280px on field reports, which carry more of them) and re-encoded as JPEG
+// through a canvas. Re-encoding drops all metadata, including the GPS location a phone camera
+// writes into the file. The server strips JPEG metadata again (src/lib/photo-storage.ts) in
+// case a client skips this step.
 
-const MAX_EDGE = 1600;
 const JPEG_QUALITY = 0.82;
 
-export async function preparePhoto(file: File): Promise<Blob> {
+export async function preparePhoto(file: File, maxEdge = 1600): Promise<Blob> {
   const url = URL.createObjectURL(file);
   try {
     const image = new Image();
@@ -15,7 +15,7 @@ export async function preparePhoto(file: File): Promise<Blob> {
     // re-encoded photo keeps the right way up after the flag itself is dropped.
     await image.decode();
 
-    const scale = Math.min(1, MAX_EDGE / Math.max(image.naturalWidth, image.naturalHeight));
+    const scale = Math.min(1, maxEdge / Math.max(image.naturalWidth, image.naturalHeight));
     const canvas = document.createElement('canvas');
     canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
     canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
