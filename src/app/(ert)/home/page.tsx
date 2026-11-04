@@ -1,6 +1,6 @@
 'use client';
 
-import { ProfileSetup } from '@/components/auth';
+import { AccountLoadFailed, ProfileSetup } from '@/components/auth';
 import { FOCUS_RING } from '@/components/ds';
 import { useAssessmentDrafts, useMyAssessments } from '@/components/hooks/use-assessments';
 import { useOngoingEvents } from '@/components/hooks/use-events';
@@ -26,6 +26,7 @@ export default function ErtHomePage() {
       </ErtFrame>
     );
   }
+  if (access.status === 'error') return <AccountLoadFailed />;
   if (access.status === 'setup') return <ProfileSetup />;
 
   return (

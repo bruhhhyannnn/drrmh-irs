@@ -1,7 +1,7 @@
 ---
 type: module
 module: routes
-updated: 2026-10-27
+updated: 2026-11-04
 verified: true
 paths:
   - src/app
@@ -60,7 +60,7 @@ Every page lives under `src/app/` in a route group, and the group decides the fr
 
 ## Rules and gotchas
 
-- Admin vs. non-admin is decided by `isAdminUserType()` (`src/lib/constants.ts`). `ProtectedRoute` sends ERT Members to `/home`, and `useErtAccess` sends admins to `/dashboard` ([[auth]]).
+- Admin vs. non-admin is decided by `isAdminUserType()` (`src/lib/constants.ts`). `ProtectedRoute` sends non-admins to `/home` without mounting the page, and `useErtAccess` sends admins to `/dashboard` ([[auth]]).
 - ERT pages that must work offline avoid dynamic segments, because the service worker might not have cached them. The `ert-pages` cache rule in `next.config.ts` ignores the query string ([[offline-pwa]]).
 - The `(print)` pages and `?print=` render without a shell or `ErtFrame`, but keep their guard.
 - A new admin page goes in `NAV` in `(admin)/_components/shell/nav.ts`. A Super-Admin-only page also goes in `SUPER_ADMIN_HREFS` (today `/campus` and `/assessments/checklist`), which the shell blocks for Administrators.

@@ -1,7 +1,7 @@
 ---
 type: module
 module: auth
-updated: 2026-10-28
+updated: 2026-11-04
 verified: true
 paths:
   - src/actions/auth
@@ -44,11 +44,12 @@ Read this before touching sign-in, the profile, role checks or the setup gate.
 | `src/app/auth/callback/page.tsx`                                                 | OAuth callback, a client page (not a route handler)                               |
 | `src/components/auth/auth-provider.tsx`                                          | Listens to Supabase auth, loads the profile into the store                        |
 | `src/components/auth/protected-route.tsx`                                        | `ProtectedRoute`, guard for `(admin)`, `(pillars)`, `(print)` layouts             |
+| `src/components/auth/account-load-failed.tsx`                                    | `AccountLoadFailed`: Retry and Sign Out when the profile can't be loaded          |
 | `src/components/auth/profile-setup.tsx`                                          | `ProfileSetupGate` and the full-page `ProfileSetup`                               |
 | `src/components/auth/profile-drawer.tsx`                                         | `ProfileDrawer` ("My profile"): details, appearance, checklist language, Sign out |
 | `src/components/auth/auth-shell.tsx`, `auth-ui.tsx`, `google-sign-in-button.tsx` | The auth page frame, banners and headings, Google button                          |
 | `src/lib/server-auth.ts`                                                         | `requireProfile(token)`, `requireAdmin(token, campusId)` (server only)            |
-| `src/lib/access.ts`                                                              | `canUseAssessment(profile)`                                                       |
+| `src/lib/access.ts`                                                              | `canUseAssessment`, `homePathFor`, `signInDestination`, `adminGuard`, `ertGuard`  |
 | `src/lib/constants.ts`                                                           | `USER_TYPES`, `isAdminUserType()`                                                 |
 | `src/store/auth.store.ts`                                                        | `useAuthStore` (Zustand, persisted)                                               |
 | `src/app/(ert)/_lib/use-ert-access.ts`                                           | `useErtAccess`, the guard for ERT pages                                           |
@@ -76,16 +77,18 @@ Token-verified helpers in `src/lib/server-auth.ts` (used by assessment, checklis
 
 - Routes: `/signin` (reads `?from=` and `?error=domain|setup|timeout`), `/forgot-password`, `/update-password`, `/auth/callback`.
 - Google: `GoogleSignInButton` calls `signInWithOAuth` with `hd: 'up.edu.ph'`, `prompt: 'select_account'`, redirect to `${NEXT_PUBLIC_SITE_URL ?? origin}/auth/callback`.
-- Callback: waits for the session (`getSession` plus `SIGNED_IN`), calls `provisionGoogleUser`, then Administrator / Super Admin → `/dashboard`, everyone else → `/home`. 10 s timeout → `/signin?error=timeout`.
-- `AuthProvider` (mounted in `src/components/providers.tsx`): `getSession` then `onAuthStateChange` (ignores `PASSWORD_RECOVERY`), and loads the profile with `getUserByAuthId` into `useAuthStore`.
+- Callback: waits for the session (`getSession` plus `SIGNED_IN`), calls `provisionGoogleUser`, then goes to `homePathFor(userTypeName)`. A 20 s timeout, which covers provisioning too → `/signin?error=timeout`; a session that did land is then picked up by `SignInForm`.
+- `SignInForm`: once signed in it shows "Signing you in…", waits for the profile and replaces to `signInDestination(type, from)`: non-admins always `/home`, admins `?from=` when it's a path inside the app, else `/dashboard`. If the profile fails it goes to `/home`, which shows `AccountLoadFailed`.
+- `AuthProvider` (mounted in `src/components/providers.tsx`): `getSession` then `onAuthStateChange` (ignores `PASSWORD_RECOVERY`), and loads the profile with `getUserByAuthId` into `useAuthStore`. One fetch per user at a time, an answer for a superseded user is ignored, and after 20 s it sets `profileError` (a fixed message, because production hides thrown ones).
 - `useAuthStore`: `user`, `session`, `userProfile`, `profileError`, `loading`, `reset()`. Persisted in localStorage as `irs-auth`, only `userProfile`.
-- `ProtectedRoute`: no user → `/signin?from=<path>`; `ERT Member` (and a `Bystander` type) → `/home`; `profileError` shows "Account Loading Failed" with Retry and Sign Out.
-- `ProfileSetupGate` wraps the `(admin)` layout; ERT pages get `{ status: 'setup' }` from `useErtAccess` and render `ProfileSetup`. `useErtAccess` sends signed-out users to `/signin`, admins to `/dashboard`, and (with `requireAssessment`) users failing `canUseAssessment` to `/home`.
+- `ProtectedRoute`: `adminGuard` decides during render, and only `allow` mounts the children. No user → `/signin?from=<path>`; any non-admin → `/home`; `profileError` shows `AccountLoadFailed`.
+- `ProfileSetupGate` wraps the `(admin)` layout; ERT pages get `{ status: 'setup' }` from `useErtAccess` and render `ProfileSetup`. `useErtAccess` (`ertGuard`) sends signed-out users to `/signin`, admins to `/dashboard`, and (with `requireAssessment`) users failing `canUseAssessment` to `/home`. `{ status: 'error' }` means the profile failed to load, and the page shows `AccountLoadFailed`.
 - `ProfileSetup` asks for campus, cluster (or Other (please specify), which opens Specify cluster), building / unit (optional, since some clusters have none: No unit first, Other (please specify) last, which opens Specify unit; a typed cluster lists only those two) and position (or a custom one), then calls `completeUserProfile`. It stores the returned profile, or shows the `ok: false` message (a typed cluster name another campus has) in the page banner.
 
 ## Rules and gotchas
 
-- Admin vs non-admin is decided by `isAdminUserType()` only ("Administrator", "Super Admin"). The callback page compares the two names inline; keep them in step.
+- Admin vs non-admin is decided by `isAdminUserType()` only ("Administrator", "Super Admin"). Landing pages come from `homePathFor`.
+- A guard must decide during render, not in an effect: a child's effects run before its parent's, so children returned for even one render start their queries.
 - Assessment access is decided only by `canUseAssessment()` (today: user type is `ERT Member`). The `/home` card, the top-bar switch, the page guard and `checkAssessmentCaller` all call it.
 - `AuthProvider` reuses a persisted `userProfile` when its `auth_id` matches the session user and skips the fetch. Changes an admin makes to that user (type, campus, active) show only after sign-out (`reset()`) or cleared storage.
 - `is_active = false` is not checked by `ProtectedRoute`, `useErtAccess` or the sign-in pages. Only `requireProfile` refuses inactive users, so only token-verified actions block them.

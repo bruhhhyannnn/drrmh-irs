@@ -1,6 +1,6 @@
 'use client';
 
-import { ProfileSetup } from '@/components/auth';
+import { AccountLoadFailed, ProfileSetup } from '@/components/auth';
 import { Loader } from '@/components/ui/loader';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
@@ -29,6 +29,7 @@ function AssessmentRoute() {
   const access = useErtAccess({ requireAssessment: true });
 
   if (access.status === 'checking') return <PageLoading label="Checking your access…" />;
+  if (access.status === 'error') return <AccountLoadFailed />;
   if (access.status === 'setup') return <ProfileSetup />;
 
   const print = params.get('print');

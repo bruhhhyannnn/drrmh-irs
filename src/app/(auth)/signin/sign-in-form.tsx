@@ -10,7 +10,9 @@ import {
   PasswordInput,
   TextInput,
 } from '@/components/ds';
+import { Loader } from '@/components/ui/loader';
 import { cn, SignInFormData, signInSchema, supabase } from '@/lib';
+import { signInDestination } from '@/lib/access';
 import { useAuthStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft } from 'lucide-react';
@@ -39,8 +41,8 @@ const PARAM_BANNERS: Record<string, Banner> = {
 export function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams?.get('from') ?? '/dashboard';
-  const { user } = useAuthStore();
+  const from = searchParams?.get('from');
+  const { user, userProfile, profileError, loading } = useAuthStore();
   const [step, setStep] = useState<'email' | 'password'>('email');
   const [banner, setBanner] = useState<Banner | null>(
     () => PARAM_BANNERS[searchParams?.get('error') ?? ''] ?? null
@@ -55,9 +57,15 @@ export function SignInForm() {
     formState: { errors, isSubmitting },
   } = useForm<SignInFormData>({ resolver: zodResolver(signInSchema) });
 
+  // Waits for the profile, so an ERT member never passes through the admin pages. /home shows
+  // Retry and Sign out when the profile can't be loaded.
+  const userTypeName = userProfile?.user_type?.name;
+  const hasProfile = !!userProfile;
   useEffect(() => {
-    if (user) router.push(redirectTo);
-  }, [user, router, redirectTo]);
+    if (!user || loading) return;
+    if (profileError) router.replace('/home');
+    else if (hasProfile) router.replace(signInDestination(userTypeName, from));
+  }, [user, loading, profileError, hasProfile, userTypeName, from, router]);
 
   // Move focus with the step, but leave the page alone on first load (the Google button,
   // not the email field, is what most people need).
@@ -86,10 +94,10 @@ export function SignInForm() {
     });
     if (error) {
       setBanner({ tone: 'error', message: error.message });
-      return;
     }
-    router.push(redirectTo);
   };
+
+  if (user) return <Loader label="Signing you in…" className="py-10" />;
 
   const bannerEl = banner && <AuthBanner tone={banner.tone}>{banner.message}</AuthBanner>;
 
