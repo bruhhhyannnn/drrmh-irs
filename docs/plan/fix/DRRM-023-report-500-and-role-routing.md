@@ -53,6 +53,9 @@ Get status reports saving on production, make every sign-in end in a page or an 
 ### 2.3 Database / Prisma
 
 - [x] **Production:** ran `prisma/manual/DRRM-022-report-photos.sql` on 2026-11-04 and confirmed the columns, constraints and bucket. No schema change on this branch.
+- [x] **Local:** `DATABASE_URL` moved to the transaction pooler (`:6543`).
+- [ ] **Vercel:** check `DATABASE_URL` uses `:6543`, and redeploy if it changes.
+- [ ] **Local, Vercel and CI:** check `SHADOW_DATABASE_URL` doesn't point at production.
 - [ ] Follow-up: `report_casualties` has RLS off and no policies. Turn RLS on as its own task.
 
 ---
@@ -72,11 +75,11 @@ Get status reports saving on production, make every sign-in end in a page or an 
 - [x] Lint check: `npm run lint`
 - [x] Build check: `npm run build`
 - [x] Stalled database: the same query now rejects after about 8 s (it was still pending after 90 s).
-- [ ] Manual test scenarios (not run yet: Postgres wasn't reachable from the shell used for this work):
+- [x] With the database failing: sign-in ends on Account Loading Failed with Retry and Sign Out, and `/report` shows Try again (seen in local dev).
+- [ ] Manual test scenarios still to confirm one by one:
   1. ERT email sign-in: lands on `/home`, with no `/dashboard` in history and no admin requests in the Network tab.
   2. ERT Google sign-in: lands on `/home`.
   3. Admin sign-in: lands on `/dashboard`. Signed out on `/events`, signing in returns to `/events`.
   4. ERT member opens `/dashboard` directly: goes to `/home` without mounting the admin shell.
-  5. After the SQL is applied: an ERT member submits a report with a photo on a test event.
-  6. With the database unreachable: sign-in ends on Account Loading Failed with Retry and Sign Out.
-  7. Offline: a report queues and sends when back online.
+  5. An ERT member submits a report with a photo on a test event, then it is deleted.
+  6. Offline: a report queues and sends when back online.

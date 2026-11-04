@@ -82,6 +82,13 @@ Two defects made this worse:
 - `ProtectedRoute` only redirected in an effect. On the render after the profile loaded it returned `children`, so the admin shell and dashboard mounted. Children's effects run before the parent's, so their queries could start before the redirect.
 - `/report` had the same shape the other way round: it started its queries before checking for an admin.
 
+### 2.4 Found while testing: the session pooler ran out of clients
+
+- **Symptom:** `(EMAXCONNSESSION) max clients reached in session mode - max clients are limited to pool_size: 15`, on sign-in and on the admin reports list. It came and went.
+- **Root cause:** `DATABASE_URL` used the session pooler (`:5432`), where each connected client keeps a slot, and the project allows 15. Each running copy of the app can open up to 10 (the `pg` default). A dev server alone can't reach 15, so other clients were holding slots too. Which ones wasn't identified, because the database sees them all as coming from the pooler.
+- **Fix:** use the transaction pooler (`:6543`). With the app's Prisma setup, 25 parallel queries had no failures and an interactive transaction worked. Vercel's `DATABASE_URL` wasn't visible from here, so it has to be checked by hand: with `:5432`, a busy drill could hit this same limit.
+- **Related:** the local `SHADOW_DATABASE_URL` pointed at production. It plays no part in this error, but see [[database]].
+
 ---
 
 ## 3. Proposed Fix & Link
