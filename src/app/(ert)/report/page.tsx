@@ -1,16 +1,21 @@
 'use client';
 
-import { ProfileSetup } from '@/components/auth';
+import { AccountLoadFailed, ProfileSetup } from '@/components/auth';
 import { useOngoingEvents } from '@/components/hooks/use-events';
 import { useMyReport } from '@/components/hooks/use-reports';
 import { Loader } from '@/components/ui/loader';
-import { isAdminUserType } from '@/lib';
-import { useAuthStore, useOfflineQueueStore } from '@/store';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { isNetworkError } from '@/lib/offline-queue';
+import { useOfflineQueueStore } from '@/store';
+import { useState } from 'react';
 import { ErtFrame } from '../_components/frame';
+import { useErtAccess, type ErtProfile } from '../_lib/use-ert-access';
 import { useFieldQueue } from '../_lib/use-field-queue';
-import { NoOngoingEvent, OfflineFirstLoad, SavedOffline } from './_components/notice-screens';
+import {
+  NoOngoingEvent,
+  OfflineFirstLoad,
+  ReportLoadFailed,
+  SavedOffline,
+} from './_components/notice-screens';
 import { ErtReportForm } from './_components/report-form';
 import { SubmittedReport } from './_components/submitted-report';
 
@@ -23,36 +28,23 @@ const EVENT_POLL_MS = 30_000;
  * between events. One report per member per ongoing event.
  */
 export default function ErtReportPage() {
-  const router = useRouter();
-  const { user, userProfile, loading } = useAuthStore();
+  const access = useErtAccess();
+
+  if (access.status === 'checking') return <PageLoading label="Checking your access…" />;
+  if (access.status === 'error') return <AccountLoadFailed />;
+  if (access.status === 'setup') return <ProfileSetup />;
+  return <ReportScreens profile={access.profile} />;
+}
+
+function ReportScreens({ profile }: { profile: ErtProfile }) {
   const isOnline = useOfflineQueueStore((s) => s.isOnline);
   const [viewingReportId, setViewingReportId] = useState<string | null>(null);
 
-  const userId = userProfile?.id;
-  const campusName = userProfile?.campus?.name ?? 'Your campus';
-  const profileReady = !!userProfile?.is_profile_complete;
+  const campusName = profile.campus?.name ?? 'Your campus';
 
-  const myReport = useMyReport(profileReady ? userId : undefined);
-  const events = useOngoingEvents(profileReady ? (userProfile?.campus_id ?? '') : '', {
-    refetchInterval: EVENT_POLL_MS,
-  });
+  const myReport = useMyReport(profile.id);
+  const events = useOngoingEvents(profile.campus_id ?? '', { refetchInterval: EVENT_POLL_MS });
   const queue = useFieldQueue();
-
-  useEffect(() => {
-    if (!loading && !user) router.replace('/signin');
-  }, [loading, user, router]);
-
-  useEffect(() => {
-    if (!loading && userProfile && isAdminUserType(userProfile.user_type?.name)) {
-      router.replace('/dashboard');
-    }
-  }, [loading, userProfile, router]);
-
-  if (loading || !user || !userProfile || isAdminUserType(userProfile.user_type?.name)) {
-    return <PageLoading label="Checking your access…" />;
-  }
-
-  if (!userProfile.is_profile_complete) return <ProfileSetup />;
 
   // With no connection on first load, these queries stay paused with nothing to show.
   const waitingOffline = !isOnline && (myReport.isPending || events.isPending);
@@ -60,7 +52,12 @@ export default function ErtReportPage() {
     return <PageLoading label="Loading the ongoing event…" />;
   }
 
-  const queued = queue.find((e) => e.status === 'pending' && e.payload.user_id === userProfile.id);
+  // A dropped connection on the member's own report still opens the form, which can save
+  // offline. A server fault can't save either, and no events must not read as "No ongoing event".
+  const loadFailed =
+    events.isLoadingError || (myReport.isLoadingError && !isNetworkError(myReport.error));
+
+  const queued = queue.find((e) => e.status === 'pending' && e.payload.user_id === profile.id);
   const ongoing = events.data ?? [];
 
   let screen: React.ReactNode;
@@ -70,6 +67,16 @@ export default function ErtReportPage() {
     screen = <SavedOffline entry={queued} campusName={campusName} />;
   } else if (waitingOffline) {
     screen = <OfflineFirstLoad campusName={campusName} />;
+  } else if (loadFailed) {
+    screen = (
+      <ReportLoadFailed
+        campusName={campusName}
+        onRetry={() => {
+          void myReport.refetch();
+          void events.refetch();
+        }}
+      />
+    );
   } else if (ongoing.length === 0) {
     screen = viewingReportId ? (
       <SubmittedReport
@@ -80,7 +87,7 @@ export default function ErtReportPage() {
       />
     ) : (
       <NoOngoingEvent
-        userId={userProfile.id}
+        userId={profile.id}
         campusName={campusName}
         onViewReport={setViewingReportId}
       />

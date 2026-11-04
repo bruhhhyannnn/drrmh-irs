@@ -1,78 +1,30 @@
 'use client';
 
-import { supabase } from '@/lib';
+import { adminGuard } from '@/lib/access';
 import { useAuthStore } from '@/store';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { Button } from '../ui/button';
+import { useEffect } from 'react';
 import { Loader } from '../ui/loader';
-
-const REDIRECT_USER_TYPES: Record<string, string> = {
-  'ERT Member': '/home',
-  Bystander: '/home',
-};
+import { AccountLoadFailed } from './account-load-failed';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, userProfile, profileError, loading, reset } = useAuthStore();
+  const { user, userProfile, profileError, loading } = useAuthStore();
   const router = useRouter();
-  const [isRedirecting, setIsRedirecting] = useState(false);
+  const guard = adminGuard({ loading, hasUser: !!user, profile: userProfile, profileError });
+  const signedOut = guard.status === 'signin';
+  const redirectTo = guard.status === 'redirect' ? guard.to : null;
 
   useEffect(() => {
-    if (loading || isRedirecting || profileError) return;
-
-    // No user → send to sign in
-    if (!user) {
+    if (signedOut) {
       const path = window.location.pathname + window.location.search;
       const from = path === '/' ? '/dashboard' : path;
-      setIsRedirecting(true);
       router.push(`/signin?from=${encodeURIComponent(from)}`);
-      return;
+    } else if (redirectTo) {
+      router.replace(redirectTo);
     }
+  }, [signedOut, redirectTo, router]);
 
-    // Has user but profile not yet loaded → wait
-    if (!userProfile) return;
-
-    // Non-admin user type → send to their page
-    const typeName = userProfile.user_type?.name;
-    if (typeName && typeName in REDIRECT_USER_TYPES) {
-      setIsRedirecting(true);
-      router.replace(REDIRECT_USER_TYPES[typeName]);
-    }
-  }, [loading, user, userProfile, profileError, router, isRedirecting]);
-
-  if (profileError) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-4">
-        <div className="w-full max-w-md rounded-xl border border-gray-200 bg-surface p-6 text-center shadow-xs">
-          <h2 className="mb-2 text-lg font-semibold text-gray-900">Account Loading Failed</h2>
-          <p className="mb-6 text-sm text-gray-600">{profileError}</p>
-          <div className="flex justify-center gap-3">
-            <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
-              Retry
-            </Button>
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={async () => {
-                await supabase.auth.signOut();
-                reset();
-                router.replace('/signin');
-              }}
-            >
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show the loader while auth is resolving or navigation is in flight
-  if (loading || isRedirecting || (user && !userProfile)) {
-    return <Loader fullScreen label="Checking your access…" />;
-  }
-
-  if (!user) return null;
-
-  return <>{children}</>;
+  if (guard.status === 'error') return <AccountLoadFailed />;
+  if (guard.status === 'allow') return <>{children}</>;
+  return <Loader fullScreen label="Checking your access…" />;
 }

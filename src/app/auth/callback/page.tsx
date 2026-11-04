@@ -24,6 +24,7 @@
 import { provisionGoogleUser } from '@/actions/auth';
 import { Loader } from '@/components/ui/loader';
 import { supabase } from '@/lib';
+import { homePathFor } from '@/lib/access';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
@@ -33,29 +34,30 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     let handled = false;
+    let timedOut = false;
+    // Covers provisioning too. Past this, a session that did land is picked up by /signin.
     const timeout = setTimeout(() => {
-      handled = true;
+      timedOut = true;
       router.replace('/signin?error=timeout');
-    }, 10_000);
+    }, 20_000);
 
     async function handleSession(
       userId: string,
       email: string,
       userMetadata: Record<string, unknown>
     ) {
-      if (handled) return;
+      if (handled || timedOut) return;
       handled = true;
-      clearTimeout(timeout);
       try {
         const fullName: string | null =
           (userMetadata?.full_name as string) ?? (userMetadata?.name as string) ?? null;
         const { userTypeName } = await provisionGoogleUser(userId, email, fullName);
-        if (userTypeName === 'Administrator' || userTypeName === 'Super Admin') {
-          router.replace('/dashboard');
-        } else {
-          router.replace('/home');
-        }
+        if (timedOut) return;
+        clearTimeout(timeout);
+        router.replace(homePathFor(userTypeName));
       } catch (err) {
+        if (timedOut) return;
+        clearTimeout(timeout);
         if (err instanceof Error && err.message === 'DOMAIN_NOT_ALLOWED') {
           await supabase.auth.signOut();
           router.replace('/signin?error=domain');

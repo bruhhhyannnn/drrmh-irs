@@ -12,6 +12,26 @@ const NOT_FOUND = 'This report could not be found.';
 
 export type ReportRefusal = { ok: false; error: string; retry: boolean };
 
+/**
+ * The answer when saving a report fails on the server. Thrown messages are hidden in production
+ * (React error #441), so the phone gets this instead. Only a report pointing at a row that is
+ * gone can never work; anything else keeps its answers on the phone for another try.
+ */
+export function reportSaveFailure(err: unknown): ReportRefusal {
+  if ((err as { code?: unknown } | null)?.code === 'P2003') {
+    return {
+      ok: false,
+      error: 'The event or cluster on this report no longer exists.',
+      retry: false,
+    };
+  }
+  return {
+    ok: false,
+    error: 'The report couldn’t be saved. Your answers are still here, so please try again.',
+    retry: true,
+  };
+}
+
 export function checkReportCaller(
   caller: CallerCheck,
   /** `campus_id: null` when only the owner may write, as for a new report. */

@@ -13,7 +13,7 @@ import { inScope } from '@/lib/admin-scope';
 import { unitIdForName } from '@/lib/lookup-names';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
-import { checkReportCaller, type ReportRefusal } from '@/lib/report-caller';
+import { checkReportCaller, reportSaveFailure, type ReportRefusal } from '@/lib/report-caller';
 import {
   removeReportPhotos,
   REPORT_PHOTO_SELECT,
@@ -165,9 +165,23 @@ export type CreateReportResult = { ok: true; id: string; photoCount: number } | 
  * refused); older queued entries have none and get a new one.
  * `photos` carries the damage and casualty photos, named by `reportPhotoFiles`. They are
  * uploaded first so the rows can hold their paths, and removed again only if the row wasn't
- * created. `photoCount` is how many were saved.
+ * created. `photoCount` is how many were saved. A server fault answers `reportSaveFailure`
+ * rather than throwing, so the phone gets a readable message and a queued report stays queued.
  */
 export async function createReport(
+  token: string | null,
+  data: ReportFormData & { id?: string; user_id?: string; sent_at?: number },
+  photos?: FormData
+): Promise<CreateReportResult> {
+  try {
+    return await saveNewReport(token, data, photos);
+  } catch (err) {
+    console.error('createReport failed:', err);
+    return reportSaveFailure(err);
+  }
+}
+
+async function saveNewReport(
   token: string | null,
   data: ReportFormData & { id?: string; user_id?: string; sent_at?: number },
   photos?: FormData

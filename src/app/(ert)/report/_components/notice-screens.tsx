@@ -4,10 +4,35 @@ import { Button } from '@/components/ds';
 import { useMyLatestReport } from '@/components/hooks/use-reports';
 import type { QueuedFieldReport } from '@/lib/offline-queue';
 import { useOfflineQueueStore } from '@/store';
-import { Calendar, WifiOff } from 'lucide-react';
+import { Calendar, TriangleAlert, WifiOff } from 'lucide-react';
 import { DetailList, Dot, Hero, Mono, NoticeCard, Pill } from '../../_components/chrome';
 import { formatDateTime } from '../../_lib/format';
 import { queuedHeadcount } from '../../_lib/use-field-queue';
+
+/** Shown when the server couldn't say which events are ongoing or whether a report was sent. */
+export function ReportLoadFailed({
+  campusName,
+  onRetry,
+}: {
+  campusName: string;
+  onRetry: () => void;
+}) {
+  return (
+    <>
+      <Hero eyebrow={campusName} title="Status report" />
+      <NoticeCard
+        icon={<TriangleAlert size={30} aria-hidden />}
+        iconTone="warning"
+        title="The report couldn’t be loaded"
+        description="Something went wrong on our side, so this page can’t show the ongoing event or your report yet. Please try again in a moment."
+      >
+        <Button variant="outline" fullWidth onClick={onRetry}>
+          Try again
+        </Button>
+      </NoticeCard>
+    </>
+  );
+}
 
 /**
  * Shown when the campus has no ongoing event, instead of an empty event picker. The page

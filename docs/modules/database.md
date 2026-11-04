@@ -1,7 +1,7 @@
 ---
 type: module
 module: database
-updated: 2026-10-29
+updated: 2026-11-04
 verified: true
 paths:
   - prisma/schema.prisma
@@ -66,19 +66,19 @@ DATABASE_URL="$(grep -E '^DIRECT_URL=' .env.development.local | cut -d= -f2- | t
 
 ## Where it lives
 
-| Path                                     | What it holds                                                                                                                                                                         |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `prisma/schema.prisma`                   | All models and enums; generator `prisma-client-js` with no `output`                                                                                                                   |
-| `prisma/manual/*.sql`                    | Idempotent schema changes, one file per ticket: `DRRM-008-bystander-report-v2.sql`, `DRRM-011-super-admin-v2.sql`, `DRRM-015-assessment.sql`                                          |
-| `prisma/migrations/`                     | One old migration (`20260505010152_add_report_verification`); it still creates tables the schema no longer has (`report_assignments`, `activity_logs`, `locations`, `report_damages`) |
-| `prisma/seed.ts`                         | `npm run seed`: lookup tables, NSED events per quarter, sample reports                                                                                                                |
-| `prisma/seed-matatag.ts`, `prisma/data/` | `npm run seed:matatag`: the MATATAG checklist (see [[assessments]])                                                                                                                   |
-| `prisma.config.ts`                       | Schema path, migrations path, seed command, `DATABASE_URL`, `SHADOW_DATABASE_URL`; loads `.env` via `dotenv/config`                                                                   |
-| `src/lib/prisma.ts`                      | `prisma`: `PrismaClient` with `PrismaPg` adapter on `DATABASE_URL`, cached on `globalThis` outside production                                                                         |
-| `src/lib/supabase.ts`                    | `supabase` browser client (publishable key, persisted session) and `getAccessToken()`                                                                                                 |
-| `src/lib/supabase-admin.ts`              | `supabaseAdmin` with `SUPABASE_SERVICE_ROLE_KEY` (server only)                                                                                                                        |
-| `src/lib/prisma-error.ts`                | `toFriendlyError(error, label)`                                                                                                                                                       |
-| `src/lib/schemas.ts`                     | Zod schemas and form types for every form                                                                                                                                             |
+| Path                                     | What it holds                                                                                                                                                                                                                                             |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `prisma/schema.prisma`                   | All models and enums; generator `prisma-client-js` with no `output`                                                                                                                                                                                       |
+| `prisma/manual/*.sql`                    | Idempotent schema changes, one file per ticket: `DRRM-008-bystander-report-v2.sql`, `DRRM-011-super-admin-v2.sql`, `DRRM-015-assessment.sql`, `DRRM-022-report-photos.sql`. Run each on every database before deploying the code that needs it (DRRM-023) |
+| `prisma/migrations/`                     | One old migration (`20260505010152_add_report_verification`); it still creates tables the schema no longer has (`report_assignments`, `activity_logs`, `locations`, `report_damages`)                                                                     |
+| `prisma/seed.ts`                         | `npm run seed`: lookup tables, NSED events per quarter, sample reports                                                                                                                                                                                    |
+| `prisma/seed-matatag.ts`, `prisma/data/` | `npm run seed:matatag`: the MATATAG checklist (see [[assessments]])                                                                                                                                                                                       |
+| `prisma.config.ts`                       | Schema path, migrations path, seed command, `DATABASE_URL`, `SHADOW_DATABASE_URL`; loads `.env` via `dotenv/config`                                                                                                                                       |
+| `src/lib/prisma.ts`                      | `prisma`: `PrismaClient` with `PrismaPg` adapter on `DATABASE_URL`, 8 s connection timeout, cached on `globalThis` outside production                                                                                                                     |
+| `src/lib/supabase.ts`                    | `supabase` browser client (publishable key, persisted session) and `getAccessToken()`                                                                                                                                                                     |
+| `src/lib/supabase-admin.ts`              | `supabaseAdmin` with `SUPABASE_SERVICE_ROLE_KEY` (server only)                                                                                                                                                                                            |
+| `src/lib/prisma-error.ts`                | `toFriendlyError(error, label)`                                                                                                                                                                                                                           |
+| `src/lib/schemas.ts`                     | Zod schemas and form types for every form                                                                                                                                                                                                                 |
 
 ## Data
 

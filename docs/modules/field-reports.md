@@ -1,6 +1,6 @@
 ---
 type: module
-updated: 2026-10-30
+updated: 2026-11-04
 module: field-reports
 paths:
   - src/actions/reports/index.ts
@@ -22,23 +22,23 @@ A field report (status report) is one ERT team leader's headcount, casualties, m
 
 ## Where it lives
 
-| Path                                                    | What it holds                                                        |
-| ------------------------------------------------------- | -------------------------------------------------------------------- |
-| `src/actions/reports/index.ts`                          | Report CRUD, ERT "my report" reads, casualty and missing person rows |
-| `src/actions/population-categories/index.ts`            | Headcount field catalog and per-campus assignment                    |
-| `src/lib/report-photos.ts`                              | Server-only Storage helpers for the private `report-photos` bucket   |
-| `src/lib/report-caller.ts`                              | `checkReportCaller`: who may write to a report (pure, tested)        |
-| `src/app/(admin)/reports/_components/report-photos.tsx` | `ReportPhotos`: the admin drawer's Photos section                    |
-| `src/components/hooks/use-reports.ts`                   | Query/mutation hooks for reports, casualties, missing persons        |
-| `src/components/hooks/use-population-categories.ts`     | Hooks for headcount fields (also used by Settings)                   |
-| `src/app/(admin)/reports/page.tsx`                      | `/reports` list: search, event and cluster filters, server paging    |
-| `src/app/(admin)/reports/_components/report-drawer.tsx` | `ReportDrawer`: admin Add report / Edit report                       |
-| `src/app/(ert)/report/page.tsx`                         | `/report`: picks which screen the ERT member sees                    |
-| `src/app/(ert)/report/_components/report-form.tsx`      | `ErtReportForm`: the one-page status report                          |
-| `src/app/(ert)/report/_components/submitted-report.tsx` | `SubmittedReport`: read view, people still editable                  |
-| `src/app/(ert)/report/_components/notice-screens.tsx`   | `NoOngoingEvent`, `OfflineFirstLoad`, `SavedOffline`                 |
-| `src/app/(ert)/report/_lib/draft.ts`                    | `loadDraft` / `saveDraft` / `clearDraft` in `localStorage`           |
-| `src/app/(ert)/_lib/use-field-queue.ts`                 | `useFieldQueue`: field reports waiting in IndexedDB                  |
+| Path                                                    | What it holds                                                            |
+| ------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `src/actions/reports/index.ts`                          | Report CRUD, ERT "my report" reads, casualty and missing person rows     |
+| `src/actions/population-categories/index.ts`            | Headcount field catalog and per-campus assignment                        |
+| `src/lib/report-photos.ts`                              | Server-only Storage helpers for the private `report-photos` bucket       |
+| `src/lib/report-caller.ts`                              | `checkReportCaller`: who may write to a report (pure, tested)            |
+| `src/app/(admin)/reports/_components/report-photos.tsx` | `ReportPhotos`: the admin drawer's Photos section                        |
+| `src/components/hooks/use-reports.ts`                   | Query/mutation hooks for reports, casualties, missing persons            |
+| `src/components/hooks/use-population-categories.ts`     | Hooks for headcount fields (also used by Settings)                       |
+| `src/app/(admin)/reports/page.tsx`                      | `/reports` list: search, event and cluster filters, server paging        |
+| `src/app/(admin)/reports/_components/report-drawer.tsx` | `ReportDrawer`: admin Add report / Edit report                           |
+| `src/app/(ert)/report/page.tsx`                         | `/report`: picks which screen the ERT member sees                        |
+| `src/app/(ert)/report/_components/report-form.tsx`      | `ErtReportForm`: the one-page status report                              |
+| `src/app/(ert)/report/_components/submitted-report.tsx` | `SubmittedReport`: read view, people still editable                      |
+| `src/app/(ert)/report/_components/notice-screens.tsx`   | `NoOngoingEvent`, `OfflineFirstLoad`, `SavedOffline`, `ReportLoadFailed` |
+| `src/app/(ert)/report/_lib/draft.ts`                    | `loadDraft` / `saveDraft` / `clearDraft` in `localStorage`               |
+| `src/app/(ert)/_lib/use-field-queue.ts`                 | `useFieldQueue`: field reports waiting in IndexedDB                      |
 
 ## Data
 
@@ -57,7 +57,7 @@ A field report (status report) is one ERT team leader's headcount, casualties, m
 
 - `getReports(page, query?, campusId?, filters)`: 10 per page, search on reporter, cluster, unit, event; filter by `eventId` / `clusterId`; campus via `cluster.campus_id`.
 - `getReport(token, id)`: `{ ok: true, report }`, the full report with people, damage and headcount.
-- `createReport(token, data, photos?)`: one nested create with missing persons, casualties and population counts, as the verified caller (`requireProfile` + `checkReportCaller`): `user_id` is the caller's profile, and a payload whose `user_id` is another account answers `{ ok: false, retry: true }` (a shared phone). Returns `{ ok: true, id, photoCount }` or `{ ok: false, error, retry }`. `data.id` is the report id, made once on the phone (`newUuid`) and kept by the offline queue: if that id is already the caller's report the call returns success without writing or uploading, and a unique violation from a concurrent replay counts as saved too (its uploads are removed). An id that is another account's report is refused (`retry: false`) without revealing anything about it. Older queued entries without an id get a server-made one. `photos` (FormData, see Rules) are uploaded inside the `try` so the rows hold the paths; the uploads are removed only when the row wasn't created. A `unit_name` (Unit → Other (please specify)) becomes the unit in that cluster, added when new (`unitIdForName`), so a queued report still replays as one payload. An optional `sent_at` (ms, capped at now) sets `submitted_at`: the offline queue passes the time the report was queued, so a report sent offline keeps its real time. Writes legacy columns through `mapPopulationCountsToLegacyColumns`.
+- `createReport(token, data, photos?)`: one nested create with missing persons, casualties and population counts, as the verified caller (`requireProfile` + `checkReportCaller`): `user_id` is the caller's profile, and a payload whose `user_id` is another account answers `{ ok: false, retry: true }` (a shared phone). Returns `{ ok: true, id, photoCount }` or `{ ok: false, error, retry }`; a server fault is logged and answers `reportSaveFailure` (`retry: true` unless the event or cluster is gone), because production hides thrown messages. `data.id` is the report id, made once on the phone (`newUuid`) and kept by the offline queue: if that id is already the caller's report the call returns success without writing or uploading, and a unique violation from a concurrent replay counts as saved too (its uploads are removed). An id that is another account's report is refused (`retry: false`) without revealing anything about it. Older queued entries without an id get a server-made one. `photos` (FormData, see Rules) are uploaded inside the `try` so the rows hold the paths; the uploads are removed only when the row wasn't created. A `unit_name` (Unit → Other (please specify)) becomes the unit in that cluster, added when new (`unitIdForName`), so a queued report still replays as one payload. An optional `sent_at` (ms, capped at now) sets `submitted_at`: the offline queue passes the time the report was queued, so a report sent offline keeps its real time. Writes legacy columns through `mapPopulationCountsToLegacyColumns`.
 - `saveReportEdits(token, id, data)`: returns `{ ok: true, report }`; a schema failure is `{ ok: false, error, retry: false }`. Validates with `reportSchema` minus `event_id` (casualties may carry their `id`, plus `removed_casualty_ids`); resolves `unit_name` the same way. In one interactive transaction it locks the report row (`SELECT ... FOR UPDATE`), reads the photos of `removed_casualty_ids`, replaces headcount and missing rows, updates casualties that kept their id, adds new ones and deletes only `removed_casualty_ids`. A casualty added since the form loaded keeps its row and photos. The removed casualties' photos are deleted after commit.
 - `deleteReport(token, id)`: `{ ok: true }`. In one transaction locks the report, reads its photo paths and deletes it; the photos go after commit. A refused caller never reaches the delete.
 - `getReportPhotoUrls(token, reportId)`: one-hour signed URLs, `{ ok, damage, casualties: [{ id, name, condition, urls }] }`, for an admin (`requireAdmin`) with the report's campus in scope; `{ ok: false, error, retry }` on every failure (the check and lookup sit inside the `try`).
@@ -73,7 +73,7 @@ A field report (status report) is one ERT team leader's headcount, casualties, m
 
 - `/reports` (admin). Uses `useReports`, `useDeleteReport`, `useEvents`, `useSettingsTable('clusters')`, scoped by `useScopedCampusId()`.
 - `ReportDrawer` (admin). Add picks an ongoing event from `useOngoingEventOptions`; cluster, units and headcount fields follow that event's campus. Unit is optional: No unit first, Other (please specify) last, which opens Unit name and sends `unit_name`. Edit uses `useSaveReportEdits`.
-- `/report` (ERT). Shows, in order: `SubmittedReport` if `useMyReport` finds one; `SavedOffline` if a pending queued report for this user exists; `OfflineFirstLoad`; `NoOngoingEvent` (with past report via `getMyLatestReport`); else `ErtReportForm`. Ongoing events are polled every 30 s.
+- `/report` (ERT). Guarded by `useErtAccess`, with its queries behind the guard. Shows, in order: `SubmittedReport` if `useMyReport` finds one; `SavedOffline` if a pending queued report for this user exists; `OfflineFirstLoad`; `ReportLoadFailed` (Try again) if the events failed to load or the member's report hit a server fault; `NoOngoingEvent` (with past report via `getMyLatestReport`); else `ErtReportForm`. A dropped connection on the member's report still opens the form, which can save offline. Ongoing events are polled every 30 s.
 - `ErtReportForm` saves a draft to `localStorage` key `irs:ert-report-draft:<userId>` after each change and drops it if its event is no longer ongoing. Photos aren't in the draft (only their count, so a restored draft says to add them again).
 - Photos: up to 3 of the damage under the damage tiles, and up to 3 per casualty in the casualty `PeopleDrawer` (its `photos` prop), via the shared `PhotoField` ([[bystander-reports]]) at 1280 px. A field takes no more once the report's photos reach `REPORT_PHOTO_BUDGET_BYTES` (3.5 MB), and doesn't add a prepared photo over `REPORT_PHOTO_MAX_BYTES` (1.5 MB, also the server's per-file cap). A casualty's line shows "· n photos". When `photoCount` comes back lower than the photos sent, the ERT form and `SubmittedReport` show a warning toast.
 - `PeopleDrawer` releases photo object URLs: for a person added in this visit and then removed, for the draft and this visit's people on Cancel, and for people passed in once a save takes them off. `onSave` may return a Promise; `false` or a rejection keeps the drawer open with the list as entered.
