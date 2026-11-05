@@ -5,16 +5,19 @@ import { useCampusEventOptions, useEventSummarySource } from '@/components/hooks
 import { useCasualtyConditions, useDamageConditions } from '@/components/hooks/use-settings';
 import { cn } from '@/lib';
 import { ChartNoAxesColumn, X } from 'lucide-react';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { formatDate, formatDateTime, formatEventWindow } from '../../_lib/format';
 import {
   buildSummary,
   compareSummaries,
+  scopeHref,
   type Summary,
   type SummarySource,
 } from '../../_lib/summary';
 import { useEventTitle } from '../shell/campus-switcher';
 import { Mono, Skeleton } from '../ui';
+import type { ScopeLinks } from './drill-down';
 import {
   AnalyticsGrid,
   CasualtiesCard,
@@ -52,7 +55,19 @@ export function useSummary(source: SummarySource | null | undefined): Summary | 
  * next to Overview. `before` renders above the summary (the campus page's event picker).
  * Mount with `key={eventId}` so a different event starts uncompared.
  */
-export function EventSummary({ eventId, before }: { eventId: string; before?: React.ReactNode }) {
+export function EventSummary({
+  eventId,
+  before,
+  linkParams,
+}: {
+  eventId: string;
+  before?: React.ReactNode;
+  /** Params the page needs in every cluster and unit link, beyond the ones already in its URL. */
+  linkParams?: Record<string, string>;
+}) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const links: ScopeLinks = (target) => scopeHref(pathname, searchParams, target, linkParams);
   const { data: source, isPending, error } = useEventSummarySource(eventId);
   const summary = useSummary(source);
   const [compareId, setCompareId] = useState<string | null>(null);
@@ -181,7 +196,7 @@ export function EventSummary({ eventId, before }: { eventId: string; before?: Re
         </>
       )}
 
-      <ClustersCard summary={summary} />
+      <ClustersCard summary={summary} links={links} />
       <HeadcountCard summary={summary} />
       <CasualtiesCard summary={summary} />
       <MissingCard summary={summary} />

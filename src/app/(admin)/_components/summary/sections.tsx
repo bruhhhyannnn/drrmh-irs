@@ -9,6 +9,7 @@ import { formatTime, personName, plural } from '../../_lib/format';
 import {
   firstReportScale,
   headcountOf,
+  NO_UNIT,
   shortLabel,
   timelineLabels,
   timelineMilestones,
@@ -20,6 +21,7 @@ import {
 import { FilterSelect } from '../data-list';
 import { Bar, Card, Chip, Mono } from '../ui';
 import { ColumnChart, DamageChart, Donut, RankedBars, SERIES, SeriesLegend } from './charts';
+import { coverageLabel, DRILL_ROW, DrillLink, MissingUnits, type ScopeLinks } from './drill-down';
 
 const PAD_X = 'px-4 md:px-5';
 
@@ -155,7 +157,7 @@ function NoReportChip() {
   );
 }
 
-export function ClustersCard({ summary }: { summary: Summary }) {
+export function ClustersCard({ summary, links }: { summary: Summary; links: ScopeLinks }) {
   const { done, pending, total, reported } = summary.clusters;
   const maxPeople = Math.max(1, ...done.map((c) => c.people));
   return (
@@ -197,12 +199,22 @@ export function ClustersCard({ summary }: { summary: Summary }) {
           <div
             key={c.id}
             role="row"
-            className={cn('flex flex-col gap-1.5 border-t border-line py-3', PAD_X)}
+            className={cn('flex flex-col gap-0.5 border-t border-line py-2', PAD_X)}
           >
-            <div className={CLUSTER_GRID}>
+            <div className={cn(CLUSTER_GRID, DRILL_ROW, 'py-1')}>
               <div role="cell" className="flex min-w-0 items-center gap-3">
                 <DoneMark />
-                <span className="text-[17px] leading-[1.3] font-bold">{c.name}</span>
+                <div className="flex min-w-0 flex-col gap-px">
+                  <DrillLink
+                    href={links({ clusterId: c.id })}
+                    className="text-[17px] leading-[1.3] font-bold"
+                  >
+                    {c.name}
+                  </DrillLink>
+                  {c.coverage && (
+                    <span className="text-[14px] text-gray-500">{coverageLabel(c.coverage)}</span>
+                  )}
+                </div>
               </div>
               <Mono className="text-right text-[16px] font-semibold">{c.reports}</Mono>
               <Mono
@@ -221,8 +233,15 @@ export function ClustersCard({ summary }: { summary: Summary }) {
               </div>
             </div>
             {c.units.map((u) => (
-              <div key={u.name} className={CLUSTER_GRID}>
-                <span className="pl-9 text-[16px] text-gray-600">{u.name}</span>
+              <div key={u.name} className={cn(CLUSTER_GRID, DRILL_ROW, 'py-1')}>
+                <div className="min-w-0 pl-9">
+                  <DrillLink
+                    href={links({ clusterId: c.id, unitId: u.id ?? NO_UNIT })}
+                    className="text-[16px] text-gray-600"
+                  >
+                    {u.name}
+                  </DrillLink>
+                </div>
                 <span />
                 <span />
                 <Mono className="text-right text-[14px] font-medium text-gray-600">
@@ -230,21 +249,35 @@ export function ClustersCard({ summary }: { summary: Summary }) {
                 </Mono>
               </div>
             ))}
+            <MissingUnits coverage={c.coverage} className="pl-9" />
           </div>
         ))}
         {pending.map((p) => (
           <div
             key={p.id}
             role="row"
-            className={cn(CLUSTER_GRID, 'border-t border-line py-3', PAD_X)}
+            className={cn('flex flex-col gap-0.5 border-t border-line py-2', PAD_X)}
           >
-            <div role="cell" className="flex min-w-0 items-center gap-3">
-              <PendingMark />
-              <span className="text-[17px] leading-[1.3] font-bold text-gray-600">{p.name}</span>
+            <div className={cn(CLUSTER_GRID, DRILL_ROW, 'py-1')}>
+              <div role="cell" className="flex min-w-0 items-center gap-3">
+                <PendingMark />
+                <div className="flex min-w-0 flex-col gap-px">
+                  <DrillLink
+                    href={links({ clusterId: p.id })}
+                    className="text-[17px] leading-[1.3] font-bold text-gray-600"
+                  >
+                    {p.name}
+                  </DrillLink>
+                  {p.coverage && (
+                    <span className="text-[14px] text-gray-500">{coverageLabel(p.coverage)}</span>
+                  )}
+                </div>
+              </div>
+              <div className="col-span-3 flex justify-end">
+                <NoReportChip />
+              </div>
             </div>
-            <div className="col-span-3 flex justify-end">
-              <NoReportChip />
-            </div>
+            <MissingUnits coverage={p.coverage} className="pl-9" />
           </div>
         ))}
         <div
@@ -269,14 +302,20 @@ export function ClustersCard({ summary }: { summary: Summary }) {
       {/* Phone: stacked rows */}
       <ul className="md:hidden">
         {done.map((c) => (
-          <li key={c.id} className={cn('flex flex-col gap-1.5 border-t border-line py-3', PAD_X)}>
-            <div className="flex items-center gap-3">
+          <li key={c.id} className={cn('flex flex-col gap-0.5 border-t border-line py-2', PAD_X)}>
+            <div className={cn('flex items-center gap-3 py-1', DRILL_ROW)}>
               <DoneMark />
               <div className="flex min-w-0 flex-1 flex-col gap-px">
-                <span className="text-[17px] leading-[1.3] font-bold">{c.name}</span>
+                <DrillLink
+                  href={links({ clusterId: c.id })}
+                  className="text-[17px] leading-[1.3] font-bold"
+                >
+                  {c.name}
+                </DrillLink>
                 <span className="text-[14px] text-gray-500">
                   {plural(c.reports, 'report', 'reports')}
                   {c.casualties > 0 && ` · ${plural(c.casualties, 'casualty', 'casualties')}`}
+                  {c.coverage && ` · ${coverageLabel(c.coverage)}`}
                 </span>
               </div>
               <Mono className="text-[17px] font-bold">{c.people.toLocaleString()}</Mono>
@@ -284,21 +323,40 @@ export function ClustersCard({ summary }: { summary: Summary }) {
             {c.units.map((u) => (
               <div
                 key={u.name}
-                className="flex items-center justify-between gap-3 pl-9 text-[16px] text-gray-600"
+                className={cn(
+                  'flex min-h-10 items-center justify-between gap-3 text-[16px] text-gray-600',
+                  DRILL_ROW
+                )}
               >
-                <span>{u.name}</span>
+                <div className="min-w-0 pl-9">
+                  <DrillLink href={links({ clusterId: c.id, unitId: u.id ?? NO_UNIT })}>
+                    {u.name}
+                  </DrillLink>
+                </div>
                 <Mono className="text-[14px] font-medium">{u.people.toLocaleString()}</Mono>
               </div>
             ))}
+            <MissingUnits coverage={c.coverage} className="pl-9" />
           </li>
         ))}
         {pending.map((p) => (
-          <li key={p.id} className={cn('flex items-center gap-3 border-t border-line py-3', PAD_X)}>
-            <PendingMark />
-            <span className="min-w-0 flex-1 text-[17px] leading-[1.3] font-bold text-gray-600">
-              {p.name}
-            </span>
-            <NoReportChip />
+          <li key={p.id} className={cn('flex flex-col gap-0.5 border-t border-line py-2', PAD_X)}>
+            <div className={cn('flex items-center gap-3 py-1', DRILL_ROW)}>
+              <PendingMark />
+              <div className="flex min-w-0 flex-1 flex-col gap-px">
+                <DrillLink
+                  href={links({ clusterId: p.id })}
+                  className="text-[17px] leading-[1.3] font-bold text-gray-600"
+                >
+                  {p.name}
+                </DrillLink>
+                {p.coverage && (
+                  <span className="text-[14px] text-gray-500">{coverageLabel(p.coverage)}</span>
+                )}
+              </div>
+              <NoReportChip />
+            </div>
+            <MissingUnits coverage={p.coverage} className="pl-9" />
           </li>
         ))}
         <li
