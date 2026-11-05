@@ -11,6 +11,8 @@ import { FilterSelect, ListToolbar } from '../../_components/data-list';
 import { useScopedCampusId } from '../../_components/shell/campus-switcher';
 import { EmptyNote, Skeleton } from '../../_components/ui';
 import { BuildingCompareView } from '../../dashboard/_components/building-safety/building-level';
+import { clusterOptions, filterByCategory } from '../_lib/category-filter';
+import { CategorySelect, useCategory } from './category-select';
 
 function BuildingPicker({
   buildings,
@@ -136,6 +138,7 @@ export function CompareTab() {
   const router = useRouter();
   const pathname = usePathname();
   const [clusterId, setClusterId] = useState('');
+  const [category, setCategory] = useCategory();
 
   if (isPending) {
     return (
@@ -148,12 +151,9 @@ export function CompareTab() {
     return <EmptyNote>The buildings couldn&apos;t be loaded: {error.message}</EmptyNote>;
   }
 
-  const clusters = [
-    ...new Map(
-      data.flatMap((b) => (b.cluster ? [[b.cluster.id, b.cluster] as const] : []))
-    ).values(),
-  ].sort((a, b) => a.name.localeCompare(b.name));
-  const buildings = clusterId ? data.filter((b) => b.cluster?.id === clusterId) : data;
+  const inCategory = filterByCategory(data, category);
+  const clusters = clusterOptions(inCategory);
+  const buildings = clusterId ? inCategory.filter((b) => b.cluster?.id === clusterId) : inCategory;
   const requestedId = params.get('building');
   const selected =
     buildings.find((b) => b.id === requestedId) ??
@@ -196,18 +196,27 @@ export function CompareTab() {
             onSelect={(id) => setParams({ building: id })}
           />
         </div>
-        <FilterSelect
-          label="Cluster"
-          allLabel="All clusters"
-          value={clusterId}
-          onChange={setClusterId}
-          options={clusters.map((c) => ({ value: c.id, label: c.name }))}
+        <CategorySelect
+          value={category}
+          onChange={(next) => {
+            setClusterId('');
+            setCategory(next);
+          }}
         />
+        {category !== 'off_campus' && (
+          <FilterSelect
+            label="Cluster"
+            allLabel="All clusters"
+            value={clusterId}
+            onChange={setClusterId}
+            options={clusters.map((c) => ({ value: c.id, label: c.name }))}
+          />
+        )}
       </ListToolbar>
 
       <div className="flex flex-col gap-5 border-t border-line p-4.5 md:p-6">
         {!selected ? (
-          <EmptyNote>No buildings in this cluster.</EmptyNote>
+          <EmptyNote>No buildings to compare here.</EmptyNote>
         ) : (
           <BuildingCompareView
             buildingId={selected.id}

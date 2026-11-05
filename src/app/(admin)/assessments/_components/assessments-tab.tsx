@@ -23,6 +23,8 @@ import {
 import { useScopedCampusId } from '../../_components/shell/campus-switcher';
 import { Chip, EmptyNote } from '../../_components/ui';
 import { formatDate, plural } from '../../_lib/format';
+import { clusterOptions, filterByCategory } from '../_lib/category-filter';
+import { CategorySelect, useCategory } from './category-select';
 import { ScoreCell } from './score-cell';
 
 const PAGE_SIZE = 10;
@@ -69,6 +71,7 @@ export function AssessmentsTab() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [page, setPage] = useState(1);
+  const [category, setCategory] = useCategory();
 
   if (error) return <EmptyNote>The assessments couldn&apos;t be loaded: {error.message}</EmptyNote>;
 
@@ -80,15 +83,16 @@ export function AssessmentsTab() {
     };
   const unique = (list: { id: string; name: string }[]) =>
     [...new Map(list.map((x) => [x.id, x])).values()].sort((a, b) => a.name.localeCompare(b.name));
-  const clusters = unique(data.flatMap((r) => (r.cluster ? [r.cluster] : [])));
+  const inCategory = filterByCategory(data, category);
+  const clusters = clusterOptions(inCategory);
   const units = unique(
-    data
+    inCategory
       .filter((r) => !clusterId || r.cluster?.id === clusterId)
       .flatMap((r) => (r.unit ? [r.unit] : []))
   );
 
   const q = query.trim().toLowerCase();
-  const rows = data.filter((r) => {
+  const rows = inCategory.filter((r) => {
     const day = dayOf(r.ended_at);
     return (
       (!clusterId || r.cluster?.id === clusterId) &&
@@ -97,6 +101,7 @@ export function AssessmentsTab() {
       (!to || day <= to) &&
       (!q ||
         r.building.name.toLowerCase().includes(q) ||
+        r.label.toLowerCase().includes(q) ||
         r.evaluator_name.toLowerCase().includes(q))
     );
   });
@@ -167,23 +172,36 @@ export function AssessmentsTab() {
           value={query}
           onChange={reset(setQuery)}
         />
-        <FilterSelect
-          label="Cluster"
-          allLabel="All clusters"
-          value={clusterId}
-          onChange={(v) => {
-            reset(setClusterId)(v);
+        <CategorySelect
+          value={category}
+          onChange={(next) => {
+            setClusterId('');
             setUnitId('');
+            setPage(1);
+            setCategory(next);
           }}
-          options={clusters.map((c) => ({ value: c.id, label: c.name }))}
         />
-        <FilterSelect
-          label="Unit"
-          allLabel="All units"
-          value={unitId}
-          onChange={reset(setUnitId)}
-          options={units.map((u) => ({ value: u.id, label: u.name }))}
-        />
+        {category !== 'off_campus' && (
+          <>
+            <FilterSelect
+              label="Cluster"
+              allLabel="All clusters"
+              value={clusterId}
+              onChange={(v) => {
+                reset(setClusterId)(v);
+                setUnitId('');
+              }}
+              options={clusters.map((c) => ({ value: c.id, label: c.name }))}
+            />
+            <FilterSelect
+              label="Unit"
+              allLabel="All units"
+              value={unitId}
+              onChange={reset(setUnitId)}
+              options={units.map((u) => ({ value: u.id, label: u.name }))}
+            />
+          </>
+        )}
         <DateFilter label="From" value={from} onChange={reset(setFrom)} />
         <DateFilter label="To" value={to} onChange={reset(setTo)} />
         <ListCount loading={isPending}>
