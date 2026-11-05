@@ -22,6 +22,12 @@ export interface LocationOptions {
   barangays: CodeName[];
 }
 
+/** A saved list never goes stale (a new one has a new version). A missing one is tried again as
+ * soon as the phone reconnects, so "connect to the internet" isn't stuck until a reload. */
+export function locationListStaleTime(tree: PsgcTree | null | undefined): number {
+  return tree ? Infinity : 0;
+}
+
 const NOTHING: Omit<LocationOptions, 'available'> = {
   regions: [],
   provinces: [],

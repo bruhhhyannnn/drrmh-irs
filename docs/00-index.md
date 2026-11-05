@@ -40,6 +40,7 @@ Each module note lists its paths, data, server actions, client pieces, rules and
 - [[0007-token-verified-actions]]
 - [[0008-hand-built-charts]]
 - [[0009-table-driven-settings]]
+- [[0010-off-campus-buildings]]
 
 New decision: copy [[decisions/TEMPLATE]].
 

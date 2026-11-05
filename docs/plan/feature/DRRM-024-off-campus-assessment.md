@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-024
-status: draft
+status: in-progress
 branch: feat/DRRM-024-off-campus-assessment
 modules:
   - '[[assessments]]'
@@ -17,7 +17,7 @@ tags: [plan, feature]
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-- **Status:** `Draft`
+- **Status:** `In Progress`
 - **Target Branch / PR:** `feat/DRRM-024-off-campus-assessment`
 - **Owner / Author:** Jomar Lazaro
 

@@ -9,6 +9,14 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-024 Off-campus building assessments: 2026-11-05 (branch `feat/DRRM-024-off-campus-assessment`, not merged yet)
+
+Plan: [[plan/feature/DRRM-024-off-campus-assessment]]
+
+- **ERT form** ([[assessments]], [[offline-pwa]]): an On campus / Off campus choice on the Details step, PSGC location dropdowns that work offline, and an optional map pin. Schema in `prisma/manual/DRRM-024-off-campus-buildings.sql` ([[0010-off-campus-buildings]]).
+- **Admins** ([[building-safety]], [[assessment-admin]]): a Campuses | Off-campus switch on the dashboard with a drill-down by location, and a category filter on the Assessments tabs. Off-campus results never count toward a campus score.
+- **Pillar pages** ([[pillars-and-landing]]): the placeholders become each pillar's results, Campus beside Off-campus, including the N/A rate, and `/pillars` is a new overview.
+
 ## DRRM-024 Event cluster and unit drill-down: 2026-11-05 (branch `feat/DRRM-024-event-cluster-drilldown`, not merged yet)
 
 [[plan/feature/DRRM-024-event-cluster-drilldown]] · [[events]]

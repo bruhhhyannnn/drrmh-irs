@@ -22,6 +22,7 @@ import {
 import { toPayload, type AssessmentDraft } from '@/lib/assessment-draft';
 import type { AssessmentTemplate } from '@/lib/assessment-template';
 import type { LocationScope } from '@/lib/building-safety';
+import { locationListStaleTime } from '@/lib/location-options';
 import { cachedFetch, withTimeout } from '@/lib/offline-cache';
 import {
   deleteAssessmentDraft,
@@ -117,7 +118,7 @@ export function useLocationTree() {
       if (tree) await putAssessmentCache(key, tree).catch(() => {});
       return tree;
     },
-    staleTime: Infinity,
+    staleTime: (query) => locationListStaleTime(query.state.data),
     networkMode: 'always',
   });
 }

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   filterOptions,
+  locationListStaleTime,
   locationOptions,
   NO_PROVINCE,
   picksFromBarangay,
@@ -30,6 +31,12 @@ const picks = (patch: Partial<LocationPicks> = {}): LocationPicks => ({
   province_code: '',
   city_code: '',
   ...patch,
+});
+
+test('a saved list stays fresh, and a missing one is tried again', () => {
+  assert.equal(locationListStaleTime(TREE), Infinity);
+  assert.equal(locationListStaleTime(null), 0);
+  assert.equal(locationListStaleTime(undefined), 0);
 });
 
 test('no saved list means off-campus is unavailable', () => {

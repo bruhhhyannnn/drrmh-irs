@@ -134,7 +134,13 @@ export function Select({
   const minWidth = variant === 'filter' ? 220 : 0;
   const last = options.length - 1;
 
-  const openList = (index = selectedIndex >= 0 ? selectedIndex : 0) => {
+  // From the whole list: a search left over from last time is cleared as the list opens.
+  const openList = (
+    index = Math.max(
+      0,
+      allOptions.findIndex((o) => o.value === value)
+    )
+  ) => {
     const trigger = triggerRef.current;
     if (!trigger || disabled) return;
     setPosition(placeList(trigger, minWidth));
