@@ -8,6 +8,7 @@ import {
   type SafeAnswer,
   type ScoredAssessment,
 } from './assessment-template';
+import { buildingPlaceSelect, toBuildingPlace } from './building-place';
 import { scoresFromPillarRows } from './building-safety';
 import { prisma } from './prisma';
 
@@ -205,17 +206,7 @@ export async function loadAssessmentRecord(
       floor_count: true,
       needs_follow_up: true,
       building: {
-        select: {
-          name: true,
-          unit: {
-            select: {
-              name: true,
-              cluster: {
-                select: { name: true, campus_id: true, campus: { select: { name: true } } },
-              },
-            },
-          },
-        },
+        select: { name: true, ...buildingPlaceSelect },
       },
       evaluator: { select: { first_name: true, last_name: true } },
       event: { select: { name: true } },
@@ -227,15 +218,18 @@ export async function loadAssessmentRecord(
   if (!a) return null;
   const version = await loadVersion({ id: a.template_version_id });
   if (!version) return null;
+  const place = toBuildingPlace(a.building);
 
   return {
     id: a.id,
     building_id: a.building_id,
-    campus_id: a.building.unit.cluster.campus_id,
+    campus_id: place.campus.id,
     building_name: a.building.name,
-    unit_name: a.building.unit.name,
-    cluster_name: a.building.unit.cluster.name,
-    campus_name: a.building.unit.cluster.campus.name,
+    unit_name: place.unit?.name ?? null,
+    cluster_name: place.cluster?.name ?? null,
+    campus_name: place.campus.name,
+    location: place.location,
+    place_label: place.label,
     evaluator_name: personName(a.evaluator),
     incident_commander: a.incident_commander,
     event_name: a.event?.name ?? null,
@@ -297,15 +291,7 @@ export async function loadBuildingScores(
       id: true,
       name: true,
       floor_count: true,
-      unit: {
-        select: {
-          id: true,
-          name: true,
-          cluster: {
-            select: { id: true, name: true, campus: { select: { id: true, name: true } } },
-          },
-        },
-      },
+      ...buildingPlaceSelect,
       assessments: { orderBy: { ended_at: 'desc' }, take: 2, select: scoredSelect },
       _count: { select: { assessments: true } },
     },
@@ -314,9 +300,7 @@ export async function loadBuildingScores(
     id: b.id,
     name: b.name,
     floor_count: b.floor_count,
-    unit: { id: b.unit.id, name: b.unit.name },
-    cluster: { id: b.unit.cluster.id, name: b.unit.cluster.name },
-    campus: b.unit.cluster.campus,
+    ...toBuildingPlace(b),
     assessment_count: b._count.assessments,
     latest: b.assessments[0] ? toScoredAssessment(b.assessments[0]) : null,
     previous: b.assessments[1] ? toScoredAssessment(b.assessments[1]) : null,

@@ -38,7 +38,11 @@ export function BuildingLevel({
 
   const { building } = history;
   const parts = trailParts(
-    { campus: building.campus, cluster: building.cluster, unit: building.unit },
+    {
+      campus: building.campus,
+      cluster: building.cluster ?? undefined,
+      unit: building.unit ?? undefined,
+    },
     go,
     isSuperAdmin,
     building.name

@@ -5,6 +5,7 @@ import { useAssessmentList } from '@/components/hooks/use-assessments';
 import { cn } from '@/lib';
 import { percent } from '@/lib/assessment-score';
 import type { AdminAssessmentRow } from '@/lib/assessment-template';
+import { placeLine } from '@/lib/building-place';
 import { Eye } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -79,17 +80,19 @@ export function AssessmentsTab() {
     };
   const unique = (list: { id: string; name: string }[]) =>
     [...new Map(list.map((x) => [x.id, x])).values()].sort((a, b) => a.name.localeCompare(b.name));
-  const clusters = unique(data.map((r) => r.cluster));
+  const clusters = unique(data.flatMap((r) => (r.cluster ? [r.cluster] : [])));
   const units = unique(
-    data.filter((r) => !clusterId || r.cluster.id === clusterId).map((r) => r.unit)
+    data
+      .filter((r) => !clusterId || r.cluster?.id === clusterId)
+      .flatMap((r) => (r.unit ? [r.unit] : []))
   );
 
   const q = query.trim().toLowerCase();
   const rows = data.filter((r) => {
     const day = dayOf(r.ended_at);
     return (
-      (!clusterId || r.cluster.id === clusterId) &&
-      (!unitId || r.unit.id === unitId) &&
+      (!clusterId || r.cluster?.id === clusterId) &&
+      (!unitId || r.unit?.id === unitId) &&
       (!from || day >= from) &&
       (!to || day <= to) &&
       (!q ||
@@ -107,7 +110,7 @@ export function AssessmentsTab() {
       header: 'Building',
       width: 'minmax(0,1.5fr)',
       cell: (r) => (
-        <NameCell primary={r.building.name} secondary={r.unit.name} href={detailHref(r.id)} />
+        <NameCell primary={r.building.name} secondary={r.label} href={detailHref(r.id)} />
       ),
     },
     {
@@ -115,7 +118,7 @@ export function AssessmentsTab() {
       header: 'Cluster',
       width: 'minmax(0,1fr)',
       hideOnTablet: true,
-      cell: (r) => <TextCell>{r.cluster.name}</TextCell>,
+      cell: (r) => <TextCell>{r.cluster?.name ?? '—'}</TextCell>,
     },
     {
       key: 'date',
@@ -199,7 +202,7 @@ export function AssessmentsTab() {
           return (
             <MobileCard
               title={r.building.name}
-              subtitle={`${r.unit.name} · ${r.cluster.name}`}
+              subtitle={placeLine(r)}
               chip={
                 r.needs_follow_up ? (
                   <Chip tone="amber" dot>

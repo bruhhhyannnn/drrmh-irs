@@ -391,7 +391,7 @@ function Submitted({ userId }: { userId: string }) {
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="truncate text-[17px] font-bold">{row.building_name}</span>
                 <span className="text-[14px] text-gray-600">
-                  {row.unit_name} · <Mono>{formatDate(row.ended_at)}</Mono>
+                  {row.place_label} · <Mono>{formatDate(row.ended_at)}</Mono>
                 </span>
               </div>
               {row.needs_follow_up && (

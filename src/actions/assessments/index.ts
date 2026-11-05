@@ -11,6 +11,12 @@ import {
   type CreateAssessmentResult,
   type MyAssessmentRow,
 } from '@/lib/assessment-template';
+import {
+  buildingInCampus,
+  buildingPlaceSelect,
+  campusBuildings,
+  toBuildingPlace,
+} from '@/lib/building-place';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
 import { assessmentPayloadSchema, type AssessmentPayload } from '@/lib/schemas';
@@ -80,7 +86,7 @@ export async function getAssessmentSetup(
       },
     }),
     prisma.building.findMany({
-      where: { is_active: true, unit: { cluster: { campus_id: campusId } } },
+      where: { is_active: true, ...campusBuildings(campusId) },
       orderBy: { name: 'asc' },
       select: {
         id: true,
@@ -138,7 +144,7 @@ async function resolveBuilding(
 ): Promise<string | null> {
   if ('id' in building) {
     const found = await prisma.building.findFirst({
-      where: { id: building.id, is_active: true, unit: { cluster: { campus_id: campusId } } },
+      where: { id: building.id, is_active: true, ...buildingInCampus(campusId) },
       select: { id: true },
     });
     return found?.id ?? null;
@@ -301,14 +307,14 @@ export async function getMyAssessments(token: string | null): Promise<MyAssessme
       id: true,
       ended_at: true,
       needs_follow_up: true,
-      building: { select: { name: true, unit: { select: { name: true } } } },
+      building: { select: { name: true, ...buildingPlaceSelect } },
       pillar_scores: { select: { safe_count: true, counted_count: true } },
     },
   });
   return rows.map((r) => ({
     id: r.id,
     building_name: r.building.name,
-    unit_name: r.building.unit.name,
+    place_label: toBuildingPlace(r.building).label,
     ended_at: r.ended_at.toISOString(),
     safe: r.pillar_scores.reduce((n, p) => n + p.safe_count, 0),
     counted: r.pillar_scores.reduce((n, p) => n + p.counted_count, 0),

@@ -7,6 +7,7 @@ import {
   type PillarCode,
   type ScoredAssessment,
 } from './assessment-template';
+import type { BuildingPlace } from './building-place';
 
 // The admin side of the building assessment (DRRM-015 Phase 2): turning stored pillar rows into
 // scores, the change between two assessments, and the dashboard rollup (spec 4.3). Pure code, so
@@ -117,13 +118,16 @@ export function poolBuildings(buildings: BuildingScores[]): RollupGroup {
   };
 }
 
-const CHILD_OF: Record<RollupLevel, { kind: ChildRow['kind']; of: (b: BuildingScores) => Named }> =
-  {
-    all: { kind: 'campus', of: (b) => b.campus },
-    campus: { kind: 'cluster', of: (b) => b.cluster },
-    cluster: { kind: 'unit', of: (b) => b.unit },
-    unit: { kind: 'building', of: (b) => ({ id: b.id, name: b.name }) },
-  };
+/** Who a building belongs to at a level. Only Campus buildings join a campus's groups. */
+const CHILD_OF: Record<
+  RollupLevel,
+  { kind: ChildRow['kind']; of: (b: BuildingScores) => Named | null }
+> = {
+  all: { kind: 'campus', of: (b) => (b.category === 'campus' ? b.campus : null) },
+  campus: { kind: 'cluster', of: (b) => b.cluster },
+  cluster: { kind: 'unit', of: (b) => b.unit },
+  unit: { kind: 'building', of: (b) => (b.unit ? { id: b.id, name: b.name } : null) },
+};
 
 /** The level's children (campuses, clusters, units or buildings), each pooled, by name. */
 export function groupChildren(buildings: BuildingScores[], level: RollupLevel): ChildRow[] {
@@ -131,6 +135,7 @@ export function groupChildren(buildings: BuildingScores[], level: RollupLevel): 
   const groups = new Map<string, { named: Named; list: BuildingScores[] }>();
   for (const b of buildings) {
     const named = of(b);
+    if (!named) continue;
     const group = groups.get(named.id) ?? { named, list: [] };
     group.list.push(b);
     groups.set(named.id, group);
@@ -363,7 +368,7 @@ export interface SafetyRollup {
 }
 
 export interface BuildingHistory {
-  building: Named & { unit: Named; cluster: Named; campus: Named };
+  building: Named & BuildingPlace;
   /** Oldest first; `number` is #1…#n by when they ended. */
   assessments: (ScoredAssessment & { number: number; version_label: string })[];
 }

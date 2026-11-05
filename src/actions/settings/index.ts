@@ -71,13 +71,17 @@ function revalidateTable(table: SettingsTable) {
  */
 export async function getSettingsItems(table: SettingsTable, filterId?: string) {
   const model = MODEL_MAP[table];
-  const where = !filterId
-    ? undefined
-    : table === 'clusters'
-      ? { campus_id: filterId }
-      : table === 'units'
-        ? { cluster_id: filterId }
-        : undefined;
+  // Off-campus buildings come from assessments, not this table (DRRM-024).
+  const where =
+    table === 'buildings'
+      ? { unit_id: { not: null } }
+      : !filterId
+        ? undefined
+        : table === 'clusters'
+          ? { campus_id: filterId }
+          : table === 'units'
+            ? { cluster_id: filterId }
+            : undefined;
   // @ts-expect-error dynamic model access
   return prisma[model].findMany({ where, include: INCLUDE_MAP[table], orderBy: { name: 'asc' } });
 }

@@ -5,6 +5,8 @@
 // typed data in prisma/data (`ChecklistData`).
 
 import type { Tally } from './assessment-score';
+import type { BuildingPlace } from './building-place';
+import type { BuildingLocation } from './psgc';
 
 /** Kinds of area a building can have, in pre-screen order. */
 export const AREA_CODES = [
@@ -119,7 +121,8 @@ export interface AssessmentTemplate {
 /** A saved building to choose on the Details step, with the profile its last assessment left. */
 export interface BuildingOption {
   id: string;
-  unit_id: string;
+  /** null for an off-campus building. */
+  unit_id: string | null;
   name: string;
   floor_count: number;
   area_type_ids: string[];
@@ -143,7 +146,8 @@ export type CreateAssessmentResult =
 export interface MyAssessmentRow {
   id: string;
   building_name: string;
-  unit_name: string;
+  /** The unit, or "<barangay>, <city>". */
+  place_label: string;
   ended_at: string;
   safe: number;
   counted: number;
@@ -153,9 +157,14 @@ export interface MyAssessmentRow {
 export interface AssessmentRecord {
   id: string;
   building_name: string;
-  unit_name: string;
-  cluster_name: string;
+  /** null for an off-campus building. */
+  unit_name: string | null;
+  cluster_name: string | null;
+  /** The owning campus. */
   campus_name: string;
+  /** null for a campus building. */
+  location: BuildingLocation | null;
+  place_label: string;
   evaluator_name: string;
   incident_commander: string;
   event_name: string | null;
@@ -191,24 +200,18 @@ export interface ScoredAssessment {
 }
 
 /** A building with its latest assessment and the one before it. */
-export interface BuildingScores {
+export interface BuildingScores extends BuildingPlace {
   id: string;
   name: string;
   floor_count: number;
-  unit: Named;
-  cluster: Named;
-  campus: Named;
   assessment_count: number;
   latest: ScoredAssessment | null;
   previous: ScoredAssessment | null;
 }
 
-export interface AdminAssessmentRow {
+export interface AdminAssessmentRow extends BuildingPlace {
   id: string;
   building: Named;
-  unit: Named;
-  cluster: Named;
-  campus: Named;
   evaluator_name: string;
   event_name: string | null;
   ended_at: string;

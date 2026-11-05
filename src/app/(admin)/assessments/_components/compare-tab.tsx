@@ -67,7 +67,7 @@ function BuildingPicker({
                 ({selected.assessment_count})
               </span>
             </div>
-            <span className="truncate text-[13px] text-gray-500">{selected.unit.name}</span>
+            <span className="truncate text-[13px] text-gray-500">{selected.label}</span>
           </div>
         ) : (
           <span className="flex-1 text-[15px] text-gray-500">Select a building</span>
@@ -117,7 +117,7 @@ function BuildingPicker({
                       ({b.assessment_count})
                     </span>
                   </div>
-                  <span className="truncate text-[13px] text-gray-500">{b.unit.name}</span>
+                  <span className="truncate text-[13px] text-gray-500">{b.label}</span>
                 </button>
               );
             })}
@@ -148,10 +148,12 @@ export function CompareTab() {
     return <EmptyNote>The buildings couldn&apos;t be loaded: {error.message}</EmptyNote>;
   }
 
-  const clusters = [...new Map(data.map((b) => [b.cluster.id, b.cluster])).values()].sort((a, b) =>
-    a.name.localeCompare(b.name)
-  );
-  const buildings = clusterId ? data.filter((b) => b.cluster.id === clusterId) : data;
+  const clusters = [
+    ...new Map(
+      data.flatMap((b) => (b.cluster ? [[b.cluster.id, b.cluster] as const] : []))
+    ).values(),
+  ].sort((a, b) => a.name.localeCompare(b.name));
+  const buildings = clusterId ? data.filter((b) => b.cluster?.id === clusterId) : data;
   const requestedId = params.get('building');
   const selected =
     buildings.find((b) => b.id === requestedId) ??

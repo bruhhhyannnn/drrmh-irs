@@ -3,6 +3,7 @@
 import { useBuildingSummaries } from '@/components/hooks/use-assessments';
 import { percent, recoveryStatus } from '@/lib/assessment-score';
 import type { BuildingScores } from '@/lib/assessment-template';
+import { placeLine } from '@/lib/building-place';
 import { ChartLine, Eye } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -54,14 +55,16 @@ export function BuildingsTab() {
       setPage(1);
     };
 
-  const clusters = [...new Map(data.map((b) => [b.cluster.id, b.cluster])).values()].sort((a, b) =>
-    a.name.localeCompare(b.name)
-  );
+  const clusters = [
+    ...new Map(
+      data.flatMap((b) => (b.cluster ? [[b.cluster.id, b.cluster] as const] : []))
+    ).values(),
+  ].sort((a, b) => a.name.localeCompare(b.name));
   const q = query.trim().toLowerCase();
   const rows = data.filter(
     (b) =>
-      (!clusterId || b.cluster.id === clusterId) &&
-      (!q || b.name.toLowerCase().includes(q) || b.unit.name.toLowerCase().includes(q))
+      (!clusterId || b.cluster?.id === clusterId) &&
+      (!q || b.name.toLowerCase().includes(q) || b.label.toLowerCase().includes(q))
   );
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const current = Math.min(page, totalPages);
@@ -76,7 +79,7 @@ export function BuildingsTab() {
       cell: (b) => (
         <NameCell
           primary={b.name}
-          secondary={b.unit.name}
+          secondary={b.label}
           href={b.latest ? detailHref(b.latest.id) : undefined}
         />
       ),
@@ -86,7 +89,7 @@ export function BuildingsTab() {
       header: 'Cluster',
       width: 'minmax(0,1fr)',
       hideOnTablet: true,
-      cell: (b) => <TextCell>{b.cluster.name}</TextCell>,
+      cell: (b) => <TextCell>{b.cluster?.name ?? '—'}</TextCell>,
     },
     {
       key: 'overall',
@@ -186,7 +189,7 @@ export function BuildingsTab() {
         card={(b) => (
           <MobileCard
             title={b.name}
-            subtitle={`${b.unit.name} · ${b.cluster.name}`}
+            subtitle={placeLine(b)}
             chip={
               b.latest?.needs_follow_up ? (
                 <Chip tone="amber" dot>

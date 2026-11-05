@@ -75,14 +75,59 @@ function building(
     id,
     name: id,
     floor_count: 1,
+    category: 'campus',
     unit: { id: unit, name: unit },
     cluster: { id: cluster, name: cluster },
     campus: { id: 'campus', name: 'UP Test' },
+    location: null,
+    label: unit,
     assessment_count: (latest ? 1 : 0) + (previous ? 1 : 0),
     latest,
     previous,
   };
 }
+
+function offCampus(
+  id: string,
+  codes: { region: string; province?: string; city: string; barangay: string },
+  latest: ScoredAssessment | null = null
+): BuildingScores {
+  const at = (code: string) => ({ code, name: `Place ${code}` });
+  return {
+    id,
+    name: id,
+    floor_count: 1,
+    category: 'off_campus',
+    unit: null,
+    cluster: null,
+    campus: { id: 'campus', name: 'UP Test' },
+    location: {
+      region: at(codes.region),
+      province: codes.province ? at(codes.province) : null,
+      city: at(codes.city),
+      barangay: at(codes.barangay),
+    },
+    label: `Place ${codes.barangay}, Place ${codes.city}`,
+    assessment_count: latest ? 1 : 0,
+    latest,
+    previous: null,
+  };
+}
+
+test('an off-campus building never joins a campus group', () => {
+  const list = [
+    building('A', 'u1', 'c1', s(8, 10)),
+    offCampus('Z', { region: 'r1', city: 'x1', barangay: 'b1' }, s(1, 10)),
+  ];
+  assert.deepEqual(
+    groupChildren(list, 'campus').map((c) => c.id),
+    ['c1']
+  );
+  assert.deepEqual(
+    groupChildren(list, 'cluster').map((c) => c.id),
+    ['u1']
+  );
+});
 
 test('pooled current counts every latest; the change only re-assessed buildings', () => {
   const g = poolBuildings([
