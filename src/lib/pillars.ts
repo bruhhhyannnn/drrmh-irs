@@ -6,9 +6,9 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-// The four DRRM pillars (Republic Act No. 10121). Each will become its own app, separate from
-// the IRS; until then the admin sidebar opens a placeholder page per pillar in a new tab. When
-// the apps exist, point `pillarHref` at them.
+// The four DRRM pillars (Republic Act No. 10121). The admin sidebar opens a page per pillar in a
+// new tab, with its building assessment results (DRRM-024). If a pillar later becomes its own app,
+// point `pillarHref` at it.
 
 export interface Pillar {
   slug: string;

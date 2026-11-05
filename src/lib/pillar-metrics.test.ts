@@ -6,7 +6,6 @@ import { lowestBuildings, mostNa, naRate, pillarGroup, recoveryGroup } from './p
 
 const tally = (safe: number, counted: number, na = 0) => ({ safe, counted, na });
 const PREVENTION: PillarCode = 'prevention-mitigation';
-const RECOVERY: PillarCode = 'rehabilitation-recovery';
 
 function scored(id: string, prevention = tally(0, 0), recovery = tally(0, 1)): ScoredAssessment {
   return {
@@ -218,6 +217,7 @@ test('recoveryGroup counts in place, missing and N/A, and lists the missing buil
   assert.equal(group.in_place, 1);
   assert.equal(group.missing, 1);
   assert.equal(group.na, 1);
-  assert.deepEqual(group.missingBuildings, [{ id: 'Lacks', name: 'Lacks' }]);
-  assert.ok(RECOVERY);
+  assert.deepEqual(group.missingBuildings, [
+    { id: 'Lacks', name: 'Lacks', label: 'Unit', category: 'campus' },
+  ]);
 });
