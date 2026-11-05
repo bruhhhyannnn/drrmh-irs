@@ -5,8 +5,19 @@ import { cn } from '@/lib';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
-import { plural } from '../../_lib/format';
-import type { ScopeTarget, UnitCoverage } from '../../_lib/summary';
+import { formatTime, personName, plural } from '../../_lib/format';
+import {
+  NO_UNIT,
+  peopleOf,
+  scopedCoverage,
+  type ScopeTarget,
+  type Summary,
+  type SummaryScope,
+  type UnitCoverage,
+} from '../../_lib/summary';
+import { Card, Mono } from '../ui';
+
+const PAD_X = 'px-4 md:px-5';
 
 /** Builds the link to a cluster or unit on the current page. */
 export type ScopeLinks = (target: ScopeTarget) => string;
@@ -78,5 +89,138 @@ export function MissingUnits({
         </ul>
       )}
     </div>
+  );
+}
+
+/** Where a narrowed page sits within the event, with the way back. */
+export function ScopeBreadcrumb({
+  title,
+  scope,
+  links,
+}: {
+  title: string;
+  scope: SummaryScope;
+  links: ScopeLinks;
+}) {
+  const crumbs = [
+    { label: title, href: links({ clusterId: null }) },
+    { label: scope.clusterName, href: links({ clusterId: scope.clusterId }) },
+    ...(scope.unitName ? [{ label: scope.unitName, href: '' }] : []),
+  ];
+  return (
+    <nav aria-label="Breadcrumb">
+      <ol className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[16px]">
+        {crumbs.map((crumb, i) => {
+          const last = i === crumbs.length - 1;
+          return (
+            <li key={i} className="flex min-w-0 items-center gap-1.5">
+              {i > 0 && <ChevronRight size={15} aria-hidden className="shrink-0 text-gray-400" />}
+              {last ? (
+                <span aria-current="page" className="font-bold text-gray-900">
+                  {crumb.label}
+                </span>
+              ) : (
+                <Link
+                  href={crumb.href}
+                  className={cn(
+                    'rounded-sm font-semibold text-brand-500 hover:underline',
+                    FOCUS_RING
+                  )}
+                >
+                  {crumb.label}
+                </Link>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
+
+/** The Clusters card on a cluster's page: its units, and the ones that haven't reported. */
+export function UnitsCard({
+  summary,
+  scope,
+  links,
+}: {
+  summary: Summary;
+  scope: SummaryScope;
+  links: ScopeLinks;
+}) {
+  const units = summary.clusters.done[0]?.units ?? [];
+  const coverage = scopedCoverage(summary);
+  return (
+    <Card className="flex flex-col">
+      <div className={cn('flex flex-wrap items-center gap-x-4 gap-y-1 py-4', PAD_X)}>
+        <h2 className="flex-1 text-[19px] leading-[1.3] font-bold">Units in {scope.clusterName}</h2>
+        {coverage && (
+          <span className="text-[14px] font-semibold text-gray-600">
+            <Mono className="text-[16px] font-bold text-gray-900">
+              {coverage.reported} of {coverage.total}
+            </Mono>{' '}
+            reported
+          </span>
+        )}
+      </div>
+      {units.length > 0 && (
+        <ul className={cn('flex flex-col border-t border-line py-2', PAD_X)}>
+          {units.map((u) => (
+            <li
+              key={u.name}
+              className={cn('flex min-h-10 items-center justify-between gap-3', DRILL_ROW)}
+            >
+              <DrillLink
+                href={links({ clusterId: scope.clusterId, unitId: u.id ?? NO_UNIT })}
+                className="text-[16px] font-semibold"
+              >
+                {u.name}
+              </DrillLink>
+              <Mono className="text-[16px] font-bold">{u.people.toLocaleString()}</Mono>
+            </li>
+          ))}
+        </ul>
+      )}
+      {coverage?.missing.length ? (
+        <MissingUnits coverage={coverage} className={cn('border-t border-line py-1', PAD_X)} />
+      ) : null}
+      {!units.length && !coverage && (
+        <p className={cn('border-t border-line py-4 text-[16px] text-gray-500', PAD_X)}>
+          No reports from this cluster yet.
+        </p>
+      )}
+    </Card>
+  );
+}
+
+/** The Clusters card on a unit's page: the reports its numbers come from, newest first. */
+export function UnitReportsCard({ summary }: { summary: Summary }) {
+  const reports = [...summary.source.reports].reverse();
+  return (
+    <Card className="flex flex-col">
+      <h2 className={cn('py-4 text-[19px] leading-[1.3] font-bold', PAD_X)}>
+        Reports from this unit
+      </h2>
+      {reports.length ? (
+        <ul className="flex flex-col">
+          {reports.map((r) => (
+            <li
+              key={r.id}
+              className={cn('flex min-h-12 items-center gap-3 border-t border-line py-2', PAD_X)}
+            >
+              <div className="flex min-w-0 flex-1 flex-col gap-px">
+                <span className="text-[16px] font-semibold">{personName(r.user) || '—'}</span>
+                <span className="text-[14px] text-gray-500">{formatTime(r.submitted_at)}</span>
+              </div>
+              <Mono className="text-[16px] font-bold">{peopleOf(r).toLocaleString()}</Mono>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className={cn('border-t border-line py-4 text-[16px] text-gray-500', PAD_X)}>
+          No reports from this unit in this event.
+        </p>
+      )}
+    </Card>
   );
 }

@@ -11,13 +11,15 @@ import { formatDate, formatDateTime, formatEventWindow } from '../../_lib/format
 import {
   buildSummary,
   compareSummaries,
+  resolveScope,
   scopeHref,
+  scopeSource,
   type Summary,
   type SummarySource,
 } from '../../_lib/summary';
 import { useEventTitle } from '../shell/campus-switcher';
 import { Mono, Skeleton } from '../ui';
-import type { ScopeLinks } from './drill-down';
+import { ScopeBreadcrumb, UnitReportsCard, UnitsCard, type ScopeLinks } from './drill-down';
 import {
   AnalyticsGrid,
   CasualtiesCard,
@@ -70,6 +72,20 @@ export function EventSummary({
   const links: ScopeLinks = (target) => scopeHref(pathname, searchParams, target, linkParams);
   const { data: source, isPending, error } = useEventSummarySource(eventId);
   const summary = useSummary(source);
+  const clusterParam = searchParams.get('cluster');
+  const unitParam = searchParams.get('unit');
+  const { scope, invalid } = useMemo(
+    () =>
+      source
+        ? resolveScope(source, { cluster: clusterParam, unit: unitParam })
+        : { scope: null, invalid: false },
+    [source, clusterParam, unitParam]
+  );
+  const scopedSource = useMemo(
+    () => (source && scope ? scopeSource(source, scope) : null),
+    [source, scope]
+  );
+  const narrowed = useSummary(scopedSource);
   const [compareId, setCompareId] = useState<string | null>(null);
   const { data: options = [] } = useCampusEventOptions(source?.event.campus_id);
   const { data: compareSource } = useEventSummarySource(compareId ?? undefined);
@@ -105,26 +121,43 @@ export function EventSummary({
     );
   }
 
-  const comparing = compareId && compareSummary;
+  // The sections read the narrowed summary; the completed banner speaks for the whole event.
+  const view = narrowed ?? summary;
+  const comparing = !scope && compareId && compareSummary;
   const title = eventTitle(summary.source.event.name, summary.source.event.campus.name);
   const picked = others.find((o) => o.id === compareId);
+  const scopeName = scope && [scope.clusterName, scope.unitName].filter(Boolean).join(' › ');
+  const heading = scopeName ? `${title} · ${scopeName}` : title;
+  // A new scope starts the sections' own filters over, so a filter from another view can't hide
+  // everything with its control gone.
+  const scopeKey = scope ? `${scope.clusterId}/${scope.unitId ?? ''}` : 'event';
 
   return (
     <div className="flex flex-col gap-6">
       {summary.completed && <CompletedBanner summary={summary} />}
       {before}
+      {scope && <ScopeBreadcrumb title={title} scope={scope} links={links} />}
+      {invalid && (
+        <p
+          role="status"
+          className="rounded-[18px] border border-gray-200 bg-surface px-4 py-3 text-[16px] text-gray-600"
+        >
+          That cluster or unit isn&apos;t part of this event, so the whole event is shown.
+        </p>
+      )}
 
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2.5 pt-1">
         <div className="flex min-w-0 flex-col gap-0.5">
           <h2 className="text-[22px] leading-[1.3] font-extrabold">Overview</h2>
           <span className="text-[16px] leading-[1.45] text-gray-500">
-            {title} · {summary.completed ? 'Completed' : 'As of'}{' '}
+            {heading} · {summary.completed ? 'Completed' : 'As of'}{' '}
             <Mono className="text-[14px] font-semibold text-gray-700">
               {formatDateTime(summary.asOf)}
             </Mono>
           </span>
         </div>
-        {others.length > 0 &&
+        {!scope &&
+          others.length > 0 &&
           (compareId ? (
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-[14px] font-semibold text-gray-600">Compared with</span>
@@ -169,9 +202,9 @@ export function EventSummary({
           ))}
       </div>
 
-      <OverviewTiles summary={summary} />
+      <OverviewTiles summary={view} scope={scope} />
 
-      {compareId && !compareSummary && <Skeleton className="h-96" />}
+      {!scope && compareId && !compareSummary && <Skeleton className="h-96" />}
       {comparing && (
         <>
           <CompareCard
@@ -196,18 +229,26 @@ export function EventSummary({
         </>
       )}
 
-      <ClustersCard summary={summary} links={links} />
-      <HeadcountCard summary={summary} />
-      <CasualtiesCard summary={summary} />
-      <MissingCard summary={summary} />
+      {!scope && <ClustersCard summary={summary} links={links} />}
+      {scope && !scope.unitId && (
+        <UnitsCard key={scopeKey} summary={view} scope={scope} links={links} />
+      )}
+      {scope?.unitId && <UnitReportsCard summary={view} />}
+      <HeadcountCard key={`headcount-${scopeKey}`} summary={view} scoped={!!scope} />
+      <CasualtiesCard key={`casualties-${scopeKey}`} summary={view} />
+      <MissingCard key={`missing-${scopeKey}`} summary={view} />
 
-      <div className="flex flex-col gap-1 pt-3">
-        <h2 className="text-[22px] leading-[1.3] font-extrabold">Analytics</h2>
-        <span className="text-[16px] leading-[1.45] text-pretty text-gray-500">
-          {title} · {summary.completed ? 'completed' : 'as of'} {formatDateTime(summary.asOf)}
-        </span>
-      </div>
-      <AnalyticsGrid summary={summary} />
+      {!scope?.unitId && (
+        <>
+          <div className="flex flex-col gap-1 pt-3">
+            <h2 className="text-[22px] leading-[1.3] font-extrabold">Analytics</h2>
+            <span className="text-[16px] leading-[1.45] text-pretty text-gray-500">
+              {heading} · {summary.completed ? 'completed' : 'as of'} {formatDateTime(summary.asOf)}
+            </span>
+          </div>
+          <AnalyticsGrid summary={view} scoped={!!scope} />
+        </>
+      )}
     </div>
   );
 }

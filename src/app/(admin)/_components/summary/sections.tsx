@@ -10,6 +10,7 @@ import {
   firstReportScale,
   headcountOf,
   NO_UNIT,
+  scopedCoverage,
   shortLabel,
   timelineLabels,
   timelineMilestones,
@@ -17,6 +18,7 @@ import {
   timelineScale,
   type CompareRow,
   type Summary,
+  type SummaryScope,
 } from '../../_lib/summary';
 import { FilterSelect } from '../data-list';
 import { Bar, Card, Chip, Mono } from '../ui';
@@ -61,20 +63,36 @@ const TILE_ICON = {
   amber: 'bg-warning-50 text-warning-700',
 };
 
-export function OverviewTiles({ summary }: { summary: Summary }) {
-  const { totals, clusters } = summary;
+function reportsFrom(summary: Summary, scope?: SummaryScope | null) {
+  const { reported, total } = summary.clusters;
+  if (!scope) return `From ${reported} of ${plural(total, 'cluster', 'clusters')}`;
+  if (scope.unitId) return 'From this unit';
+  const coverage = scopedCoverage(summary);
+  return coverage ? `From ${coverageLabel(coverage)}` : 'From this cluster';
+}
+
+export function OverviewTiles({
+  summary,
+  scope,
+}: {
+  summary: Summary;
+  scope?: SummaryScope | null;
+}) {
+  const { totals } = summary;
   const tiles = [
     {
       label: 'Total affected',
       value: totals.people.toLocaleString(),
-      sub: `Counted in ${plural(totals.clustersCounted, 'cluster', 'clusters')}`,
+      sub: scope
+        ? `In ${scope.unitName ?? scope.clusterName}`
+        : `Counted in ${plural(totals.clustersCounted, 'cluster', 'clusters')}`,
       icon: <Users size={18} aria-hidden />,
       tone: 'neutral' as const,
     },
     {
       label: 'Reports',
       value: totals.reports.toLocaleString(),
-      sub: `From ${clusters.reported} of ${plural(clusters.total, 'cluster', 'clusters')}`,
+      sub: reportsFrom(summary, scope),
       icon: <ChartNoAxesColumn size={18} aria-hidden />,
       tone: 'neutral' as const,
     },
@@ -383,7 +401,7 @@ export function ClustersCard({ summary, links }: { summary: Summary; links: Scop
 
 /* ─── Headcount ──────────────────────────────────────────────────────────────────────── */
 
-export function HeadcountCard({ summary }: { summary: Summary }) {
+export function HeadcountCard({ summary, scoped }: { summary: Summary; scoped?: boolean }) {
   const [clusterId, setClusterId] = useState('');
   const reports = summary.source.reports.filter((r) => !clusterId || r.cluster_id === clusterId);
   const rows = clusterId ? headcountOf(reports) : summary.headcount.rows;
@@ -400,13 +418,15 @@ export function HeadcountCard({ summary }: { summary: Summary }) {
           people
         </span>
         <div className="flex-1" />
-        <FilterSelect
-          label="Headcount for cluster"
-          allLabel="All clusters"
-          value={clusterId}
-          onChange={setClusterId}
-          options={summary.clusters.done.map((c) => ({ value: c.id, label: c.name }))}
-        />
+        {!scoped && (
+          <FilterSelect
+            label="Headcount for cluster"
+            allLabel="All clusters"
+            value={clusterId}
+            onChange={setClusterId}
+            options={summary.clusters.done.map((c) => ({ value: c.id, label: c.name }))}
+          />
+        )}
       </div>
       {rows.length ? (
         <ul
@@ -841,13 +861,13 @@ export function FirstReportChart({ summary, compare }: { summary: Summary; compa
   );
 }
 
-export function AnalyticsGrid({ summary }: { summary: Summary }) {
+export function AnalyticsGrid({ summary, scoped }: { summary: Summary; scoped?: boolean }) {
   const { totals, damage } = summary;
   const units = new Set(summary.casualties.map((c) => `${c.cluster}/${c.unit}`)).size;
   return (
     <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
       <ReportsReceivedChart summary={summary} />
-      <FirstReportChart summary={summary} />
+      {!scoped && <FirstReportChart summary={summary} />}
       <ChartCard
         title="Casualties by condition"
         subtitle={
