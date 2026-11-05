@@ -9,6 +9,12 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-024 Event cluster and unit drill-down: 2026-11-05 (branch `feat/DRRM-024-event-cluster-drilldown`, not merged yet)
+
+[[plan/feature/DRRM-024-event-cluster-drilldown]] · [[events]]
+
+- Clicking a cluster or unit on an event's summary narrows the whole page to it, with its own link. Each cluster lists its units with no report yet, and a unit's page lists its reports, read-only once the event is completed.
+
 ## DRRM-015 MATATAG building assessment: 2026-10-20 → 2026-10-21 (branch `feat/DRRM-015-assessment-form`, not merged yet)
 
 Plans: [[plan/feature/DRRM-015-assessment-form]] · [[plan/feature/DRRM-015-phase-1-plan]] · [[plan/feature/DRRM-015-phase-2-plan]] · [[plan/feature/DRRM-015-assessment-print]]

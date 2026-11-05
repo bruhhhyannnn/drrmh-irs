@@ -558,27 +558,29 @@ function AnalyticsSection({ summary, compare }: { summary: Summary; compare: Sum
             compact
             nameWidth="w-20"
             valueWidth="w-28"
-            rows={summary.firstReport.map((r) => ({
-              key: r.id,
-              name: r.name,
-              values: [
-                {
-                  value: r.minutes,
-                  label: minutes(r.minutes),
-                  color: SERIES.a,
-                  muted: r.minutes === null,
-                },
-                ...(compare
-                  ? [
-                      {
-                        value: other.get(r.name) ?? null,
-                        label: minutes(other.get(r.name)),
-                        color: SERIES.b,
-                      },
-                    ]
-                  : []),
-              ],
-            }))}
+            rows={summary.firstReport
+              .filter((r) => r.minutes !== null)
+              .map((r) => ({
+                key: r.id,
+                name: r.name,
+                values: [
+                  {
+                    value: r.minutes,
+                    label: minutes(r.minutes),
+                    color: SERIES.a,
+                    muted: r.minutes === null,
+                  },
+                  ...(compare
+                    ? [
+                        {
+                          value: other.get(r.name) ?? null,
+                          label: minutes(other.get(r.name)),
+                          color: SERIES.b,
+                        },
+                      ]
+                    : []),
+                ],
+              }))}
           />
         </ChartBox>
         <ChartBox

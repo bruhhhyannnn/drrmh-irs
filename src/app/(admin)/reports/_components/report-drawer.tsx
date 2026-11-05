@@ -55,9 +55,10 @@ import {
 import { useEventTitle } from '../../_components/shell/campus-switcher';
 import { Avatar, Skeleton } from '../../_components/ui';
 import { formatDateTime, personName } from '../../_lib/format';
+import { ReportDetails } from './report-details';
 import { ReportPhotos } from './report-photos';
 
-type Report = NonNullable<ReturnType<typeof useReport>['data']>;
+export type Report = NonNullable<ReturnType<typeof useReport>['data']>;
 
 const toSex = (sex: string | null): PersonSex =>
   sex === 'male' || sex === 'female' ? sex : 'unknown';
@@ -71,6 +72,7 @@ export function ReportDrawer({
   onClose,
   reportId,
   campusId,
+  readOnly,
 }: {
   open: boolean;
   onClose: () => void;
@@ -78,6 +80,8 @@ export function ReportDrawer({
   reportId?: string;
   /** The top-bar campus, which limits the events Add report offers. */
   campusId?: string;
+  /** Show `reportId` to read, with nothing to edit or save. */
+  readOnly?: boolean;
 }) {
   const { data: report, isPending } = useReport(reportId);
   const eventTitle = useEventTitle();
@@ -89,7 +93,7 @@ export function ReportDrawer({
       open={open}
       onClose={onClose}
       size="wide"
-      title={isEdit ? 'Edit report' : 'Add report'}
+      title={readOnly ? 'Report' : isEdit ? 'Edit report' : 'Add report'}
       subtitle={
         isEdit
           ? report
@@ -100,11 +104,13 @@ export function ReportDrawer({
       footer={
         <DrawerButtons>
           <DrawerButton variant="outline" onClick={onClose}>
-            Cancel
+            {readOnly ? 'Close' : 'Cancel'}
           </DrawerButton>
-          <DrawerButton type="submit" form="report-form" loading={saving}>
-            {isEdit ? 'Update report' : 'Submit report'}
-          </DrawerButton>
+          {!readOnly && (
+            <DrawerButton type="submit" form="report-form" loading={saving}>
+              {isEdit ? 'Update report' : 'Submit report'}
+            </DrawerButton>
+          )}
         </DrawerButtons>
       }
     >
@@ -114,6 +120,8 @@ export function ReportDrawer({
           <Skeleton className="h-48" />
           <Skeleton className="h-64" />
         </div>
+      ) : readOnly && report ? (
+        <ReportDetails report={report} />
       ) : (
         <ReportForm
           report={isEdit ? (report ?? null) : null}

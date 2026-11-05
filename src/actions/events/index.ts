@@ -236,7 +236,15 @@ export async function getEventSummarySource(eventId: string) {
     }),
     prisma.cluster.findMany({
       where: { campus_id: event.campus_id, is_active: true },
-      select: { id: true, name: true },
+      select: {
+        id: true,
+        name: true,
+        units: {
+          where: { is_active: true },
+          select: { id: true, name: true, created_at: true },
+          orderBy: { name: 'asc' },
+        },
+      },
       orderBy: { name: 'asc' },
     }),
     prisma.campusPopulationCategory.findMany({

@@ -51,6 +51,7 @@ Statuses are taken from each plan's frontmatter as of 2026-10-22. Keep this list
 
 | Plan                                                                                                 | Status      | Branch                                     |
 | ---------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------------ |
+| [[plan/feature/DRRM-024-event-cluster-drilldown\|DRRM-024 Event cluster and unit drill-down]]        | in-review   | `feat/DRRM-024-event-cluster-drilldown`    |
 | [[plan/fix/DRRM-023-report-500-and-role-routing\|DRRM-023 Report 500s and role routing]]             | in-progress | `fix/DRRM-023-report-500-and-role-routing` |
 | [[plan/review/2026-10-29-pr-89-report-photos\|PR #89 report photos review (2026-10-29)]]             | in-progress | `feat/DRRM-022-report-photos`              |
 | [[plan/feature/DRRM-022-report-photos\|DRRM-022 Photos on field reports]]                            | in-review   | `feat/DRRM-022-report-photos`              |
