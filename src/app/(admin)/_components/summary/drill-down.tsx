@@ -15,6 +15,7 @@ import {
   type SummaryScope,
   type UnitCoverage,
 } from '../../_lib/summary';
+import { ReportDrawer } from '../../reports/_components/report-drawer';
 import { Card, Mono } from '../ui';
 
 const PAD_X = 'px-4 md:px-5';
@@ -196,6 +197,7 @@ export function UnitsCard({
 /** The Clusters card on a unit's page: the reports its numbers come from, newest first. */
 export function UnitReportsCard({ summary }: { summary: Summary }) {
   const reports = [...summary.source.reports].reverse();
+  const [drawer, setDrawer] = useState<{ open: boolean; reportId?: string }>({ open: false });
   return (
     <Card className="flex flex-col">
       <h2 className={cn('py-4 text-[19px] leading-[1.3] font-bold', PAD_X)}>
@@ -204,15 +206,23 @@ export function UnitReportsCard({ summary }: { summary: Summary }) {
       {reports.length ? (
         <ul className="flex flex-col">
           {reports.map((r) => (
-            <li
-              key={r.id}
-              className={cn('flex min-h-12 items-center gap-3 border-t border-line py-2', PAD_X)}
-            >
-              <div className="flex min-w-0 flex-1 flex-col gap-px">
-                <span className="text-[16px] font-semibold">{personName(r.user) || '—'}</span>
-                <span className="text-[14px] text-gray-500">{formatTime(r.submitted_at)}</span>
-              </div>
-              <Mono className="text-[16px] font-bold">{peopleOf(r).toLocaleString()}</Mono>
+            <li key={r.id} className="border-t border-line">
+              <button
+                type="button"
+                onClick={() => setDrawer({ open: true, reportId: r.id })}
+                className={cn(
+                  'flex min-h-14 w-full items-center gap-3 py-2 text-left transition-colors hover:bg-gray-50',
+                  PAD_X,
+                  FOCUS_RING
+                )}
+              >
+                <span className="flex min-w-0 flex-1 flex-col gap-px">
+                  <span className="text-[16px] font-semibold">{personName(r.user) || '—'}</span>
+                  <span className="text-[14px] text-gray-500">{formatTime(r.submitted_at)}</span>
+                </span>
+                <Mono className="text-[16px] font-bold">{peopleOf(r).toLocaleString()}</Mono>
+                <ChevronRight size={15} aria-hidden className="shrink-0 text-gray-400" />
+              </button>
             </li>
           ))}
         </ul>
@@ -221,6 +231,13 @@ export function UnitReportsCard({ summary }: { summary: Summary }) {
           No reports from this unit in this event.
         </p>
       )}
+      <ReportDrawer
+        open={drawer.open}
+        onClose={() => setDrawer((d) => ({ ...d, open: false }))}
+        reportId={drawer.reportId}
+        campusId={summary.source.event.campus_id}
+        readOnly={summary.completed}
+      />
     </Card>
   );
 }
