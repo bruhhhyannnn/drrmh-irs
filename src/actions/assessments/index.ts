@@ -20,7 +20,8 @@ import {
 } from '@/lib/building-place';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
-import { findBarangay } from '@/lib/psgc-data';
+import type { PsgcTree } from '@/lib/psgc';
+import { findBarangay, loadPsgcTree } from '@/lib/psgc-data';
 import { assessmentPayloadSchema, type AssessmentPayload } from '@/lib/schemas';
 import { requireProfile } from '@/lib/server-auth';
 import { Prisma } from '@prisma/client';
@@ -126,6 +127,13 @@ export async function getAssessmentSetup(
     })),
     events: events.map((e) => ({ id: e.id, name: e.name, status: e.status.name })),
   };
+}
+
+/** The location list for off-campus assessments, which the phone keeps. null when unverified. */
+export async function getLocationTree(token: string | null): Promise<PsgcTree | null> {
+  const caller = await requireProfile(token);
+  if (!caller.ok) return null;
+  return loadPsgcTree();
 }
 
 /* ─── Submit ─── */

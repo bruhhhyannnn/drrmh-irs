@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/lib';
+import { filterOptions } from '@/lib/location-options';
 import { Check, ChevronDown } from 'lucide-react';
 import { Fragment, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -74,11 +75,14 @@ let closeOpenList: (() => void) | null = null;
 const isTypeChar = (e: React.KeyboardEvent) =>
   e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey;
 
+/** The keys a search box hands on to the list. */
+const LIST_KEYS = ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Enter', 'Escape', 'Tab'];
+
 export function Select({
   id,
   value,
   onChange,
-  options,
+  options: allOptions,
   placeholder,
   label,
   required,
@@ -88,11 +92,14 @@ export function Select({
   describedBy,
   variant = 'field',
   className,
+  searchable = false,
 }: {
   id?: string;
   value: string;
   onChange: (value: string) => void;
   options: SelectOption[];
+  /** A search box at the top of the open list, for lists too long to scroll on a phone. */
+  searchable?: boolean;
   /** Shown in grey while nothing (or the empty option) is picked. Without one, the empty
    * option shows by its label, e.g. a filter's "All types". */
   placeholder?: string;
@@ -118,9 +125,12 @@ export function Select({
   // The list lives outside the page root, so it copies the large type scale and a forced
   // light theme (the A4 report) from where the field sits.
   const [frame, setFrame] = useState<{ large: boolean; theme?: string }>({ large: false });
+  const [search, setSearch] = useState('');
+  const searchRef = useRef<HTMLInputElement>(null);
 
+  const options = searchable ? filterOptions(allOptions, search) : allOptions;
   const selectedIndex = options.findIndex((o) => o.value === value);
-  const selected = selectedIndex >= 0 ? options[selectedIndex] : undefined;
+  const selected = allOptions.find((o) => o.value === value);
   const minWidth = variant === 'filter' ? 220 : 0;
   const last = options.length - 1;
 
@@ -132,9 +142,15 @@ export function Select({
       large: !!trigger.closest('[data-large-text]'),
       theme: trigger.closest('[data-theme]')?.getAttribute('data-theme') ?? undefined,
     });
-    setActive(Math.max(0, Math.min(index, last)));
+    setSearch('');
+    setActive(Math.max(0, Math.min(index, allOptions.length - 1)));
     setOpen(true);
   };
+
+  // The box takes focus so a phone shows its keyboard straight away.
+  useEffect(() => {
+    if (open && searchable) searchRef.current?.focus();
+  }, [open, searchable]);
 
   useEffect(() => {
     if (!open) return;
@@ -149,6 +165,7 @@ export function Select({
   const pick = (index: number) => {
     const option = options[index];
     setOpen(false);
+    if (searchable) triggerRef.current?.focus();
     if (option && option.value !== value) onChange(option.value);
   };
 
@@ -174,7 +191,7 @@ export function Select({
     if (!open) openList();
   };
 
-  const onKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+  const onKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
     if (!open) {
       if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(e.key)) {
         e.preventDefault();
@@ -217,6 +234,7 @@ export function Select({
         // Only the list closes, not the drawer or dialog around the field.
         e.preventDefault();
         e.stopPropagation();
+        if (searchable) triggerRef.current?.focus();
         return setOpen(false);
       case 'Tab':
         return setOpen(false);
@@ -350,7 +368,13 @@ export function Select({
             data-theme={frame.theme}
             data-large-text={frame.large || undefined}
             // Keeps focus (and the open list) on the field while an option is clicked.
-            onMouseDown={(e) => e.preventDefault()}
+            onMouseDown={(e) => {
+              if (e.target !== searchRef.current) e.preventDefault();
+            }}
+            onBlur={(e) => {
+              const next = e.relatedTarget as Node | null;
+              if (next !== triggerRef.current && !listRef.current?.contains(next)) setOpen(false);
+            }}
             style={position}
             className={cn(
               figtree.variable,
@@ -358,9 +382,30 @@ export function Select({
               'font-landing fixed z-70 flex flex-col gap-0.5 overflow-y-auto overscroll-contain rounded-2xl border border-gray-200 bg-surface p-1.5 text-gray-900 antialiased shadow-[0_12px_24px_-4px_rgba(16,24,40,.14),0_4px_8px_-2px_rgba(16,24,40,.06)]'
             )}
           >
+            {searchable && (
+              <input
+                ref={searchRef}
+                type="search"
+                value={search}
+                aria-label={`Search ${label ?? placeholder ?? 'the list'}`}
+                aria-controls={listId}
+                placeholder="Search…"
+                autoComplete="off"
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setActive(0);
+                }}
+                onKeyDown={(e) => {
+                  // Letters go in the box; the list keys still move through the list.
+                  if (e.key === 'Enter' && options.length === 0) e.preventDefault();
+                  else if (LIST_KEYS.includes(e.key)) onKeyDown(e);
+                }}
+                className="sticky top-0 z-10 mb-1 h-11 w-full shrink-0 rounded-[10px] border border-gray-300 bg-surface px-3 text-[16px] text-gray-900 outline-none focus:border-brand-500"
+              />
+            )}
             {options.length === 0 && (
               <p className="px-3 py-3 text-[14px] large-text:text-[16px] text-gray-500">
-                Nothing to choose yet.
+                {allOptions.length === 0 ? 'Nothing to choose yet.' : 'No matches.'}
               </p>
             )}
             {options.map((option, i) => {
