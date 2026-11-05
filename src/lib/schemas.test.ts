@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { assessmentPayloadSchema, itemSchema } from './schemas';
+import { assessmentDetailsSchema, assessmentPayloadSchema, itemSchema } from './schemas';
 
 const U = '7a0c3b9e-3f5b-4d2a-9c1e-2b8f6d4a1e00';
 const valid = {
@@ -30,6 +30,87 @@ test('assessment payload', () => {
     false
   );
   assert.equal(assessmentPayloadSchema.safeParse({ ...valid, building: { id: U } }).success, true);
+});
+
+const offCampusBuilding = {
+  new_off_campus: {
+    barangay_code: '1380601001',
+    name: ' Annex ',
+    latitude: null,
+    longitude: null,
+    location_name: null,
+  },
+};
+
+test('a queued payload from before off-campus still parses', () => {
+  const parsed = assessmentPayloadSchema.parse(valid);
+  assert.ok('new' in parsed.building);
+});
+
+test('an off-campus payload trims the name and keeps the code', () => {
+  const parsed = assessmentPayloadSchema.parse({ ...valid, building: offCampusBuilding });
+  assert.ok('new_off_campus' in parsed.building);
+  assert.equal(parsed.building.new_off_campus.name, 'Annex');
+  assert.equal(parsed.building.new_off_campus.barangay_code, '1380601001');
+});
+
+test('an off-campus payload needs a 10-digit barangay code', () => {
+  const building = {
+    new_off_campus: { ...offCampusBuilding.new_off_campus, barangay_code: '138060' },
+  };
+  assert.equal(assessmentPayloadSchema.safeParse({ ...valid, building }).success, false);
+});
+
+test('a pin outside the map is refused', () => {
+  const building = {
+    new_off_campus: { ...offCampusBuilding.new_off_campus, latitude: 95, longitude: 120 },
+  };
+  assert.equal(assessmentPayloadSchema.safeParse({ ...valid, building }).success, false);
+});
+
+const details = {
+  location_kind: 'campus' as const,
+  cluster_id: U,
+  unit_id: U,
+  region_code: '',
+  province_code: '',
+  city_code: '',
+  barangay_code: '',
+  building_id: U,
+  new_building_name: '',
+  incident_commander: '',
+  event_id: '',
+};
+
+const issuePaths = (data: unknown) => {
+  const result = assessmentDetailsSchema.safeParse(data);
+  return result.success ? [] : result.error.issues.map((i) => i.path[0]);
+};
+
+test('details need a location choice', () => {
+  assert.deepEqual(issuePaths({ ...details, location_kind: null }), ['location_kind']);
+});
+
+test('on-campus details still need a cluster and unit', () => {
+  assert.deepEqual(issuePaths(details), []);
+  assert.deepEqual(issuePaths({ ...details, cluster_id: '', unit_id: '' }), [
+    'cluster_id',
+    'unit_id',
+  ]);
+});
+
+test('off-campus details need a location, not a cluster or unit', () => {
+  const off = { ...details, location_kind: 'off_campus' as const, cluster_id: '', unit_id: '' };
+  assert.deepEqual(issuePaths(off), ['region_code', 'city_code', 'barangay_code']);
+  assert.deepEqual(
+    issuePaths({ ...off, region_code: 'r', city_code: 'c', barangay_code: 'b' }),
+    []
+  );
+});
+
+test('details still need a building or a new name', () => {
+  assert.deepEqual(issuePaths({ ...details, building_id: '' }), ['building_id']);
+  assert.deepEqual(issuePaths({ ...details, building_id: '', new_building_name: 'Annex' }), []);
 });
 
 test('checklist item schema enforces pillar on scored items and scored on sub-items', () => {

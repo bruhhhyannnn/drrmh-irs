@@ -123,6 +123,8 @@ export interface BuildingOption {
   id: string;
   /** null for an off-campus building. */
   unit_id: string | null;
+  /** null for a campus building. */
+  barangay_code: string | null;
   name: string;
   floor_count: number;
   area_type_ids: string[];

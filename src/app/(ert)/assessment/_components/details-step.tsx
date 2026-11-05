@@ -1,7 +1,11 @@
 'use client';
 
 import { FieldError, FieldHelp, FieldLabel, SelectField, TextInput } from '@/components/ds';
-import { applyBuildingProfile, type AssessmentDraft } from '@/lib/assessment-draft';
+import {
+  applyBuildingProfile,
+  detailsFromDraft,
+  type AssessmentDraft,
+} from '@/lib/assessment-draft';
 import type { AssessmentSetup, AssessmentTemplate } from '@/lib/assessment-template';
 import { assessmentDetailsSchema, type AssessmentDetailsFormData } from '@/lib/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -35,14 +39,7 @@ export function DetailsStep({
   const form = useForm<AssessmentDetailsFormData>({
     resolver: zodResolver(assessmentDetailsSchema),
     mode: 'onTouched',
-    defaultValues: {
-      cluster_id: draft.cluster_id,
-      unit_id: draft.unit_id,
-      building_id: draft.building_id,
-      new_building_name: draft.new_building_name,
-      incident_commander: draft.incident_commander,
-      event_id: draft.event_id,
-    },
+    defaultValues: detailsFromDraft(draft),
   });
   const values = form.watch();
   const errors = form.formState.errors;

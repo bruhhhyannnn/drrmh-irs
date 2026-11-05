@@ -279,6 +279,15 @@ export const assessmentPayloadSchema = z.object({
   building: z.union([
     z.object({ id: uuid }),
     z.object({ new: z.object({ unit_id: uuid, name: z.string().trim().min(1).max(120) }) }),
+    z.object({
+      new_off_campus: z.object({
+        barangay_code: z.string().regex(/^\d{10}$/),
+        name: z.string().trim().min(1).max(120),
+        latitude: z.number().min(-90).max(90).nullable(),
+        longitude: z.number().min(-180).max(180).nullable(),
+        location_name: z.string().max(500).nullable(),
+      }),
+    }),
   ]),
   event_id: uuid.nullable(),
   incident_commander: z.string().trim().max(200),
@@ -303,16 +312,38 @@ export const assessmentPayloadSchema = z.object({
 // The Details step: where the building is and who is in charge.
 export const assessmentDetailsSchema = z
   .object({
-    cluster_id: z.string().min(1, 'Choose a cluster'),
-    unit_id: z.string().min(1, 'Choose a college or unit'),
+    /** Nothing is pre-selected: a default nobody noticed would file a building wrongly. */
+    location_kind: z.enum(['campus', 'off_campus']).nullable(),
+    cluster_id: z.string(),
+    unit_id: z.string(),
+    region_code: z.string(),
+    province_code: z.string(),
+    city_code: z.string(),
+    barangay_code: z.string(),
     building_id: z.string(),
     new_building_name: z.string().trim().max(120),
     incident_commander: z.string().trim().max(200),
     event_id: z.string(),
   })
-  .refine((d) => d.building_id || d.new_building_name, {
-    path: ['building_id'],
-    message: 'Choose a building or add one',
+  .superRefine((d, ctx) => {
+    const need = (field: keyof typeof d, message: string) => {
+      if (!d[field]) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [field], message });
+    };
+    if (!d.location_kind) {
+      need('location_kind', 'Choose on campus or off campus');
+      return;
+    }
+    if (d.location_kind === 'campus') {
+      need('cluster_id', 'Choose a cluster');
+      need('unit_id', 'Choose a college or unit');
+    } else {
+      need('region_code', 'Choose a region');
+      need('city_code', 'Choose a city or municipality');
+      need('barangay_code', 'Choose a barangay');
+    }
+    if (!d.building_id && !d.new_building_name) {
+      need('building_id', 'Choose a building or add one');
+    }
   });
 
 /* ─── Checklist editor (DRRM-015 Phase 3, Super Admin) ─── */

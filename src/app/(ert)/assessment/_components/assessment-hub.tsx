@@ -112,6 +112,10 @@ export function AssessmentHub({ profile }: { profile: ErtProfile }) {
       unit_id: unitId,
       building_name: saved?.name ?? entry.summary?.title ?? '',
       now: new Date(),
+      ...(saved?.barangay_code && {
+        location_kind: 'off_campus' as const,
+        barangay_code: saved.barangay_code,
+      }),
     });
     // A building that's no longer listed has to be chosen again on Details.
     if ('id' in payload.building && setup.data && !saved) {
