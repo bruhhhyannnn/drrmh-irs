@@ -816,6 +816,8 @@ export function FirstReportChart({ summary, compare }: { summary: Summary; compa
   const max = firstReportScale(compare ? [summary, compare] : [summary]);
   const ticks = [0, 1, 2, 3, 4].map((i) => Math.round((max / 4) * i));
   const other = new Map(compare?.firstReport.map((r) => [r.name, r.minutes]));
+  // Clusters with no report have no time to show, so they stay out of the chart.
+  const reported = summary.firstReport.filter((r) => r.minutes !== null);
   const label = (m: number | null | undefined) =>
     m === null ? 'No report' : m === undefined ? '—' : `${m} min`;
   return (
@@ -828,11 +830,11 @@ export function FirstReportChart({ summary, compare }: { summary: Summary; compa
       }
       legend={compare && <SeriesLegend a={shortLabel(summary)} b={shortLabel(compare)} />}
     >
-      {summary.firstReport.length ? (
+      {reported.length ? (
         <RankedBars
           max={max}
           axis={{ ticks, unit: 'min' }}
-          rows={summary.firstReport.map((r) => ({
+          rows={reported.map((r) => ({
             key: r.id,
             name: r.name,
             values: [
@@ -855,7 +857,7 @@ export function FirstReportChart({ summary, compare }: { summary: Summary; compa
           }))}
         />
       ) : (
-        <p className="text-[16px] text-gray-500">No clusters at this campus yet.</p>
+        <p className="text-[16px] text-gray-500">No cluster has reported yet.</p>
       )}
     </ChartCard>
   );

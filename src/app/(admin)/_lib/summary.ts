@@ -1,7 +1,7 @@
 import type { getEventSummarySource } from '@/actions/events';
 import { personMeta, type PersonSex } from '@/components/ds/people';
 import { format } from 'date-fns';
-import { formatTime, personName } from './format';
+import { formatTime, personName, plural } from './format';
 import type { Tone } from './status';
 
 // The event summary shared by campus details, event details and the report PDF: one pure
@@ -540,7 +540,7 @@ export function compareSummaries(a: Summary, b: Summary): CompareRow[] {
   const allChange: Pick<CompareRow, 'change' | 'tone'> = !allA
     ? a.clusters.pending.length
       ? {
-          change: `${a.clusters.pending.map((c) => c.name).join(', ')} missing`,
+          change: `${plural(a.clusters.pending.length, 'cluster', 'clusters')} missing`,
           tone: 'bad',
         }
       : { change: '—', tone: 'same' }
