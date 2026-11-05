@@ -17,10 +17,10 @@ const FIELDS = [
   { id: 'stu', name: 'Students' },
 ];
 const CLUSTERS = [
-  { id: 'pgh', name: 'PGH' },
-  { id: 'taft', name: 'Taft' },
-  { id: 'pf', name: 'Padre Faura' },
-  { id: 'pg', name: 'Pedro Gil' },
+  { id: 'pgh', name: 'PGH', units: [] },
+  { id: 'taft', name: 'Taft', units: [] },
+  { id: 'pf', name: 'Padre Faura', units: [] },
+  { id: 'pg', name: 'Pedro Gil', units: [] },
 ];
 
 let n = 0;

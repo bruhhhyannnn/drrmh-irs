@@ -1,5 +1,5 @@
 import type { getEventSummarySource } from '@/actions/events';
-import { personMeta, type PersonSex } from '@/components/ds';
+import { personMeta, type PersonSex } from '@/components/ds/people';
 import { format } from 'date-fns';
 import { formatTime, personName } from './format';
 import type { Tone } from './status';
@@ -60,7 +60,20 @@ export interface ClusterRow {
   casualties: number;
   people: number;
   firstAt: Date;
-  units: { name: string; people: number }[];
+  /** `id` is null for the reports filed without a unit. */
+  units: { id: string | null; name: string; people: number }[];
+  coverage: UnitCoverage | null;
+}
+
+/**
+ * Which of a cluster's active units have reported. Null when the cluster has no units to expect,
+ * or is inactive and so has no list. Reports without a unit, or for a deactivated unit, stay in
+ * the people counts but don't count here.
+ */
+export interface UnitCoverage {
+  total: number;
+  reported: number;
+  missing: { id: string; name: string }[];
 }
 
 export interface CasualtyRow {
@@ -112,7 +125,7 @@ export interface Summary {
   };
   clusters: {
     done: ClusterRow[];
-    pending: { id: string; name: string }[];
+    pending: { id: string; name: string; coverage: UnitCoverage | null }[];
     /** Active clusters at the campus. */
     total: number;
     /** Active clusters with at least one report. */
@@ -140,6 +153,91 @@ function who(person: { age: number | null; sex: string | null }) {
   return meta === 'No details added' ? 'No details' : meta;
 }
 
+/* ─── Narrowing to a cluster or unit ─────────────────────────────────────────────────── */
+
+/** The `unit` link value for the reports filed without a unit. */
+export const NO_UNIT = 'none';
+
+export interface SummaryScope {
+  clusterId: string;
+  clusterName: string;
+  /** A unit's id or `NO_UNIT`; null when the whole cluster is in view. */
+  unitId: string | null;
+  unitName: string | null;
+}
+
+export interface ScopeTarget {
+  clusterId: string | null;
+  unitId?: string | null;
+}
+
+/** The source as if the event only had this cluster or unit; `buildSummary` takes it unchanged. */
+export function scopeSource(
+  source: SummarySource,
+  { clusterId, unitId }: Pick<SummaryScope, 'clusterId' | 'unitId'>
+): SummarySource {
+  return {
+    ...source,
+    clusters: source.clusters.filter((c) => c.id === clusterId),
+    reports: source.reports.filter(
+      (r) =>
+        r.cluster_id === clusterId &&
+        (!unitId || (unitId === NO_UNIT ? !r.unit_id : r.unit_id === unitId))
+    ),
+  };
+}
+
+/**
+ * Reads the scope from a link. A cluster counts if it's active at the campus or has reports (an
+ * inactive one can), and a unit if it's active in that cluster or has reports there. Anything
+ * else is a bad link, which shows the whole event.
+ */
+export function resolveScope(
+  source: SummarySource,
+  { cluster, unit }: { cluster: string | null; unit: string | null }
+): { scope: SummaryScope | null; invalid: boolean } {
+  const bad = { scope: null, invalid: true };
+  if (!cluster) return unit ? bad : { scope: null, invalid: false };
+
+  const active = source.clusters.find((c) => c.id === cluster);
+  const reports = source.reports.filter((r) => r.cluster_id === cluster);
+  const clusterName = active?.name ?? reports[0]?.cluster.name;
+  if (!clusterName) return bad;
+  const whole = { clusterId: cluster, clusterName };
+  if (!unit) return { scope: { ...whole, unitId: null, unitName: null }, invalid: false };
+
+  const unitName =
+    unit === NO_UNIT
+      ? reports.some((r) => !r.unit_id) && 'No unit'
+      : (active?.units.find((u) => u.id === unit)?.name ??
+        reports.find((r) => r.unit_id === unit)?.unit?.name);
+  if (!unitName) return bad;
+  return { scope: { ...whole, unitId: unit, unitName }, invalid: false };
+}
+
+/** A link to a scope, keeping the page's other params. `pins` are params to set as well. */
+export function scopeHref(
+  pathname: string,
+  params: { toString(): string },
+  { clusterId, unitId }: ScopeTarget,
+  pins: Record<string, string> = {}
+) {
+  const next = new URLSearchParams(params.toString());
+  next.delete('cluster');
+  next.delete('unit');
+  for (const [key, value] of Object.entries(pins)) next.set(key, value);
+  if (clusterId) next.set('cluster', clusterId);
+  if (clusterId && unitId) next.set('unit', unitId);
+  const query = next.toString();
+  return query ? `${pathname}?${query}` : pathname;
+}
+
+/** The unit coverage of a summary narrowed to one cluster. */
+export function scopedCoverage(summary: Summary) {
+  const { done, pending } = summary.clusters;
+  return done[0]?.coverage ?? pending[0]?.coverage ?? null;
+}
+
 /** Headcount per field over some reports, largest first; fields at 0 are left out. */
 export function headcountOf(reports: SummaryReport[]) {
   const totals = new Map<string, { id: string; name: string; count: number }>();
@@ -153,7 +251,8 @@ export function headcountOf(reports: SummaryReport[]) {
   return [...totals.values()].filter((r) => r.count > 0).sort((a, b) => b.count - a.count);
 }
 
-const peopleOf = (r: SummaryReport) => r.population_counts.reduce((sum, pc) => sum + pc.count, 0);
+export const peopleOf = (r: SummaryReport) =>
+  r.population_counts.reduce((sum, pc) => sum + pc.count, 0);
 
 export function buildSummary(
   source: SummarySource,
@@ -165,6 +264,22 @@ export function buildSummary(
   const times = reports.map((r) => new Date(r.submitted_at));
   const start = event.started_at ? new Date(event.started_at) : (times[0] ?? null);
   const asOf = completed && event.ended_at ? new Date(event.ended_at) : now;
+
+  const coverageOf = (clusterId: string): UnitCoverage | null => {
+    const units = clusters.find((c) => c.id === clusterId)?.units ?? [];
+    // A unit added after a completed event was never expected to report for it.
+    const expected = units.filter(
+      (u) => !(completed && event.ended_at) || new Date(u.created_at) <= new Date(event.ended_at)
+    );
+    if (!expected.length) return null;
+    const reportedIds = new Set(
+      reports.filter((r) => r.cluster_id === clusterId).map((r) => r.unit_id)
+    );
+    const missing = expected
+      .filter((u) => !reportedIds.has(u.id))
+      .map(({ id, name }) => ({ id, name }));
+    return { total: expected.length, reported: expected.length - missing.length, missing };
+  };
 
   // Clusters, in the order they first reported.
   const byCluster = new Map<string, ClusterRow>();
@@ -179,6 +294,7 @@ export function buildSummary(
         people: 0,
         firstAt: new Date(r.submitted_at),
         units: [],
+        coverage: coverageOf(r.cluster_id),
       };
       byCluster.set(r.cluster_id, row);
     }
@@ -189,11 +305,13 @@ export function buildSummary(
     const unitName = r.unit?.name ?? 'No unit';
     const unit = row.units.find((u) => u.name === unitName);
     if (unit) unit.people += people;
-    else row.units.push({ name: unitName, people });
+    else row.units.push({ id: r.unit_id, name: unitName, people });
   }
   const done = [...byCluster.values()].sort((a, b) => a.firstAt.getTime() - b.firstAt.getTime());
   done.forEach((row) => row.units.sort((a, b) => b.people - a.people));
-  const pending = clusters.filter((c) => !byCluster.has(c.id));
+  const pending = clusters
+    .filter((c) => !byCluster.has(c.id))
+    .map((c) => ({ id: c.id, name: c.name, coverage: coverageOf(c.id) }));
   const reportedActive = clusters.filter((c) => byCluster.has(c.id)).length;
 
   const casualties: CasualtyRow[] = reports
