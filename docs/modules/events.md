@@ -1,6 +1,6 @@
 ---
 type: module
-updated: 2026-10-30
+updated: 2026-11-05
 module: events
 paths:
   - src/actions/events/index.ts
@@ -59,7 +59,7 @@ Events are the drills and real incidents that field reports are filed against. A
 - `getOngoingEventOptions(campusId?)`: ongoing events for the admin Add report drawer.
 - `getSiblingOngoingEvents(eventId)`: same-name ongoing events at other campuses.
 - `getCampusEventOptions(campusId)`: all events at a campus, for "Compare with".
-- `getEventSummarySource(eventId)`: event, its reports (people, damage, headcount), active clusters and active population fields.
+- `getEventSummarySource(eventId)`: event, its reports (people, damage, headcount), active clusters with their active units, and active population fields.
 
 Every mutation calls `revalidatePath` on `/events`, `/events/details` and `/dashboard`.
 
@@ -72,6 +72,8 @@ Every mutation calls `revalidatePath` on `/events`, `/events/details` and `/dash
 - Campus scope comes from `useScopedCampusId()` and `useIsSuperAdmin()` in `(admin)/_components/shell/campus-switcher.tsx`. `useEventTitle()` shows "Name — Campus" to Super Admins only.
 - Export PDF (event details, and the download icon on each `/events` row and phone card) opens `/events/report?id=` in a new tab (see [[print]]). The Excel export was removed in DRRM-018.
 - Export NSED report (event details only, when the event is completed and its campus is UP Manila, `isUpManila`): the office's quarterly NSED report as a Word file. `downloadNsedReport` is imported on click, fetches `public/templates/nsed-report.docx`, fills it with `buildNsedReport(source)` through docxtemplater + pizzip and saves `NSED Report Q1 2026.docx`. The app fills what it records (date and times, headcount per cluster, the timeline, the summary, one breakdown and note per cluster, headcount by category); the rest are yellow `[Add …]` blanks for the office. Tags and rules: [[plan/feature/DRRM-019-nsed-report]].
+- Drill-down (`_components/summary/drill-down.tsx`, DRRM-024): clicking a cluster or unit narrows the whole summary. The scope lives in the link (`&cluster=<id>&unit=<id or none>`). `resolveScope` validates it (a bad link shows the whole event with a note), `scopeSource` filters the source, and `buildSummary` runs on the result, so every section agrees. Compare and exports always stay whole-event, and the Completed banner reads the full summary. On a unit's page, reports open in `ReportDrawer`, read-only once the event is completed. On `/campus/details`, the picked event is the `event` param, because `id` is the campus there.
+- Units with no report yet: `getEventSummarySource` loads each active cluster's active units, and `buildSummary` adds a `coverage` to each cluster (`4 of 6 units`, and the missing names). Reports with no unit or a deactivated unit stay in the numbers but not in coverage. On a completed event, a unit created after `ended_at` isn't expected.
 - The event "calendar" is the This month card on the dashboard (`MonthCard` in `(admin)/dashboard/page.tsx`), fed by `getDashboard`. There is no separate calendar page.
 
 ## Rules and gotchas

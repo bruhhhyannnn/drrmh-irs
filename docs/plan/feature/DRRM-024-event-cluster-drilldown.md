@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-024
-status: approved
+status: in-review
 branch: feat/DRRM-024-event-cluster-drilldown
 modules:
   - '[[events]]'
@@ -11,7 +11,7 @@ tags: [plan, feature]
 
 # DRRM-024 Feature RFC / Plan: Event cluster and unit drill-down
 
-- **Status:** `Approved`
+- **Status:** `In Review`
 - **Target Branch / PR:** `feat/DRRM-024-event-cluster-drilldown`
 - **Owner / Author:** DevJom
 

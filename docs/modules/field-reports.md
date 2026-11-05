@@ -95,6 +95,7 @@ A field report (status report) is one ERT team leader's headcount, casualties, m
 - The ERT page guards itself (signed out → `/signin`, admins → `/dashboard`, incomplete profile → `ProfileSetup`).
 - Legacy flat count columns are still written for the 12 original codes (transitional shim in `src/lib/utils.ts`).
 - Campus headcount fields are soft-removed (`is_active = false`) because old reports point at the category. `deleteCampusPopulationCategory` removes only the assignment row.
+- `ReportDrawer`'s `readOnly` prop shows a report as text (`report-details.tsx`). Only the event drill-down on a completed event uses it ([[events]]). `/reports` still edits, and `saveReportEdits` doesn't check the event's status, so the "Reports are locked" banner isn't enforced there.
 - `saveReportEdits` replaces headcount and missing-person rows, so their ids change on every edit; casualties keep theirs.
 
 ## Decisions
