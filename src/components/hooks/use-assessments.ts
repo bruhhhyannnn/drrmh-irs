@@ -13,9 +13,15 @@ import {
   getPublishedTemplate,
   getTemplateVersion,
 } from '@/actions/assessments';
-import { compareAssessments, getBuildingHistory, getSafetyRollup } from '@/actions/building-safety';
+import {
+  compareAssessments,
+  getBuildingHistory,
+  getOffCampusRollup,
+  getSafetyRollup,
+} from '@/actions/building-safety';
 import { toPayload, type AssessmentDraft } from '@/lib/assessment-draft';
 import type { AssessmentTemplate } from '@/lib/assessment-template';
+import type { LocationScope } from '@/lib/building-safety';
 import { cachedFetch, withTimeout } from '@/lib/offline-cache';
 import {
   deleteAssessmentDraft,
@@ -267,6 +273,22 @@ export function useSafetyRollup(
     queryKey: ['building-safety', scope.campusId, scope.clusterId, scope.unitId],
     queryFn: async () => getSafetyRollup(await getAccessToken(), scope),
     enabled,
+    staleTime: 60_000,
+  });
+}
+
+export function useOffCampusRollup(scope: { campusId: string | null } & LocationScope) {
+  return useQuery({
+    queryKey: [
+      'building-safety',
+      'off-campus',
+      scope.campusId,
+      scope.regionCode,
+      scope.provinceCode,
+      scope.cityCode,
+      scope.barangayCode,
+    ],
+    queryFn: async () => getOffCampusRollup(await getAccessToken(), scope),
     staleTime: 60_000,
   });
 }

@@ -9,7 +9,7 @@ import {
   type ScoredAssessment,
 } from './assessment-template';
 import { buildingPlaceSelect, toBuildingPlace } from './building-place';
-import { scoresFromPillarRows } from './building-safety';
+import { scoresFromPillarRows, type AnswerFact } from './building-safety';
 import { prisma } from './prisma';
 
 // Loaders shared by the ERT and admin assessment actions: a checklist version as the app sees it,
@@ -278,6 +278,37 @@ export function toScoredAssessment(
     event_name: a.event?.name ?? null,
     ...scoresFromPillarRows(a.pillar_scores.map((p) => ({ ...p, code: p.pillar.code }))),
   };
+}
+
+/** The scored answers behind a group of buildings' section scores and most-failed items, and which
+ * assessments count as current and as the like-for-like pair. */
+export async function loadRollupFacts(buildings: BuildingScores[]): Promise<{
+  facts: AnswerFact[];
+  ids: { current: string[]; lflCurrent: string[]; lflPrevious: string[] };
+}> {
+  const reassessed = buildings.filter((b) => b.latest && b.previous);
+  const ids = {
+    current: buildings.flatMap((b) => (b.latest ? [b.latest.id] : [])),
+    lflCurrent: reassessed.map((b) => b.latest!.id),
+    lflPrevious: reassessed.map((b) => b.previous!.id),
+  };
+  const assessmentIds = [...ids.current, ...ids.lflPrevious];
+  if (assessmentIds.length === 0) return { facts: [], ids };
+
+  const [itemMeta, rows] = await Promise.all([
+    loadScoredItemMeta(),
+    prisma.assessmentAnswerRow.findMany({
+      where: { assessment_id: { in: assessmentIds }, answer: { not: null } },
+      select: { assessment_id: true, item_id: true, answer: true },
+    }),
+  ]);
+  const facts: AnswerFact[] = [];
+  for (const r of rows) {
+    const meta = itemMeta.get(r.item_id);
+    if (!meta || !r.answer) continue;
+    facts.push({ assessment_id: r.assessment_id, ...meta, answer: r.answer });
+  }
+  return { facts, ids };
 }
 
 /** Buildings by name, each with its latest assessment and the one before it. */

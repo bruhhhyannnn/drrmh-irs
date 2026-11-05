@@ -8,6 +8,7 @@ import {
   type ScoredAssessment,
 } from './assessment-template';
 import type { BuildingPlace } from './building-place';
+import type { BuildingLocation, CodeName } from './psgc';
 
 // The admin side of the building assessment (DRRM-015 Phase 2): turning stored pillar rows into
 // scores, the change between two assessments, and the dashboard rollup (spec 4.3). Pure code, so
@@ -49,6 +50,8 @@ export function pointsChange(
 
 /* ─── Dashboard rollup ─── */
 
+export type LocationKind = 'region' | 'province' | 'city' | 'barangay';
+
 export type RollupLevel = 'all' | 'campus' | 'cluster' | 'unit';
 
 export interface Pooled {
@@ -73,7 +76,7 @@ export interface RollupGroup {
 }
 
 export interface ChildRow extends Named, RollupGroup {
-  kind: 'campus' | 'cluster' | 'unit' | 'building';
+  kind: 'campus' | 'cluster' | 'unit' | 'building' | LocationKind;
 }
 
 const RECOVERY: PillarCode = 'rehabilitation-recovery';
@@ -118,6 +121,37 @@ export function poolBuildings(buildings: BuildingScores[]): RollupGroup {
   };
 }
 
+/** Pooled rows for groups of buildings, by name. A building with no group is left out. */
+function poolGroups(
+  buildings: BuildingScores[],
+  of: (b: BuildingScores) => { kind: ChildRow['kind']; id: string; name: string } | null
+): ChildRow[] {
+  const groups = new Map<
+    string,
+    { head: ChildRow['kind']; named: Named; list: BuildingScores[] }
+  >();
+  for (const b of buildings) {
+    const child = of(b);
+    if (!child) continue;
+    const key = `${child.kind}:${child.id}`;
+    const group = groups.get(key) ?? {
+      head: child.kind,
+      named: { id: child.id, name: child.name },
+      list: [],
+    };
+    group.list.push(b);
+    groups.set(key, group);
+  }
+  return [...groups.values()]
+    .map(({ head, named, list }) => ({
+      id: named.id,
+      name: named.name,
+      kind: head,
+      ...poolBuildings(list),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 /** Who a building belongs to at a level. Only Campus buildings join a campus's groups. */
 const CHILD_OF: Record<
   RollupLevel,
@@ -132,17 +166,85 @@ const CHILD_OF: Record<
 /** The level's children (campuses, clusters, units or buildings), each pooled, by name. */
 export function groupChildren(buildings: BuildingScores[], level: RollupLevel): ChildRow[] {
   const { kind, of } = CHILD_OF[level];
-  const groups = new Map<string, { named: Named; list: BuildingScores[] }>();
-  for (const b of buildings) {
+  return poolGroups(buildings, (b) => {
     const named = of(b);
-    if (!named) continue;
-    const group = groups.get(named.id) ?? { named, list: [] };
-    group.list.push(b);
-    groups.set(named.id, group);
+    return named && { kind, id: named.id, name: named.name };
+  });
+}
+
+/* ─── Off-campus drill-down (DRRM-024) ─── */
+
+export interface LocationScope {
+  regionCode: string | null;
+  provinceCode: string | null;
+  cityCode: string | null;
+  barangayCode: string | null;
+}
+
+export interface LocationCrumb extends CodeName {
+  kind: LocationKind;
+}
+
+const LOCATION_CHAIN: readonly LocationKind[] = ['region', 'province', 'city', 'barangay'];
+
+const placeAt = (location: BuildingLocation, kind: LocationKind): CodeName | null => location[kind];
+
+/** The children one step below a depth in LOCATION_CHAIN (-1: above the regions). A city with no
+ * province is a child of its region, beside the provinces. */
+function locationChildren(buildings: BuildingScores[], depth: number): ChildRow[] {
+  return poolGroups(buildings, (b) => {
+    const { location } = b;
+    if (!location) return null;
+    if (depth === LOCATION_CHAIN.length - 1) return { kind: 'building', id: b.id, name: b.name };
+    const province = depth === 0 && location.province;
+    const kind: LocationKind = province ? 'province' : LOCATION_CHAIN[depth === 0 ? 2 : depth + 1];
+    const place = placeAt(location, kind);
+    return place && { kind, id: place.code, name: place.name };
+  });
+}
+
+/**
+ * The off-campus level a scope points at: its children and the places above them. A level with
+ * one child opens that child, so a pilot in one barangay doesn't take four clicks through charts
+ * with a single bar. Scores pool as on campus.
+ */
+export function openLocationLevel(
+  buildings: BuildingScores[],
+  scope: LocationScope
+): { trail: LocationCrumb[]; children: ChildRow[] } {
+  const wanted: Record<LocationKind, string | null> = {
+    region: scope.regionCode,
+    province: scope.provinceCode,
+    city: scope.cityCode,
+    barangay: scope.barangayCode,
+  };
+  let list = buildings.filter((b) => {
+    const { location } = b;
+    return (
+      location &&
+      LOCATION_CHAIN.every((k) => !wanted[k] || placeAt(location, k)?.code === wanted[k])
+    );
+  });
+  let depth = LOCATION_CHAIN.reduce((deepest, k, i) => (wanted[k] ? i : deepest), -1);
+
+  const trail: LocationCrumb[] = [];
+  const first = list[0]?.location;
+  if (first) {
+    for (const kind of LOCATION_CHAIN.slice(0, depth + 1)) {
+      const place = placeAt(first, kind);
+      if (place) trail.push({ kind, ...place });
+    }
   }
-  return [...groups.values()]
-    .map(({ named, list }) => ({ id: named.id, name: named.name, kind, ...poolBuildings(list) }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+
+  for (;;) {
+    const children = locationChildren(list, depth);
+    const only = children.length === 1 ? children[0] : null;
+    if (!only || only.kind === 'building') return { trail, children };
+    const kind = only.kind as LocationKind;
+    trail.push({ kind, code: only.id, name: only.name });
+    list = list.filter((b) => b.location && placeAt(b.location, kind)?.code === only.id);
+    depth = LOCATION_CHAIN.indexOf(kind);
+  }
 }
 
 /** One scored answer, with what the section table and the most-failed list need. */
@@ -336,6 +438,9 @@ export interface DashboardScope {
   buildingId: string | null;
   a: string | null;
   b: string | null;
+  /** Which buildings the section shows; off campus has its own drill-down. */
+  view: 'campus' | 'off_campus';
+  location: LocationScope;
 }
 
 /** The drill-down level from the `bs_` params. An Administrator's campus never comes from the URL. */
@@ -351,6 +456,13 @@ export function scopeFromParams(
     buildingId: get('bs_building'),
     a: get('bs_a'),
     b: get('bs_b'),
+    view: get('bs_view') === 'off_campus' ? 'off_campus' : 'campus',
+    location: {
+      regionCode: get('bs_region'),
+      provinceCode: get('bs_province'),
+      cityCode: get('bs_city'),
+      barangayCode: get('bs_barangay'),
+    },
   };
 }
 
@@ -363,6 +475,16 @@ export interface SafetyRollup {
   group: RollupGroup;
   children: ChildRow[];
   notAssessed: Named[];
+  sections: SectionRow[];
+  mostFailed: { pillar: PillarCode; items: FailedItem[] }[];
+}
+
+/** The off-campus view of the section. Buildings there are added as they're assessed, so unlike
+ * a campus it has no list of buildings still to assess. */
+export interface OffCampusRollup {
+  trail: LocationCrumb[];
+  group: RollupGroup;
+  children: ChildRow[];
   sections: SectionRow[];
   mostFailed: { pillar: PillarCode; items: FailedItem[] }[];
 }

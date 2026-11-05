@@ -3,23 +3,30 @@
 import { inScope } from '@/lib/admin-scope';
 import {
   loadBuildingScores,
-  loadScoredItemMeta,
+  loadRollupFacts,
   loadVersion,
   scoredSelect,
   toScoredAssessment,
 } from '@/lib/assessment-records';
 import { scoreAssessment, type AnswerMap } from '@/lib/assessment-score';
 import { type AssessmentTemplate } from '@/lib/assessment-template';
-import { buildingPlaceSelect, campusBuildings, toBuildingPlace } from '@/lib/building-place';
+import {
+  buildingPlaceSelect,
+  campusBuildings,
+  offCampusBuildings,
+  toBuildingPlace,
+} from '@/lib/building-place';
 import {
   compareScores,
   groupChildren,
   mostFailed,
+  openLocationLevel,
   poolBuildings,
   sectionScores,
-  type AnswerFact,
   type BuildingHistory,
   type Comparison,
+  type LocationScope,
+  type OffCampusRollup,
   type RollupLevel,
   type SafetyRollup,
 } from '@/lib/building-safety';
@@ -59,7 +66,7 @@ export async function getSafetyRollup(
     ],
   };
 
-  const [campus, cluster, unit, buildings, itemMeta] = await Promise.all([
+  const [campus, cluster, unit, buildings] = await Promise.all([
     campusId
       ? prisma.campus.findUnique({ where: { id: campusId }, select: { id: true, name: true } })
       : null,
@@ -80,42 +87,10 @@ export async function getSafetyRollup(
         })
       : null,
     loadBuildingScores(where),
-    loadScoredItemMeta(),
   ]);
   if ((clusterId && !cluster) || (unitId && !unit)) return null;
 
-  const reassessed = buildings.filter((b) => b.latest && b.previous);
-  const ids = {
-    current: buildings.flatMap((b) => (b.latest ? [b.latest.id] : [])),
-    lflCurrent: reassessed.map((b) => b.latest!.id),
-    lflPrevious: reassessed.map((b) => b.previous!.id),
-  };
-  const allAssessmentIds = [...ids.current, ...ids.lflPrevious];
-  const rows =
-    allAssessmentIds.length > 0
-      ? await prisma.assessmentAnswerRow.findMany({
-          where: {
-            assessment_id: { in: allAssessmentIds },
-            answer: { not: null },
-          },
-          select: {
-            assessment_id: true,
-            item_id: true,
-            answer: true,
-          },
-        })
-      : [];
-
-  const facts: AnswerFact[] = [];
-  for (const r of rows) {
-    const meta = itemMeta.get(r.item_id);
-    if (!meta || !r.answer) continue;
-    facts.push({
-      assessment_id: r.assessment_id,
-      ...meta,
-      answer: r.answer,
-    });
-  }
+  const { facts, ids } = await loadRollupFacts(buildings);
 
   return {
     level,
@@ -127,6 +102,42 @@ export async function getSafetyRollup(
     group: poolBuildings(buildings),
     children: groupChildren(buildings, level),
     notAssessed: buildings.filter((b) => !b.latest).map((b) => ({ id: b.id, name: b.name })),
+    sections: sectionScores(facts, ids),
+    mostFailed: mostFailed(facts, ids.current),
+  };
+}
+
+const codeOrNull = (value: unknown) =>
+  typeof value === 'string' && /^\d{10}$/.test(value) ? value : null;
+
+/** One level of the off-campus drill-down (DRRM-024). An Administrator sees the off-campus
+ * buildings their own campus assessed. null when the caller isn't an admin. */
+export async function getOffCampusRollup(
+  token: string | null,
+  scope: { campusId?: string | null } & LocationScope
+): Promise<OffCampusRollup | null> {
+  const caller = await requireAdmin(token, uuidOrNull(scope.campusId));
+  if (!caller.ok) return null;
+  const location: LocationScope = {
+    regionCode: codeOrNull(scope.regionCode),
+    provinceCode: codeOrNull(scope.provinceCode),
+    cityCode: codeOrNull(scope.cityCode),
+    barangayCode: codeOrNull(scope.barangayCode),
+  };
+
+  const buildings = await loadBuildingScores({
+    is_active: true,
+    ...offCampusBuildings(caller.scope.campusId),
+    ...(location.regionCode && { region_code: location.regionCode }),
+    ...(location.provinceCode && { province_code: location.provinceCode }),
+    ...(location.cityCode && { city_code: location.cityCode }),
+    ...(location.barangayCode && { barangay_code: location.barangayCode }),
+  });
+  const { facts, ids } = await loadRollupFacts(buildings);
+
+  return {
+    ...openLocationLevel(buildings, location),
+    group: poolBuildings(buildings),
     sections: sectionScores(facts, ids),
     mostFailed: mostFailed(facts, ids.current),
   };

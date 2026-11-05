@@ -11,7 +11,7 @@ import { SERIES_COLORS } from '../../../_components/charts/grouped-bars';
 import { LineChart } from '../../../_components/charts/line-chart';
 import { Card, CardHeading, EmptyNote, Mono, Skeleton } from '../../../_components/ui';
 import { formatDate } from '../../../_lib/format';
-import { trailParts, type Go } from './building-safety';
+import { crumbsOf, locationParts, trailParts, type Go } from './building-safety';
 import { Breadcrumb, pct, pillarLabel, recoveryText, SCORED_PILLARS } from './parts';
 
 const detailHref = (id: string) => `/assessments/details?id=${id}`;
@@ -37,16 +37,18 @@ export function BuildingLevel({
   }
 
   const { building } = history;
-  const parts = trailParts(
-    {
-      campus: building.campus,
-      cluster: building.cluster ?? undefined,
-      unit: building.unit ?? undefined,
-    },
-    go,
-    isSuperAdmin,
-    building.name
-  );
+  const parts = building.location
+    ? [...locationParts(crumbsOf(building.location), go), { label: building.name }]
+    : trailParts(
+        {
+          campus: building.campus,
+          cluster: building.cluster ?? undefined,
+          unit: building.unit ?? undefined,
+        },
+        go,
+        isSuperAdmin,
+        building.name
+      );
 
   return (
     <Card className="flex flex-col gap-5 p-4.5 md:p-6">
