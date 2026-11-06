@@ -38,14 +38,14 @@ The admin Users page: list, search, add, edit, deactivate and delete user accoun
 
 `src/actions/users/index.ts`. None of these verify the caller or the campus; the page decides what is shown.
 
-- `getUsers(query?, campusId?)`: users matching name, email or username (case-insensitive), filtered by `campus_id` when given, newest first.
-- `getUser(id)`: one user with relations.
-- `getUserByAuthId(authId)`: the profile for a Supabase user; used by `AuthProvider`.
-- `createUser(data)`: resolves `custom_unit_name` / `custom_position_name` to ids (`withNamedAssignment`), then creates the Supabase Auth user (`email_confirm: true`) with the password, then the `users` row. `is_profile_complete` is `true` only for admin user types. If the row insert fails, the Auth user is deleted. Revalidates `/users`.
-- `updateUser(id, data)`: resolves the typed names the same way, then updates the `users` row only. Revalidates `/users`.
-- `setUserActive(id, isActive)`: the Active switch and its Undo. Revalidates `/users`.
-- `completeUserProfile(id, data)`: requires `campus_id`; resolves `custom_cluster_name` first (so a typed unit lands in it), then `custom_unit_name` / `custom_position_name`; sets `is_profile_complete = true`. Returns `{ ok: true, user }`, or `{ ok: false, error }` when the typed cluster name belongs to another campus. Revalidates `/`.
-- `deleteUser(id)`: returns `DeleteUserResult`. `{ ok: false, error }` when the user is gone or evaluated building assessments (each keeps its evaluator, so Active should be turned off instead). Otherwise nulls `reports.user_id` and `events.user_id` and deletes the row in one transaction, then deletes the Supabase Auth user. Revalidates `/users`.
+- `getUsers(token, query?, campusId?)`: users matching name, email or username (case-insensitive), newest first, in the caller's scope: an Administrator's own campus, or for a Super Admin the campus asked for (or all). `[]` when the caller isn't an admin.
+- `getUser(token, id)`: one user with relations; `null` outside the caller's scope.
+- `getMyProfile(token)`: the signed-in person's own profile, found from the verified token (inactive accounts included); used by `AuthProvider`.
+- `createUser(data, token)`: checks the caller (an Administrator only on their own campus, never a Super Admin; off campus only by a Super Admin), then resolves `custom_unit_name` / `custom_position_name` to ids (`withNamedAssignment`), then creates the Supabase Auth user (`email_confirm: true`) with the password, then the `users` row. `is_profile_complete` is `true` only for admin user types. If the row insert fails, the Auth user is deleted. Revalidates `/users`.
+- `updateUser(token, id, data)`: resolves the typed names the same way, then updates the `users` row only. Revalidates `/users`.
+- `setUserActive(token, id, isActive)`: the Active switch and its Undo. Revalidates `/users`.
+- `completeUserProfile(token, data)`: the signed-in person's own profile only; requires `campus_id`; resolves `custom_cluster_name` first (so a typed unit lands in it), then `custom_unit_name` / `custom_position_name`; sets `is_profile_complete = true`. Returns `{ ok: true, user }`, or `{ ok: false, error }` when the typed cluster name belongs to another campus. Revalidates `/`.
+- `deleteUser(token, id)`: returns `DeleteUserResult`. `{ ok: false, error }` when the user is gone or evaluated building assessments (each keeps its evaluator, so Active should be turned off instead). Otherwise nulls `reports.user_id` and `events.user_id` and deletes the row in one transaction, then deletes the Supabase Auth user. Revalidates `/users`.
 
 Errors from Prisma go through `toFriendlyError(err, 'user')` (see [[database]]).
 
@@ -65,7 +65,7 @@ Errors from Prisma go through `toFriendlyError(err, 'user')` (see [[database]]).
 ## Rules and gotchas
 
 - An **Off-campus account** switch (DRRM-026) shows only to a Super Admin adding an ERT Member. `createUser(data, token)` checks that token is a Super Admin's before making one, and the account starts with no campus or assignment. Whether an account is off campus can't be changed later (`updateUser` ignores it). Off-campus users appear only under All campuses, and their drawer shows Organization, Position, Organization's address and Address.
-- Who may do what is enforced only in the UI. The actions take any id or campus the client sends.
+- Who may do what is decided on the server (`src/lib/user-access.ts`, since the DRRM-025/026 security review). Every action takes the access token and calls `requireAdmin`. A Super Admin manages anyone. An Administrator manages accounts on their own campus only, never a Super Admin or an off-campus account, can't give the Super Admin type, and can't move an account to another campus. Settings writes need an admin too, and off-campus buildings can't be edited there.
 - `updateUser` does not touch Supabase Auth. Changing the email in Edit user changes the profile, not the sign-in email, and there is no admin password reset here.
 - Deactivating a user does not sign them out or block the client pages; only token-verified actions refuse inactive profiles (see [[auth]]).
 - A user's changes reach their own app only after they sign out, because `AuthProvider` reuses the persisted profile.

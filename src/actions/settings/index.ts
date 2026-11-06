@@ -3,6 +3,7 @@
 import { toSettingsPath } from '@/lib';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
+import { requireAdmin } from '@/lib/server-auth';
 import { revalidatePath } from 'next/cache';
 
 export type SettingsTable =
@@ -90,7 +91,25 @@ function singularLabel(table: SettingsTable) {
   return TITLE_MAP[table].replace(/s$/, '').toLowerCase();
 }
 
-export async function createSettingsItem(table: SettingsTable, data: Record<string, unknown>) {
+/**
+ * Settings writes need an admin (security review of DRRM-025/026: these took any caller before).
+ * Off-campus buildings come from assessments and are Super Admin only, so they aren't edited here.
+ */
+async function settingsWriter(token: string | null, table: SettingsTable, id?: string) {
+  const caller = await requireAdmin(token);
+  if (!caller.ok) throw new Error('Sign in as an administrator to change settings.');
+  if (table === 'buildings' && id) {
+    const building = await prisma.building.findUnique({ where: { id }, select: { unit_id: true } });
+    if (!building?.unit_id) throw new Error('Off-campus buildings are not edited in Settings.');
+  }
+}
+
+export async function createSettingsItem(
+  token: string | null,
+  table: SettingsTable,
+  data: Record<string, unknown>
+) {
+  await settingsWriter(token, table);
   const model = MODEL_MAP[table];
   try {
     // @ts-expect-error dynamic model access
@@ -103,10 +122,12 @@ export async function createSettingsItem(table: SettingsTable, data: Record<stri
 }
 
 export async function updateSettingsItem(
+  token: string | null,
   table: SettingsTable,
   id: string,
   data: Record<string, unknown>
 ) {
+  await settingsWriter(token, table, id);
   const model = MODEL_MAP[table];
   try {
     // @ts-expect-error dynamic model access
@@ -118,7 +139,8 @@ export async function updateSettingsItem(
   }
 }
 
-export async function deleteSettingsItem(table: SettingsTable, id: string) {
+export async function deleteSettingsItem(token: string | null, table: SettingsTable, id: string) {
+  await settingsWriter(token, table, id);
   const model = MODEL_MAP[table];
   try {
     // @ts-expect-error dynamic model access

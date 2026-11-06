@@ -11,6 +11,7 @@ import {
 } from '@/components/ds';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getInitials, supabase } from '@/lib';
+import { getAccessToken } from '@/lib/supabase';
 import { useAuthStore } from '@/store';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -99,7 +100,7 @@ function CampusProfileSetup() {
     setSaving(true);
     setSaveError('');
     try {
-      const result = await completeUserProfile(userProfile.id, {
+      const result = await completeUserProfile(await getAccessToken(), {
         ...(isOther
           ? { custom_position_name: customPosition.trim() }
           : { position_id: positionId }),

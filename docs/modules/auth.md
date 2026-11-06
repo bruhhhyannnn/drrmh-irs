@@ -27,7 +27,7 @@ Read this before touching sign-in, the profile, role checks or the setup gate.
 
 - **Identity:** Supabase Auth is the identity provider. Google OAuth is restricted to `@up.edu.ph` emails: the button passes `hd: 'up.edu.ph'`, and `provisionGoogleUser` refuses other domains. Email + password sign-in also exists (`signInWithPassword` in `src/app/(auth)/signin/sign-in-form.tsx`).
 - **Profile:** the `users` table (Prisma) holds the app profile, linked to the Supabase user by `auth_id`.
-- **Loading the profile:** `AuthProvider` (`src/components/auth/auth-provider.tsx`) listens to `supabase.auth.onAuthStateChange`, then loads the profile through the `getUserByAuthId` server action into `useAuthStore` (Zustand).
+- **Loading the profile:** `AuthProvider` (`src/components/auth/auth-provider.tsx`) listens to `supabase.auth.onAuthStateChange`, then loads the profile through the `getMyProfile(token)` server action, which finds it from the verified token, into `useAuthStore` (Zustand).
 - **First Google sign-in:** `provisionGoogleUser` (`src/actions/auth`) adds the user to `users` with the "ERT Member" user type.
 - **Roles:** `ProtectedRoute` gates admin pages by role. Admin vs. non-admin is decided by `isAdminUserType()` (`src/lib/constants.ts`). "Administrator" and "Super Admin" land on `/dashboard`, everyone else on `/home` ([[routes]]).
 - **Off-campus accounts (DRRM-026):** a Super Admin makes them on the Users page with an email and password; Google stays `@up.edu.ph` only. `users.is_off_campus` accounts have no campus, cluster, unit or position (`chk_users_off_campus`). `ProfileSetup` shows `OffCampusSetup` for them, in three steps with Back and Next (About you; Your home address; Where you work, with the data privacy consent). Addresses are picked from the PSGC lists, as in the assessment (`LocationFields` in `src/components/common`), and saved as one readable line (`composeAddress`, `src/lib/off-campus-setup.ts`), saved by the token-verified `completeOffCampusProfile`. `canUseReport` (`src/lib/access.ts`) is false for them.
@@ -67,7 +67,7 @@ Read this before touching sign-in, the profile, role checks or the setup gate.
 
 - `provisionGoogleUser(authId, email, fullName)`: throws `DOMAIN_NOT_ALLOWED` unless the email ends in `@up.edu.ph`. Returns the existing profile by `auth_id`; else links a profile with the same email (sets `auth_id`); else creates an `ERT Member` with `username` = email local part + first 6 hex of the auth id. A `P2002` race falls back to linking by email. Returns `{ userTypeName }`.
 
-Profile actions used by this module live in `src/actions/users` (see [[users]]): `getUserByAuthId(authId)` and `completeUserProfile(id, data)`. Neither checks the caller.
+Profile actions used by this module live in `src/actions/users` (see [[users]]): `getMyProfile(token)` and `completeUserProfile(token, data)`. Both work only on the account behind the verified token (since the DRRM-025/026 security review).
 
 Token-verified helpers in `src/lib/server-auth.ts` (used by assessment, checklist and building-safety actions):
 
@@ -80,7 +80,7 @@ Token-verified helpers in `src/lib/server-auth.ts` (used by assessment, checklis
 - Google: `GoogleSignInButton` calls `signInWithOAuth` with `hd: 'up.edu.ph'`, `prompt: 'select_account'`, redirect to `${NEXT_PUBLIC_SITE_URL ?? origin}/auth/callback`.
 - Callback: waits for the session (`getSession` plus `SIGNED_IN`), calls `provisionGoogleUser`, then goes to `homePathFor(userTypeName)`. A 20 s timeout, which covers provisioning too → `/signin?error=timeout`; a session that did land is then picked up by `SignInForm`.
 - `SignInForm`: once signed in it shows "Signing you in…", waits for the profile and replaces to `signInDestination(type, from)`: non-admins always `/home`, admins `?from=` when it's a path inside the app, else `/dashboard`. If the profile fails it goes to `/home`, which shows `AccountLoadFailed`.
-- `AuthProvider` (mounted in `src/components/providers.tsx`): `getSession` then `onAuthStateChange` (ignores `PASSWORD_RECOVERY`), and loads the profile with `getUserByAuthId` into `useAuthStore`. One fetch per user at a time, an answer for a superseded user is ignored, and after 20 s it sets `profileError` (a fixed message, because production hides thrown ones).
+- `AuthProvider` (mounted in `src/components/providers.tsx`): `getSession` then `onAuthStateChange` (ignores `PASSWORD_RECOVERY`), and loads the profile with `getMyProfile(await getAccessToken())` into `useAuthStore`. One fetch per user at a time, an answer for a superseded user is ignored, and after 20 s it sets `profileError` (a fixed message, because production hides thrown ones).
 - `useAuthStore`: `user`, `session`, `userProfile`, `profileError`, `loading`, `reset()`. Persisted in localStorage as `irs-auth`, only `userProfile`.
 - `ProtectedRoute`: `adminGuard` decides during render, and only `allow` mounts the children. No user → `/signin?from=<path>`; any non-admin → `/home`; `profileError` shows `AccountLoadFailed`.
 - `ProfileSetupGate` wraps the `(admin)` layout; ERT pages get `{ status: 'setup' }` from `useErtAccess` and render `ProfileSetup`. `useErtAccess` (`ertGuard`) sends signed-out users to `/signin`, admins to `/dashboard`, and (with `requireAssessment`) users failing `canUseAssessment` to `/home`. `{ status: 'error' }` means the profile failed to load, and the page shows `AccountLoadFailed`.
@@ -93,7 +93,7 @@ Token-verified helpers in `src/lib/server-auth.ts` (used by assessment, checklis
 - Assessment access is decided only by `canUseAssessment()` (today: user type is `ERT Member`). The `/home` card, the top-bar switch, the page guard and `checkAssessmentCaller` all call it.
 - `AuthProvider` reuses a persisted `userProfile` when its `auth_id` matches the session user and skips the fetch. Changes an admin makes to that user (type, campus, active) show only after sign-out (`reset()`) or cleared storage.
 - `is_active = false` is not checked by `ProtectedRoute`, `useErtAccess` or the sign-in pages. Only `requireProfile` refuses inactive users, so only token-verified actions block them.
-- Older actions (`getUserByAuthId`, `completeUserProfile`, everything in `src/actions/users`) trust the ids the client sends. New actions should take `getAccessToken()` and call `requireProfile` / `requireAdmin`.
+- Everything in `src/actions/users` now checks its caller (DRRM-025/026 security review). New actions should take `getAccessToken()` and call `requireProfile` / `requireAdmin`.
 - The callback must stay a client page: supabase-js keeps the PKCE verifier in localStorage, which a route handler cannot read.
 - Accounts made by an admin in [[users]] start with `is_profile_complete = true` only for admin user types; ERT members still see `ProfileSetup`.
 - Google users who already have an admin-made account with the same email are linked, not duplicated.

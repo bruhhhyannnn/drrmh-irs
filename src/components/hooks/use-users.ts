@@ -24,14 +24,14 @@ function invalidateNamedLookups(
 export function useUsers(query?: string, campusId?: string) {
   return useQuery({
     queryKey: ['users', query, campusId],
-    queryFn: () => getUsers(query, campusId),
+    queryFn: async () => getUsers(await getAccessToken(), query, campusId),
   });
 }
 
 export function useUser(id?: string) {
   return useQuery({
     queryKey: ['user', id],
-    queryFn: () => getUser(id!),
+    queryFn: async () => getUser(await getAccessToken(), id!),
     enabled: !!id,
   });
 }
@@ -52,7 +52,8 @@ export function useCreateUser() {
 export function useUpdateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateUserInput }) => updateUser(id, data),
+    mutationFn: async ({ id, data }: { id: string; data: UpdateUserInput }) =>
+      updateUser(await getAccessToken(), id, data),
     onSuccess: (_user, { id, data }) => {
       invalidateNamedLookups(queryClient, data);
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -64,8 +65,8 @@ export function useUpdateUser() {
 export function useSetUserActive() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
-      setUserActive(id, isActive),
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) =>
+      setUserActive(await getAccessToken(), id, isActive),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] }),
   });
 }
@@ -73,7 +74,7 @@ export function useSetUserActive() {
 export function useDeleteUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => deleteUser(id),
+    mutationFn: async (id: string) => deleteUser(await getAccessToken(), id),
     onSuccess: (result) => {
       if (result.ok) queryClient.invalidateQueries({ queryKey: ['users'] });
     },
