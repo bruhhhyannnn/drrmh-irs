@@ -46,18 +46,59 @@ const userBaseSchema = z.object({
   custom_position_name: z.string().trim().max(120, 'Keep it under 120 characters').optional(),
   user_type_id: z.string().uuid('User type is required'),
   is_active: z.boolean().default(true),
-  campus_id: z.string().uuid('Campus is required'),
+  /** Checked by needsCampus: an off-campus account has none. */
+  campus_id: z.string(),
+  /** DRRM-026: an account for someone outside UP, made by a Super Admin. */
+  is_off_campus: z.boolean().default(false),
+  address: z.string().trim().max(200, 'Keep it under 200 characters').optional(),
+  organization: z.string().trim().max(200, 'Keep it under 200 characters').optional(),
+  organization_address: z.string().trim().max(200, 'Keep it under 200 characters').optional(),
+  position_title: z.string().trim().max(200, 'Keep it under 200 characters').optional(),
 });
 
-export const userCreateSchema = userBaseSchema.refine(
-  (data) => data.password === data.confirmPassword,
-  {
-    message: "Passwords don't match",
-    path: ['confirmPassword'],
+/** Every account but an off-campus one belongs to a campus. */
+const needsCampus = (data: { is_off_campus: boolean; campus_id: string }, ctx: z.RefinementCtx) => {
+  if (!data.is_off_campus && !z.string().uuid().safeParse(data.campus_id).success) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['campus_id'],
+      message: 'Campus is required',
+    });
   }
-);
+};
 
-export const userEditSchema = userBaseSchema.omit({ password: true, confirmPassword: true });
+export const userCreateSchema = userBaseSchema.superRefine((data, ctx) => {
+  needsCampus(data, ctx);
+  if (data.password !== data.confirmPassword) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['confirmPassword'],
+      message: "Passwords don't match",
+    });
+  }
+});
+
+export const userEditSchema = userBaseSchema
+  .omit({ password: true, confirmPassword: true })
+  .superRefine(needsCampus);
+
+/** What an off-campus account fills in on first sign-in (DRRM-026). */
+const required = (label: string) =>
+  z.string().trim().min(1, `Enter your ${label}.`).max(200, 'Keep it under 200 characters');
+
+export const offCampusProfileSchema = z.object({
+  first_name: required('first name'),
+  middle_name: z.string().trim().max(200).optional(),
+  last_name: required('last name'),
+  suffix: z.string().trim().max(50).optional(),
+  address: required('address'),
+  organization: required('organization'),
+  organization_address: required("organization's address"),
+  position_title: required('position'),
+  consent: z.literal(true, {
+    errorMap: () => ({ message: 'Agree to the data privacy notice to continue.' }),
+  }),
+});
 
 /* ─── Main Tables ─── */
 /** Add / Edit event. Add can tick several campuses: one event is created per campus. */
@@ -444,6 +485,7 @@ export type SignInFormData = z.infer<typeof signInSchema>;
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 export type UpdatePasswordFormData = z.infer<typeof updatePasswordSchema>;
 export type UserCreateFormData = z.infer<typeof userCreateSchema>;
+export type OffCampusProfileFormData = z.infer<typeof offCampusProfileSchema>;
 export type CampusFormData = z.infer<typeof campusSchema>;
 export type PopulationCategoryFormData = z.infer<typeof populationCategorySchema>;
 export type EventFormData = z.infer<typeof eventSchema>;

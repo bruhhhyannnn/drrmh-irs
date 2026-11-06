@@ -4,6 +4,8 @@ import { isAdminUserType } from '@/lib';
 import { clusterIdForName, positionIdForName, unitIdForName } from '@/lib/lookup-names';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
+import { offCampusProfileSchema, type OffCampusProfileFormData } from '@/lib/schemas';
+import { requireAdmin, requireProfile } from '@/lib/server-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { revalidatePath } from 'next/cache';
 
@@ -20,7 +22,14 @@ export type CreateUserInput = {
   position_id?: string | null;
   user_type_id: string;
   is_active?: boolean;
-  campus_id: string;
+  /** null for an off-campus account. */
+  campus_id: string | null;
+  /** DRRM-026: someone outside UP. Only a Super Admin may make one, and only as an ERT Member. */
+  is_off_campus?: boolean;
+  address?: string | null;
+  organization?: string | null;
+  organization_address?: string | null;
+  position_title?: string | null;
   /** "Other (please specify)": a unit in `cluster_id` or a position not in the list yet. */
   custom_unit_name?: string | null;
   custom_position_name?: string | null;
@@ -95,14 +104,39 @@ export async function getUserByAuthId(authId: string) {
   });
 }
 
-export async function createUser(data: CreateUserInput) {
-  const { password, ...named } = data;
-  const profileData = await withNamedAssignment(named);
+/** An off-campus account has no UP assignment; its own fields are filled in at first sign-in. */
+const NO_ASSIGNMENT = {
+  campus_id: null,
+  cluster_id: null,
+  unit_id: null,
+  position_id: null,
+  custom_unit_name: null,
+  custom_position_name: null,
+};
 
+/**
+ * `token` is checked only for an off-campus account (DRRM-026): its caller must be a Super Admin,
+ * because such an account belongs to no campus that an Administrator could be responsible for.
+ */
+export async function createUser(data: CreateUserInput, token?: string | null) {
+  const { password, ...named } = data;
   const userType = await prisma.userType.findUnique({
-    where: { id: profileData.user_type_id },
+    where: { id: named.user_type_id },
     select: { name: true },
   });
+
+  if (named.is_off_campus) {
+    const caller = await requireAdmin(token);
+    if (!caller.ok || caller.scope.role !== 'super_admin') {
+      throw new Error('Only a super admin can make an off-campus account.');
+    }
+    if (userType?.name !== 'ERT Member') {
+      throw new Error('Only an ERT member account can be off campus.');
+    }
+  }
+  const profileData = named.is_off_campus
+    ? { ...named, ...NO_ASSIGNMENT, is_off_campus: true }
+    : await withNamedAssignment({ ...named, is_off_campus: false });
   const is_profile_complete = isAdminUserType(userType?.name);
 
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -129,9 +163,17 @@ export async function createUser(data: CreateUserInput) {
 
 export async function updateUser(id: string, data: UpdateUserInput) {
   try {
+    // Whether an account is off campus is fixed when it's made.
+    const { is_off_campus: _fixed, ...rest } = data;
+    const current = await prisma.user.findUnique({
+      where: { id },
+      select: { is_off_campus: true },
+    });
     const user = await prisma.user.update({
       where: { id },
-      data: await withNamedAssignment(data),
+      data: current?.is_off_campus
+        ? { ...rest, ...NO_ASSIGNMENT }
+        : await withNamedAssignment({ ...rest, campus_id: rest.campus_id || undefined }),
     });
     revalidatePath('/users');
     return user;
@@ -193,6 +235,44 @@ export async function completeUserProfile(
   const user = await prisma.user.update({
     where: { id },
     data: { ...(await withNamedAssignment(rest)), is_profile_complete: true },
+    include: {
+      cluster: true,
+      unit: { include: { cluster: true } },
+      position: true,
+      user_type: true,
+      campus: true,
+    },
+  });
+  revalidatePath('/');
+  return { ok: true as const, user };
+}
+
+/**
+ * First sign-in setup for an off-campus account (DRRM-026): its name, address, organization and
+ * position, with the data privacy consent. The caller is the verified token's own account.
+ */
+export async function completeOffCampusProfile(
+  token: string | null,
+  data: OffCampusProfileFormData
+) {
+  const caller = await requireProfile(token);
+  if (!caller.ok) return { ok: false as const, error: 'Sign in again to save your profile.' };
+  if (!caller.profile.is_off_campus) {
+    return { ok: false as const, error: 'This setup is only for off-campus accounts.' };
+  }
+  const parsed = offCampusProfileSchema.safeParse(data);
+  if (!parsed.success) {
+    return { ok: false as const, error: parsed.error.issues[0]?.message ?? 'Check your details.' };
+  }
+  const { consent: _consent, middle_name, suffix, ...fields } = parsed.data;
+  const user = await prisma.user.update({
+    where: { id: caller.profile.id },
+    data: {
+      ...fields,
+      middle_name: middle_name || null,
+      suffix: suffix || null,
+      is_profile_complete: true,
+    },
     include: {
       cluster: true,
       unit: { include: { cluster: true } },

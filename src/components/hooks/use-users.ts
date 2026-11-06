@@ -8,6 +8,7 @@ import {
   type CreateUserInput,
   type UpdateUserInput,
 } from '@/actions/users';
+import { getAccessToken } from '@/lib/supabase';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 /** A unit or position typed under "Other (please specify)" is new in the Settings lists. */
@@ -38,7 +39,7 @@ export function useUser(id?: string) {
 export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: CreateUserInput) => createUser(data),
+    mutationFn: async (data: CreateUserInput) => createUser(data, await getAccessToken()),
     onSuccess: (_user, data) => {
       invalidateNamedLookups(queryClient, data);
       queryClient.invalidateQueries({ queryKey: ['users'] });

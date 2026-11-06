@@ -45,10 +45,20 @@ export function ProfileDrawer({ open, onClose }: { open: boolean; onClose: () =>
 
   const rows = [
     { label: 'Username', value: userProfile.username },
-    { label: 'Campus', value: userProfile.campus?.name },
-    { label: 'Cluster', value: userProfile.cluster?.name ?? userProfile.unit?.cluster?.name },
-    { label: 'Unit / Building', value: userProfile.unit?.name },
-    { label: 'Position', value: userProfile.position?.name },
+    // An off-campus account (DRRM-026) has its organization instead of a UP assignment.
+    ...(userProfile.is_off_campus
+      ? [
+          { label: 'Organization', value: userProfile.organization },
+          { label: 'Position', value: userProfile.position_title },
+          { label: "Organization's address", value: userProfile.organization_address },
+          { label: 'Address', value: userProfile.address },
+        ]
+      : [
+          { label: 'Campus', value: userProfile.campus?.name },
+          { label: 'Cluster', value: userProfile.cluster?.name ?? userProfile.unit?.cluster?.name },
+          { label: 'Unit / Building', value: userProfile.unit?.name },
+          { label: 'Position', value: userProfile.position?.name },
+        ]),
     {
       label: 'Member since',
       value: userProfile.created_at

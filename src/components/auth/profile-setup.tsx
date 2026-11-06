@@ -19,6 +19,7 @@ import { useCampusClusters } from '../hooks/use-campus';
 import { useCampus, usePositions, useUnits } from '../hooks/use-settings';
 import { AuthShell } from './auth-shell';
 import { AUTH_LINK, AuthBanner, AuthHeading } from './auth-ui';
+import { OffCampusSetup } from './off-campus-setup';
 
 /** Shows profile setup in place of the page until the signed-in user's profile is complete. */
 export function ProfileSetupGate({ children }: { children: React.ReactNode }) {
@@ -27,13 +28,19 @@ export function ProfileSetupGate({ children }: { children: React.ReactNode }) {
   return needsSetup ? <ProfileSetup /> : children;
 }
 
+/** First sign-in setup: an off-campus account gets its own form (DRRM-026), anyone else this one. */
+export function ProfileSetup() {
+  const isOffCampus = useAuthStore((s) => !!s.userProfile?.is_off_campus);
+  return isOffCampus ? <OffCampusSetup /> : <CampusProfileSetup />;
+}
+
 /**
  * First sign-in setup: campus, cluster and position, plus building / unit when there is one
  * (some clusters have none). Cluster, unit and position each end with "Other (please specify)"
  * for a name that isn't listed yet. A full page (in the auth frame) instead of a modal that can't
  * be closed, with "Not you? Sign out".
  */
-export function ProfileSetup() {
+function CampusProfileSetup() {
   const router = useRouter();
   const { user, userProfile, setUserProfile, reset } = useAuthStore();
   const [campusId, setCampusId] = useState(userProfile?.campus_id ?? '');
