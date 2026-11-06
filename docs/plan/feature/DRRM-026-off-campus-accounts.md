@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-026
-status: draft
+status: in-review
 branch: feat/DRRM-026-off-campus-accounts
 modules:
   - '[[auth]]'
@@ -16,7 +16,7 @@ tags: [plan, feature]
 
 # [DRRM-026] Off-campus accounts: Design
 
-- **Status:** `Draft`
+- **Status:** `In Review`
 - **Target Branch / PR:** `feat/DRRM-026-off-campus-accounts`, stacked on `feat/DRRM-025-off-campus-assessment` (PR #94)
 - **Owner / Author:** Jomar Lazaro
 

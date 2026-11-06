@@ -1,6 +1,6 @@
 ---
 type: module
-updated: 2026-10-28
+updated: 2026-11-06
 module: users
 paths:
   - src/actions/users
@@ -64,6 +64,7 @@ Errors from Prisma go through `toFriendlyError(err, 'user')` (see [[database]]).
 
 ## Rules and gotchas
 
+- An **Off-campus account** switch (DRRM-026) shows only to a Super Admin adding an ERT Member. `createUser(data, token)` checks that token is a Super Admin's before making one, and the account starts with no campus or assignment. Whether an account is off campus can't be changed later (`updateUser` ignores it). Off-campus users appear only under All campuses, and their drawer shows Organization, Position, Organization's address and Address.
 - Who may do what is enforced only in the UI. The actions take any id or campus the client sends.
 - `updateUser` does not touch Supabase Auth. Changing the email in Edit user changes the profile, not the sign-in email, and there is no admin password reset here.
 - Deactivating a user does not sign them out or block the client pages; only token-verified actions refuse inactive profiles (see [[auth]]).

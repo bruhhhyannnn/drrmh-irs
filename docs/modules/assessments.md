@@ -1,7 +1,7 @@
 ---
 type: module
 module: assessments
-updated: 2026-11-05
+updated: 2026-11-06
 verified: true
 paths:
   - src/app/(ert)/assessment
@@ -36,6 +36,7 @@ Read this before touching anything in the MATATAG assessment (DRRM-015). Admin p
   - Group parents are unscored and hold the shared prompt. Every scored item has one DRRM pillar.
 - **Buildings:** a building keeps a profile (floors, `building_areas`) that pre-fills its next assessment. It is Campus (has a unit, fixed on the Settings → Buildings tab, [[settings-lookups]]) or Off-campus (no unit; a PSGC location and the evaluator's campus, added as it's assessed). Read a building's place through `toBuildingPlace` in `src/lib/building-place.ts` ([[0010-off-campus-buildings]]).
 - **On or off campus:** the Details step starts with this required choice, with nothing pre-selected. Off campus shows Region, Province (hidden where a region has none), City/Municipality and Barangay. A new off-campus building can carry an optional map pin.
+- **Off-campus accounts (DRRM-026):** `checkAssessmentCaller` lets them submit with `campusId: null`. Their drafts start Off campus with no choice, and the Details step hides the event and reads "Results go to DRRM-H Super Admins." Their buildings belong to no campus (`offCampusPool(null)`, shared by all off-campus accounts), and `getAssessmentSetup` returns those with no clusters or events (cached as `setup:off-campus`).
 - **Location list:** PSGC in `src/data/psgc.json`, read on the server through `src/lib/psgc-data.ts`. The phone downloads it once per `PSGC_VERSION` (`useLocationTree`, loaded on the hub) and keeps it in `assessment-cache`. `npm run psgc:build` rebuilds it.
 - **Seed:** the checklist text is seeded from `prisma/data/matatag-2025-07-25.ts` by `npm run seed:matatag`. The seed can be re-run safely: it matches by code and never deletes, so item ids stay stable ([[database]]).
 - **Shared pure logic** in `src/lib`, used by the form, the server and the tests:
