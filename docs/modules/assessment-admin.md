@@ -1,7 +1,7 @@
 ---
 type: module
 module: assessment-admin
-updated: 2026-10-22
+updated: 2026-11-05
 verified: true
 paths:
   - src/actions/assessment-admin
@@ -29,7 +29,8 @@ Read this before touching the admin assessment pages or their actions.
   - `/assessments/details?id=`, reusing the ERT `AssessmentRecordBody`.
   - `/assessments/report?id=`, the A4 page in the `(print)` group, using the ERT `RecordPrint`.
   - The Super Admin checklist editor `/assessments/checklist` ([[checklist-editor]]).
-- **Buildings** are fixed on the Settings → Buildings tab, the shared lookup table ([[settings-lookups]]).
+- **Buildings:** campus buildings are fixed on the Settings → Buildings tab, the shared lookup table ([[settings-lookups]]). Off-campus buildings come from assessments ([[0010-off-campus-buildings]]).
+- **Category filter:** all three tabs filter by Campus, Off-campus or both (`?category=`, `src/app/(admin)/assessments/_lib/category-filter.ts`). They open on Campus. An Administrator sees the off-campus buildings their own campus's ERT members assessed.
 
 ## Where it lives
 
@@ -49,7 +50,7 @@ Read this before touching the admin assessment pages or their actions.
 ## Data
 
 - `Assessment` (`assessments`) with `AssessmentPillarScore` (`assessment_pillar_scores`), `evaluator` (`User`), `event` (`Event`).
-- `Building` (`buildings`) through `Unit` → `Cluster` → `Campus` for scope and names.
+- `Building` (`buildings`) through `toBuildingPlace` for scope and names: `Unit` → `Cluster` → `Campus`, or its own `campus_id` and location when off campus.
 - Deleting an `Assessment` cascades to `assessment_areas`, `assessment_answers`, `assessment_pillar_scores` and `assessment_section_comments` (`onDelete: Cascade` in the schema).
 - `loadAssessmentRecord(where)` also loads the template version the assessment was answered with.
 
@@ -95,3 +96,4 @@ Shared loaders in `src/lib/assessment-records.ts`:
 - [[0006-versioned-checklist-template]] a record is shown with the version it was answered with.
 - [[0001-server-actions-only]] the pages read only through `src/actions/assessment-admin`.
 - [[0008-hand-built-charts]] the Compare tab uses the hand-built line chart.
+- [[0010-off-campus-buildings]] a building is Campus or Off-campus.

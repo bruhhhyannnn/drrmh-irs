@@ -3,6 +3,7 @@
 import { useBuildingSummaries } from '@/components/hooks/use-assessments';
 import { percent, recoveryStatus } from '@/lib/assessment-score';
 import type { BuildingScores } from '@/lib/assessment-template';
+import { placeLine } from '@/lib/building-place';
 import { ChartLine, Eye } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -22,6 +23,8 @@ import {
 import { useScopedCampusId } from '../../_components/shell/campus-switcher';
 import { Chip, EmptyNote } from '../../_components/ui';
 import { formatDate, plural } from '../../_lib/format';
+import { clusterOptions, filterByCategory } from '../_lib/category-filter';
+import { CategorySelect, useCategory } from './category-select';
 import { RECOVERY_TEXT, RecoveryCell, ScoreCell } from './score-cell';
 
 const PAGE_SIZE = 10;
@@ -29,7 +32,8 @@ const PAGE_SIZE = 10;
 const detailHref = (id: string) => `/assessments/details?id=${id}`;
 
 /** The Assessments → Compare tab for this building (its history and A/B compare). */
-const compareHref = (b: BuildingScores) => `/assessments?tab=compare&building=${b.id}`;
+const compareHref = (b: BuildingScores) =>
+  `/assessments?tab=compare&building=${b.id}${b.category === 'off_campus' ? '&category=off_campus' : ''}`;
 
 const PILLAR_COLUMNS = [
   ['prevention-mitigation', 'Prevention'],
@@ -44,6 +48,7 @@ export function BuildingsTab() {
   const [query, setQuery] = useState('');
   const [clusterId, setClusterId] = useState('');
   const [page, setPage] = useState(1);
+  const [category, setCategory] = useCategory();
 
   if (error) return <EmptyNote>The buildings couldn&apos;t be loaded: {error.message}</EmptyNote>;
 
@@ -54,14 +59,13 @@ export function BuildingsTab() {
       setPage(1);
     };
 
-  const clusters = [...new Map(data.map((b) => [b.cluster.id, b.cluster])).values()].sort((a, b) =>
-    a.name.localeCompare(b.name)
-  );
+  const inCategory = filterByCategory(data, category);
+  const clusters = clusterOptions(inCategory);
   const q = query.trim().toLowerCase();
-  const rows = data.filter(
+  const rows = inCategory.filter(
     (b) =>
-      (!clusterId || b.cluster.id === clusterId) &&
-      (!q || b.name.toLowerCase().includes(q) || b.unit.name.toLowerCase().includes(q))
+      (!clusterId || b.cluster?.id === clusterId) &&
+      (!q || b.name.toLowerCase().includes(q) || b.label.toLowerCase().includes(q))
   );
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const current = Math.min(page, totalPages);
@@ -76,7 +80,7 @@ export function BuildingsTab() {
       cell: (b) => (
         <NameCell
           primary={b.name}
-          secondary={b.unit.name}
+          secondary={b.label}
           href={b.latest ? detailHref(b.latest.id) : undefined}
         />
       ),
@@ -86,7 +90,7 @@ export function BuildingsTab() {
       header: 'Cluster',
       width: 'minmax(0,1fr)',
       hideOnTablet: true,
-      cell: (b) => <TextCell>{b.cluster.name}</TextCell>,
+      cell: (b) => <TextCell>{b.cluster?.name ?? '—'}</TextCell>,
     },
     {
       key: 'overall',
@@ -163,13 +167,23 @@ export function BuildingsTab() {
           value={query}
           onChange={reset(setQuery)}
         />
-        <FilterSelect
-          label="Cluster"
-          allLabel="All clusters"
-          value={clusterId}
-          onChange={reset(setClusterId)}
-          options={clusters.map((c) => ({ value: c.id, label: c.name }))}
+        <CategorySelect
+          value={category}
+          onChange={(next) => {
+            setClusterId('');
+            setPage(1);
+            setCategory(next);
+          }}
         />
+        {category !== 'off_campus' && (
+          <FilterSelect
+            label="Cluster"
+            allLabel="All clusters"
+            value={clusterId}
+            onChange={reset(setClusterId)}
+            options={clusters.map((c) => ({ value: c.id, label: c.name }))}
+          />
+        )}
         <ListCount loading={isPending}>{plural(rows.length, 'building', 'buildings')}</ListCount>
       </ListToolbar>
       <DataTable
@@ -186,7 +200,7 @@ export function BuildingsTab() {
         card={(b) => (
           <MobileCard
             title={b.name}
-            subtitle={`${b.unit.name} · ${b.cluster.name}`}
+            subtitle={placeLine(b)}
             chip={
               b.latest?.needs_follow_up ? (
                 <Chip tone="amber" dot>

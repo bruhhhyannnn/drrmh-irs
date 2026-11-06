@@ -156,6 +156,7 @@ export function SelectField({
   invalid,
   leading,
   describedBy,
+  searchable,
 }: {
   id: string;
   value: string;
@@ -168,6 +169,7 @@ export function SelectField({
   invalid?: boolean;
   leading?: React.ReactNode;
   describedBy?: string;
+  searchable?: boolean;
 }) {
   return (
     <Select
@@ -181,6 +183,7 @@ export function SelectField({
       invalid={invalid}
       leading={leading}
       describedBy={describedBy}
+      searchable={searchable}
     />
   );
 }

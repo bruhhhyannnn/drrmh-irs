@@ -1,7 +1,7 @@
 ---
 type: module
 module: database
-updated: 2026-11-04
+updated: 2026-11-05
 verified: true
 paths:
   - prisma/schema.prisma
@@ -68,19 +68,20 @@ DATABASE_URL="$(grep -E '^DIRECT_URL=' .env.development.local | cut -d= -f2- | t
 
 ## Where it lives
 
-| Path                                     | What it holds                                                                                                                                                                                                                                             |
-| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `prisma/schema.prisma`                   | All models and enums; generator `prisma-client-js` with no `output`                                                                                                                                                                                       |
-| `prisma/manual/*.sql`                    | Idempotent schema changes, one file per ticket: `DRRM-008-bystander-report-v2.sql`, `DRRM-011-super-admin-v2.sql`, `DRRM-015-assessment.sql`, `DRRM-022-report-photos.sql`. Run each on every database before deploying the code that needs it (DRRM-023) |
-| `prisma/migrations/`                     | One old migration (`20260505010152_add_report_verification`); it still creates tables the schema no longer has (`report_assignments`, `activity_logs`, `locations`, `report_damages`)                                                                     |
-| `prisma/seed.ts`                         | `npm run seed`: lookup tables, NSED events per quarter, sample reports                                                                                                                                                                                    |
-| `prisma/seed-matatag.ts`, `prisma/data/` | `npm run seed:matatag`: the MATATAG checklist (see [[assessments]])                                                                                                                                                                                       |
-| `prisma.config.ts`                       | Schema path, migrations path, seed command, `DATABASE_URL`, `SHADOW_DATABASE_URL`; loads `.env` via `dotenv/config`                                                                                                                                       |
-| `src/lib/prisma.ts`                      | `prisma`: `PrismaClient` with `PrismaPg` adapter on `DATABASE_URL`, 8 s connection timeout, cached on `globalThis` outside production                                                                                                                     |
-| `src/lib/supabase.ts`                    | `supabase` browser client (publishable key, persisted session) and `getAccessToken()`                                                                                                                                                                     |
-| `src/lib/supabase-admin.ts`              | `supabaseAdmin` with `SUPABASE_SERVICE_ROLE_KEY` (server only)                                                                                                                                                                                            |
-| `src/lib/prisma-error.ts`                | `toFriendlyError(error, label)`                                                                                                                                                                                                                           |
-| `src/lib/schemas.ts`                     | Zod schemas and form types for every form                                                                                                                                                                                                                 |
+| Path                                          | What it holds                                                                                                                                                                                                                                                                                  |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `prisma/schema.prisma`                        | All models and enums; generator `prisma-client-js` with no `output`                                                                                                                                                                                                                            |
+| `prisma/manual/*.sql`                         | Idempotent schema changes, one file per ticket: `DRRM-008-bystander-report-v2.sql`, `DRRM-011-super-admin-v2.sql`, `DRRM-015-assessment.sql`, `DRRM-022-report-photos.sql`, `DRRM-025-off-campus-buildings.sql`. Run each on every database before deploying the code that needs it (DRRM-023) |
+| `prisma/migrations/`                          | One old migration (`20260505010152_add_report_verification`); it still creates tables the schema no longer has (`report_assignments`, `activity_logs`, `locations`, `report_damages`)                                                                                                          |
+| `prisma/seed.ts`                              | `npm run seed`: lookup tables, NSED events per quarter, sample reports                                                                                                                                                                                                                         |
+| `prisma/seed-matatag.ts`, `prisma/data/`      | `npm run seed:matatag`: the MATATAG checklist (see [[assessments]])                                                                                                                                                                                                                            |
+| `src/data/psgc.json`, `scripts/build-psgc.ts` | The PSGC location list and what builds it (`npm run psgc:build`, then bump `PSGC_VERSION`). In `.prettierignore`: formatting it would grow it several times over                                                                                                                               |
+| `prisma.config.ts`                            | Schema path, migrations path, seed command, `DATABASE_URL`, `SHADOW_DATABASE_URL`; loads `.env` via `dotenv/config`                                                                                                                                                                            |
+| `src/lib/prisma.ts`                           | `prisma`: `PrismaClient` with `PrismaPg` adapter on `DATABASE_URL`, 8 s connection timeout, cached on `globalThis` outside production                                                                                                                                                          |
+| `src/lib/supabase.ts`                         | `supabase` browser client (publishable key, persisted session) and `getAccessToken()`                                                                                                                                                                                                          |
+| `src/lib/supabase-admin.ts`                   | `supabaseAdmin` with `SUPABASE_SERVICE_ROLE_KEY` (server only)                                                                                                                                                                                                                                 |
+| `src/lib/prisma-error.ts`                     | `toFriendlyError(error, label)`                                                                                                                                                                                                                                                                |
+| `src/lib/schemas.ts`                          | Zod schemas and form types for every form                                                                                                                                                                                                                                                      |
 
 ## Data
 
@@ -112,7 +113,7 @@ None live here. Every module's `src/actions/<domain>/index.ts` imports `prisma` 
 
 - Change the schema with a new idempotent file in `prisma/manual/` plus the matching `schema.prisma` edit. Never `prisma db push`, `migrate dev` or `migrate reset`.
 - Apply a manual file over the direct connection (`DIRECT_URL`, port 5432); `db execute` hangs on the pooler (6543). Production runs it in the Supabase SQL editor before the deploy.
-- Some constraints exist only in SQL: `CHECK`s on `bystander_reports.contact_number` and `photo_paths` (max 3), `reports.damage_photo_paths` and `report_casualties.photo_paths` (max 3), population count `>= 0`, assessment item pillar rules, `floor_count >= 1`, `ended_at >= started_at`, and the one-published-version unique index. Prisma does not know them.
+- Some constraints exist only in SQL: `CHECK`s on `bystander_reports.contact_number` and `photo_paths` (max 3), `reports.damage_photo_paths` and `report_casualties.photo_paths` (max 3), population count `>= 0`, assessment item pillar rules, `floor_count >= 1`, `ended_at >= started_at`, a building's two shapes (`chk_buildings_place`), the off-campus name index (`uq_buildings_campus_barangay_name`), and the one-published-version unique index. Prisma does not know them.
 - The generated client goes to the default `@prisma/client` (no `output` in the generator) and code imports from `@prisma/client`; `postinstall` runs `prisma generate`.
 - `prisma/seed.ts` connects with `SHADOW_DATABASE_URL`, not `DATABASE_URL`. It writes every cluster and event to the fixed campus id `f5b2b08d-d24a-4fbc-af3a-defe18b8f03d`. Lookups use `createMany` with `skipDuplicates`, but events are `create`d, so re-running adds duplicate NSED events.
 - `supabase-admin.ts` holds the service-role key. Import it only from server code.
@@ -124,3 +125,4 @@ None live here. Every module's `src/actions/<domain>/index.ts` imports `prisma` 
 - [[0002-manual-sql-schema-changes]] schema changes ship as `prisma/manual/*.sql`.
 - [[0006-versioned-checklist-template]] the assessment tables model versioned templates.
 - [[0009-table-driven-settings]] the lookup models share one generic settings UI.
+- [[0010-off-campus-buildings]] a building is Campus or Off-campus.

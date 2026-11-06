@@ -5,6 +5,7 @@ import {
   useAssessmentDrafts,
   useAssessmentSetup,
   useAssessmentTemplate,
+  useLocationTree,
   useMyAssessments,
   useTemplateVersion,
 } from '@/components/hooks/use-assessments';
@@ -17,6 +18,7 @@ import {
   type AssessmentDraft,
 } from '@/lib/assessment-draft';
 import { percent } from '@/lib/assessment-score';
+import { picksFromBarangay } from '@/lib/location-options';
 import {
   deleteAssessmentDraft,
   getAllQueuedCount,
@@ -43,6 +45,8 @@ export function AssessmentHub({ profile }: { profile: ErtProfile }) {
   const flushNow = useOfflineQueueStore((s) => s.flushNow);
   const template = useAssessmentTemplate();
   const setup = useAssessmentSetup(profile.campus_id ?? undefined);
+  // Loaded here, not on the Details step, so it's on the phone before the evaluator goes offline.
+  const locationTree = useLocationTree();
   const drafts = useAssessmentDrafts(profile.id);
   const [queueKey, setQueueKey] = useState(0);
   const queued = useQueuedAssessments(queueKey).filter(
@@ -106,12 +110,21 @@ export function AssessmentHub({ profile }: { profile: ErtProfile }) {
         ? payload.building.new.unit_id
         : (saved?.unit_id ?? profile.unit_id ?? '');
     const cluster = setup.data?.clusters.find((c) => c.units.some((u) => u.id === unitId));
+    const barangayCode =
+      'new_off_campus' in payload.building
+        ? payload.building.new_off_campus.barangay_code
+        : (saved?.barangay_code ?? '');
     let draft = draftFromPayload(payload, {
       campus_id: profile.campus_id ?? '',
       cluster_id: cluster?.id ?? profile.cluster_id ?? '',
       unit_id: unitId,
       building_name: saved?.name ?? entry.summary?.title ?? '',
       now: new Date(),
+      ...(saved?.barangay_code && {
+        location_kind: 'off_campus' as const,
+        barangay_code: saved.barangay_code,
+      }),
+      ...picksFromBarangay(locationTree.data ?? null, barangayCode),
     });
     // A building that's no longer listed has to be chosen again on Details.
     if ('id' in payload.building && setup.data && !saved) {
@@ -391,7 +404,7 @@ function Submitted({ userId }: { userId: string }) {
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="truncate text-[17px] font-bold">{row.building_name}</span>
                 <span className="text-[14px] text-gray-600">
-                  {row.unit_name} · <Mono>{formatDate(row.ended_at)}</Mono>
+                  {row.place_label} · <Mono>{formatDate(row.ended_at)}</Mono>
                 </span>
               </div>
               {row.needs_follow_up && (

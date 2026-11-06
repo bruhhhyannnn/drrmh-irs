@@ -7,14 +7,22 @@ import {
 import {
   createAssessment,
   getAssessmentSetup,
+  getLocationTree,
   getMyAssessment,
   getMyAssessments,
   getPublishedTemplate,
   getTemplateVersion,
 } from '@/actions/assessments';
-import { compareAssessments, getBuildingHistory, getSafetyRollup } from '@/actions/building-safety';
+import {
+  compareAssessments,
+  getBuildingHistory,
+  getOffCampusRollup,
+  getSafetyRollup,
+} from '@/actions/building-safety';
 import { toPayload, type AssessmentDraft } from '@/lib/assessment-draft';
 import type { AssessmentTemplate } from '@/lib/assessment-template';
+import type { LocationScope } from '@/lib/building-safety';
+import { locationListStaleTime } from '@/lib/location-options';
 import { cachedFetch, withTimeout } from '@/lib/offline-cache';
 import {
   deleteAssessmentDraft,
@@ -25,6 +33,7 @@ import {
   putAssessmentCache,
   queueAssessment,
 } from '@/lib/offline-queue';
+import { PSGC_VERSION, type PsgcTree } from '@/lib/psgc';
 import { getAccessToken } from '@/lib/supabase';
 import { useOfflineQueueStore } from '@/store';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -88,6 +97,28 @@ export function useAssessmentSetup(campusId?: string) {
         getAssessmentSetup(await getAccessToken(), campusId!)
       ),
     enabled: !!campusId,
+    networkMode: 'always',
+  });
+}
+
+/**
+ * The off-campus location list, downloaded once per PSGC_VERSION and kept on the phone. It's about
+ * 2 MB, so unlike the checklist it isn't fetched again while a saved copy exists. null when it
+ * isn't on the phone and can't be fetched now.
+ */
+export function useLocationTree() {
+  return useQuery({
+    queryKey: ['location-tree', PSGC_VERSION],
+    queryFn: async (): Promise<PsgcTree | null> => {
+      const key = `psgc:${PSGC_VERSION}`;
+      const saved = await getAssessmentCache<PsgcTree>(key).catch(() => undefined);
+      if (saved) return saved;
+      if (!navigator.onLine) return null;
+      const tree = await getLocationTree(await getAccessToken());
+      if (tree) await putAssessmentCache(key, tree).catch(() => {});
+      return tree;
+    },
+    staleTime: (query) => locationListStaleTime(query.state.data),
     networkMode: 'always',
   });
 }
@@ -243,6 +274,22 @@ export function useSafetyRollup(
     queryKey: ['building-safety', scope.campusId, scope.clusterId, scope.unitId],
     queryFn: async () => getSafetyRollup(await getAccessToken(), scope),
     enabled,
+    staleTime: 60_000,
+  });
+}
+
+export function useOffCampusRollup(scope: { campusId: string | null } & LocationScope) {
+  return useQuery({
+    queryKey: [
+      'building-safety',
+      'off-campus',
+      scope.campusId,
+      scope.regionCode,
+      scope.provinceCode,
+      scope.cityCode,
+      scope.barangayCode,
+    ],
+    queryFn: async () => getOffCampusRollup(await getAccessToken(), scope),
     staleTime: 60_000,
   });
 }
