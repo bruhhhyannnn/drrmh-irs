@@ -1,7 +1,7 @@
 ---
 type: module
 module: building-safety
-updated: 2026-10-22
+updated: 2026-11-05
 verified: true
 paths:
   - src/actions/building-safety
@@ -23,6 +23,7 @@ The Building safety section of the admin dashboard pools the latest building ass
 Read this before touching the dashboard's Building safety section, its actions, the score arithmetic or the charts.
 
 - **Where:** the section is in `(admin)/dashboard/_components/building-safety/`, with its actions in `src/actions/building-safety`. It drills Campus → Cluster → Unit → Building.
+- **Off-campus:** a Campuses | Off-campus switch (`bs_view`) shows off-campus buildings by location, Region → Province → City/Municipality → Barangay → Building (`bs_region`, `bs_province`, `bs_city`, `bs_barangay`). `openLocationLevel` skips a level with one child. The scores pool the same way, but they never count toward a campus: campus scores read through `campusBuildings` ([[0010-off-campus-buildings]]). It shows a plain assessed count and no "Not yet assessed", because a building joins as it's assessed.
 - **URL state:** the level is kept in the `bs_campus` / `bs_cluster` / `bs_unit` / `bs_building` / `bs_a` / `bs_b` URL params. Drilling pushes a history entry, and the A/B picks replace it. The section never moves the campus switcher.
 - **Pure functions:** pooling, the like-for-like change, section scores, most-failed items, the A/B comparison and `scopeFromParams` are pure functions in `src/lib/building-safety.ts`, with tests. So is the score arithmetic the admin pages share (pillar rows, change in points).
 - **Charts:** hand-built in `(admin)/_components/charts/`, coloured with the `--series-1…6` tokens from `globals.css`, checked with the dataviz validator, and with every value printed ([[0008-hand-built-charts]]).
@@ -54,13 +55,15 @@ Read this before touching the dashboard's Building safety section, its actions, 
 
 - `getSafetyRollup(token, { campusId, clusterId, unitId })`: one drill level (`all`, `campus`, `cluster`, `unit`). Returns `SafetyRollup`: trail, pooled group, children, not-assessed buildings, sections, most failed. `null` when not an admin or the cluster/unit isn't in the caller's campus.
 - `getBuildingHistory(token, buildingId)`: the building's assessments oldest first, numbered #1…#n, with version label. `null` when out of scope.
+- `getOffCampusRollup(token, { campusId, regionCode, provinceCode, cityCode, barangayCode })`: one level of the off-campus view. `null` when not an admin.
 - `compareAssessments(token, aId, bId)`: two assessments of the same building, side by side. `null` unless both exist, share a building and are in scope.
 
 ## Pure logic (`src/lib/building-safety.ts`)
 
 - `scoresFromPillarRows`, `pointsChange` (percentage points; `null` when either counted nothing).
 - `poolBuildings`: sums tallies of each building's latest assessment (not an average of percents). `likeForLike` uses only buildings assessed at least twice. `pscp` counts the continuity plan (Recovery pillar `in_place`).
-- `groupChildren(buildings, level)`: children of a level, each pooled, by name.
+- `groupChildren(buildings, level)`: children of a level, each pooled, by name. Off-campus buildings join no campus group.
+- `openLocationLevel(buildings, scope)`: an off-campus level's trail and children.
 - `sectionScores(facts, ids)`, `mostFailed(facts, currentIds, perPillar = 5)`.
 - `compareScores(a, b)`: overall, four pillars, sections matched by code; `versionsDiffer` flag. `comparePair` picks A/B, defaulting to previous vs latest.
 - `scopeFromParams(params, { isSuperAdmin, switcherCampusId })`.
@@ -90,3 +93,4 @@ Read this before touching the dashboard's Building safety section, its actions, 
 - [[0007-token-verified-actions]] every action scopes the campus with `requireAdmin`.
 - [[0006-versioned-checklist-template]] comparisons load each assessment's own version.
 - [[0001-server-actions-only]] the dashboard reads only through `src/actions/building-safety`.
+- [[0010-off-campus-buildings]] off-campus buildings stay out of campus scores.

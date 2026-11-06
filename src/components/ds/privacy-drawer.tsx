@@ -17,10 +17,12 @@ export function PrivacyDrawer({
   open,
   onClose,
   note,
+  backLabel = 'Back to the report',
 }: {
   open: boolean;
   onClose: () => void;
   note?: React.ReactNode;
+  backLabel?: string;
 }) {
   return (
     <Drawer
@@ -30,7 +32,7 @@ export function PrivacyDrawer({
       subtitle={PRIVACY_NOTICE_SUBTITLE}
       footer={
         <Button fullWidth onClick={onClose}>
-          Back to the report
+          {backLabel}
         </Button>
       }
     >

@@ -5,8 +5,10 @@ import {
   answerFilterOf,
   applyBuildingProfile,
   clampFloors,
+  detailsFromDraft,
   draftFromPayload,
   draftSteps,
+  locationKindOf,
   newDraft,
   newUuid,
   parseFloors,
@@ -19,6 +21,7 @@ import {
   type AssessmentDraft,
 } from './assessment-draft';
 import { templateFromData } from './assessment-template';
+import { assessmentDetailsSchema } from './schemas';
 
 // The draft kept on the phone while an assessment is filled in, and the payload made from it.
 
@@ -95,6 +98,7 @@ test('choosing a building takes its saved profile and keeps the answers', () => 
   const next = applyBuildingProfile(d, {
     id: 'b1',
     unit_id: 'unit1',
+    barangay_code: null,
     name: 'Main',
     floor_count: 4,
     area_type_ids: ['offices'],
@@ -147,6 +151,122 @@ test('a queued payload opens again as the same draft (review I2)', () => {
   assert.equal(reopened.client_ref, d.client_ref);
   assert.equal(reopened.unit_id, 'unit1');
   assert.deepEqual(toPayload(T, reopened, new Date('2026-10-20T02:00:00Z')), payload);
+});
+
+/* ─── Off campus (DRRM-025) ─── */
+
+const offCampus = (patch: Partial<AssessmentDraft> = {}) =>
+  draft({
+    location_kind: 'off_campus',
+    region_code: '1300000000',
+    province_code: '',
+    city_code: '1380600000',
+    barangay_code: '1380601001',
+    new_building_name: ' Annex ',
+    ...patch,
+  });
+
+test('a draft saved before off-campus existed counts as campus', () => {
+  const saved = draft();
+  delete saved.location_kind;
+  assert.equal(locationKindOf(saved), 'campus');
+});
+
+test('a new draft has no location chosen', () => {
+  assert.equal(locationKindOf(draft()), null);
+});
+
+test('detailsFromDraft fills in what an older draft lacks', () => {
+  const saved = draft({ building_id: 'b1' });
+  delete saved.location_kind;
+  delete saved.region_code;
+  delete saved.barangay_code;
+  const details = detailsFromDraft(saved);
+  assert.equal(details.location_kind, 'campus');
+  assert.equal(details.region_code, '');
+  assert.equal(details.barangay_code, '');
+  assert.equal(details.building_id, 'b1');
+  assert.equal(assessmentDetailsSchema.safeParse(details).success, true);
+});
+
+test('toPayload sends a new off-campus building by barangay code', () => {
+  assert.deepEqual(toPayload(T, offCampus(), new Date()).building, {
+    new_off_campus: {
+      barangay_code: '1380601001',
+      name: 'Annex',
+      latitude: null,
+      longitude: null,
+      location_name: null,
+    },
+  });
+});
+
+test('toPayload carries the pin with a new off-campus building', () => {
+  const { building } = toPayload(
+    T,
+    offCampus({ pin: { lat: 14.5, lng: 120.9, name: 'Padre Faura' } }),
+    new Date()
+  );
+  assert.deepEqual('new_off_campus' in building && building.new_off_campus, {
+    barangay_code: '1380601001',
+    name: 'Annex',
+    latitude: 14.5,
+    longitude: 120.9,
+    location_name: 'Padre Faura',
+  });
+});
+
+test('toPayload sends a saved off-campus building by id', () => {
+  const d = offCampus({ building_id: 'b1', new_building_name: '' });
+  assert.deepEqual(toPayload(T, d, new Date()).building, { id: 'b1' });
+});
+
+test('draftFromPayload restores a new off-campus building and its pin', () => {
+  const d = offCampus({ pin: { lat: 14.5, lng: 120.9, name: 'Padre Faura' } });
+  const payload = toPayload(T, d, new Date('2026-10-20T02:00:00Z'));
+  const reopened = draftFromPayload(payload, {
+    campus_id: 'c1',
+    cluster_id: '',
+    unit_id: '',
+    building_name: '',
+    now: new Date('2026-10-21T00:00:00Z'),
+  });
+  assert.equal(reopened.location_kind, 'off_campus');
+  assert.equal(reopened.barangay_code, '1380601001');
+  assert.equal(reopened.new_building_name, 'Annex');
+  assert.deepEqual(reopened.pin, { lat: 14.5, lng: 120.9, name: 'Padre Faura' });
+  assert.deepEqual(toPayload(T, reopened, new Date('2026-10-20T02:00:00Z')), payload);
+});
+
+test('draftFromPayload takes a saved building’s category from the caller', () => {
+  const payload = toPayload(
+    T,
+    offCampus({ building_id: 'b1', new_building_name: '' }),
+    new Date('2026-10-20T02:00:00Z')
+  );
+  const reopened = draftFromPayload(payload, {
+    campus_id: 'c1',
+    cluster_id: '',
+    unit_id: '',
+    building_name: 'Main',
+    location_kind: 'off_campus',
+    barangay_code: '1380601001',
+    now: new Date('2026-10-21T00:00:00Z'),
+  });
+  assert.equal(reopened.location_kind, 'off_campus');
+  assert.equal(reopened.barangay_code, '1380601001');
+});
+
+test('draftFromPayload treats a queued campus building as campus', () => {
+  const payload = toPayload(T, draft({ new_building_name: 'Annex' }), new Date());
+  const reopened = draftFromPayload(payload, {
+    campus_id: 'c1',
+    cluster_id: 'k1',
+    unit_id: 'unit1',
+    building_name: '',
+    now: new Date(),
+  });
+  assert.equal(locationKindOf(reopened), 'campus');
 });
 
 test('typed floors: blank is "not yet", the rest is clamped (review I5)', () => {
@@ -239,4 +359,18 @@ test('a question falls under its answer filter, or "unanswered" until it has one
     ['a', 'b', 'c'].map((i) => answerFilterOf(d, i)),
     ['no', 'unanswered', 'unanswered']
   );
+});
+
+test('a draft can start off campus, for an off-campus account (DRRM-026)', () => {
+  const d = newDraft({
+    client_ref: newUuid(),
+    evaluator_id: 'u1',
+    campus_id: '',
+    template_version_id: T.version_id,
+    cluster_id: '',
+    unit_id: '',
+    now: new Date(),
+    location_kind: 'off_campus',
+  });
+  assert.equal(locationKindOf(d), 'off_campus');
 });

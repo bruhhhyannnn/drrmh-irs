@@ -1,12 +1,16 @@
 'use client';
 
 import { AccountLoadFailed, ProfileSetup } from '@/components/auth';
+import { ButtonLink } from '@/components/ds';
 import { useOngoingEvents } from '@/components/hooks/use-events';
 import { useMyReport } from '@/components/hooks/use-reports';
 import { Loader } from '@/components/ui/loader';
+import { canUseReport, REPORT_OFF_CAMPUS_MESSAGE } from '@/lib/access';
 import { isNetworkError } from '@/lib/offline-queue';
 import { useOfflineQueueStore } from '@/store';
+import { Ban } from 'lucide-react';
 import { useState } from 'react';
+import { NoticeCard } from '../_components/chrome';
 import { ErtFrame } from '../_components/frame';
 import { useErtAccess, type ErtProfile } from '../_lib/use-ert-access';
 import { useFieldQueue } from '../_lib/use-field-queue';
@@ -33,7 +37,24 @@ export default function ErtReportPage() {
   if (access.status === 'checking') return <PageLoading label="Checking your access…" />;
   if (access.status === 'error') return <AccountLoadFailed />;
   if (access.status === 'setup') return <ProfileSetup />;
+  if (!canUseReport(access.profile)) return <NoReportForAccount />;
   return <ReportScreens profile={access.profile} />;
+}
+
+/** An off-campus account has no UP cluster to report for (DRRM-026). */
+function NoReportForAccount() {
+  return (
+    <ErtFrame>
+      <NoticeCard
+        icon={<Ban size={28} aria-hidden />}
+        iconTone="neutral"
+        title={REPORT_OFF_CAMPUS_MESSAGE}
+        description="Status reports are for UP campus teams. You can still assess buildings with the safety checklist."
+      >
+        <ButtonLink href="/assessment">Go to building assessment</ButtonLink>
+      </NoticeCard>
+    </ErtFrame>
+  );
 }
 
 function ReportScreens({ profile }: { profile: ErtProfile }) {

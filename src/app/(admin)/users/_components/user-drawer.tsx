@@ -156,6 +156,11 @@ function UserForm({
       custom_position_name: '',
       user_type_id: user?.user_type_id ?? ertTypeId,
       is_active: user?.is_active ?? true,
+      is_off_campus: user?.is_off_campus ?? false,
+      address: user?.address ?? '',
+      organization: user?.organization ?? '',
+      organization_address: user?.organization_address ?? '',
+      position_title: user?.position_title ?? '',
     },
   });
 
@@ -183,10 +188,17 @@ function UserForm({
     )
     .map((t) => ({ value: t.id, label: TYPE_LABELS[t.name] }));
   const isErt = typeId === ertTypeId;
+  // DRRM-026: someone outside UP. Only a Super Admin makes one, and only as an ERT member.
+  const offCampusSwitch = useWatch({ control, name: 'is_off_campus' });
+  const offCampus = isErt && (user ? !!user.is_off_campus : isSuperAdmin && offCampusSwitch);
 
   const onSubmit = handleSubmit(async (data) => {
-    // ERT members report for a cluster and unit; admins don't need one.
-    if (isErt && !data.cluster_id) {
+    if (!offCampus && !data.campus_id) {
+      setError('campus_id', { message: 'Campus is required' });
+      return;
+    }
+    // ERT members report for a cluster and unit; admins and off-campus accounts don't need one.
+    if (isErt && !offCampus && !data.cluster_id) {
       setError('cluster_id', { message: 'Pick a cluster for an ERT member.' });
       return;
     }
@@ -207,7 +219,7 @@ function UserForm({
       suffix: data.suffix?.trim() || null,
       email: data.email.trim(),
       username: data.username.trim(),
-      campus_id: data.campus_id,
+      campus_id: offCampus ? null : data.campus_id,
       cluster_id: data.cluster_id || null,
       unit_id: unitOther ? null : data.unit_id || null,
       position_id: positionOther ? null : data.position_id || null,
@@ -215,6 +227,13 @@ function UserForm({
       custom_position_name: positionName || null,
       user_type_id: data.user_type_id,
       is_active: data.is_active,
+      is_off_campus: offCampus,
+      ...(user?.is_off_campus && {
+        address: data.address?.trim() || null,
+        organization: data.organization?.trim() || null,
+        organization_address: data.organization_address?.trim() || null,
+        position_title: data.position_title?.trim() || null,
+      }),
     };
     try {
       if (user) {
@@ -403,162 +422,198 @@ function UserForm({
           </FormGrid>
         </DrawerSection>
 
-        <DrawerSection title="Assignment">
-          <FormGrid>
-            {/* Administrators add users to their own campus. */}
-            {isSuperAdmin && (
+        {user?.is_off_campus && (
+          <DrawerSection title="Off campus">
+            <FormGrid>
+              {(
+                [
+                  ['organization', 'Organization'],
+                  ['position_title', 'Position'],
+                  ['organization_address', "Organization's address"],
+                  ['address', 'Address'],
+                ] as const
+              ).map(([name, label]) => (
+                <FormField
+                  key={name}
+                  id={`user-${name}`}
+                  label={label}
+                  hint="Optional"
+                  error={errors[name]?.message}
+                >
+                  <TextInput
+                    id={`user-${name}`}
+                    autoComplete="off"
+                    maxLength={200}
+                    invalid={!!errors[name]}
+                    {...register(name)}
+                  />
+                </FormField>
+              ))}
+            </FormGrid>
+          </DrawerSection>
+        )}
+
+        {!offCampus && (
+          <DrawerSection title="Assignment">
+            <FormGrid>
+              {/* Administrators add users to their own campus. */}
+              {isSuperAdmin && (
+                <FormField
+                  id="user-campus"
+                  label="Campus"
+                  hint="Required"
+                  half
+                  error={errors.campus_id?.message}
+                >
+                  <Controller
+                    control={control}
+                    name="campus_id"
+                    render={({ field }) => (
+                      <SelectField
+                        id="user-campus"
+                        value={field.value ?? ''}
+                        onChange={(value) => {
+                          field.onChange(value);
+                          setValue('cluster_id', null);
+                          setValue('unit_id', null);
+                          setUnitOther(false);
+                        }}
+                        options={campuses
+                          .filter((c) => c.is_active || c.id === field.value)
+                          .map((c) => ({ value: c.id, label: c.name }))}
+                        placeholder="Select campus"
+                        required
+                        invalid={!!errors.campus_id}
+                        describedBy={describedBy('user-campus', errors.campus_id)}
+                      />
+                    )}
+                  />
+                </FormField>
+              )}
               <FormField
-                id="user-campus"
-                label="Campus"
-                hint="Required"
+                id="user-cluster"
+                label="Cluster"
+                hint={isErt ? 'Required' : 'Optional'}
                 half
-                error={errors.campus_id?.message}
+                error={errors.cluster_id?.message}
               >
                 <Controller
                   control={control}
-                  name="campus_id"
+                  name="cluster_id"
                   render={({ field }) => (
                     <SelectField
-                      id="user-campus"
+                      id="user-cluster"
                       value={field.value ?? ''}
                       onChange={(value) => {
-                        field.onChange(value);
-                        setValue('cluster_id', null);
+                        field.onChange(value || null);
                         setValue('unit_id', null);
                         setUnitOther(false);
                       }}
-                      options={campuses
+                      options={clusters
                         .filter((c) => c.is_active || c.id === field.value)
                         .map((c) => ({ value: c.id, label: c.name }))}
-                      placeholder="Select campus"
-                      required
-                      invalid={!!errors.campus_id}
-                      describedBy={describedBy('user-campus', errors.campus_id)}
+                      placeholder={campusId ? 'Select cluster' : 'Pick the campus first'}
+                      emptyLabel="No cluster"
+                      required={isErt}
+                      disabled={!campusId}
+                      invalid={!!errors.cluster_id}
+                      describedBy={describedBy('user-cluster', errors.cluster_id)}
                     />
                   )}
                 />
               </FormField>
-            )}
-            <FormField
-              id="user-cluster"
-              label="Cluster"
-              hint={isErt ? 'Required' : 'Optional'}
-              half
-              error={errors.cluster_id?.message}
-            >
-              <Controller
-                control={control}
-                name="cluster_id"
-                render={({ field }) => (
-                  <SelectField
-                    id="user-cluster"
-                    value={field.value ?? ''}
-                    onChange={(value) => {
-                      field.onChange(value || null);
-                      setValue('unit_id', null);
-                      setUnitOther(false);
-                    }}
-                    options={clusters
-                      .filter((c) => c.is_active || c.id === field.value)
-                      .map((c) => ({ value: c.id, label: c.name }))}
-                    placeholder={campusId ? 'Select cluster' : 'Pick the campus first'}
-                    emptyLabel="No cluster"
-                    required={isErt}
-                    disabled={!campusId}
-                    invalid={!!errors.cluster_id}
-                    describedBy={describedBy('user-cluster', errors.cluster_id)}
-                  />
-                )}
-              />
-            </FormField>
-            {/* Some clusters have no units, so Unit is optional for everyone. */}
-            <FormField id="user-unit" label="Unit" hint="Optional" half>
-              <Controller
-                control={control}
-                name="unit_id"
-                render={({ field }) => (
-                  <SelectField
-                    id="user-unit"
-                    value={unitOther ? OTHER_VALUE : (field.value ?? '')}
-                    onChange={(value) => {
-                      setUnitOther(value === OTHER_VALUE);
-                      field.onChange(value === OTHER_VALUE ? null : value || null);
-                    }}
-                    options={[
-                      ...units
-                        .filter((u) => u.is_active || u.id === field.value)
-                        .map((u) => ({ value: u.id, label: u.name })),
-                      OTHER_OPTION,
-                    ]}
-                    placeholder={clusterId ? 'No unit' : 'Pick the cluster first'}
-                    emptyLabel="No unit"
-                    disabled={!clusterId}
-                  />
-                )}
-              />
-            </FormField>
-            <FormField id="user-position" label="Position" hint="Optional" half={isSuperAdmin}>
-              <Controller
-                control={control}
-                name="position_id"
-                render={({ field }) => (
-                  <SelectField
-                    id="user-position"
-                    value={positionOther ? OTHER_VALUE : (field.value ?? '')}
-                    onChange={(value) => {
-                      setPositionOther(value === OTHER_VALUE);
-                      field.onChange(value === OTHER_VALUE ? null : value || null);
-                    }}
-                    options={[
-                      ...positions
-                        .filter((p) => p.is_active || p.id === field.value)
-                        .map((p) => ({ value: p.id, label: p.name })),
-                      OTHER_OPTION,
-                    ]}
-                    placeholder="Select position"
-                    emptyLabel="No position"
-                  />
-                )}
-              />
-            </FormField>
-            {unitOther && (
-              <FormField
-                id="user-unit-name"
-                label="Unit name"
-                hint="Required"
-                error={errors.custom_unit_name?.message}
-              >
-                <TextInput
+              {/* Some clusters have no units, so Unit is optional for everyone. */}
+              <FormField id="user-unit" label="Unit" hint="Optional" half>
+                <Controller
+                  control={control}
+                  name="unit_id"
+                  render={({ field }) => (
+                    <SelectField
+                      id="user-unit"
+                      value={unitOther ? OTHER_VALUE : (field.value ?? '')}
+                      onChange={(value) => {
+                        setUnitOther(value === OTHER_VALUE);
+                        field.onChange(value === OTHER_VALUE ? null : value || null);
+                      }}
+                      options={[
+                        ...units
+                          .filter((u) => u.is_active || u.id === field.value)
+                          .map((u) => ({ value: u.id, label: u.name })),
+                        OTHER_OPTION,
+                      ]}
+                      placeholder={clusterId ? 'No unit' : 'Pick the cluster first'}
+                      emptyLabel="No unit"
+                      disabled={!clusterId}
+                    />
+                  )}
+                />
+              </FormField>
+              <FormField id="user-position" label="Position" hint="Optional" half={isSuperAdmin}>
+                <Controller
+                  control={control}
+                  name="position_id"
+                  render={({ field }) => (
+                    <SelectField
+                      id="user-position"
+                      value={positionOther ? OTHER_VALUE : (field.value ?? '')}
+                      onChange={(value) => {
+                        setPositionOther(value === OTHER_VALUE);
+                        field.onChange(value === OTHER_VALUE ? null : value || null);
+                      }}
+                      options={[
+                        ...positions
+                          .filter((p) => p.is_active || p.id === field.value)
+                          .map((p) => ({ value: p.id, label: p.name })),
+                        OTHER_OPTION,
+                      ]}
+                      placeholder="Select position"
+                      emptyLabel="No position"
+                    />
+                  )}
+                />
+              </FormField>
+              {unitOther && (
+                <FormField
                   id="user-unit-name"
-                  autoFocus
-                  placeholder="e.g. Room 500s"
-                  autoComplete="off"
-                  invalid={!!errors.custom_unit_name}
-                  aria-describedby={describedBy('user-unit-name', errors.custom_unit_name)}
-                  {...register('custom_unit_name')}
-                />
-              </FormField>
-            )}
-            {positionOther && (
-              <FormField
-                id="user-position-name"
-                label="Position name"
-                hint="Required"
-                error={errors.custom_position_name?.message}
-              >
-                <TextInput
+                  label="Unit name"
+                  hint="Required"
+                  error={errors.custom_unit_name?.message}
+                >
+                  <TextInput
+                    id="user-unit-name"
+                    autoFocus
+                    placeholder="e.g. Room 500s"
+                    autoComplete="off"
+                    invalid={!!errors.custom_unit_name}
+                    aria-describedby={describedBy('user-unit-name', errors.custom_unit_name)}
+                    {...register('custom_unit_name')}
+                  />
+                </FormField>
+              )}
+              {positionOther && (
+                <FormField
                   id="user-position-name"
-                  autoFocus
-                  placeholder="e.g. Safety Officer"
-                  autoComplete="organization-title"
-                  invalid={!!errors.custom_position_name}
-                  aria-describedby={describedBy('user-position-name', errors.custom_position_name)}
-                  {...register('custom_position_name')}
-                />
-              </FormField>
-            )}
-          </FormGrid>
-        </DrawerSection>
+                  label="Position name"
+                  hint="Required"
+                  error={errors.custom_position_name?.message}
+                >
+                  <TextInput
+                    id="user-position-name"
+                    autoFocus
+                    placeholder="e.g. Safety Officer"
+                    autoComplete="organization-title"
+                    invalid={!!errors.custom_position_name}
+                    aria-describedby={describedBy(
+                      'user-position-name',
+                      errors.custom_position_name
+                    )}
+                    {...register('custom_position_name')}
+                  />
+                </FormField>
+              )}
+            </FormGrid>
+          </DrawerSection>
+        )}
 
         <DrawerSection title="Access">
           <FormGrid>
@@ -583,6 +638,28 @@ function UserForm({
                 )}
               />
             </FormField>
+            {isSuperAdmin && isErt && !user && (
+              <div className="md:col-span-2">
+                <Controller
+                  control={control}
+                  name="is_off_campus"
+                  render={({ field }) => (
+                    <SwitchField
+                      id="user-off-campus"
+                      label="Off-campus account"
+                      description="For someone outside UP. They fill in their organization at first sign-in, can't use Report, and only super admins see their assessments. This can't be changed later."
+                      checked={!!field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
+              </div>
+            )}
+            {user?.is_off_campus && (
+              <p className="text-[14px] text-gray-600 md:col-span-2">
+                Off-campus account: no campus, no Report, seen by super admins only.
+              </p>
+            )}
             <div className="md:col-span-2">
               <Controller
                 control={control}

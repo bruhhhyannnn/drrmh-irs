@@ -14,6 +14,7 @@ import {
   compareScores,
   groupChildren,
   mostFailed,
+  openLocationLevel,
   pointsChange,
   poolBuildings,
   scopeFromParams,
@@ -75,14 +76,207 @@ function building(
     id,
     name: id,
     floor_count: 1,
+    category: 'campus',
     unit: { id: unit, name: unit },
     cluster: { id: cluster, name: cluster },
     campus: { id: 'campus', name: 'UP Test' },
+    location: null,
+    label: unit,
     assessment_count: (latest ? 1 : 0) + (previous ? 1 : 0),
     latest,
     previous,
   };
 }
+
+function offCampus(
+  id: string,
+  codes: { region: string; province?: string; city: string; barangay: string },
+  latest: ScoredAssessment | null = null
+): BuildingScores {
+  const at = (code: string) => ({ code, name: `Place ${code}` });
+  return {
+    id,
+    name: id,
+    floor_count: 1,
+    category: 'off_campus',
+    unit: null,
+    cluster: null,
+    campus: { id: 'campus', name: 'UP Test' },
+    location: {
+      region: at(codes.region),
+      province: codes.province ? at(codes.province) : null,
+      city: at(codes.city),
+      barangay: at(codes.barangay),
+    },
+    label: `Place ${codes.barangay}, Place ${codes.city}`,
+    assessment_count: latest ? 1 : 0,
+    latest,
+    previous: null,
+  };
+}
+
+const noScope = { regionCode: null, provinceCode: null, cityCode: null, barangayCode: null };
+
+test('starts by region when buildings span regions', () => {
+  const { trail, children } = openLocationLevel(
+    [
+      offCampus('A', { region: 'r1', city: 'x1', barangay: 'b1' }, s(8, 10)),
+      offCampus('B', { region: 'r2', city: 'x2', barangay: 'b2' }, s(5, 10)),
+    ],
+    noScope
+  );
+  assert.deepEqual(trail, []);
+  assert.deepEqual(
+    children.map((c) => [c.kind, c.id]),
+    [
+      ['region', 'r1'],
+      ['region', 'r2'],
+    ]
+  );
+});
+
+test('a level with one child opens that child, and adds it to the trail', () => {
+  const { trail, children } = openLocationLevel(
+    [
+      offCampus('A', { region: 'r1', city: 'x1', barangay: 'b1' }),
+      offCampus('B', { region: 'r1', city: 'x2', barangay: 'b2' }),
+    ],
+    noScope
+  );
+  assert.deepEqual(trail, [{ kind: 'region', code: 'r1', name: 'Place r1' }]);
+  assert.deepEqual(
+    children.map((c) => [c.kind, c.id]),
+    [
+      ['city', 'x1'],
+      ['city', 'x2'],
+    ]
+  );
+});
+
+test('a city with no province is a child of its region beside provinces', () => {
+  const { children } = openLocationLevel(
+    [
+      offCampus('A', { region: 'r1', province: 'p1', city: 'x1', barangay: 'b1' }),
+      offCampus('B', { region: 'r1', city: 'x2', barangay: 'b2' }),
+    ],
+    noScope
+  );
+  assert.deepEqual(
+    children.map((c) => [c.kind, c.id]),
+    [
+      ['province', 'p1'],
+      ['city', 'x2'],
+    ]
+  );
+});
+
+test('a scope narrows to that place and fills in the trail', () => {
+  const { trail, children } = openLocationLevel(
+    [
+      offCampus('A', { region: 'r1', province: 'p1', city: 'x1', barangay: 'b1' }),
+      offCampus('B', { region: 'r1', province: 'p1', city: 'x2', barangay: 'b2' }),
+      offCampus('C', { region: 'r1', province: 'p2', city: 'x3', barangay: 'b3' }),
+    ],
+    { ...noScope, regionCode: 'r1', provinceCode: 'p1' }
+  );
+  assert.deepEqual(
+    trail.map((t) => t.kind),
+    ['region', 'province']
+  );
+  assert.deepEqual(
+    children.map((c) => c.id),
+    ['x1', 'x2']
+  );
+});
+
+test('one barangay ends at its buildings', () => {
+  const { trail, children } = openLocationLevel(
+    [
+      offCampus('A', { region: 'r1', city: 'x1', barangay: 'b1' }),
+      offCampus('B', { region: 'r1', city: 'x1', barangay: 'b1' }),
+    ],
+    noScope
+  );
+  assert.deepEqual(
+    trail.map((t) => t.kind),
+    ['region', 'city', 'barangay']
+  );
+  assert.deepEqual(
+    children.map((c) => [c.kind, c.id]),
+    [
+      ['building', 'A'],
+      ['building', 'B'],
+    ]
+  );
+});
+
+test('one building still shows as a building row', () => {
+  const { children } = openLocationLevel(
+    [offCampus('A', { region: 'r1', city: 'x1', barangay: 'b1' })],
+    noScope
+  );
+  assert.deepEqual(
+    children.map((c) => c.kind),
+    ['building']
+  );
+});
+
+test('location scores pool the same way as campus scores', () => {
+  const list = [
+    offCampus('A', { region: 'r1', city: 'x1', barangay: 'b1' }, s(8, 10)),
+    offCampus('B', { region: 'r1', city: 'x1', barangay: 'b2' }, s(5, 10)),
+    offCampus('C', { region: 'r2', city: 'x2', barangay: 'b3' }, s(1, 10)),
+  ];
+  const r1 = openLocationLevel(list, noScope).children[0];
+  assert.deepEqual(r1.current.overall, poolBuildings(list.slice(0, 2)).current.overall);
+});
+
+test('a campus building is ignored', () => {
+  const { children } = openLocationLevel(
+    [
+      building('A', 'u1', 'c1', s(8, 10)),
+      offCampus('Z', { region: 'r1', city: 'x1', barangay: 'b1' }),
+    ],
+    noScope
+  );
+  assert.deepEqual(
+    children.map((c) => c.id),
+    ['Z']
+  );
+});
+
+test('scopeFromParams defaults to the campus view', () => {
+  const scope = scopeFromParams(new URLSearchParams(), {
+    isSuperAdmin: false,
+    switcherCampusId: '',
+  });
+  assert.equal(scope.view, 'campus');
+  assert.deepEqual(scope.location, noScope);
+});
+
+test('scopeFromParams reads the off-campus view and its location', () => {
+  const scope = scopeFromParams(new URLSearchParams('bs_view=off_campus&bs_region=r1&bs_city=x1'), {
+    isSuperAdmin: false,
+    switcherCampusId: '',
+  });
+  assert.equal(scope.view, 'off_campus');
+  assert.deepEqual(scope.location, { ...noScope, regionCode: 'r1', cityCode: 'x1' });
+});
+
+test('an off-campus building never joins a campus group', () => {
+  const list = [
+    building('A', 'u1', 'c1', s(8, 10)),
+    offCampus('Z', { region: 'r1', city: 'x1', barangay: 'b1' }, s(1, 10)),
+  ];
+  assert.deepEqual(
+    groupChildren(list, 'campus').map((c) => c.id),
+    ['c1']
+  );
+  assert.deepEqual(
+    groupChildren(list, 'cluster').map((c) => c.id),
+    ['u1']
+  );
+});
 
 test('pooled current counts every latest; the change only re-assessed buildings', () => {
   const g = poolBuildings([

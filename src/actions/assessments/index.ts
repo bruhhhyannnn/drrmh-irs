@@ -11,8 +11,17 @@ import {
   type CreateAssessmentResult,
   type MyAssessmentRow,
 } from '@/lib/assessment-template';
+import { matchBuildingByName } from '@/lib/building-match';
+import {
+  buildingInCampus,
+  buildingPlaceSelect,
+  offCampusPool,
+  toBuildingPlace,
+} from '@/lib/building-place';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
+import type { PsgcTree } from '@/lib/psgc';
+import { findBarangay, loadPsgcTree } from '@/lib/psgc-data';
 import { assessmentPayloadSchema, type AssessmentPayload } from '@/lib/schemas';
 import { requireProfile } from '@/lib/server-auth';
 import { Prisma } from '@prisma/client';
@@ -52,15 +61,21 @@ export async function getTemplateVersion(
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
-/** The caller's own campus only; empty for any other campus or an unverified caller. */
+/**
+ * The caller's own campus only; empty for any other campus or an unverified caller. An off-campus
+ * account (DRRM-026, `campusId` null) gets the buildings no campus owns, and no clusters or events.
+ */
 export async function getAssessmentSetup(
   token: string | null,
-  campusId: string
+  campusId: string | null
 ): Promise<AssessmentSetup> {
   const none: AssessmentSetup = { clusters: [], buildings: [], events: [] };
-  if (!isUuid(campusId)) return none;
   const caller = await requireProfile(token);
-  if (!caller.ok || caller.profile.campus_id !== campusId) return none;
+  if (!caller.ok) return none;
+  if (caller.profile.is_off_campus) {
+    return { ...none, buildings: await loadBuildingOptions(offCampusPool(null)) };
+  }
+  if (!isUuid(campusId) || caller.profile.campus_id !== campusId) return none;
 
   const statusIs = (name: string): Prisma.EventWhereInput => ({
     status: { name: { equals: name, mode: 'insensitive' } },
@@ -79,18 +94,7 @@ export async function getAssessmentSetup(
         },
       },
     }),
-    prisma.building.findMany({
-      where: { is_active: true, unit: { cluster: { campus_id: campusId } } },
-      orderBy: { name: 'asc' },
-      select: {
-        id: true,
-        unit_id: true,
-        name: true,
-        floor_count: true,
-        areas: { select: { area_type_id: true } },
-        assessments: { orderBy: { ended_at: 'desc' }, take: 1, select: { ended_at: true } },
-      },
-    }),
+    loadBuildingOptions(buildingInCampus(campusId)),
     prisma.event.findMany({
       where: {
         campus_id: campusId,
@@ -106,16 +110,42 @@ export async function getAssessmentSetup(
 
   return {
     clusters,
-    buildings: buildings.map((b) => ({
-      id: b.id,
-      unit_id: b.unit_id,
-      name: b.name,
-      floor_count: b.floor_count,
-      area_type_ids: b.areas.map((a) => a.area_type_id),
-      last_assessed_at: b.assessments[0]?.ended_at.toISOString() ?? null,
-    })),
+    buildings,
     events: events.map((e) => ({ id: e.id, name: e.name, status: e.status.name })),
   };
+}
+
+/** Active buildings to choose on the Details step, with the profile their last assessment left. */
+async function loadBuildingOptions(where: Prisma.BuildingWhereInput) {
+  const buildings = await prisma.building.findMany({
+    where: { is_active: true, ...where },
+    orderBy: { name: 'asc' },
+    select: {
+      id: true,
+      unit_id: true,
+      barangay_code: true,
+      name: true,
+      floor_count: true,
+      areas: { select: { area_type_id: true } },
+      assessments: { orderBy: { ended_at: 'desc' }, take: 1, select: { ended_at: true } },
+    },
+  });
+  return buildings.map((b) => ({
+    id: b.id,
+    unit_id: b.unit_id,
+    barangay_code: b.barangay_code,
+    name: b.name,
+    floor_count: b.floor_count,
+    area_type_ids: b.areas.map((a) => a.area_type_id),
+    last_assessed_at: b.assessments[0]?.ended_at.toISOString() ?? null,
+  }));
+}
+
+/** The location list for off-campus assessments, which the phone keeps. null when unverified. */
+export async function getLocationTree(token: string | null): Promise<PsgcTree | null> {
+  const caller = await requireProfile(token);
+  if (!caller.ok) return null;
+  return loadPsgcTree();
 }
 
 /* ─── Submit ─── */
@@ -130,20 +160,79 @@ async function findByClientRef(clientRef: string) {
   return found?.id ?? null;
 }
 
-/** The building's id, or null when it isn't available to this campus. New ones are created. */
+/** An off-campus building by its barangay and name in this campus, created when it's new. The
+ * location comes from the server's own list; the phone only sends the barangay's code. */
+async function resolveOffCampusBuilding(
+  building: Extract<AssessmentPayload['building'], { new_off_campus: unknown }>['new_off_campus'],
+  campusId: string | null,
+  userId: string
+): Promise<string | null> {
+  const location = await findBarangay(building.barangay_code);
+  if (!location) return null;
+
+  // null is the pool of buildings no campus owns (an off-campus account's), not every campus.
+  const where = { ...offCampusPool(campusId), barangay_code: building.barangay_code };
+  const findSameName = async () =>
+    matchBuildingByName(
+      await prisma.building.findMany({
+        where,
+        select: { id: true, name: true, is_active: true },
+      }),
+      building.name
+    );
+  const existing = await findSameName();
+  if (existing) return existing.is_active ? existing.id : null;
+  try {
+    const created = await prisma.building.create({
+      data: {
+        campus_id: campusId,
+        name: building.name,
+        created_by: userId,
+        region_code: location.region.code,
+        region_name: location.region.name,
+        province_code: location.province?.code ?? null,
+        province_name: location.province?.name ?? null,
+        city_code: location.city.code,
+        city_name: location.city.name,
+        barangay_code: location.barangay.code,
+        barangay_name: location.barangay.name,
+        latitude: building.latitude,
+        longitude: building.longitude,
+        location_name: building.location_name,
+      },
+      select: { id: true },
+    });
+    return created.id;
+  } catch (err) {
+    if (!isUniqueViolation(err)) throw err;
+    const again = await findSameName();
+    return again?.is_active ? again.id : null;
+  }
+}
+
+/** The building's id, or null when it isn't available to this campus. New ones are created. An
+ * off-campus account (`campusId` null) may only use buildings no campus owns. */
 async function resolveBuilding(
   building: AssessmentPayload['building'],
-  campusId: string,
+  campusId: string | null,
   userId: string
 ): Promise<string | null> {
   if ('id' in building) {
     const found = await prisma.building.findFirst({
-      where: { id: building.id, is_active: true, unit: { cluster: { campus_id: campusId } } },
+      where: {
+        id: building.id,
+        is_active: true,
+        ...(campusId ? buildingInCampus(campusId) : offCampusPool(null)),
+      },
       select: { id: true },
     });
     return found?.id ?? null;
   }
+  if ('new_off_campus' in building) {
+    return resolveOffCampusBuilding(building.new_off_campus, campusId, userId);
+  }
 
+  if (!campusId) return null;
   const { unit_id, name } = building.new;
   const unit = await prisma.unit.findFirst({
     where: { id: unit_id, is_active: true, cluster: { campus_id: campusId } },
@@ -157,7 +246,7 @@ async function resolveBuilding(
       where: { unit_id },
       select: { id: true, name: true, is_active: true },
     });
-    return siblings.find((b) => b.name.toLowerCase() === name.toLowerCase()) ?? null;
+    return matchBuildingByName(siblings, name);
   };
   const existing = await findSameName();
   if (existing) return existing.is_active ? existing.id : null;
@@ -219,15 +308,22 @@ export async function createAssessment(
       );
     }
 
+    if (
+      'new_off_campus' in data.building &&
+      !(await findBarangay(data.building.new_off_campus.barangay_code))
+    ) {
+      return fail('That barangay is no longer on the location list. Choose it again.');
+    }
     const buildingId = await resolveBuilding(data.building, campusId, profile.id);
     if (!buildingId) return fail('That building is no longer available.');
 
-    const event = data.event_id
-      ? await prisma.event.findFirst({
-          where: { id: data.event_id, campus_id: campusId },
-          select: { id: true },
-        })
-      : null;
+    const event =
+      data.event_id && campusId
+        ? await prisma.event.findFirst({
+            where: { id: data.event_id, campus_id: campusId },
+            select: { id: true },
+          })
+        : null;
 
     const pillars = await prisma.drrmPillar.findMany({ select: { id: true, code: true } });
     const pillarScores = PILLAR_CODES.map((code) => {
@@ -301,14 +397,14 @@ export async function getMyAssessments(token: string | null): Promise<MyAssessme
       id: true,
       ended_at: true,
       needs_follow_up: true,
-      building: { select: { name: true, unit: { select: { name: true } } } },
+      building: { select: { name: true, ...buildingPlaceSelect } },
       pillar_scores: { select: { safe_count: true, counted_count: true } },
     },
   });
   return rows.map((r) => ({
     id: r.id,
     building_name: r.building.name,
-    unit_name: r.building.unit.name,
+    place_label: toBuildingPlace(r.building).label,
     ended_at: r.ended_at.toISOString(),
     safe: r.pillar_scores.reduce((n, p) => n + p.safe_count, 0),
     counted: r.pillar_scores.reduce((n, p) => n + p.counted_count, 0),

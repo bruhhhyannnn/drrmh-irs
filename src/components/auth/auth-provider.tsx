@@ -1,8 +1,9 @@
 'use client';
 
-import { getUserByAuthId } from '@/actions/users';
+import { getMyProfile } from '@/actions/users';
 import { supabase } from '@/lib';
 import { withTimeout } from '@/lib/offline-cache';
+import { getAccessToken } from '@/lib/supabase';
 import { useAuthStore } from '@/store';
 import { useEffect, useRef } from 'react';
 
@@ -65,7 +66,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfileError(null);
 
     try {
-      const user = await withTimeout(getUserByAuthId(userId), PROFILE_TIMEOUT_MS);
+      // The server finds the profile from the verified token, not from an id the client sends.
+      const user = await withTimeout(
+        getAccessToken().then((token) => getMyProfile(token)),
+        PROFILE_TIMEOUT_MS
+      );
+      if (user && user.auth_id !== userId) return;
       if (fetchingForRef.current !== userId) return;
       if (!user) {
         setUserProfile(null);

@@ -40,6 +40,7 @@ Each module note lists its paths, data, server actions, client pieces, rules and
 - [[0007-token-verified-actions]]
 - [[0008-hand-built-charts]]
 - [[0009-table-driven-settings]]
+- [[0010-off-campus-buildings]]
 
 New decision: copy [[decisions/TEMPLATE]].
 
@@ -51,6 +52,7 @@ Statuses are taken from each plan's frontmatter as of 2026-10-22. Keep this list
 
 | Plan                                                                                                 | Status      | Branch                                     |
 | ---------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------------ |
+| [[plan/feature/DRRM-025-off-campus-assessment\|DRRM-025 Off-campus building assessments]]            | in-review   | `feat/DRRM-025-off-campus-assessment`      |
 | [[plan/feature/DRRM-024-event-cluster-drilldown\|DRRM-024 Event cluster and unit drill-down]]        | in-review   | `feat/DRRM-024-event-cluster-drilldown`    |
 | [[plan/fix/DRRM-023-report-500-and-role-routing\|DRRM-023 Report 500s and role routing]]             | in-progress | `fix/DRRM-023-report-500-and-role-routing` |
 | [[plan/review/2026-10-29-pr-89-report-photos\|PR #89 report photos review (2026-10-29)]]             | in-progress | `feat/DRRM-022-report-photos`              |

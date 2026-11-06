@@ -13,6 +13,7 @@ import {
   SettingsTable,
   updateSettingsItem,
 } from '@/actions/settings';
+import { getAccessToken } from '@/lib/supabase';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 
 /** Other lists that show a table's rows: buildings also appear on the assessment pages. */
@@ -36,7 +37,8 @@ export function useSettingsTable(table: SettingsTable, filterId?: string) {
 export function useCreateSetting(table: SettingsTable) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: Record<string, unknown>) => createSettingsItem(table, data),
+    mutationFn: async (data: Record<string, unknown>) =>
+      createSettingsItem(await getAccessToken(), table, data),
     onSuccess: () => invalidateTable(queryClient, table),
   });
 }
@@ -44,8 +46,8 @@ export function useCreateSetting(table: SettingsTable) {
 export function useUpdateSetting(table: SettingsTable) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
-      updateSettingsItem(table, id, data),
+    mutationFn: async ({ id, data }: { id: string; data: Record<string, unknown> }) =>
+      updateSettingsItem(await getAccessToken(), table, id, data),
     onSuccess: () => invalidateTable(queryClient, table),
   });
 }
@@ -53,7 +55,7 @@ export function useUpdateSetting(table: SettingsTable) {
 export function useDeleteSetting(table: SettingsTable) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => deleteSettingsItem(table, id),
+    mutationFn: async (id: string) => deleteSettingsItem(await getAccessToken(), table, id),
     onSuccess: () => invalidateTable(queryClient, table),
   });
 }

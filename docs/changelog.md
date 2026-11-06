@@ -9,6 +9,30 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-027 Pillar page redesign: 2026-11-06 (branch `feat/DRRM-027-pillar-page-redesign`, not merged yet)
+
+Plan: [[plan/feature/DRRM-027-pillar-page-redesign]] · [[pillars-and-landing]]
+
+- Redesigns the DRRM pillar pages (`/pillars/<slug>`) with a single view at a time (Campus vs Off-campus in `?view=`) and a Super Admin campus picker (writing `useCampusScopeStore`).
+- Sections structured in decision order: 1. How are we doing (pooled score tile with change pts, buildings assessed, need follow-up, answered N/A rate), 2. What to fix first (full-width failing checklist items with building drill-down), 3. Buildings to visit (lowest scores with follow-up tags and dates), 4. Where it's weakest (places table with change).
+- Adds five focused charts: quarterly score trend (Chart A, Campus vs Off-campus), score bands (Chart B, with building drill-down and no-score count), better/same/worse change bar (Chart C, with drill-down), section scores as bars (Chart D, lowest first), and monthly activity with overdue building tracking (Chart E).
+- Dedicated view for Rehabilitation and Recovery with continuity plan counts, plan change tracking, missing plan building list, and quarterly adoption trend.
+
+## DRRM-026 Off-campus accounts: 2026-11-06 (branch `feat/DRRM-026-off-campus-accounts`, not merged yet)
+
+Plan: [[plan/feature/DRRM-026-off-campus-accounts]]
+
+- A Super Admin makes off-campus ERT accounts with an email and password ([[users]]). They set up their own name, address, organization and position, with a data privacy consent ([[auth]]), and have no Report tool.
+- Their assessments are always off campus and belong to no campus, so only Super Admins see them ([[assessments]], [[campus-scoping]]). Schema in `prisma/manual/DRRM-026-off-campus-accounts.sql` ([[database]]).
+
+## DRRM-025 Off-campus building assessments: 2026-11-05 (branch `feat/DRRM-025-off-campus-assessment`, not merged yet)
+
+Plan: [[plan/feature/DRRM-025-off-campus-assessment]]
+
+- **ERT form** ([[assessments]], [[offline-pwa]]): an On campus / Off campus choice on the Details step, PSGC location dropdowns that work offline, and an optional map pin. Schema in `prisma/manual/DRRM-025-off-campus-buildings.sql` ([[0010-off-campus-buildings]]).
+- **Admins** ([[building-safety]], [[assessment-admin]]): a Campuses | Off-campus switch on the dashboard with a drill-down by location, and a category filter on the Assessments tabs. Off-campus results never count toward a campus score.
+- **Pillar pages** ([[pillars-and-landing]]): the placeholders become each pillar's results, Campus beside Off-campus, including the N/A rate, and `/pillars` is a new overview.
+
 ## DRRM-024 Event cluster and unit drill-down: 2026-11-05 (branch `feat/DRRM-024-event-cluster-drilldown`, not merged yet)
 
 [[plan/feature/DRRM-024-event-cluster-drilldown]] · [[events]]

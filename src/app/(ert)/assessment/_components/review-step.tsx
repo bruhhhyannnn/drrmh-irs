@@ -3,7 +3,7 @@
 import { Bilingual } from '@/components/assessment/bilingual';
 import { Banner, Button, FOCUS_RING } from '@/components/ds';
 import { cn } from '@/lib';
-import type { DraftStep } from '@/lib/assessment-draft';
+import { detailsFromDraft, type DraftStep } from '@/lib/assessment-draft';
 import { scoreAssessment, type AnswerMap } from '@/lib/assessment-score';
 import { itemLabel, type TemplateItem } from '@/lib/assessment-template';
 import { assessmentDetailsSchema } from '@/lib/schemas';
@@ -34,14 +34,7 @@ export function ReviewStep({
     Object.entries(draft.answers).map(([itemId, a]) => [itemId, a.answer])
   );
   const score = scoreAssessment(template, draft.floor_count, draft.area_type_ids, answers);
-  const detailsOk = assessmentDetailsSchema.safeParse({
-    cluster_id: draft.cluster_id,
-    unit_id: draft.unit_id,
-    building_id: draft.building_id,
-    new_building_name: draft.new_building_name,
-    incident_commander: draft.incident_commander,
-    event_id: draft.event_id,
-  }).success;
+  const detailsOk = assessmentDetailsSchema.safeParse(detailsFromDraft(draft)).success;
 
   const unanswered = template.sections
     .map((section) => ({
