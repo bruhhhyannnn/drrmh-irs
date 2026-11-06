@@ -10,6 +10,7 @@ import {
 } from './assessment-template';
 import { buildingPlaceSelect, NO_CAMPUS_NAME, toBuildingPlace } from './building-place';
 import { scoresFromPillarRows, type AnswerFact } from './building-safety';
+import type { HistoryRow } from './pillar-trends';
 import { prisma } from './prisma';
 
 // Loaders shared by the ERT and admin assessment actions: a checklist version as the app sees it,
@@ -309,6 +310,35 @@ export async function loadRollupFacts(buildings: BuildingScores[]): Promise<{
     facts.push({ assessment_id: r.assessment_id, ...meta, answer: r.answer });
   }
   return { facts, ids };
+}
+
+/** Every assessment of these buildings with its tally in one pillar, for the pillar page's charts
+ * over time (DRRM-027). */
+export async function loadPillarHistory(
+  where: Prisma.BuildingWhereInput,
+  pillar: PillarCode
+): Promise<HistoryRow[]> {
+  const rows = await prisma.assessment.findMany({
+    where: { building: where },
+    select: {
+      building_id: true,
+      ended_at: true,
+      pillar_scores: {
+        where: { pillar: { code: pillar } },
+        select: { safe_count: true, counted_count: true, na_count: true },
+      },
+    },
+  });
+  return rows.map((r) => {
+    const score = r.pillar_scores[0];
+    return {
+      building_id: r.building_id,
+      ended_at: r.ended_at.toISOString(),
+      tally: score
+        ? { safe: score.safe_count, counted: score.counted_count, na: score.na_count }
+        : { safe: 0, counted: 0, na: 0 },
+    };
+  });
 }
 
 /** Buildings by name, each with its latest assessment and the one before it. */

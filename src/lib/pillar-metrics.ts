@@ -10,6 +10,7 @@ import {
   type FailedItem,
   type SectionRow,
 } from './building-safety';
+import type { PillarTrends } from './pillar-trends';
 
 // What each DRRM pillar page shows for one group of buildings, Campus or Off-campus (DRRM-025).
 // Scores pool as everywhere else. The N/A rate sits beside them because a score leaves N/A out: a
@@ -169,9 +170,13 @@ export function recoveryGroup(buildings: BuildingScores[], children: ChildRow[])
   return group;
 }
 
+/** One group's numbers plus its charts and drill-downs (DRRM-027). */
+export type ScoredView = PillarGroup & PillarTrends;
+export type RecoveryView = RecoveryGroup & PillarTrends;
+
 export type PillarMetrics =
-  | { kind: 'scored'; campus: PillarGroup; off_campus: PillarGroup }
-  | { kind: 'recovery'; campus: RecoveryGroup; off_campus: RecoveryGroup };
+  | { kind: 'scored'; campus: ScoredView; off_campus: ScoredView }
+  | { kind: 'recovery'; campus: RecoveryView; off_campus: RecoveryView };
 
 export interface PillarOverviewRow {
   pillar: PillarCode;

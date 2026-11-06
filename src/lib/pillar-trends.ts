@@ -161,3 +161,44 @@ export function failingBuildings(
   }
   return result;
 }
+
+export interface PillarTrends {
+  /** Latest assessments the checklist flagged for follow-up. */
+  needsFollowUp: number;
+  /** Active buildings never assessed (campus buildings listed in Settings). */
+  notYetAssessed: number;
+  bands: ReturnType<typeof scoreBands>;
+  changes: ReturnType<typeof changeCounts>;
+  trend: ReturnType<typeof quarterlyTrend>;
+  activity: ReturnType<typeof monthlyActivity>;
+  overdue: Named[];
+  failing: Record<string, FailingBuilding[]>;
+}
+
+/** The pillar page's charts and drill-downs for one group of buildings (Campus or Off-campus). */
+export function pillarTrends(input: {
+  buildings: BuildingScores[];
+  history: HistoryRow[];
+  facts: AnswerFact[];
+  currentIds: string[];
+  pillar: PillarCode;
+  now: Date;
+}): PillarTrends {
+  const { buildings, history, facts, currentIds, pillar, now } = input;
+  const buildingOf = new Map<string, FailingBuilding>();
+  for (const b of buildings) {
+    if (b.latest) {
+      buildingOf.set(b.latest.id, { id: b.id, name: b.name, label: b.label, category: b.category });
+    }
+  }
+  return {
+    needsFollowUp: buildings.filter((b) => b.latest?.needs_follow_up).length,
+    notYetAssessed: buildings.filter((b) => !b.latest).length,
+    bands: scoreBands(buildings, pillar),
+    changes: changeCounts(buildings, pillar),
+    trend: quarterlyTrend(history, now),
+    activity: monthlyActivity(history, now),
+    overdue: overdueBuildings(buildings, now),
+    failing: failingBuildings(facts, currentIds, buildingOf, pillar),
+  };
+}

@@ -8,6 +8,7 @@ import {
   failingBuildings,
   monthlyActivity,
   overdueBuildings,
+  pillarTrends,
   quarterlyTrend,
   scoreBands,
   type HistoryRow,
@@ -236,4 +237,24 @@ test('empty inputs give empty results', () => {
     [0, 0]
   );
   assert.deepEqual(overdueBuildings([], now), []);
+});
+
+test('pillarTrends gathers the page’s extra fields for one group', () => {
+  const now = new Date('2026-11-06T00:00:00.000Z');
+  const flagged = { ...scored('a', t(4, 10), '2026-10-01T00:00:00.000Z'), needs_follow_up: true };
+  const fields = pillarTrends({
+    buildings: [building('A', flagged), building('never', null)],
+    history: [row('A', '2026-10-01T00:00:00.000Z', 4, 10)],
+    facts: [fact('a', 'VI.9', 'no')],
+    currentIds: ['a'],
+    pillar: P,
+    now,
+  });
+  assert.equal(fields.needsFollowUp, 1);
+  assert.equal(fields.notYetAssessed, 1);
+  assert.deepEqual(names(fields.failing['VI.9']), ['A']);
+  assert.deepEqual(names(fields.bands.bands[0].buildings), ['A']);
+  assert.equal(fields.trend.at(-1)?.label, 'Q4 2026');
+  assert.equal(fields.activity.at(-1)?.count, 0);
+  assert.equal(fields.activity.at(-2)?.count, 1);
 });
