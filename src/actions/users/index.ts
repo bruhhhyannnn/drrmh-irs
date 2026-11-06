@@ -7,6 +7,7 @@ import { toFriendlyError } from '@/lib/prisma-error';
 import { offCampusProfileSchema, type OffCampusProfileFormData } from '@/lib/schemas';
 import { requireAdmin, requireProfile } from '@/lib/server-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withoutAssignment } from '@/lib/user-assignment';
 import { revalidatePath } from 'next/cache';
 
 export type CreateUserInput = {
@@ -104,16 +105,6 @@ export async function getUserByAuthId(authId: string) {
   });
 }
 
-/** An off-campus account has no UP assignment; its own fields are filled in at first sign-in. */
-const NO_ASSIGNMENT = {
-  campus_id: null,
-  cluster_id: null,
-  unit_id: null,
-  position_id: null,
-  custom_unit_name: null,
-  custom_position_name: null,
-};
-
 /**
  * `token` is checked only for an off-campus account (DRRM-026): its caller must be a Super Admin,
  * because such an account belongs to no campus that an Administrator could be responsible for.
@@ -135,7 +126,7 @@ export async function createUser(data: CreateUserInput, token?: string | null) {
     }
   }
   const profileData = named.is_off_campus
-    ? { ...named, ...NO_ASSIGNMENT, is_off_campus: true }
+    ? { ...withoutAssignment(named), is_off_campus: true }
     : await withNamedAssignment({ ...named, is_off_campus: false });
   const is_profile_complete = isAdminUserType(userType?.name);
 
@@ -172,7 +163,7 @@ export async function updateUser(id: string, data: UpdateUserInput) {
     const user = await prisma.user.update({
       where: { id },
       data: current?.is_off_campus
-        ? { ...rest, ...NO_ASSIGNMENT }
+        ? withoutAssignment(rest)
         : await withNamedAssignment({ ...rest, campus_id: rest.campus_id || undefined }),
     });
     revalidatePath('/users');
