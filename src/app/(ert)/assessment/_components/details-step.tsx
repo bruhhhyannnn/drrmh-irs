@@ -141,6 +141,8 @@ export function DetailsStep({
   };
 
   const campusName = profile.campus?.name ?? '—';
+  // An off-campus account (DRRM-026) always assesses off campus, for Super Admins only.
+  const offCampusAccount = !!profile.is_off_campus;
   const fieldId = (name: string) => `${id}-${name}`;
   const pin = draft.pin ?? null;
 
@@ -148,25 +150,27 @@ export function DetailsStep({
     <Card className="flex flex-col gap-5 p-5 md:p-6">
       <h2 className="text-[19px] leading-[1.3] font-bold">Details</h2>
 
-      <div className="flex flex-col gap-2">
-        <FieldLabel id={fieldId('kind-label')} hint="Required">
-          Where is the building?
-        </FieldLabel>
-        <SegmentedControl
-          name={fieldId('kind')}
-          labelledBy={fieldId('kind-label')}
-          options={[
-            { value: 'campus', label: 'On campus' },
-            { value: 'off_campus', label: 'Off campus' },
-          ]}
-          value={values.location_kind ?? ''}
-          onChange={(value) => {
-            if (value !== 'campus' && value !== 'off_campus') return;
-            pickPlace({ location_kind: value });
-          }}
-        />
-        <FieldError>{errors.location_kind?.message}</FieldError>
-      </div>
+      {!offCampusAccount && (
+        <div className="flex flex-col gap-2">
+          <FieldLabel id={fieldId('kind-label')} hint="Required">
+            Where is the building?
+          </FieldLabel>
+          <SegmentedControl
+            name={fieldId('kind')}
+            labelledBy={fieldId('kind-label')}
+            options={[
+              { value: 'campus', label: 'On campus' },
+              { value: 'off_campus', label: 'Off campus' },
+            ]}
+            value={values.location_kind ?? ''}
+            onChange={(value) => {
+              if (value !== 'campus' && value !== 'off_campus') return;
+              pickPlace({ location_kind: value });
+            }}
+          />
+          <FieldError>{errors.location_kind?.message}</FieldError>
+        </div>
+      )}
 
       {values.location_kind === 'campus' && (
         <>
@@ -223,7 +227,11 @@ export function DetailsStep({
             errors={errors}
             onPick={pickPlace}
           />
-          <FieldHelp>Results go to {campusName}.</FieldHelp>
+          <FieldHelp>
+            {offCampusAccount
+              ? 'Results go to DRRM-H Super Admins.'
+              : `Results go to ${campusName}.`}
+          </FieldHelp>
         </>
       )}
 
@@ -311,18 +319,20 @@ export function DetailsStep({
         />
       </div>
 
-      <div className="flex flex-col gap-2">
-        <FieldLabel htmlFor={fieldId('event')} hint="Optional">
-          Linked event / drill
-        </FieldLabel>
-        <SelectField
-          id={fieldId('event')}
-          value={values.event_id}
-          onChange={(value) => set({ event_id: value })}
-          options={setup.events.map((e) => ({ value: e.id, label: e.name }))}
-          placeholder="None"
-        />
-      </div>
+      {!offCampusAccount && (
+        <div className="flex flex-col gap-2">
+          <FieldLabel htmlFor={fieldId('event')} hint="Optional">
+            Linked event / drill
+          </FieldLabel>
+          <SelectField
+            id={fieldId('event')}
+            value={values.event_id}
+            onChange={(value) => set({ event_id: value })}
+            options={setup.events.map((e) => ({ value: e.id, label: e.name }))}
+            placeholder="None"
+          />
+        </div>
+      )}
 
       <DetailList
         rows={[

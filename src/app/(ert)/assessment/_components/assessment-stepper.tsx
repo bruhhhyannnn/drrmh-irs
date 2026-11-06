@@ -85,7 +85,7 @@ function BackToHub() {
 /** The checklist version the draft was started on, and the campus's form setup. */
 function DraftLoader({ initial, profile }: { initial: AssessmentDraft; profile: ErtProfile }) {
   const template = useTemplateVersion(initial.template_version_id);
-  const setup = useAssessmentSetup(initial.campus_id);
+  const setup = useAssessmentSetup(initial.campus_id, !!profile.is_off_campus);
 
   if (template.data && setup.data) {
     return (

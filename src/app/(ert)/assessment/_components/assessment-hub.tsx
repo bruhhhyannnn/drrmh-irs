@@ -44,7 +44,7 @@ export function AssessmentHub({ profile }: { profile: ErtProfile }) {
   const setPendingCount = useOfflineQueueStore((s) => s.setPendingCount);
   const flushNow = useOfflineQueueStore((s) => s.flushNow);
   const template = useAssessmentTemplate();
-  const setup = useAssessmentSetup(profile.campus_id ?? undefined);
+  const setup = useAssessmentSetup(profile.campus_id ?? undefined, !!profile.is_off_campus);
   // Loaded here, not on the Details step, so it's on the phone before the evaluator goes offline.
   const locationTree = useLocationTree();
   const drafts = useAssessmentDrafts(profile.id);
@@ -70,6 +70,7 @@ export function AssessmentHub({ profile }: { profile: ErtProfile }) {
         cluster_id: profile.cluster_id ?? profile.unit?.cluster_id ?? '',
         unit_id: profile.unit_id ?? '',
         now: new Date(),
+        location_kind: profile.is_off_campus ? 'off_campus' : null,
       });
       await saveAssessmentDraft(draft);
       await queryClient.invalidateQueries({ queryKey: ['assessment-drafts'] });
