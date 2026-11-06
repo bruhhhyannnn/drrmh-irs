@@ -17,6 +17,7 @@ import {
 import { getAccessToken } from '@/lib/supabase';
 import { useAuthStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useId, useState } from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
@@ -24,12 +25,23 @@ import toast from 'react-hot-toast';
 import { AuthShell } from './auth-shell';
 import { AUTH_LINK, AuthBanner, AuthHeading } from './auth-ui';
 
-const STEPS: { id: SetupStep; title: string; intro: string }[] = [
-  { id: 'about', title: 'About you', intro: 'Your name as it should appear on assessments.' },
-  { id: 'home', title: 'Your home address', intro: 'Pick your barangay from the list.' },
+const STEPS: { id: SetupStep; title: string; short: string; intro: string }[] = [
+  {
+    id: 'about',
+    title: 'About you',
+    short: 'About you',
+    intro: 'Your name as it should appear on assessments.',
+  },
+  {
+    id: 'home',
+    title: 'Your home address',
+    short: 'Home address',
+    intro: 'Pick your barangay from the list.',
+  },
   {
     id: 'work',
     title: 'Where you work',
+    short: 'Where you work',
     intro: 'Your organization, your position there, and its address.',
   },
 ];
@@ -148,24 +160,44 @@ export function OffCampusSetup() {
         </span>
       </div>
 
-      <AuthHeading title="Set up your profile">{step.intro}</AuthHeading>
+      <AuthHeading title={step.title}>{step.intro}</AuthHeading>
 
-      <div className="flex flex-col gap-2">
-        <div className="flex gap-1.5" aria-hidden>
-          {STEPS.map((s, i) => (
-            <span
+      {/* Every step is named, so people see what they're filling in now and what comes next. */}
+      <ol aria-label="Setup steps" className="grid grid-cols-3 gap-2">
+        {STEPS.map((s, i) => {
+          const done = i < stepIndex;
+          const current = i === stepIndex;
+          return (
+            <li
               key={s.id}
-              className={cn(
-                'h-1.5 flex-1 rounded-full',
-                i <= stepIndex ? 'bg-brand-solid' : 'bg-gray-200'
-              )}
-            />
-          ))}
-        </div>
-        <p className="text-[13px] font-bold tracking-[.06em] text-gray-500 uppercase">
-          Step {stepIndex + 1} of {STEPS.length} · {step.title}
-        </p>
-      </div>
+              aria-current={current ? 'step' : undefined}
+              className="flex flex-col gap-1.5"
+            >
+              <span
+                aria-hidden
+                className={cn(
+                  'h-1.5 rounded-full',
+                  done || current ? 'bg-brand-solid' : 'bg-gray-200'
+                )}
+              />
+              <span
+                className={cn(
+                  'flex items-center gap-1 text-[13px] leading-tight font-bold',
+                  done ? 'text-success-700' : current ? 'text-brand-500' : 'text-gray-400'
+                )}
+              >
+                {done ? (
+                  <Check size={14} strokeWidth={3} aria-hidden />
+                ) : (
+                  <span aria-hidden>{i + 1}</span>
+                )}
+                {s.short}
+                {done && <span className="sr-only"> (done)</span>}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
 
       {saveError && <AuthBanner>{saveError}</AuthBanner>}
 
