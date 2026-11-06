@@ -7,7 +7,7 @@ import { useOngoingEvents } from '@/components/hooks/use-events';
 import { useMyReport } from '@/components/hooks/use-reports';
 import { Loader } from '@/components/ui/loader';
 import { cn } from '@/lib';
-import { canUseAssessment } from '@/lib/access';
+import { canUseAssessment, canUseReport, REPORT_OFF_CAMPUS_MESSAGE } from '@/lib/access';
 import { Building2, ChevronRight, ClipboardList } from 'lucide-react';
 import Link from 'next/link';
 import { Card, Dot, GUTTER, Hero } from '../_components/chrome';
@@ -40,6 +40,7 @@ type Status = { tone: 'success' | 'warning' | 'neutral'; text: string } | null;
 
 function HomeChooser({ profile }: { profile: ErtProfile }) {
   const canAssess = canUseAssessment(profile);
+  const canReport = canUseReport(profile);
   const events = useOngoingEvents(profile.campus_id ?? '');
   const myReport = useMyReport(profile.id);
   const drafts = useAssessmentDrafts(canAssess ? profile.id : undefined);
@@ -73,14 +74,18 @@ function HomeChooser({ profile }: { profile: ErtProfile }) {
 
   return (
     <>
-      <Hero eyebrow={profile.campus?.name ?? 'Your campus'} title="What would you like to do?" />
+      <Hero
+        eyebrow={profile.campus?.name ?? profile.organization ?? 'Your campus'}
+        title="What would you like to do?"
+      />
       <main className={cn(GUTTER, 'grid gap-4 py-6 md:grid-cols-2 md:py-8')}>
         <ChoiceCard
           href="/report"
           icon={<ClipboardList size={24} aria-hidden />}
           title="Status report"
           description="Where you are and who is with you, during an event or drill."
-          status={reportStatus}
+          status={canReport ? reportStatus : { tone: 'neutral', text: REPORT_OFF_CAMPUS_MESSAGE }}
+          disabled={!canReport}
         />
         {canAssess && (
           <ChoiceCard
@@ -109,35 +114,57 @@ function ChoiceCard({
   title,
   description,
   status,
+  disabled = false,
 }: {
   href: string;
   icon: React.ReactNode;
   title: string;
   description: string;
   status: Status;
+  /** Greyed and not a link: the tool isn't available to this account. */
+  disabled?: boolean;
 }) {
-  return (
-    <Link href={href} className={cn('group block rounded-[22px]', FOCUS_RING)}>
-      <Card className="flex h-full items-start gap-4 p-5 transition-shadow group-hover:shadow-[0_6px_18px_rgba(16,24,40,.12)] md:p-6">
-        <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700">
-          {icon}
-        </span>
-        <span className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="text-[19px] leading-[1.25] font-extrabold">{title}</span>
-          <span className="text-[15px] text-gray-600">{description}</span>
-          {status && (
-            <span className="mt-2 flex items-center gap-2 text-[15px] font-semibold text-gray-800">
-              <Dot className={STATUS_DOT[status.tone]} />
-              <span className="min-w-0">{status.text}</span>
-            </span>
-          )}
-        </span>
+  const card = (
+    <Card
+      className={cn(
+        'flex h-full items-start gap-4 p-5 md:p-6',
+        disabled
+          ? 'opacity-60'
+          : 'transition-shadow group-hover:shadow-[0_6px_18px_rgba(16,24,40,.12)]'
+      )}
+    >
+      <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700">
+        {icon}
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col gap-1">
+        <span className="text-[19px] leading-[1.25] font-extrabold">{title}</span>
+        <span className="text-[15px] text-gray-600">{description}</span>
+        {status && (
+          <span className="mt-2 flex items-center gap-2 text-[15px] font-semibold text-gray-800">
+            <Dot className={STATUS_DOT[status.tone]} />
+            <span className="min-w-0">{status.text}</span>
+          </span>
+        )}
+      </span>
+      {!disabled && (
         <ChevronRight
           size={20}
           aria-hidden
           className="mt-3 shrink-0 text-gray-400 transition-transform group-hover:translate-x-0.5"
         />
-      </Card>
+      )}
+    </Card>
+  );
+  if (disabled) {
+    return (
+      <div aria-disabled="true" className="block cursor-not-allowed rounded-[22px]">
+        {card}
+      </div>
+    );
+  }
+  return (
+    <Link href={href} className={cn('group block rounded-[22px]', FOCUS_RING)}>
+      {card}
     </Link>
   );
 }

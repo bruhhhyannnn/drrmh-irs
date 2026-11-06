@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { adminGuard, canUseAssessment, ertGuard, homePathFor, signInDestination } from './access';
+import {
+  adminGuard,
+  canUseAssessment,
+  canUseReport,
+  ertGuard,
+  homePathFor,
+  signInDestination,
+} from './access';
 
 test('Phase 1: ERT members only', () => {
   assert.equal(
@@ -99,4 +106,11 @@ test('the ERT guard asks for setup first, then is ready', () => {
   assert.deepEqual(ertGuard({ ...settled, profile: ert }, { requireAssessment: true }), {
     status: 'ready',
   });
+});
+
+test('an off-campus account has no Report tool, everyone else does (DRRM-026)', () => {
+  assert.equal(canUseReport({ ...ert, is_off_campus: true }), false);
+  assert.equal(canUseReport(ert), true);
+  assert.equal(canUseReport({ ...ert, is_off_campus: false }), true);
+  assert.equal(canUseAssessment({ ...ert, is_off_campus: true }), true);
 });

@@ -1,3 +1,4 @@
+import { REPORT_OFF_CAMPUS_MESSAGE } from './access';
 import { adminScope, inScope } from './admin-scope';
 import type { CallerCheck, VerifiedProfile } from './server-auth';
 
@@ -50,6 +51,7 @@ export function checkReportCaller(
   if (!report) return refuse(NOT_FOUND);
 
   const { profile } = caller;
+  if (profile.is_off_campus) return refuse(REPORT_OFF_CAMPUS_MESSAGE);
   if (profile.id === report.user_id) return { ok: true, profile };
   const scope = adminScope(profile);
   if (scope.ok && report.campus_id) {
