@@ -9,9 +9,13 @@ import type { BuildingLocation } from './psgc';
 
 export type BuildingCategory = 'campus' | 'off_campus';
 
+/** What a page prints where a campus name goes, for a building that has no campus (DRRM-026). */
+export const NO_CAMPUS_NAME = 'Off-campus accounts';
+
 export interface BuildingPlace {
   category: BuildingCategory;
-  campus: Named;
+  /** null for a building an off-campus account added: only Super Admins see it (DRRM-026). */
+  campus: Named | null;
   cluster: Named | null;
   unit: Named | null;
   location: BuildingLocation | null;
@@ -64,7 +68,6 @@ export function toBuildingPlace(row: PlaceRow): BuildingPlace {
       label: row.unit.name,
     };
   }
-  if (!row.campus) throw new Error('This building has neither a unit nor a campus.');
   const location = locationOf(row);
   return {
     category: 'off_campus',
@@ -82,6 +85,12 @@ export function campusBuildings(campusId: string | null): Prisma.BuildingWhereIn
     unit_id: { not: null },
     ...(campusId && { unit: { cluster: { campus_id: campusId } } }),
   };
+}
+
+/** The off-campus buildings of exactly one owner: a campus, or (null) no campus, the pool that
+ * off-campus accounts share (DRRM-026). Unlike offCampusBuildings, null here is not "every campus". */
+export function offCampusPool(campusId: string | null): Prisma.BuildingWhereInput {
+  return { unit_id: null, campus_id: campusId };
 }
 
 /** Off-campus buildings owned by a campus. null: every campus's. */

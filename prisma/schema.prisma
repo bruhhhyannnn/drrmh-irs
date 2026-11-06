@@ -22,6 +22,13 @@ model User {
   created_at          DateTime                    @default(now()) @db.Timestamptz(6)
   updated_at          DateTime                    @default(now()) @updatedAt @db.Timestamptz(6)
   is_profile_complete Boolean                     @default(false)
+  /// DRRM-026: a Super-Admin-made account for someone outside UP. It has no campus, cluster, unit or
+  /// position (CHECK chk_users_off_campus, prisma/manual/DRRM-026-off-campus-accounts.sql).
+  is_off_campus        Boolean                     @default(false)
+  address              String?
+  organization         String?
+  organization_address String?
+  position_title       String?
   cluster_id          String?                     @db.Uuid
   campus_id           String?                     @db.Uuid
   events              Event[]                     @relation("CreatedBy")
@@ -507,7 +514,8 @@ model AssessmentItem {
 /// A building under its main unit (campus and cluster come through the unit). Unique
 /// (unit_id, lower(name)) through the expression index uq_buildings_unit_name. floor_count and
 /// `areas` are the current profile, used to pre-fill the next assessment.
-/// Campus (has a unit) or Off-campus (no unit; has the owning campus and a PSGC location). CHECK
+/// Campus (has a unit) or Off-campus (no unit; a PSGC location, and the owning campus, or none when
+/// an off-campus account added it: DRRM-026). CHECK
 /// chk_buildings_place allows only those two shapes, and uq_buildings_campus_barangay_name keeps
 /// off-campus names unique. See prisma/manual/DRRM-025-off-campus-buildings.sql.
 model Building {

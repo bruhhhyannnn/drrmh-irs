@@ -33,3 +33,12 @@ test('inScope: all campuses or the same one', () => {
   assert.equal(inScope({ ok: true, role: 'administrator', campusId: 'a' }, 'a'), true);
   assert.equal(inScope({ ok: true, role: 'administrator', campusId: 'a' }, 'b'), false);
 });
+
+test('inScope: a record with no campus is only in the all-campuses scope (DRRM-026)', () => {
+  const all = { ok: true as const, role: 'super_admin' as const, campusId: null };
+  const one = { ok: true as const, role: 'super_admin' as const, campusId: 'c1' };
+  const admin = { ok: true as const, role: 'administrator' as const, campusId: 'c1' };
+  assert.equal(inScope(all, null), true);
+  assert.equal(inScope(one, null), false);
+  assert.equal(inScope(admin, null), false);
+});

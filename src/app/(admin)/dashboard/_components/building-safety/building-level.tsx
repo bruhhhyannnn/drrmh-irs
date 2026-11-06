@@ -41,7 +41,7 @@ export function BuildingLevel({
     ? [...locationParts(crumbsOf(building.location), go), { label: building.name }]
     : trailParts(
         {
-          campus: building.campus,
+          campus: building.campus ?? undefined,
           cluster: building.cluster ?? undefined,
           unit: building.unit ?? undefined,
         },
