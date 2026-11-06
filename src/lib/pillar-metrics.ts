@@ -67,6 +67,8 @@ export interface LowBuilding extends Named {
   label: string;
   category: BuildingScores['category'];
   tally: Tally;
+  ended_at: string;
+  needs_follow_up: boolean;
 }
 
 /** The lowest-scoring buildings in this pillar. One that counted nothing here has no score. */
@@ -78,8 +80,18 @@ export function lowestBuildings(
   return buildings
     .flatMap((b) => {
       const tally = b.latest?.pillars[pillar];
-      return tally && tally.counted > 0
-        ? [{ id: b.id, name: b.name, label: b.label, category: b.category, tally }]
+      return tally && tally.counted > 0 && b.latest
+        ? [
+            {
+              id: b.id,
+              name: b.name,
+              label: b.label,
+              category: b.category,
+              tally,
+              ended_at: b.latest.ended_at,
+              needs_follow_up: b.latest.needs_follow_up,
+            },
+          ]
         : [];
     })
     .sort(
@@ -91,6 +103,7 @@ export function lowestBuildings(
 export interface PlaceScore extends Named {
   assessed: number;
   tally: Tally;
+  change: number | null;
 }
 
 export interface PillarGroup {
@@ -129,6 +142,12 @@ export function pillarGroup(
       name: row.name,
       assessed: row.assessed,
       tally: row.current.pillars[pillar],
+      change: row.likeForLike
+        ? pointsChange(
+            row.likeForLike.previous.pillars[pillar],
+            row.likeForLike.current.pillars[pillar]
+          )
+        : null,
     })),
     lowest: lowestBuildings(buildings, pillar),
     sections: sectionScores(inPillar, ids),
@@ -142,7 +161,7 @@ export interface RecoveryGroup {
   missing: number;
   na: number;
   missingBuildings: (Named & { label: string; category: BuildingScores['category'] })[];
-  places: (Named & { has: number; of: number })[];
+  places: (Named & { has: number; of: number; change: number | null })[];
 }
 
 /** Recovery has one item, the continuity plan, so it reads as counts instead of a percent. */
@@ -157,6 +176,7 @@ export function recoveryGroup(buildings: BuildingScores[], children: ChildRow[])
       name: row.name,
       has: row.pscp.has,
       of: row.pscp.of,
+      change: row.pscp.change,
     })),
   };
   for (const b of buildings) {

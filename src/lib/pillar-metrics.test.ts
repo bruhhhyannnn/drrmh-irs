@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { BuildingScores, PillarCode, ScoredAssessment } from './assessment-template';
-import type { AnswerFact } from './building-safety';
+import { poolBuildings, type AnswerFact } from './building-safety';
 import { lowestBuildings, mostNa, naRate, pillarGroup, recoveryGroup } from './pillar-metrics';
 
 const tally = (safe: number, counted: number, na = 0) => ({ safe, counted, na });
@@ -220,4 +220,29 @@ test('recoveryGroup counts in place, missing and N/A, and lists the missing buil
   assert.deepEqual(group.missingBuildings, [
     { id: 'Lacks', name: 'Lacks', label: 'Unit', category: 'campus' },
   ]);
+});
+
+test('lowest buildings carry when they were assessed and whether they need follow-up (DRRM-027)', () => {
+  const flagged = { ...scored('a', tally(2, 10)), needs_follow_up: true };
+  const [row] = lowestBuildings([building('A', flagged)], PREVENTION);
+  assert.equal(row.ended_at, '2026-10-20T00:00:00.000Z');
+  assert.equal(row.needs_follow_up, true);
+});
+
+test('places carry their change since the previous assessments (DRRM-027)', () => {
+  const group = pillarGroup(
+    [building('A', scored('a2', tally(8, 10)), scored('a1', tally(5, 10)))],
+    [],
+    { current: ['a2'], lflCurrent: ['a2'], lflPrevious: ['a1'] },
+    PREVENTION,
+    [
+      {
+        id: 'c',
+        name: 'UP Test',
+        kind: 'campus',
+        ...poolBuildings([building('A', scored('a2', tally(8, 10)), scored('a1', tally(5, 10)))]),
+      },
+    ]
+  );
+  assert.equal(group.places[0].change, 30);
 });
