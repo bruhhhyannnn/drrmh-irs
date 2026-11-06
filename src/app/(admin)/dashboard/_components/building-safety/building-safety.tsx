@@ -35,7 +35,7 @@ import {
 // Building, drilled in place. The level lives in the URL (bs_campus, bs_cluster, bs_unit,
 // bs_building, bs_a, bs_b), so Back walks up and a view can be shared. Drilling never moves the
 // top-bar campus switcher; changing the switcher starts over at its campus. The Off-campus view
-// (DRRM-024, bs_view) drills by location instead: bs_region, bs_province, bs_city, bs_barangay.
+// (DRRM-025, bs_view) drills by location instead: bs_region, bs_province, bs_city, bs_barangay.
 
 export type BsKey =
   | 'bs_view'

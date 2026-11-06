@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 
 // The four DRRM pillars (Republic Act No. 10121). The admin sidebar opens a page per pillar in a
-// new tab, with its building assessment results (DRRM-024). If a pillar later becomes its own app,
+// new tab, with its building assessment results (DRRM-025). If a pillar later becomes its own app,
 // point `pillarHref` at it.
 
 export interface Pillar {

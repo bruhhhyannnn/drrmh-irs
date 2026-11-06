@@ -1,6 +1,6 @@
 import type { BuildingCategory } from '@/lib/building-place';
 
-// The Campus / Off-campus filter on the admin Assessments tabs (DRRM-024). The pages open on Campus,
+// The Campus / Off-campus filter on the admin Assessments tabs (DRRM-025). The pages open on Campus,
 // so they read as they always have until someone asks for off-campus results.
 
 export type CategoryFilter = BuildingCategory | 'all';

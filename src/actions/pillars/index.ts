@@ -20,7 +20,7 @@ import {
 import { requireAdmin } from '@/lib/server-auth';
 import { z } from 'zod';
 
-// The DRRM pillar pages (DRRM-024): each pillar's assessment results, Campus beside Off-campus. The
+// The DRRM pillar pages (DRRM-025): each pillar's assessment results, Campus beside Off-campus. The
 // campus comes from requireAdmin: an Administrator sees their own whatever `campusId` says, and the
 // off-campus buildings its ERT members assessed.
 

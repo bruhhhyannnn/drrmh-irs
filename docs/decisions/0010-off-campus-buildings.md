@@ -40,5 +40,5 @@ The owning campus decides who may see a building. It never adds to that campus's
 
 ## Links
 
-- Plan: [[plan/feature/DRRM-024-off-campus-assessment]]
+- Plan: [[plan/feature/DRRM-025-off-campus-assessment]]
 - Commit / PR:

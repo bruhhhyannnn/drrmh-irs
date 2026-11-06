@@ -11,7 +11,7 @@ import {
   type SectionRow,
 } from './building-safety';
 
-// What each DRRM pillar page shows for one group of buildings, Campus or Off-campus (DRRM-024).
+// What each DRRM pillar page shows for one group of buildings, Campus or Off-campus (DRRM-025).
 // Scores pool as everywhere else. The N/A rate sits beside them because a score leaves N/A out: a
 // building marking most items N/A can score high on very few answers, and a high rate off campus
 // says the checklist may not suit those buildings.

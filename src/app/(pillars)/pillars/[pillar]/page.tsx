@@ -8,7 +8,7 @@ import { notFound } from 'next/navigation';
 import { PillarsFrame } from '../_components/pillars-frame';
 import { PillarMetricsSection } from './_components/pillar-metrics';
 
-// One page per pillar: what it covers, and its building assessment results (DRRM-024).
+// One page per pillar: what it covers, and its building assessment results (DRRM-025).
 
 export const dynamicParams = false;
 

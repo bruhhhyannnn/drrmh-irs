@@ -71,7 +71,7 @@ function revalidateTable(table: SettingsTable) {
  */
 export async function getSettingsItems(table: SettingsTable, filterId?: string) {
   const model = MODEL_MAP[table];
-  // Off-campus buildings come from assessments, not this table (DRRM-024).
+  // Off-campus buildings come from assessments, not this table (DRRM-025).
   const where =
     table === 'buildings'
       ? { unit_id: { not: null } }

@@ -509,7 +509,7 @@ model AssessmentItem {
 /// `areas` are the current profile, used to pre-fill the next assessment.
 /// Campus (has a unit) or Off-campus (no unit; has the owning campus and a PSGC location). CHECK
 /// chk_buildings_place allows only those two shapes, and uq_buildings_campus_barangay_name keeps
-/// off-campus names unique. See prisma/manual/DRRM-024-off-campus-buildings.sql.
+/// off-campus names unique. See prisma/manual/DRRM-025-off-campus-buildings.sql.
 model Building {
   id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   unit_id       String?        @db.Uuid

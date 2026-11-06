@@ -153,7 +153,7 @@ test('a queued payload opens again as the same draft (review I2)', () => {
   assert.deepEqual(toPayload(T, reopened, new Date('2026-10-20T02:00:00Z')), payload);
 });
 
-/* ─── Off campus (DRRM-024) ─── */
+/* ─── Off campus (DRRM-025) ─── */
 
 const offCampus = (patch: Partial<AssessmentDraft> = {}) =>
   draft({

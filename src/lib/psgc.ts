@@ -1,4 +1,4 @@
-// The Philippine Standard Geographic Code as the off-campus Details step uses it (DRRM-024):
+// The Philippine Standard Geographic Code as the off-campus Details step uses it (DRRM-025):
 // Region → Province (when there is one) → City/Municipality → Barangay. This file stays free of
 // the data itself, so the browser can import it; the list is src/data/psgc.json, built by
 // scripts/build-psgc.ts and read through src/lib/psgc-data.ts on the server.

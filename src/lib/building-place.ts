@@ -2,7 +2,7 @@ import type { Prisma } from '@prisma/client';
 import type { Named } from './assessment-template';
 import type { BuildingLocation } from './psgc';
 
-// Where a building belongs (DRRM-024). A Campus building has a unit, and its campus comes through
+// Where a building belongs (DRRM-025). A Campus building has a unit, and its campus comes through
 // unit → cluster → campus. An Off-campus building has no unit: it has a PSGC location, and the
 // campus of the evaluator who added it. The campus decides who may see a building; only a Campus
 // building ever counts toward a campus score.

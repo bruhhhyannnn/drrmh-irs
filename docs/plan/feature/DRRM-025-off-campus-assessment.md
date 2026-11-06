@@ -1,8 +1,8 @@
 ---
 type: feature
-ticket: DRRM-024
-status: in-progress
-branch: feat/DRRM-024-off-campus-assessment
+ticket: DRRM-025
+status: in-review
+branch: feat/DRRM-025-off-campus-assessment
 modules:
   - '[[assessments]]'
   - '[[assessment-admin]]'
@@ -13,12 +13,12 @@ modules:
 tags: [plan, feature]
 ---
 
-# [DRRM-024] Off-campus building assessments Implementation Plan
+# [DRRM-025] Off-campus building assessments Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-- **Status:** `In Progress`
-- **Target Branch / PR:** `feat/DRRM-024-off-campus-assessment`
+- **Status:** `In Review`
+- **Target Branch / PR:** `feat/DRRM-025-off-campus-assessment`
 - **Owner / Author:** Jomar Lazaro
 
 **Goal:** Let ERT members assess buildings outside UP by location (Region → Province → City/Municipality → Barangay → Building), and let admins read those results apart from campus results on the dashboard and the pillar pages.
@@ -31,7 +31,7 @@ tags: [plan, feature]
 
 ## Global Constraints
 
-- Never run `prisma db push`, `prisma migrate dev` or `prisma migrate reset`. Schema changes ship as `prisma/manual/DRRM-024-off-campus-buildings.sql` plus the `schema.prisma` edit.
+- Never run `prisma db push`, `prisma migrate dev` or `prisma migrate reset`. Schema changes ship as `prisma/manual/DRRM-025-off-campus-buildings.sql` plus the `schema.prisma` edit.
 - Read the relevant guide in `node_modules/next/dist/docs/` before writing page or routing code.
 - Every read and write is a `'use server'` action that verifies the token with `requireProfile` / `requireAdmin`. Expected failures return `{ ok: false, error, retry }`.
 - The whole assessment stays one `createAssessment` payload, because the offline queue replays it.
@@ -190,7 +190,7 @@ test('indexBarangays gives province null when there is none');
 
 - [ ] **Step 8: Check the download size.** Report the gzipped size of `src/data/psgc.json`. Expected: under 600 KB; if not, shorten the JSON keys before continuing.
 
-- [ ] **Step 9: Commit.** `feat(assessments): add the PSGC location list (DRRM-024)`
+- [ ] **Step 9: Commit.** `feat(assessments): add the PSGC location list (DRRM-025)`
 
 ### Task 2: Schema and reads that accept both categories
 
@@ -198,7 +198,7 @@ Campus pages must look identical after this task.
 
 **Files:**
 
-- Create: `prisma/manual/DRRM-024-off-campus-buildings.sql`, `src/lib/building-place.ts`
+- Create: `prisma/manual/DRRM-025-off-campus-buildings.sql`, `src/lib/building-place.ts`
 - Test: `src/lib/building-place.test.ts`
 - Modify: `prisma/schema.prisma:509-525`, `src/lib/assessment-template.ts:119-127,143-173,194-214`, `src/lib/assessment-records.ts:207-238,293-323`, `src/actions/assessment-admin/index.ts:31-32,51-75`, `src/actions/building-safety/index.ts:50-57,142-171,199-209`, `src/actions/assessments/index.ts:82-93,140-143,304-311`, `src/actions/settings/index.ts:72-80`
 - Modify (UI, as `tsc` lists them): `src/app/(admin)/assessments/details/page.tsx:61`, `buildings-tab.tsx`, `assessments-tab.tsx`, `compare-tab.tsx`, `dashboard/_components/building-safety/building-level.tsx:41`, `src/app/(ert)/assessment/_components/assessment-hub.tsx:394`, `assessment-view.tsx:140-141`, `assessment-print.tsx:140-141`
@@ -252,7 +252,7 @@ test('toBuildingPlace reads an off-campus row with no province');
 
 - [ ] **Step 7: Verify.** Run `npm run type-check`, `npm run lint`, `npm run test`. Expected: all pass.
 
-- [ ] **Step 8: Commit.** `feat(assessments): allow off-campus buildings in the schema and reads (DRRM-024)`
+- [ ] **Step 8: Commit.** `feat(assessments): allow off-campus buildings in the schema and reads (DRRM-025)`
 
 ### Task 3: Draft, payload and submit
 
@@ -312,7 +312,7 @@ test('no match gives null');
 
 - [ ] **Step 7: Verify.** Run `npm run type-check`, `npm run lint`, `npm run test`. Expected: all pass.
 
-- [ ] **Step 8: Commit.** `feat(assessments): submit off-campus buildings (DRRM-024)`
+- [ ] **Step 8: Commit.** `feat(assessments): submit off-campus buildings (DRRM-025)`
 
 ### Task 4: Details step
 
@@ -371,7 +371,7 @@ test('choosing a city lists its barangays');
 
 - [ ] **Step 7: Verify.** Run `npm run type-check`, `npm run lint`, `npm run test`. Expected: all pass.
 
-- [ ] **Step 8: Commit.** `feat(assessments): choose on campus or off campus on the Details step (DRRM-024)`
+- [ ] **Step 8: Commit.** `feat(assessments): choose on campus or off campus on the Details step (DRRM-025)`
 
 ### Phase 2: Admin views
 
@@ -425,7 +425,7 @@ test('scopeFromParams defaults to the campus view');
 
 - [ ] **Step 5: Verify.** Run `npm run type-check`, `npm run lint`, `npm run test`. Then confirm in the browser as Administrator and Super Admin that drilling, Back and the campus switcher all work.
 
-- [ ] **Step 6: Commit.** `feat(dashboard): add the off-campus building safety view (DRRM-024)`
+- [ ] **Step 6: Commit.** `feat(dashboard): add the off-campus building safety view (DRRM-025)`
 
 ### Task 6: Assessments admin tabs
 
@@ -446,7 +446,7 @@ test('scopeFromParams defaults to the campus view');
 
 - [ ] **Step 3: Add the filter to all three tabs.** Add a filter with All, Campus and Off-campus, defaulting to Campus so the pages open as they do today, and keep it in `?category=`. Cluster and Unit filters are disabled on Off-campus. Show `label` as the secondary line.
 
-- [ ] **Step 4: Verify and commit.** Run `npm run type-check`, `npm run lint`, `npm run test`. Commit `feat(assessments): filter admin tabs by campus or off-campus (DRRM-024)`.
+- [ ] **Step 4: Verify and commit.** Run `npm run type-check`, `npm run lint`, `npm run test`. Commit `feat(assessments): filter admin tabs by campus or off-campus (DRRM-025)`.
 
 ### Task 7: Pillar pages
 
@@ -504,7 +504,7 @@ test('recoveryGroup counts in place, missing and N/A, and lists the missing buil
 
 - [ ] **Step 6: Update the comments** at `src/lib/pillars.ts:9-11` and `[pillar]/page.tsx:12`, so they no longer call these placeholders.
 
-- [ ] **Step 7: Verify and commit.** Run `npm run type-check`, `npm run lint`, `npm run test`. Check `/pillars` and all four pillar pages in the browser as Administrator and Super Admin. Commit `feat(pillars): show campus and off-campus metrics per pillar (DRRM-024)`.
+- [ ] **Step 7: Verify and commit.** Run `npm run type-check`, `npm run lint`, `npm run test`. Check `/pillars` and all four pillar pages in the browser as Administrator and Super Admin. Commit `feat(pillars): show campus and off-campus metrics per pillar (DRRM-025)`.
 
 ### Task 8: Documentation and final checks
 
@@ -517,7 +517,7 @@ test('recoveryGroup counts in place, missing and N/A, and lists the missing buil
 
 - [ ] **Step 2: Update the module notes and their `updated` dates.** Include the new SQL file in the list in `database.md`.
 
-- [ ] **Step 3: Run every section 5 check.** Commit `docs(DRRM-024): record off-campus assessments`.
+- [ ] **Step 3: Run every section 5 check.** Commit `docs(DRRM-025): record off-campus assessments`.
 
 ---
 

@@ -110,7 +110,7 @@ export async function getSafetyRollup(
 const codeOrNull = (value: unknown) =>
   typeof value === 'string' && /^\d{10}$/.test(value) ? value : null;
 
-/** One level of the off-campus drill-down (DRRM-024). An Administrator sees the off-campus
+/** One level of the off-campus drill-down (DRRM-025). An Administrator sees the off-campus
  * buildings their own campus assessed. null when the caller isn't an admin. */
 export async function getOffCampusRollup(
   token: string | null,

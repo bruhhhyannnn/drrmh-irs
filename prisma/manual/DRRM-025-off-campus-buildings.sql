@@ -1,4 +1,4 @@
--- DRRM-024: off-campus buildings. A building is now one of two shapes:
+-- DRRM-025: off-campus buildings. A building is now one of two shapes:
 --   Campus:     has a unit, as before. Its campus comes through unit → cluster → campus.
 --   Off-campus: no unit. Has the evaluator's campus (who owns it) and a PSGC location.
 -- Existing rows all have a unit, so they stay Campus and aren't touched. Safe to re-run.

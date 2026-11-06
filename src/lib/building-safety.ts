@@ -172,7 +172,7 @@ export function groupChildren(buildings: BuildingScores[], level: RollupLevel): 
   });
 }
 
-/* ─── Off-campus drill-down (DRRM-024) ─── */
+/* ─── Off-campus drill-down (DRRM-025) ─── */
 
 export interface LocationScope {
   regionCode: string | null;
