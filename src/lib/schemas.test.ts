@@ -203,5 +203,5 @@ test('the off-campus profile needs every field and the consent', () => {
   };
   assert.deepEqual(issues({ ...offCampusProfile, organization: '  ' }), ['organization']);
   assert.deepEqual(issues({ ...offCampusProfile, consent: false }), ['consent']);
-  assert.deepEqual(issues({ ...offCampusProfile, address: 'x'.repeat(201) }), ['address']);
+  assert.deepEqual(issues({ ...offCampusProfile, address: 'x'.repeat(401) }), ['address']);
 });

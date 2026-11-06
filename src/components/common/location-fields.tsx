@@ -2,8 +2,6 @@
 
 import { Banner, FieldError, FieldLabel, SelectField } from '@/components/ds';
 import type { LocationOptions, LocationPicks } from '@/lib/location-options';
-import type { AssessmentDetailsFormData } from '@/lib/schemas';
-import type { FieldErrors } from 'react-hook-form';
 
 type Place = { code: string; name: string };
 const toOptions = (places: Place[]) => places.map((p) => ({ value: p.code, label: p.name }));
@@ -23,7 +21,8 @@ export function LocationFields({
   barangayCode: string;
   options: LocationOptions;
   loading: boolean;
-  errors: FieldErrors<AssessmentDetailsFormData>;
+  /** Messages under Region, City/Municipality and Barangay, from whichever form uses these. */
+  errors: Partial<Record<'region_code' | 'city_code' | 'barangay_code', { message?: string }>>;
   /** A choice clears the choices under it. */
   onPick: (patch: Partial<LocationPicks & { barangay_code: string }>) => void;
 }) {

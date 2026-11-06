@@ -91,9 +91,14 @@ export const offCampusProfileSchema = z.object({
   middle_name: z.string().trim().max(200).optional(),
   last_name: required('last name'),
   suffix: z.string().trim().max(50).optional(),
-  address: required('address'),
+  // A picked address is saved as one line: street, barangay, city, province and region (DRRM-026).
+  address: z.string().trim().min(1, 'Enter your address.').max(400, 'Keep it under 400 characters'),
   organization: required('organization'),
-  organization_address: required("organization's address"),
+  organization_address: z
+    .string()
+    .trim()
+    .min(1, "Enter your organization's address.")
+    .max(400, 'Keep it under 400 characters'),
   position_title: required('position'),
   consent: z.literal(true, {
     errorMap: () => ({ message: 'Agree to the data privacy notice to continue.' }),

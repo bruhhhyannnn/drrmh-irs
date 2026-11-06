@@ -1,5 +1,6 @@
 'use client';
 
+import { LocationFields } from '@/components/common/location-fields';
 import {
   FieldError,
   FieldHelp,
@@ -24,7 +25,6 @@ import { useForm } from 'react-hook-form';
 import { Card, DetailList, Mono, personName } from '../../_components/chrome';
 import { formatDateTime } from '../../_lib/format';
 import type { ErtProfile } from '../../_lib/use-ert-access';
-import { LocationFields } from './location-fields';
 
 export type StepProps = {
   template: AssessmentTemplate;
