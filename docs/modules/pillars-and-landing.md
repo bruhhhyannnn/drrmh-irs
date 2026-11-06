@@ -1,6 +1,6 @@
 ---
 type: module
-updated: 2026-11-05
+updated: 2026-11-06
 module: pillars-and-landing
 paths:
   - src/app/(pillars)
@@ -8,6 +8,7 @@ paths:
   - src/app/(public)/layout.tsx
   - src/app/(public)/_components
   - src/lib/campus-logo.ts
+  - src/lib/pillar-trends.ts
 tags: [module]
 ---
 
@@ -30,9 +31,11 @@ The public landing page at `/` introduces the system to anyone and links to the 
 | `src/app/(pillars)/layout.tsx`                         | Wraps pillar pages in `ProtectedRoute`; no IRS shell                                                                                                                                                                                                      |
 | `src/app/(pillars)/pillars/page.tsx`                   | `PillarsPage`: the four pillars, Campus beside Off-campus (`PillarOverview`)                                                                                                                                                                              |
 | `src/app/(pillars)/pillars/[pillar]/page.tsx`          | `PillarPage`: one per pillar, statically generated, with `PillarMetricsSection` reading its data on the client                                                                                                                                            |
+| `src/app/(pillars)/pillars/[pillar]/_components/`      | Redesigned pillar page components (DRRM-027): `shared`, `score-tiles`, `fix-first`, `buildings-to-visit`, `places-table`, `pillar-charts`, `scored-view`, `recovery-view`                                                                                 |
 | `src/app/(pillars)/pillars/_components/`               | `PillarsFrame` (header and width), `PillarOverview`, `ScopeNote`                                                                                                                                                                                          |
 | `src/actions/pillars/index.ts`                         | `getPillarMetrics`, `getPillarOverview`                                                                                                                                                                                                                   |
 | `src/lib/pillar-metrics.ts`                            | Pure metrics: `naRate`, `mostNa`, `lowestBuildings`, `pillarGroup`, `recoveryGroup`                                                                                                                                                                       |
+| `src/lib/pillar-trends.ts`                             | Pure trends and charts arithmetic: `scoreBands`, `changeCounts`, `quarterlyTrend`, `monthlyActivity`, `overdueBuildings`, `failingBuildings`, `pillarTrends` (DRRM-027)                                                                                   |
 | `src/components/hooks/use-pillars.ts`                  | `usePillarMetrics`, `usePillarOverview`                                                                                                                                                                                                                   |
 | `src/lib/pillars.ts`                                   | `PILLARS` and `pillarHref(slug)` (shared with [[building-safety]] and [[checklist-editor]])                                                                                                                                                               |
 | `src/lib/campus-logo.ts`                               | `campusLogo(name)`, `ownCampusLogo(name)`                                                                                                                                                                                                                 |
@@ -50,7 +53,7 @@ The pillar pages read `Building`, `Assessment`, `AssessmentPillarScore` and `Ass
 
 `src/actions/pillars/index.ts`. Both take the access token and call `requireAdmin`, so an Administrator sees their own campus and the off-campus buildings its ERT members assessed:
 
-- `getPillarMetrics(token, slug, campusId)`: `kind: 'scored'` with `PillarGroup` per category (score, change, N/A rate, places, 5 lowest buildings, sections, 5 most-failed items, 5 most-often N/A items), or `kind: 'recovery'` with counts. `null` for a non-admin or unknown slug.
+- `getPillarMetrics(token, slug, campusId)`: `kind: 'scored'` with `ScoredView` per category (score, change, N/A rate, places, lowest buildings with dates and follow-up flags, sections, most-failed items with failing buildings drill-down, most-often N/A items, score bands, better/same/worse changes, quarterly trend, monthly activity, overdue and not-yet-assessed counts), or `kind: 'recovery'` with `RecoveryView`. `null` for a non-admin or unknown slug.
 - `getPillarOverview(token, campusId)`: each pillar's tallies per category, and how many buildings were assessed.
 
 ## Client side
@@ -62,7 +65,14 @@ The pillar pages read `Building`, `Assessment`, `AssessmentPillarScore` and `Ass
 - The hero heading's campus takes turns through `HERO_CAMPUSES` (UP Manila, PGH, UP Diliman, UP System) with `--animate-campus-turn` (12 s loop, 3 s each). The names are `aria-hidden`; the `h1`'s `aria-label` reads all four. With reduced motion only UP Manila shows (DRRM-021).
 - The partners bar has two groups: "Developed under the DRRM-H Program" with UP Manila and DRRM-H Center, then, after a divider shown on `lg` only, the UP Resilience Institute and the NOAH wordmark. NOAH sits on a `data-theme="light"` chip so its black letters read on the dark theme.
 - `/pillars`: the overview table, linking to each pillar.
-- `/pillars/<slug>`: header with "IRS dashboard" back button, "Pillar n of 4", name, summary, the metrics, example activities from RA 10121, and a nav to the other pillars. This route has no campus switcher, so `ScopeNote` names the campus in view.
+- `/pillars/<slug>`: redesigned (DRRM-027). A single category at a time (`Campus · N buildings | Off-campus · N` switch in `?view=`), with a Super-Admin campus picker updating `useCampusScopeStore` (administrators see their own campus text). In decision order:
+  1. **How are we doing:** pooled score tile with change pts, buildings assessed, need follow-up, answered N/A rate.
+  2. **What to fix first:** full-width most-failed checklist items with bars, expandable to list failing buildings.
+  3. **Buildings to visit:** lowest-scoring buildings with follow-up tag, score bar, and assessment date.
+  4. **Where it's weakest:** table of places with assessed count, score and change.
+  5. **Trends and activity:** quarterly score trend (Chart A, Campus vs Off-campus in `LineChart`), score bands (Chart B in `BandBars` with interactive drill-down and no-score note), better/same/worse (Chart C in `ChangeBar` with drill-down), and monthly activity & overdue (Chart E in `ActivityBars`).
+  6. **Folded sections:** 5. By checklist section (Chart D, section score bars lowest first) and Does the checklist fit? (questions most often answered N/A).
+  - **Rehabilitation & Recovery:** dedicated view showing continuity plan status tiles (in place, missing, N/A), buildings lacking a plan, places, quarterly adoption trend, plan change (`lost a plan`, `kept a plan`, `gained a plan`), and activity & overdue.
 - The admin sidebar builds the pillar items from `PILLARS` in `src/app/(admin)/_components/shell/nav.ts` with `newTab: true` and the group label "DRRM pillars"; `admin-shell.tsx` adds `target="_blank"`.
 - Campus logos: `ownCampusLogo` returns `/up-<slug>-logo.png` when the campus is in `CAMPUS_LOGOS` (baguio, cebu, diliman, losbanos, manila, mindanao, openuniversity, tacloban, visayas), else `null`. `campusLogo` falls back to `/up-logo.png`. Used by the print `Letterhead`, the admin `CampusMark` (shows initials when `null`), and the bystander form's campus step.
 

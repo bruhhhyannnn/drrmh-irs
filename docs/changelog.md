@@ -9,6 +9,15 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-027 Pillar page redesign: 2026-11-06 (branch `feat/DRRM-027-pillar-page-redesign`, not merged yet)
+
+Plan: [[plan/feature/DRRM-027-pillar-page-redesign]] · [[pillars-and-landing]]
+
+- Redesigns the DRRM pillar pages (`/pillars/<slug>`) with a single view at a time (Campus vs Off-campus in `?view=`) and a Super Admin campus picker (writing `useCampusScopeStore`).
+- Sections structured in decision order: 1. How are we doing (pooled score tile with change pts, buildings assessed, need follow-up, answered N/A rate), 2. What to fix first (full-width failing checklist items with building drill-down), 3. Buildings to visit (lowest scores with follow-up tags and dates), 4. Where it's weakest (places table with change).
+- Adds five focused charts: quarterly score trend (Chart A, Campus vs Off-campus), score bands (Chart B, with building drill-down and no-score count), better/same/worse change bar (Chart C, with drill-down), section scores as bars (Chart D, lowest first), and monthly activity with overdue building tracking (Chart E).
+- Dedicated view for Rehabilitation and Recovery with continuity plan counts, plan change tracking, missing plan building list, and quarterly adoption trend.
+
 ## DRRM-026 Off-campus accounts: 2026-11-06 (branch `feat/DRRM-026-off-campus-accounts`, not merged yet)
 
 Plan: [[plan/feature/DRRM-026-off-campus-accounts]]

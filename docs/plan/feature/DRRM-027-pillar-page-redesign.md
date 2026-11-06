@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-027
-status: draft
+status: in-review
 branch: feat/DRRM-027-pillar-page-redesign
 modules:
   - '[[pillars-and-landing]]'
@@ -11,7 +11,7 @@ tags: [plan, feature]
 
 # [DRRM-027] Pillar page redesign: Design
 
-- **Status:** `Draft`
+- **Status:** `In Review`
 - **Target Branch / PR:** `feat/DRRM-027-pillar-page-redesign`, stacked on `feat/DRRM-026-off-campus-accounts` (PR #95)
 - **Owner / Author:** Jomar Lazaro
 
@@ -189,7 +189,7 @@ D and the fix-first list don't apply, because Recovery has a single item.
 - `overdueBuildings(buildings, now, days = 365): Named[]`
 - `failingBuildings(facts: AnswerFact[], currentIds: string[], buildingOf: Map<string, Named & { label: string; category: BuildingCategory }>, pillar): Record<string, (Named & { label: string; category: BuildingCategory })[]>`, keyed by item label
 
-- [ ] Failing tests:
+- [x] Failing tests:
   - 49, 50, 69, 70, 84 and 85 percent land in the right bands, and an all-N/A building counts as `noScore`
   - `changeCounts` sorts by rounded percent, and equal is `same`
   - `quarterlyTrend` pools each building's latest assessment as of each quarter's end, drops leading quarters with no data, and labels quarters `Q2 2026`
@@ -198,7 +198,7 @@ D and the fix-first list don't apply, because Recovery has a single item.
   - `overdueBuildings` leaves out never-assessed buildings and includes one assessed 366 days ago
   - `failingBuildings` lists only the latest assessments' unsafe answers, for this pillar
   - empty inputs give empty or zeroed results
-- [ ] Implement, run `npx tsx --test src/lib/pillar-trends.test.ts` (Expected: PASS), commit.
+- [x] Implement, run `npx tsx --test src/lib/pillar-trends.test.ts` (Expected: PASS), commit.
 
 ### Task 2: Data from the server
 
@@ -210,7 +210,7 @@ D and the fix-first list don't apply, because Recovery has a single item.
 - `PillarGroup` gains `needsFollowUp: number`, `bands`, `changes`, `trend`, `activity`, `overdue: Named[]`, `notYetAssessed: number` and `failing`
 - `RecoveryGroup` gains `trend`, `activity`, `overdue`, `notYetAssessed` and `changes`, the last read as gained, kept or lost a plan
 
-- [ ] Implement `getPillarMetrics` filling these, with history scoped exactly like each group's buildings. Run `npm run type-check` and `npm run test` (Expected: clean, all pass). Commit.
+- [x] Implement `getPillarMetrics` filling these, with history scoped exactly like each group's buildings. Run `npm run type-check` and `npm run test` (Expected: clean, all pass). Commit.
 
 ### Task 3: Chart components
 
@@ -224,7 +224,7 @@ D and the fix-first list don't apply, because Recovery has a single item.
 
 Each component prints its values and gives every mark a hover title.
 
-- [ ] Implement them and check them with the dataviz anti-patterns list. Run `npm run type-check` (Expected: clean). Commit.
+- [x] Implement them and check them with the dataviz anti-patterns list. Run `npm run type-check` (Expected: clean). Commit.
 
 ### Task 4: The page
 
@@ -232,12 +232,12 @@ Each component prints its values and gives every mark a hover title.
 
 **Consumes:** Tasks 2 and 3.
 
-- [ ] Build the layout from section 2 in the approved order:
+- [x] Build the layout from section 2 in the approved order:
   - the Super-Admin-only campus picker, writing `useCampusScopeStore`
   - an empty note per section when nothing is assessed
   - the "No score" note under the bands
-- [ ] Run `npm run type-check`, `npm run lint` and `npm run build` (Expected: clean). Commit.
+- [x] Run `npm run type-check`, `npm run lint` and `npm run build` (Expected: clean). Commit.
 
 ### Task 5: Docs
 
-- [ ] Update `docs/modules/pillars-and-landing.md` and `docs/changelog.md`, and set this plan to in-review. Run `npm run test` (Expected: all pass). Commit.
+- [x] Update `docs/modules/pillars-and-landing.md` and `docs/changelog.md`, and set this plan to in-review. Run `npm run test` (Expected: all pass). Commit.
