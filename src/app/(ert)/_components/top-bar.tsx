@@ -3,7 +3,7 @@
 import { ProfileDrawer } from '@/components/auth';
 import { FOCUS_RING } from '@/components/ds';
 import { cn, supabase } from '@/lib';
-import { canUseAssessment } from '@/lib/access';
+import { canUseAssessment, canUseReport, REPORT_OFF_CAMPUS_MESSAGE } from '@/lib/access';
 import { RATE_APP_URL } from '@/lib/rate-app';
 import { useAuthStore, useRateAppStore } from '@/store';
 import { ChevronDown, LogOut, Star, User } from 'lucide-react';
@@ -24,6 +24,7 @@ import { WaitingToSend } from './waiting-to-send';
 export function TopBar() {
   const { userProfile } = useAuthStore();
   const showSwitch = canUseAssessment(userProfile);
+  const reportOff = !canUseReport(userProfile);
   return (
     <header className="border-b border-line bg-surface">
       <div className={cn(GUTTER, 'relative flex h-16 items-center gap-2.5 md:h-18')}>
@@ -43,14 +44,14 @@ export function TopBar() {
             DRRM-H IRS
           </span>
         </Link>
-        {showSwitch && <ModeSwitch className="ml-3 hidden md:flex" />}
+        {showSwitch && <ModeSwitch reportOff={reportOff} className="ml-3 hidden md:flex" />}
         <div className="flex-1" />
         {userProfile && <WaitingToSend />}
         {userProfile && <AccountMenu />}
       </div>
       {showSwitch && (
         <div className={cn(GUTTER, 'pb-3 md:hidden')}>
-          <ModeSwitch className="flex" />
+          <ModeSwitch reportOff={reportOff} className="flex" />
         </div>
       )}
     </header>
@@ -63,7 +64,7 @@ const MODES = [
 ];
 
 /** Looks like SegmentedControl, but each option is a link to its page. */
-function ModeSwitch({ className }: { className?: string }) {
+function ModeSwitch({ className, reportOff }: { className?: string; reportOff: boolean }) {
   const pathname = usePathname();
   return (
     <nav
@@ -72,6 +73,20 @@ function ModeSwitch({ className }: { className?: string }) {
     >
       {MODES.map((mode) => {
         const on = pathname === mode.href || pathname.startsWith(`${mode.href}/`);
+        // An off-campus account sees Report, greyed and not a link (DRRM-026).
+        if (reportOff && mode.href === '/report') {
+          return (
+            <span
+              key={mode.href}
+              aria-disabled="true"
+              title={REPORT_OFF_CAMPUS_MESSAGE}
+              className="flex h-11 flex-1 cursor-not-allowed items-center justify-center rounded-full px-4 text-[15px] large-text:text-[16px] font-semibold text-gray-400 md:flex-none"
+            >
+              {mode.label}
+              <span className="sr-only">: {REPORT_OFF_CAMPUS_MESSAGE}</span>
+            </span>
+          );
+        }
         return (
           <Link
             key={mode.href}

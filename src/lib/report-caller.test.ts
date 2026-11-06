@@ -81,3 +81,15 @@ test('a report pointing at a removed event or cluster is refused, not retried fo
   assert.equal(failure.retry, false);
   assert.match(failure.error, /no longer exists/);
 });
+
+test('an off-campus account is refused for good, with the message (DRRM-026)', () => {
+  const offCampus = {
+    ...profile(OWNER, 'ERT Member', null),
+    is_off_campus: true,
+  } as unknown as VerifiedProfile;
+  assert.deepEqual(checkReportCaller(signedIn(offCampus), { user_id: OWNER, campus_id: null }), {
+    ok: false,
+    error: 'Not available for off-campus accounts',
+    retry: false,
+  });
+});

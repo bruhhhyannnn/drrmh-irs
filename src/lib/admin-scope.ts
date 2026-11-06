@@ -21,7 +21,10 @@ export function adminScope(
   return { ok: false };
 }
 
-/** Whether a record at `campusId` is visible; `campusId: null` in the scope means all campuses. */
-export function inScope(scope: AdminScope & { ok: true }, campusId: string): boolean {
+/**
+ * Whether a record at `campusId` is visible; `campusId: null` in the scope means all campuses. A
+ * record with no campus (an off-campus account's, DRRM-026) is only in the all-campuses scope.
+ */
+export function inScope(scope: AdminScope & { ok: true }, campusId: string | null): boolean {
   return scope.campusId === null || scope.campusId === campusId;
 }

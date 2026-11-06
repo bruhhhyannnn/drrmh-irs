@@ -141,10 +141,13 @@ export function ChildrenTable({
   rows,
   noun,
   onOpen,
+  showCoverage = true,
 }: {
   rows: ChildRow[];
   noun: string;
   onOpen: (row: ChildRow) => void;
+  /** "3/5" in Assessed. Off campus shows a plain count: a building joins as it's assessed. */
+  showCoverage?: boolean;
 }) {
   const lfl = (row: ChildRow, pick: (p: RollupGroup['current']) => Tally) =>
     row.likeForLike
@@ -194,9 +197,7 @@ export function ChildrenTable({
                 </button>
               </th>
               <td className="px-2 py-2.5 text-right">
-                <Mono>
-                  {row.assessed}/{row.buildings}
-                </Mono>
+                <Mono>{showCoverage ? `${row.assessed}/${row.buildings}` : row.assessed}</Mono>
               </td>
               <td className="px-2 py-2.5 text-right whitespace-nowrap">
                 <Mono className="font-semibold">{pct(row.current.overall)}</Mono>{' '}

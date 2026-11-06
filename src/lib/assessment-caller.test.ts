@@ -51,3 +51,20 @@ test("the owner's own account decides for good", () => {
   assert.equal(ok.ok, true);
   assert.equal(ok.ok && ok.campusId, 'campus-1');
 });
+
+test('an off-campus account submits with no campus (DRRM-026)', () => {
+  const offCampus = { ...profile(A, 'ERT Member', null), is_off_campus: true } as VerifiedProfile;
+  const result = checkAssessmentCaller(signedIn(offCampus), A);
+  assert.equal(result.ok, true);
+  assert.equal(result.ok && result.campusId, null);
+});
+
+test('a UP account with no campus is still refused', () => {
+  const result = checkAssessmentCaller(signedIn(profile(A, 'ERT Member', null)), A);
+  assert.deepEqual(result, { ok: false, error: 'Your profile has no campus yet.', retry: false });
+});
+
+test('a UP account keeps its campus', () => {
+  const result = checkAssessmentCaller(signedIn(profile(A, 'ERT Member')), A);
+  assert.equal(result.ok && result.campusId, 'campus-1');
+});

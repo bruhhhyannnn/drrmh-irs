@@ -1,7 +1,7 @@
 ---
 type: module
 module: assessments
-updated: 2026-10-28
+updated: 2026-11-06
 verified: true
 paths:
   - src/app/(ert)/assessment
@@ -34,7 +34,10 @@ Read this before touching anything in the MATATAG assessment (DRRM-015). Admin p
   - `assessment_templates` → `assessment_template_versions` → `assessment_sections` → `assessment_items`.
   - Only one version is `published` at a time, and an assessment keeps the version it was answered with.
   - Group parents are unscored and hold the shared prompt. Every scored item has one DRRM pillar.
-- **Buildings:** a building belongs to a unit and keeps a profile (floors, `building_areas`) that pre-fills its next assessment. Buildings are fixed on the Settings → Buildings tab, the shared lookup table ([[settings-lookups]]).
+- **Buildings:** a building keeps a profile (floors, `building_areas`) that pre-fills its next assessment. It is Campus (has a unit, fixed on the Settings → Buildings tab, [[settings-lookups]]) or Off-campus (no unit; a PSGC location and the evaluator's campus, added as it's assessed). Read a building's place through `toBuildingPlace` in `src/lib/building-place.ts` ([[0010-off-campus-buildings]]).
+- **On or off campus:** the Details step starts with this required choice, with nothing pre-selected. Off campus shows Region, Province (hidden where a region has none), City/Municipality and Barangay. A new off-campus building can carry an optional map pin.
+- **Off-campus accounts (DRRM-026):** `checkAssessmentCaller` lets them submit with `campusId: null`. Their drafts start Off campus with no choice, and the Details step hides the event and reads "Results go to DRRM-H Super Admins." Their buildings belong to no campus (`offCampusPool(null)`, shared by all off-campus accounts), and `getAssessmentSetup` returns those with no clusters or events (cached as `setup:off-campus`).
+- **Location list:** PSGC in `src/data/psgc.json`, read on the server through `src/lib/psgc-data.ts`. The phone downloads it once per `PSGC_VERSION` (`useLocationTree`, loaded on the hub) and keeps it in `assessment-cache`. `npm run psgc:build` rebuilds it.
 - **Seed:** the checklist text is seeded from `prisma/data/matatag-2025-07-25.ts` by `npm run seed:matatag`. The seed can be re-run safely: it matches by code and never deletes, so item ids stay stable ([[database]]).
 - **Shared pure logic** in `src/lib`, used by the form, the server and the tests:
   - `assessment-template.ts`: types, and `templateFromData` for tests.
@@ -75,7 +78,7 @@ Read this before touching anything in the MATATAG assessment (DRRM-015). Admin p
 
 - `Assessment` (`assessments`): `client_ref` (unique, the draft id on the phone), `template_version_id`, `building_id`, `event_id`, `evaluator_id`, `incident_commander`, `floor_count`, `started_at`, `ended_at`, `needs_follow_up`. Immutable after submit.
 - `AssessmentArea` (`assessment_areas`), `AssessmentAnswerRow` (`assessment_answers`, `answer` yes/no/na or null plus `remarks`), `AssessmentSectionComment` (`assessment_section_comments`), `AssessmentPillarScore` (`assessment_pillar_scores`: `safe_count`, `counted_count`, `na_count`, four rows per assessment).
-- `Building` (`buildings`): `unit_id`, `name`, `floor_count`, `is_active`. `BuildingArea` (`building_areas`) is the current profile used to pre-fill the next assessment.
+- `Building` (`buildings`): `unit_id` (null off campus), `campus_id` (off campus only), `name`, `floor_count`, `is_active`, the location's `region_*`, `province_*`, `city_*` and `barangay_*` codes and names, and the optional `latitude`, `longitude`, `location_name`. `BuildingArea` (`building_areas`) is the current profile used to pre-fill the next assessment.
 - Reads the template tables (`AssessmentTemplateVersion`, `AssessmentSection`, `AssessmentItem`, `BuildingAreaType`, `DrrmPillar`) through `loadVersion` in `src/lib/assessment-records.ts`.
 - Reads `Cluster`, `Unit`, `Event` for the Details step.
 
@@ -85,8 +88,9 @@ Read this before touching anything in the MATATAG assessment (DRRM-015). Admin p
 
 - `getPublishedTemplate()`: the version new assessments use.
 - `getTemplateVersion(token, versionId)`: any non-draft version by id, for drafts started on an older one. Signed-in callers only.
-- `getAssessmentSetup(token, campusId)`: only for the caller's own campus (empty otherwise). Active clusters with units, active buildings with profile and last assessed date, and events that are ongoing or completed in the last 30 days.
-- `createAssessment(token, payload)`: verifies the token with `requireProfile`, then `checkAssessmentCaller` (owner, `canUseAssessment`, has campus). Validates with `assessmentPayloadSchema`, returns the existing id when `client_ref` already landed, refuses draft versions, re-checks with `prepareAssessmentWrite`, resolves or creates the building in the caller's campus, then writes the assessment, its rows and pillar scores in one transaction and replaces the building's profile.
+- `getAssessmentSetup(token, campusId)`: only for the caller's own campus (empty otherwise). Active clusters with units, active buildings of both categories with profile and last assessed date, and events that are ongoing or completed in the last 30 days.
+- `getLocationTree(token)`: the whole location list, for the phone to keep. null when the caller can't be verified.
+- `createAssessment(token, payload)`: verifies the token with `requireProfile`, then `checkAssessmentCaller` (owner, `canUseAssessment`, has campus). Validates with `assessmentPayloadSchema`, returns the existing id when `client_ref` already landed, refuses draft versions, re-checks with `prepareAssessmentWrite`, resolves or creates the building in the caller's campus (a new off-campus one takes its location from the server's list, by `barangay_code`), then writes the assessment, its rows and pillar scores in one transaction and replaces the building's profile.
 - `getMyAssessments(token)`: the caller's last 50, newest first.
 - `getMyAssessment(token, id)`: one of the caller's own, via `loadAssessmentRecord`.
 
@@ -105,7 +109,9 @@ Read this before touching anything in the MATATAG assessment (DRRM-015). Admin p
 - `client_ref` dedupes replays. A unique violation on insert is treated as already saved.
 - Answers that stop applying after a floor or area change stay in the draft ("set aside"); only `toPayload` drops them.
 - The submit times out after 20 s and goes to the queue. A refused queued entry can be retried (`retryQueuedAssessment`) or reopened as a draft (`draftFromPayload`, same `client_ref`).
-- New buildings match an existing one by unit and case-insensitive name (`uq_buildings_unit_name`).
+- New buildings match an existing one by unit, or by campus and barangay off campus, and case-insensitive name (`uq_buildings_unit_name`, `uq_buildings_campus_barangay_name`, `matchBuildingByName`).
+- A draft or queued assessment from before off-campus existed has no `location_kind` and counts as campus: read it through `locationKindOf` and `detailsFromDraft`.
+- A barangay code the server's list no longer has is refused with a message, and the entry can be reopened as a draft.
 - Moving between hub, draft and view uses `history.pushState`, not `router.push`, so it works offline.
 - `npm run seed:matatag` matches by code and never deletes, so item ids on phones stay valid.
 
@@ -116,3 +122,4 @@ Read this before touching anything in the MATATAG assessment (DRRM-015). Admin p
 - [[0007-token-verified-actions]] submit and own reads verify the Supabase token server-side.
 - [[0004-offline-queue-bundled-create]] the whole assessment replays as one `createAssessment` payload.
 - [[0001-server-actions-only]] all reads and writes go through `src/actions/assessments`.
+- [[0010-off-campus-buildings]] a building is Campus or Off-campus.

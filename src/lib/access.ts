@@ -6,7 +6,16 @@ import { isAdminUserType } from './constants';
 type AccessProfile = {
   user_type?: { name: string } | null;
   position?: { name: string } | null;
+  is_off_campus?: boolean | null;
 };
+
+/** Shown wherever the Report tool would be, for an off-campus account (DRRM-026). */
+export const REPORT_OFF_CAMPUS_MESSAGE = 'Not available for off-campus accounts';
+
+/** Field reports need a UP cluster, which an off-campus account doesn't have (DRRM-026). */
+export function canUseReport(p: AccessProfile | null | undefined): boolean {
+  return !p?.is_off_campus;
+}
 
 // Phase 1: every ERT member. Later: ERT member AND position is Safety Officer.
 export function canUseAssessment(p: AccessProfile | null | undefined): boolean {

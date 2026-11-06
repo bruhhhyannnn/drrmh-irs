@@ -58,7 +58,9 @@ function AssessmentDetails() {
     <>
       <PageHeader
         title={record.building_name}
-        subtitle={`${record.unit_name} · ${record.cluster_name} · ${formatDate(record.ended_at)}`}
+        subtitle={[record.place_label, record.cluster_name, formatDate(record.ended_at)]
+          .filter(Boolean)
+          .join(' · ')}
         back={BACK}
         chip={
           record.needs_follow_up ? (
