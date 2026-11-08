@@ -16,7 +16,7 @@ type Refusal = Extract<CreateAssessmentResult, { ok: false }>;
 export function checkAssessmentCaller(
   caller: CallerCheck,
   evaluatorId: unknown
-): { ok: true; profile: VerifiedProfile; campusId: string } | Refusal {
+): { ok: true; profile: VerifiedProfile; campusId: string | null } | Refusal {
   const wait = (error: string): Refusal => ({ ok: false, error, retry: true });
   const refuse = (error: string): Refusal => ({ ok: false, error, retry: false });
 
@@ -31,6 +31,8 @@ export function checkAssessmentCaller(
   const { profile } = caller;
   if (profile.id !== evaluatorId) return wait(OTHER_ACCOUNT);
   if (!canUseAssessment(profile)) return refuse(CANT_SUBMIT);
+  // An off-campus account (DRRM-026) has no campus: its buildings belong to none.
+  if (profile.is_off_campus) return { ok: true, profile, campusId: null };
   if (!profile.campus_id) return refuse('Your profile has no campus yet.');
   return { ok: true, profile, campusId: profile.campus_id };
 }

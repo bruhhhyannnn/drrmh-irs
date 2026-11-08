@@ -167,7 +167,7 @@ export async function getBuildingHistory(
   });
   if (!building) return null;
   const place = toBuildingPlace(building);
-  if (!inScope(caller.scope, place.campus.id)) return null;
+  if (!inScope(caller.scope, place.campus?.id ?? null)) return null;
 
   return {
     building: { id: building.id, name: building.name, ...place },
@@ -206,7 +206,7 @@ export async function compareAssessments(
   const rowA = rows.find((r) => r.id === a);
   const rowB = rows.find((r) => r.id === b);
   if (!rowA || !rowB || rowA.building_id !== rowB.building_id) return null;
-  if (!inScope(caller.scope, toBuildingPlace(rowA.building).campus.id)) return null;
+  if (!inScope(caller.scope, toBuildingPlace(rowA.building).campus?.id ?? null)) return null;
 
   const [vA, vB] =
     rowA.template_version_id === rowB.template_version_id

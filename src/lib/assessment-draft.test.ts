@@ -360,3 +360,17 @@ test('a question falls under its answer filter, or "unanswered" until it has one
     ['no', 'unanswered', 'unanswered']
   );
 });
+
+test('a draft can start off campus, for an off-campus account (DRRM-026)', () => {
+  const d = newDraft({
+    client_ref: newUuid(),
+    evaluator_id: 'u1',
+    campus_id: '',
+    template_version_id: T.version_id,
+    cluster_id: '',
+    unit_id: '',
+    now: new Date(),
+    location_kind: 'off_campus',
+  });
+  assert.equal(locationKindOf(d), 'off_campus');
+});

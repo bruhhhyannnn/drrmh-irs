@@ -4,6 +4,7 @@ import {
   buildingInCampus,
   campusBuildings,
   offCampusBuildings,
+  offCampusPool,
   placeDetailRows,
   placeLine,
   toBuildingPlace,
@@ -98,7 +99,7 @@ test('toBuildingPlace keeps a province when there is one', () => {
   assert.deepEqual(place.location?.province, { code: '0102800000', name: 'Ilocos Norte' });
 });
 
-test('toBuildingPlace refuses a row with neither a unit nor a campus', () => {
+test('toBuildingPlace refuses a row with no unit and no location', () => {
   assert.throws(() => toBuildingPlace({ ...noLocation, unit: null, campus: null }));
 });
 
@@ -124,4 +125,23 @@ test('placeDetailRows shows the location off campus, without an empty province',
     ['City or municipality', 'City of Manila'],
     ['Barangay', 'Barangay 670'],
   ]);
+});
+
+/* ─── Off-campus accounts (DRRM-026) ─── */
+
+test('offCampusPool(null) means no campus, unlike offCampusBuildings(null)', () => {
+  assert.deepEqual(offCampusPool(null), { unit_id: null, campus_id: null });
+  assert.deepEqual(offCampusPool('c1'), { unit_id: null, campus_id: 'c1' });
+  assert.deepEqual(offCampusBuildings(null), { unit_id: null });
+});
+
+test('toBuildingPlace reads an off-campus row with no campus', () => {
+  const place = toBuildingPlace({ ...offCampusRow, campus: null });
+  assert.equal(place.category, 'off_campus');
+  assert.equal(place.campus, null);
+  assert.equal(place.label, 'Barangay 670, City of Manila');
+});
+
+test('a campus row still needs its unit', () => {
+  assert.throws(() => toBuildingPlace({ ...offCampusRow, campus: null, region_code: null }));
 });

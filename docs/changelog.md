@@ -9,6 +9,13 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-026 Off-campus accounts: 2026-11-06 (branch `feat/DRRM-026-off-campus-accounts`, not merged yet)
+
+Plan: [[plan/feature/DRRM-026-off-campus-accounts]]
+
+- A Super Admin makes off-campus ERT accounts with an email and password ([[users]]). They set up their own name, address, organization and position, with a data privacy consent ([[auth]]), and have no Report tool.
+- Their assessments are always off campus and belong to no campus, so only Super Admins see them ([[assessments]], [[campus-scoping]]). Schema in `prisma/manual/DRRM-026-off-campus-accounts.sql` ([[database]]).
+
 ## DRRM-025 Off-campus building assessments: 2026-11-05 (branch `feat/DRRM-025-off-campus-assessment`, not merged yet)
 
 Plan: [[plan/feature/DRRM-025-off-campus-assessment]]

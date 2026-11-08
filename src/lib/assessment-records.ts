@@ -8,7 +8,7 @@ import {
   type SafeAnswer,
   type ScoredAssessment,
 } from './assessment-template';
-import { buildingPlaceSelect, toBuildingPlace } from './building-place';
+import { buildingPlaceSelect, NO_CAMPUS_NAME, toBuildingPlace } from './building-place';
 import { scoresFromPillarRows, type AnswerFact } from './building-safety';
 import { prisma } from './prisma';
 
@@ -193,7 +193,7 @@ const personName = (p: { first_name: string | null; last_name: string | null }) 
  * caller decides who may see it through `where`. */
 export async function loadAssessmentRecord(
   where: Prisma.AssessmentWhereInput
-): Promise<(AssessmentRecord & { campus_id: string; building_id: string }) | null> {
+): Promise<(AssessmentRecord & { campus_id: string | null; building_id: string }) | null> {
   const a = await prisma.assessment.findFirst({
     where,
     select: {
@@ -223,11 +223,11 @@ export async function loadAssessmentRecord(
   return {
     id: a.id,
     building_id: a.building_id,
-    campus_id: place.campus.id,
+    campus_id: place.campus?.id ?? null,
     building_name: a.building.name,
     unit_name: place.unit?.name ?? null,
     cluster_name: place.cluster?.name ?? null,
-    campus_name: place.campus.name,
+    campus_name: place.campus?.name ?? NO_CAMPUS_NAME,
     location: place.location,
     place_label: place.label,
     evaluator_name: personName(a.evaluator),

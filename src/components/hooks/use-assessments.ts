@@ -88,15 +88,19 @@ export function useTemplateVersion(versionId?: string) {
   });
 }
 
-/** Clusters, units, buildings and recent events of the campus, for the Details step. */
-export function useAssessmentSetup(campusId?: string) {
+/**
+ * Clusters, units, buildings and recent events of the campus, for the Details step. An off-campus
+ * account (DRRM-026) has no campus: it gets the buildings no campus owns, saved as `setup:off-campus`.
+ */
+export function useAssessmentSetup(campusId?: string, offCampus = false) {
+  const key = offCampus ? 'off-campus' : campusId;
   return useQuery({
-    queryKey: ['assessment-setup', campusId],
+    queryKey: ['assessment-setup', key],
     queryFn: () =>
-      withOfflineCache(`setup:${campusId}`, async () =>
-        getAssessmentSetup(await getAccessToken(), campusId!)
+      withOfflineCache(`setup:${key}`, async () =>
+        getAssessmentSetup(await getAccessToken(), offCampus ? null : campusId!)
       ),
-    enabled: !!campusId,
+    enabled: offCampus || !!campusId,
     networkMode: 'always',
   });
 }

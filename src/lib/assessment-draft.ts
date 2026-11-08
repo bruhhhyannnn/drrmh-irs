@@ -83,6 +83,8 @@ export function newDraft(input: {
   cluster_id: string;
   unit_id: string;
   now: Date;
+  /** 'off_campus' for an off-campus account, which has no choice (DRRM-026). */
+  location_kind?: BuildingCategory | null;
 }): AssessmentDraft {
   return {
     version: 1,
@@ -92,7 +94,7 @@ export function newDraft(input: {
     template_version_id: input.template_version_id,
     started_at: input.now.toISOString(),
     updated_at: input.now.getTime(),
-    location_kind: null,
+    location_kind: input.location_kind ?? null,
     region_code: '',
     province_code: '',
     city_code: '',
