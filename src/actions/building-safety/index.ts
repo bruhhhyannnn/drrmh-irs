@@ -3,7 +3,7 @@
 import { inScope } from '@/lib/admin-scope';
 import {
   loadBuildingScores,
-  loadScoredItemMeta,
+  loadRollupFacts,
   loadVersion,
   scoredSelect,
   toScoredAssessment,
@@ -11,14 +11,22 @@ import {
 import { scoreAssessment, type AnswerMap } from '@/lib/assessment-score';
 import { type AssessmentTemplate } from '@/lib/assessment-template';
 import {
+  buildingPlaceSelect,
+  campusBuildings,
+  offCampusBuildings,
+  toBuildingPlace,
+} from '@/lib/building-place';
+import {
   compareScores,
   groupChildren,
   mostFailed,
+  openLocationLevel,
   poolBuildings,
   sectionScores,
-  type AnswerFact,
   type BuildingHistory,
   type Comparison,
+  type LocationScope,
+  type OffCampusRollup,
   type RollupLevel,
   type SafetyRollup,
 } from '@/lib/building-safety';
@@ -48,15 +56,17 @@ export async function getSafetyRollup(
   const level: RollupLevel = unitId ? 'unit' : clusterId ? 'cluster' : campusId ? 'campus' : 'all';
 
   const where: Prisma.BuildingWhereInput = {
-    is_active: true,
-    ...(unitId && { unit_id: unitId }),
-    unit: {
-      ...(clusterId && { cluster_id: clusterId }),
-      ...(campusId && { cluster: { campus_id: campusId } }),
-    },
+    AND: [
+      campusBuildings(campusId),
+      {
+        is_active: true,
+        ...(unitId && { unit_id: unitId }),
+        ...(clusterId && { unit: { cluster_id: clusterId } }),
+      },
+    ],
   };
 
-  const [campus, cluster, unit, buildings, itemMeta] = await Promise.all([
+  const [campus, cluster, unit, buildings] = await Promise.all([
     campusId
       ? prisma.campus.findUnique({ where: { id: campusId }, select: { id: true, name: true } })
       : null,
@@ -77,42 +87,10 @@ export async function getSafetyRollup(
         })
       : null,
     loadBuildingScores(where),
-    loadScoredItemMeta(),
   ]);
   if ((clusterId && !cluster) || (unitId && !unit)) return null;
 
-  const reassessed = buildings.filter((b) => b.latest && b.previous);
-  const ids = {
-    current: buildings.flatMap((b) => (b.latest ? [b.latest.id] : [])),
-    lflCurrent: reassessed.map((b) => b.latest!.id),
-    lflPrevious: reassessed.map((b) => b.previous!.id),
-  };
-  const allAssessmentIds = [...ids.current, ...ids.lflPrevious];
-  const rows =
-    allAssessmentIds.length > 0
-      ? await prisma.assessmentAnswerRow.findMany({
-          where: {
-            assessment_id: { in: allAssessmentIds },
-            answer: { not: null },
-          },
-          select: {
-            assessment_id: true,
-            item_id: true,
-            answer: true,
-          },
-        })
-      : [];
-
-  const facts: AnswerFact[] = [];
-  for (const r of rows) {
-    const meta = itemMeta.get(r.item_id);
-    if (!meta || !r.answer) continue;
-    facts.push({
-      assessment_id: r.assessment_id,
-      ...meta,
-      answer: r.answer,
-    });
-  }
+  const { facts, ids } = await loadRollupFacts(buildings);
 
   return {
     level,
@@ -124,6 +102,42 @@ export async function getSafetyRollup(
     group: poolBuildings(buildings),
     children: groupChildren(buildings, level),
     notAssessed: buildings.filter((b) => !b.latest).map((b) => ({ id: b.id, name: b.name })),
+    sections: sectionScores(facts, ids),
+    mostFailed: mostFailed(facts, ids.current),
+  };
+}
+
+const codeOrNull = (value: unknown) =>
+  typeof value === 'string' && /^\d{10}$/.test(value) ? value : null;
+
+/** One level of the off-campus drill-down (DRRM-025). An Administrator sees the off-campus
+ * buildings their own campus assessed. null when the caller isn't an admin. */
+export async function getOffCampusRollup(
+  token: string | null,
+  scope: { campusId?: string | null } & LocationScope
+): Promise<OffCampusRollup | null> {
+  const caller = await requireAdmin(token, uuidOrNull(scope.campusId));
+  if (!caller.ok) return null;
+  const location: LocationScope = {
+    regionCode: codeOrNull(scope.regionCode),
+    provinceCode: codeOrNull(scope.provinceCode),
+    cityCode: codeOrNull(scope.cityCode),
+    barangayCode: codeOrNull(scope.barangayCode),
+  };
+
+  const buildings = await loadBuildingScores({
+    is_active: true,
+    ...offCampusBuildings(caller.scope.campusId),
+    ...(location.regionCode && { region_code: location.regionCode }),
+    ...(location.provinceCode && { province_code: location.provinceCode }),
+    ...(location.cityCode && { city_code: location.cityCode }),
+    ...(location.barangayCode && { barangay_code: location.barangayCode }),
+  });
+  const { facts, ids } = await loadRollupFacts(buildings);
+
+  return {
+    ...openLocationLevel(buildings, location),
+    group: poolBuildings(buildings),
     sections: sectionScores(facts, ids),
     mostFailed: mostFailed(facts, ids.current),
   };
@@ -144,31 +158,19 @@ export async function getBuildingHistory(
     select: {
       id: true,
       name: true,
-      unit: {
-        select: {
-          id: true,
-          name: true,
-          cluster: {
-            select: { id: true, name: true, campus: { select: { id: true, name: true } } },
-          },
-        },
-      },
+      ...buildingPlaceSelect,
       assessments: {
         orderBy: { ended_at: 'asc' },
         select: { ...scoredSelect, version: { select: { label: true } } },
       },
     },
   });
-  if (!building || !inScope(caller.scope, building.unit.cluster.campus.id)) return null;
+  if (!building) return null;
+  const place = toBuildingPlace(building);
+  if (!inScope(caller.scope, place.campus.id)) return null;
 
   return {
-    building: {
-      id: building.id,
-      name: building.name,
-      unit: { id: building.unit.id, name: building.unit.name },
-      cluster: { id: building.unit.cluster.id, name: building.unit.cluster.name },
-      campus: building.unit.cluster.campus,
-    },
+    building: { id: building.id, name: building.name, ...place },
     assessments: building.assessments.map((a, i) => ({
       ...toScoredAssessment(a),
       number: i + 1,
@@ -196,9 +198,7 @@ export async function compareAssessments(
       building_id: true,
       floor_count: true,
       template_version_id: true,
-      building: {
-        select: { unit: { select: { cluster: { select: { campus_id: true } } } } },
-      },
+      building: { select: buildingPlaceSelect },
       areas: { select: { area_type_id: true } },
       answers: { where: { answer: { not: null } }, select: { item_id: true, answer: true } },
     },
@@ -206,7 +206,7 @@ export async function compareAssessments(
   const rowA = rows.find((r) => r.id === a);
   const rowB = rows.find((r) => r.id === b);
   if (!rowA || !rowB || rowA.building_id !== rowB.building_id) return null;
-  if (!inScope(caller.scope, rowA.building.unit.cluster.campus_id)) return null;
+  if (!inScope(caller.scope, toBuildingPlace(rowA.building).campus.id)) return null;
 
   const [vA, vB] =
     rowA.template_version_id === rowB.template_version_id

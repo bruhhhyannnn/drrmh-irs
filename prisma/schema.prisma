@@ -307,6 +307,7 @@ model campus {
   clusters              Cluster[]
   events                Event[]
   users                 User[]
+  off_campus_buildings  Building[]
 }
 
 model PopulationCategory {
@@ -506,19 +507,35 @@ model AssessmentItem {
 /// A building under its main unit (campus and cluster come through the unit). Unique
 /// (unit_id, lower(name)) through the expression index uq_buildings_unit_name. floor_count and
 /// `areas` are the current profile, used to pre-fill the next assessment.
+/// Campus (has a unit) or Off-campus (no unit; has the owning campus and a PSGC location). CHECK
+/// chk_buildings_place allows only those two shapes, and uq_buildings_campus_barangay_name keeps
+/// off-campus names unique. See prisma/manual/DRRM-025-off-campus-buildings.sql.
 model Building {
-  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  unit_id     String         @db.Uuid
-  name        String
-  floor_count Int            @default(1)
-  is_active   Boolean        @default(true)
-  created_by  String?        @db.Uuid
-  created_at  DateTime       @default(now()) @db.Timestamptz(6)
-  updated_at  DateTime       @default(now()) @updatedAt @db.Timestamptz(6)
-  unit        Unit           @relation(fields: [unit_id], references: [id], onDelete: NoAction)
-  creator     User?          @relation("BuildingCreatedBy", fields: [created_by], references: [id], onDelete: SetNull)
-  areas       BuildingArea[]
-  assessments Assessment[]
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  unit_id       String?        @db.Uuid
+  campus_id     String?        @db.Uuid
+  name          String
+  floor_count   Int            @default(1)
+  is_active     Boolean        @default(true)
+  created_by    String?        @db.Uuid
+  created_at    DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime       @default(now()) @updatedAt @db.Timestamptz(6)
+  region_code   String?
+  region_name   String?
+  province_code String?
+  province_name String?
+  city_code     String?
+  city_name     String?
+  barangay_code String?
+  barangay_name String?
+  latitude      Decimal?       @db.Decimal(10, 8)
+  longitude     Decimal?       @db.Decimal(11, 8)
+  location_name String?
+  unit          Unit?          @relation(fields: [unit_id], references: [id], onDelete: NoAction)
+  campus        campus?        @relation(fields: [campus_id], references: [id], onDelete: NoAction)
+  creator       User?          @relation("BuildingCreatedBy", fields: [created_by], references: [id], onDelete: SetNull)
+  areas         BuildingArea[]
+  assessments   Assessment[]
 
   @@index([unit_id])
   @@map("buildings")

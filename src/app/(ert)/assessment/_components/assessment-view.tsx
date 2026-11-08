@@ -13,6 +13,7 @@ import {
   type TemplateItem,
   type TemplateSection,
 } from '@/lib/assessment-template';
+import { placeDetailRows } from '@/lib/building-place';
 import { useOfflineQueueStore } from '@/store';
 import { ArrowLeft, ChevronDown, FileQuestion, Printer, WifiOff } from 'lucide-react';
 import {
@@ -137,8 +138,7 @@ export function AssessmentRecordBody({ record }: { record: AssessmentRecord }) {
       <DetailList
         rows={[
           { label: 'Building', value: record.building_name },
-          { label: 'College or unit', value: record.unit_name },
-          { label: 'Cluster', value: record.cluster_name },
+          ...placeDetailRows(record).map(([label, value]) => ({ label, value })),
           { label: 'Evaluator', value: record.evaluator_name || '—' },
           { label: 'Incident commander', value: record.incident_commander || '—' },
           { label: 'Event', value: record.event_name ?? 'None' },

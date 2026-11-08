@@ -13,7 +13,8 @@
     "postinstall": "prisma generate",
     "seed": "tsx prisma/seed.ts",
     "seed:matatag": "tsx prisma/seed-matatag.ts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "psgc:build": "tsx scripts/build-psgc.ts"
   },
   "lint-staged": {
     "*.{ts,tsx}": "eslint --fix",

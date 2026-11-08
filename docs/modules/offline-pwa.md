@@ -1,7 +1,7 @@
 ---
 type: module
 module: offline-pwa
-updated: 2026-10-30
+updated: 2026-11-05
 verified: true
 paths:
   - src/lib/offline-queue.ts
@@ -33,7 +33,7 @@ Read this before touching report or assessment submits, the service worker, `nex
   - Building assessments: `createAssessment`.
 - **Two plain stores** for the assessment form:
   - `assessment-drafts`: drafts in progress, keyed by `client_ref`.
-  - `assessment-cache`: the checklist and form setup, so the form opens offline.
+  - `assessment-cache`: the checklist, form setup and off-campus location list, so the form opens offline.
 - **Pending count:** `getAllQueuedCount()` counts all three queues. The provider, the ERT report form, the assessment hub and `useSubmitAssessment` set the count with it. Two callers don't:
   - The admin `ReportDrawer` sets bystander + field counts (`report-drawer.tsx`).
   - The bystander form sets `getQueuedReportCount()` only (`bystander-report-form.tsx`).
@@ -70,7 +70,7 @@ IndexedDB stores (`STORES` in `offline-queue.ts`):
 - `bystander-reports` (key `id`): queued bystander reports, with photo `Blob`s in `attachments`.
 - `assessments` (key `id`): queued assessments, payload `AssessmentPayload`.
 - `assessment-drafts` (key `client_ref`): assessment drafts in progress.
-- `assessment-cache` (key `key`): `{ key, value, savedAt }`, e.g. `template:published`, `template:<version_id>`.
+- `assessment-cache` (key `key`): `{ key, value, savedAt }`, e.g. `template:published`, `template:<version_id>`, `psgc:<PSGC_VERSION>`. The location list is about 2 MB, so unlike the others it isn't fetched again while a saved copy exists.
 
 A queued entry is `QueuedEntry<TPayload>`: `id`, `createdAt`, `payload`, optional `attachments`, optional `summary` (`title`, `subtitle` for "waiting to send" lists), `status` (`pending` | `failed`), `errorMessage`.
 

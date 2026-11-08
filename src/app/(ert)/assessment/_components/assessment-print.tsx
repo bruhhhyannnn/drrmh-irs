@@ -30,6 +30,7 @@ import {
   type TemplateItem,
   type TemplateSection,
 } from '@/lib/assessment-template';
+import { placeDetailRows } from '@/lib/building-place';
 import { PILLARS } from '@/lib/pillars';
 import { useOfflineQueueStore } from '@/store';
 import { ArrowLeft } from 'lucide-react';
@@ -137,8 +138,7 @@ export function RecordPrint({ record, back }: { record: AssessmentRecord; back: 
         </div>
         <div className="grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-gray-300 bg-gray-300">
           {[
-            ['College or unit', record.unit_name],
-            ['Cluster', record.cluster_name],
+            ...placeDetailRows(record),
             ['Event', record.event_name ?? 'None'],
             ['Started', formatDateTime(record.started_at)],
             ['Ended', formatDateTime(record.ended_at)],
@@ -146,8 +146,16 @@ export function RecordPrint({ record, back }: { record: AssessmentRecord; back: 
             ['Assessor', record.evaluator_name || '—'],
             ['Incident commander', record.incident_commander || '—'],
             ['Areas present', areas.length > 0 ? areas.join(', ') : 'None'],
-          ].map(([label, value]) => (
-            <div key={label} className="flex flex-col gap-0.5 bg-surface px-3.5 py-2.5">
+          ].map(([label, value], i, all) => (
+            <div
+              key={label}
+              className={cn(
+                'flex flex-col gap-0.5 bg-surface px-3.5 py-2.5',
+                // The location takes more rows than a unit; the last cell fills the grid's row.
+                i === all.length - 1 && all.length % 3 === 1 && 'col-span-3',
+                i === all.length - 1 && all.length % 3 === 2 && 'col-span-2'
+              )}
+            >
               <span className="text-[13px] font-semibold text-gray-500">{label}</span>
               <span className="text-[15px] leading-[1.35] font-semibold">{value}</span>
             </div>
