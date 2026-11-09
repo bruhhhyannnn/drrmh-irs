@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-018
-status: in-review
+status: done
 branch: feat/DRRM-018-design-review-fixes
 modules:
   - '[[design-system]]'
@@ -18,7 +18,7 @@ tags: [plan, feature]
 
 # [DRRM-018] Feature Plan: Design review fixes (October 26)
 
-- **Status:** `[In Review]`
+- **Status:** `[Done]` (merged in PR #80, 2026-10-28)
 - **Target Branch / PR:** `feat/DRRM-018-design-review-fixes` → `dev`
 - **Owner / Author:** Bryan Mangapit
 - **Design source:** Claude Design project → "Fixes from testing" in `IRS - Super Admin.dc.html` (SA2b, SA6, SA11b, SA14b, SA15, 5a), `IRS - Admin.dc.html` (AD2b, AD3, AD8b, AD11b, AD12), `IRS - ERT.dc.html` (8a, 10), `IRS - Bystander.dc.html` (26a) and `IRS - Auth Screens.dc.html` (29). Assessment and pillar screens are out of scope.

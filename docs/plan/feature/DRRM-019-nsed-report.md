@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-019
-status: in-review
+status: done
 branch: feat/DRRM-019-nsed-report
 modules:
   - '[[events]]'
@@ -13,7 +13,7 @@ tags: [plan, feature]
 
 # [DRRM-019] Feature Plan: Export NSED report (.docx, UP Manila only)
 
-- **Status:** `[In Review]`
+- **Status:** `[Done]` (merged in PR #81, 2026-10-28)
 - **Target Branch / PR:** `feat/DRRM-019-nsed-report` → `dev` (branched from `feat/DRRM-018-design-review-fixes`, so merge DRRM-018 first)
 - **Owner / Author:** Bryan Mangapit
 - **Design source:** Claude Design project → `IRS - Super Admin.dc.html`, turn 7 ("NSED report for the office") and 7a (the 9-page Word file); SA8c and AD5c for the button. Item 10 of `CHANGES for Claude Code.md`.

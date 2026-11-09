@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-014
-status: in-review
+status: done
 branch: feat/DRRM-014-drrm-pillars
 modules:
   - '[[pillars-and-landing]]'
@@ -11,7 +11,7 @@ tags: [plan, feature]
 
 # [DRRM-014] Feature Plan: DRRM pillars in the admin sidebar
 
-- **Status:** `[In Review]`
+- **Status:** `[Done]` (merged in PR #74, 2026-10-13)
 - **Target Branch / PR:** `feat/DRRM-014-drrm-pillars`
 - **Owner / Author:** Bryan Mangapit
 - **Source:** request to add the four DRRM pillars to the admin app as their own pages, to plan the next apps. Stacked on `feat/DRRM-013-ui-polish`.

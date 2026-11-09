@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-021
-status: in-review
+status: done
 branch: feat/DRRM-021-landing-partners
 modules:
   - '[[pillars-and-landing]]'
@@ -10,7 +10,7 @@ tags: [plan, feature]
 
 # [DRRM-021] Feature Plan: Landing page, turning campus names and new partners
 
-- **Status:** `[In Review]`
+- **Status:** `[Done]` (merged in PR #88, 2026-10-29)
 - **Target Branch / PR:** `feat/DRRM-021-landing-partners` → `dev`
 - **Owner / Author:** Bryan Mangapit
 - **Design source:** Claude Design project → `IRS Landing v2.dc.html` (the only file edited in this round)

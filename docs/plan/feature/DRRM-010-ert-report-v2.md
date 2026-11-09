@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-010
-status: in-review
+status: done
 branch: feat/DRRM-010-ert-report-v2
 modules:
   - '[[field-reports]]'
@@ -12,7 +12,7 @@ tags: [plan, feature]
 
 # [DRRM-010] Feature Plan: ERT Report v2
 
-- **Status:** `[In Review]`
+- **Status:** `[Done]` (merged in PR #73, 2026-10-13)
 - **Target Branch / PR:** `feat/DRRM-010-ert-report-v2`
 - **Owner / Author:** Bryan Mangapit
 - **Design source:** Claude Design project → `DRRM-H Redesign - ERT.dc.html` (screens 6–10: 6, 6a–6e, 7, 7a, 8 + 9, 9a, 10; web 1140 / tablet 768 / phone 390). Builds on DRRM-009 (auth pages, shared `src/components/ds`).

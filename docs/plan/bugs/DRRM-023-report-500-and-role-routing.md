@@ -1,7 +1,7 @@
 ---
 type: bug
 ticket: DRRM-023
-status: in-progress
+status: done
 branch: fix/DRRM-023-report-500-and-role-routing
 modules:
   - '[[auth]]'
@@ -13,7 +13,7 @@ tags: [plan, bug]
 
 # [DRRM-023] Headcount submit fails, sign-in hangs, ERT sign-in passes through the admin pages
 
-- **Status:** `[In Progress]`
+- **Status:** `[Done]` (merged in PR #92, 2026-11-04)
 - **Severity:** `[Critical]` (ERT members can't submit a status report on production)
 - **Affected Area:** `[Reports | Auth]`
 - **Discovered Date:** 2026-11-04

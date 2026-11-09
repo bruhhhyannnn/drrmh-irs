@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-012
-status: in-review
+status: done
 branch: feat/DRRM-012-admin-v2
 modules:
   - '[[campus-scoping]]'
@@ -14,7 +14,7 @@ tags: [plan, feature]
 
 # [DRRM-012] Feature Plan: Admin v2
 
-- **Status:** `[In Review]`
+- **Status:** `[Done]` (merged in PR #73, 2026-10-13)
 - **Target Branch / PR:** `feat/DRRM-012-admin-v2`
 - **Owner / Author:** Bryan Mangapit
 - **Design source:** Claude Design project → `DRRM-H Redesign - Admin.dc.html` (AD1–AD20, web 1140 / tablet 768 / phone 390). Builds on DRRM-011: the same shell, tables, drawers and event summary, with everything about other campuses taken out.

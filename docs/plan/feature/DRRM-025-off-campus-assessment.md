@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-025
-status: in-review
+status: done
 branch: feat/DRRM-025-off-campus-assessment
 modules:
   - '[[assessments]]'
@@ -17,7 +17,7 @@ tags: [plan, feature]
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-- **Status:** `In Review`
+- **Status:** `[Done]` (merged in PR #94, 2026-11-08)
 - **Target Branch / PR:** `feat/DRRM-025-off-campus-assessment`
 - **Owner / Author:** Jomar Lazaro
 

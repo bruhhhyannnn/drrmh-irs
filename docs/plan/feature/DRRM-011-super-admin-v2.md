@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-011
-status: in-review
+status: done
 branch: feat/DRRM-011-super-admin-v2
 modules:
   - '[[dashboard]]'
@@ -18,7 +18,7 @@ tags: [plan, feature]
 
 # [DRRM-011] Feature Plan: Super Admin v2
 
-- **Status:** `[In Review]`
+- **Status:** `[Done]` (merged in PR #73, 2026-10-13)
 - **Target Branch / PR:** `feat/DRRM-011-super-admin-v2`
 - **Owner / Author:** Bryan Mangapit
 - **Design source:** Claude Design project → `DRRM-H Redesign - Super Admin.dc.html` (SA1–SA23, web 1140 / tablet 768 / phone 390) and `DRRM-H Redesign - Super Admin new features.dc.html` (report PDF 5a, Complete event SA8b, comparison SA8c, field order SA22). Builds on DRRM-009 / DRRM-010 (shared `src/components/ds`).

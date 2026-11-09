@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-013
-status: in-review
+status: done
 branch: feat/DRRM-013-ui-polish
 modules:
   - '[[design-system]]'
@@ -12,7 +12,7 @@ tags: [plan, feature]
 
 # [DRRM-013] Feature Plan: UI polish after the first run
 
-- **Status:** `[In Review]`
+- **Status:** `[Done]` (merged in PR #73, 2026-10-13)
 - **Target Branch / PR:** `feat/DRRM-013-ui-polish`
 - **Owner / Author:** Bryan Mangapit
 - **Source:** feedback from running the redesigned app (DRRM-007 to DRRM-012) against the dev database. Stacked on `feat/DRRM-012-admin-v2`.
