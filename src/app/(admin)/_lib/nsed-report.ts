@@ -16,7 +16,6 @@ export interface NsedReportData {
   drillDate: string;
   drillWeekday: string;
   startTime: string;
-  standDownTime: string;
   clusterHeadcounts: string;
   firstReportTime: string;
   timeline: { name: string; place: string; time: string }[];
@@ -26,35 +25,43 @@ export interface NsedReportData {
     headcount: string;
     missing: string;
     casualties: string;
+    /** Where structural damage was reported, e.g. "College of Nursing (minor cracks)". */
+    damage: string;
   }[];
   totalUnits: string;
   totalHeadcount: string;
   totalMissing: string;
   totalCasualties: string;
+  totalDamage: string;
   breakdowns: {
     title: string;
     hasReports: boolean;
-    rows: {
-      unit: string;
-      reportedBy: string;
-      time: string;
-      headcount: string;
-      missing: string;
-      casualties: string;
-    }[];
+    table: NsedBreakdownTable;
     headcount: string;
     /** Missing persons, casualties and damage, ending in a space when not empty. */
     note: string;
   }[];
-  categories: NsedCategories;
+  chart: NsedChart;
 }
 
-/** Headcount by population category (rows) and cluster (columns). */
-export interface NsedCategories {
-  clusters: string[];
-  rows: { name: string; counts: string[]; total: string }[];
+/** One cluster's units (rows) by headcount field, then Missing and Casualty, with a total row. */
+export interface NsedBreakdownTable {
+  /** "College/Unit (Pedro Gil)". */
+  unitHeader: string;
+  /** The short field names ("Faculty", "Construction W."), then "Missing" and "Casualty". */
+  columns: string[];
+  rows: { unit: string; counts: string[] }[];
   totals: string[];
-  total: string;
+}
+
+/**
+ * Headcount by category as a stacked bar chart: one bar per unit that reported, one stacked
+ * series per field, then Missing and Casualty, with the bar's total at its end.
+ */
+export interface NsedChart {
+  units: string[];
+  series: { name: string; color: string; values: number[] }[];
+  totals: number[];
 }
 
 /** The report is the UP Manila office's, so only UP Manila events offer it. */
@@ -101,6 +108,39 @@ const num = (n: number) => n.toLocaleString('en-US');
 const counted = (n: number) => (n <= 20 ? `${WORDS[n]} (${n})` : num(n));
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** "JUAN DELA CRUZ" or "juan dela cruz" → "Juan Dela Cruz"; roman numerals stay ("Jose Rizal III"). */
+export function properName(name: string) {
+  return name
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase()
+    .replace(
+      /(^|[\s\-'.])(\p{L})/gu,
+      (_, before: string, letter: string) => before + letter.toUpperCase()
+    )
+    .replace(/\b(Ii|Iii|Iv|Vi|Vii)\b/g, (numeral) => numeral.toUpperCase());
+}
+
+// The office's short names for the headcount fields (column headers and the chart legend) and
+// the chart colours of its reports; a field not listed keeps its name and takes a spare colour.
+const FIELD_STYLES: { match: RegExp; label: string; color: string }[] = [
+  { match: /^faculty/i, label: 'Faculty', color: '1A5E80' },
+  { match: /^admin/i, label: 'Admin', color: 'E87333' },
+  { match: /^reps/i, label: 'REPS', color: '1A6B2A' },
+  { match: /^ra\b/i, label: 'RA', color: '12A0D8' },
+  { match: /^student/i, label: 'Students', color: '9C2A91' },
+  { match: /^philcare/i, label: 'Philcare', color: '4CA935' },
+  { match: /^security/i, label: 'Security', color: '6390A8' },
+  { match: /^construction/i, label: 'Construction W.', color: 'F0A070' },
+  { match: /^tenant/i, label: 'Tenants', color: '5E9C6C' },
+  { match: /^health/i, label: 'Health W.', color: '5CC1EA' },
+  { match: /^non[\s-]?academic/i, label: 'Non-academic staff', color: 'C474BC' },
+  { match: /^(visitor|guest|patient)/i, label: 'Visitors/Patients', color: '8CC870' },
+];
+const MISSING_COLOR = 'A4C2D2';
+const CASUALTY_COLOR = 'F6C8AB';
+const SPARE_COLORS = ['7F7F7F', 'BF9000', '4472C4', 'A5A5A5', '70AD47', 'FFC000'];
 
 /** "a", "a and b", "a, b, and c". */
 function list(items: string[], comma = items.length > 2) {
@@ -155,6 +195,37 @@ const peopleOf = (r: SummaryReport) => r.population_counts.reduce((sum, pc) => s
 
 const zoneNumber = (unit: string | undefined) => Number(unit?.match(/^zone\s*(\d+)/i)?.[1] ?? NaN);
 
+/** Structural damage in these reports: each place once per condition, "no damage" left out. */
+function damageOf(reports: SummaryReport[]) {
+  const seen = new Set<string>();
+  const damage: { place: string; condition: string }[] = [];
+  for (const r of reports) {
+    const name = r.damage_conditions?.name;
+    if (!name || NO_DAMAGE.test(name)) continue;
+    const item = { place: placeOf(r), condition: shortCondition(name) };
+    const key = `${item.place}|${item.condition}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      damage.push(item);
+    }
+  }
+  return damage;
+}
+
+/** A cluster's reports by unit: zones by number (PGH), other units by their first report. */
+function unitsOf(reports: SummaryReport[]) {
+  const byUnit = new Map<string, { name: string; reports: SummaryReport[] }>();
+  for (const r of reports) {
+    const key = r.unit_id ?? 'none';
+    const unit = byUnit.get(key) ?? { name: r.unit?.name.trim() || 'No unit', reports: [] };
+    unit.reports.push(r);
+    byUnit.set(key, unit);
+  }
+  const units = [...byUnit.values()];
+  const byZone = units.every((u) => !Number.isNaN(zoneNumber(u.name)));
+  return byZone ? units.sort((a, b) => zoneNumber(a.name) - zoneNumber(b.name)) : units;
+}
+
 /** Missing persons, casualties and damage in one cluster's reports, as the office writes them. */
 function noteOf(reports: SummaryReport[]) {
   const byPlace = new Map<string, SummaryReport[]>();
@@ -167,7 +238,9 @@ function noteOf(reports: SummaryReport[]) {
 
   // Named missing persons, one clause per place.
   const named = places.flatMap(([place, rs]) => {
-    const names = rs.flatMap((r) => r.missing_persons.map((p) => p.name.trim()).filter(Boolean));
+    const names = rs.flatMap((r) =>
+      r.missing_persons.map((p) => properName(p.name)).filter(Boolean)
+    );
     if (!names.length) return [];
     return [
       `${list(names)} ${names.length === 1 ? 'was' : 'were'} reported missing at ${the(place)}`,
@@ -208,12 +281,7 @@ function noteOf(reports: SummaryReport[]) {
   }
 
   // Building damage.
-  const damaged = places.flatMap(([place, rs]) =>
-    rs
-      .map((r) => r.damage_conditions?.name)
-      .filter((name): name is string => !!name && !NO_DAMAGE.test(name))
-      .map((name) => `${the(place)} (${shortCondition(name)})`)
-  );
+  const damaged = damageOf(reports).map((d) => `${the(d.place)} (${d.condition})`);
   sentences.push(
     damaged.length
       ? `Building damage was reported at ${list(damaged)}.`
@@ -250,17 +318,28 @@ export function buildNsedReport(source: SummarySource): NsedReportData {
     headcount: c.reports.reduce((sum, r) => sum + peopleOf(r), 0),
     missing: c.reports.reduce((sum, r) => sum + r.missing_persons.length, 0),
     casualties: c.reports.reduce((sum, r) => sum + r.casualties.length, 0),
+    damage: damageOf(c.reports),
   }));
   const total = (key: 'units' | 'headcount' | 'missing' | 'casualties') =>
     clusterRows.reduce((sum, c) => sum + c[key], 0);
+  const damagedAreas = clusterRows.reduce((sum, c) => sum + c.damage.length, 0);
 
-  // Headcount by category: the campus's fields in their order, then any other field reported.
+  // Headcount fields: the campus's fields in their order, then any other field reported.
   const categories = [...source.fields];
   for (const r of reports) {
     for (const pc of r.population_counts) {
       if (!categories.some((c) => c.id === pc.category.id)) categories.push(pc.category);
     }
   }
+  let spare = 0;
+  const fields = categories.map((c) => {
+    const style = FIELD_STYLES.find((f) => f.match.test(c.name.trim()));
+    return {
+      id: c.id,
+      label: style?.label ?? c.name,
+      color: style?.color ?? SPARE_COLORS[spare++ % SPARE_COLORS.length],
+    };
+  });
   const countOf = (categoryId: string, rs: SummaryReport[]) =>
     rs.reduce(
       (sum, r) =>
@@ -270,6 +349,21 @@ export function buildNsedReport(source: SummarySource): NsedReportData {
           .reduce((s, pc) => s + pc.count, 0),
       0
     );
+  /** A unit's (or a cluster's) counts: each field, then missing persons, then casualties. */
+  const countsOf = (rs: SummaryReport[]) => [
+    ...fields.map((f) => countOf(f.id, rs)),
+    rs.reduce((sum, r) => sum + r.missing_persons.length, 0),
+    rs.reduce((sum, r) => sum + r.casualties.length, 0),
+  ];
+  const columns = [
+    ...fields.map((f) => ({ name: f.label, color: f.color })),
+    { name: 'Missing', color: MISSING_COLOR },
+    { name: 'Casualty', color: CASUALTY_COLOR },
+  ];
+
+  // The chart: every unit that reported, cluster by cluster in the office's order.
+  const chartUnits = clusterRows.flatMap((c) => unitsOf(c.reports));
+  const chartCounts = chartUnits.map((u) => countsOf(u.reports));
 
   return {
     quarterOrdinal: quarter ? ORDINALS[quarter.quarter - 1] : '',
@@ -278,7 +372,6 @@ export function buildNsedReport(source: SummarySource): NsedReportData {
     drillDate: start ? format(start, 'MMMM d, yyyy') : '—',
     drillWeekday: start ? format(start, 'EEEE') : '—',
     startTime: formatTime(start),
-    standDownTime: formatTime(event.ended_at),
     clusterHeadcounts: list(
       clusterRows.map((c) =>
         c.reports.length
@@ -299,41 +392,36 @@ export function buildNsedReport(source: SummarySource): NsedReportData {
       headcount: num(c.headcount),
       missing: num(c.missing),
       casualties: num(c.casualties),
+      damage: c.damage.length
+        ? c.damage.map((d) => `${d.place} (${d.condition})`).join('; ')
+        : 'None reported',
     })),
     totalUnits: num(total('units')),
     totalHeadcount: num(total('headcount')),
     totalMissing: num(total('missing')),
     totalCasualties: num(total('casualties')),
+    totalDamage: damagedAreas
+      ? `${num(damagedAreas)} ${damagedAreas === 1 ? 'area' : 'areas'}`
+      : 'None reported',
     breakdowns: clusterRows.map((c) => {
-      // By time; a cluster made of numbered zones (PGH) lists them by zone.
-      const byZone = c.reports.every((r) => !Number.isNaN(zoneNumber(r.unit?.name)));
-      const rows = byZone
-        ? [...c.reports].sort((a, b) => zoneNumber(a.unit?.name) - zoneNumber(b.unit?.name))
-        : c.reports;
+      const units = unitsOf(c.reports);
       return {
         title: clusterTitle(c.name),
-        hasReports: rows.length > 0,
-        rows: rows.map((r) => ({
-          unit: r.unit?.name ?? 'No unit',
-          reportedBy: personName(r.user) || '—',
-          time: formatTime(r.submitted_at),
-          headcount: num(peopleOf(r)),
-          missing: num(r.missing_persons.length),
-          casualties: num(r.casualties.length),
-        })),
+        hasReports: c.reports.length > 0,
+        table: {
+          unitHeader: `College/Unit (${c.name})`,
+          columns: columns.map((col) => col.name),
+          rows: units.map((u) => ({ unit: u.name, counts: countsOf(u.reports).map(num) })),
+          totals: countsOf(c.reports).map(num),
+        },
         headcount: num(c.headcount),
-        note: rows.length ? noteOf(rows) : '',
+        note: c.reports.length ? noteOf(units.flatMap((u) => u.reports)) : '',
       };
     }),
-    categories: {
-      clusters: clusterRows.map((c) => c.name),
-      rows: categories.map((category) => ({
-        name: category.name,
-        counts: clusterRows.map((c) => num(countOf(category.id, c.reports))),
-        total: num(countOf(category.id, reports)),
-      })),
-      totals: clusterRows.map((c) => num(c.headcount)),
-      total: num(total('headcount')),
+    chart: {
+      units: chartUnits.map((u) => u.name),
+      series: columns.map((col, i) => ({ ...col, values: chartCounts.map((counts) => counts[i]) })),
+      totals: chartCounts.map((counts) => counts.reduce((sum, n) => sum + n, 0)),
     },
   };
 }
