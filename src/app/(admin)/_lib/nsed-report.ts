@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
-import { formatTime, personName } from './format';
-import type { SummarySource } from './summary';
+import { formatTime } from './format';
+import { reportPlace as placeOf, reportTimeline, type SummarySource } from './summary';
 
 // The NSED report for the UP Manila DRRM-H office: what the app fills into the office's Word
 // template (public/templates/nsed-report.docx). Pure, so it can be tested; nsed-docx.ts puts it
@@ -178,13 +178,6 @@ function clusterTitle(name: string) {
 /** "the Pedro Gil cluster", for sentences. */
 const clusterInSentence = (name: string) =>
   /cluster$/i.test(name) ? `the ${name}` : `the ${name} cluster`;
-
-/** Where a report came from in the timeline: the unit, "PGH Zone 1" for zones, or the cluster. */
-function placeOf(r: SummaryReport) {
-  const unit = r.unit?.name.trim();
-  if (!unit) return `${r.cluster.name} cluster`;
-  return /^zone\b/i.test(unit) ? `${r.cluster.name} ${unit}` : unit;
-}
 
 /** "the College of Nursing", but "PGH Zone 1" takes no article. */
 function the(place: string) {
@@ -381,10 +374,10 @@ export function buildNsedReport(source: SummarySource): NsedReportData {
       true
     ),
     firstReportTime: formatTime(firstAt),
-    timeline: reports.map((r) => ({
-      name: personName(r.user) || '—',
-      place: placeOf(r),
-      time: formatTime(r.submitted_at),
+    timeline: reportTimeline(reports).map((t) => ({
+      name: t.name,
+      place: t.place,
+      time: formatTime(t.at),
     })),
     clusters: clusterRows.map((c) => ({
       name: c.name,

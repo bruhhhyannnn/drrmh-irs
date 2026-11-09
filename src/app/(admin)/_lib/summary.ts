@@ -238,6 +238,36 @@ export function scopedCoverage(summary: Summary) {
   return done[0]?.coverage ?? pending[0]?.coverage ?? null;
 }
 
+/**
+ * Where a report came from, as the timeline and the NSED report name it: the unit, "PGH Zone 1"
+ * for a zone, or "Taft cluster" when the report has no unit.
+ */
+export function reportPlace(r: Pick<SummaryReport, 'cluster' | 'unit'>) {
+  const unit = r.unit?.name.trim();
+  if (!unit) return `${r.cluster.name} cluster`;
+  return /^zone\b/i.test(unit) ? `${r.cluster.name} ${unit}` : unit;
+}
+
+export interface TimelineRow {
+  id: string;
+  /** Who sent it, or "—" when the account has no name. */
+  name: string;
+  place: string;
+  at: Date;
+}
+
+/** The timeline of reports: who reported from where, in the order they were sent. */
+export function reportTimeline(reports: SummaryReport[]): TimelineRow[] {
+  return reports
+    .map((r) => ({
+      id: r.id,
+      name: personName(r.user) || '—',
+      place: reportPlace(r),
+      at: new Date(r.submitted_at),
+    }))
+    .sort((a, b) => a.at.getTime() - b.at.getTime());
+}
+
 /** Headcount per field over some reports, largest first; fields at 0 are left out. */
 export function headcountOf(reports: SummaryReport[]) {
   const totals = new Map<string, { id: string; name: string; count: number }>();
