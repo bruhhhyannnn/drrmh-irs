@@ -1,7 +1,7 @@
 ---
 type: review
 ticket: REV-2026-10-29
-status: in-progress
+status: done
 branch: feat/DRRM-022-report-photos
 modules:
   - '[[field-reports]]'
@@ -15,7 +15,7 @@ tags: [plan, review]
 - **Review Date:** 2026-10-29
 - **Target Branch / PR / Files:** `PR #89` (`origin/main...origin/feat/DRRM-022-report-photos`, head `43679f3`)
 - **Reviewer:** Claude Code (`/code-review`), requested by DevJom
-- **Status:** `[In Progress]`
+- **Status:** `[Done]` (merged in PR #90, 2026-11-03)
 - **Overall Recommendation:** `[Request Changes]`
 
 ---

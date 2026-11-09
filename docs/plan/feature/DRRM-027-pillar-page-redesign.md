@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-027
-status: in-review
+status: done
 branch: feat/DRRM-027-pillar-page-redesign
 modules:
   - '[[pillars-and-landing]]'
@@ -11,7 +11,7 @@ tags: [plan, feature]
 
 # [DRRM-027] Pillar page redesign: Design
 
-- **Status:** `In Review`
+- **Status:** `[Done]` (merged in PR #96, 2026-11-08)
 - **Target Branch / PR:** `feat/DRRM-027-pillar-page-redesign`, stacked on `feat/DRRM-026-off-campus-accounts` (PR #95)
 - **Owner / Author:** Jomar Lazaro
 

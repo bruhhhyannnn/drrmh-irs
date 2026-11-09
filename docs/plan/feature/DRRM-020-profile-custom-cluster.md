@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-020
-status: in-review
+status: done
 branch: feat/DRRM-020-profile-custom-cluster
 modules:
   - '[[auth]]'
@@ -12,7 +12,7 @@ tags: [plan, feature]
 
 # [DRRM-020] Feature Plan: Type your own cluster in profile setup
 
-- **Status:** `[In Review]`
+- **Status:** `[Done]` (merged in PR #83, 2026-10-28)
 - **Target Branch / PR:** `feat/DRRM-020-profile-custom-cluster` → `dev`
 - **Owner / Author:** Bryan Mangapit
 

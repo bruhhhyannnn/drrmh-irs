@@ -5,11 +5,19 @@ tags: [changelog]
 
 # Changelog
 
-What changed, newest first, grouped by ticket. Built from the git history up to `1474dfb` (2026-10-21). The only tag is `v0.0.1`, so entries are grouped by ticket, not by release. When a ticket merges, add an entry here and set its plan to `done`.
+What changed, newest first, grouped by ticket. Built from the git history up to `6072713` (2026-11-08). The only tag is `v0.0.1`, so entries are grouped by ticket, not by release. When a ticket merges, add an entry here and set its plan to `done`.
 
 **Related:** [[00-index]] · [[conventions]]
 
-## DRRM-027 Pillar page redesign: 2026-11-06 (branch `feat/DRRM-027-pillar-page-redesign`, not merged yet)
+## DRRM-028 NSED report v2: 2026-11-09 (branch `feat/DRRM-028-nsed-report-v2`)
+
+Plan: [[plan/feature/DRRM-028-nsed-report-v2]] · [[events]]
+
+- The NSED report follows the office's official report: an Executive Summary heading with a blank to write it, an observers' comments table, a Structural damage column in the headcount summary, breakdown tables with a row per unit and a column per personnel category (then Missing and Casualty, with a Total row), and the comparison of what reached the Incident Commander with what was sent through the IRS.
+- The headcount by category is a native Word chart: stacked bars per unit, a colour per category, the total at each bar's end.
+- Names in the notes are written with a capital first letter, the timeline's College/Building and Time are centred, and table text is 12 pt.
+
+## DRRM-027 Pillar page redesign: 2026-11-06 (PR #96, merged 2026-11-08)
 
 Plan: [[plan/feature/DRRM-027-pillar-page-redesign]] · [[pillars-and-landing]]
 
@@ -18,14 +26,14 @@ Plan: [[plan/feature/DRRM-027-pillar-page-redesign]] · [[pillars-and-landing]]
 - Adds five focused charts: quarterly score trend (Chart A, Campus vs Off-campus), score bands (Chart B, with building drill-down and no-score count), better/same/worse change bar (Chart C, with drill-down), section scores as bars (Chart D, lowest first), and monthly activity with overdue building tracking (Chart E).
 - Dedicated view for Rehabilitation and Recovery with continuity plan counts, plan change tracking, missing plan building list, and quarterly adoption trend.
 
-## DRRM-026 Off-campus accounts: 2026-11-06 (branch `feat/DRRM-026-off-campus-accounts`, not merged yet)
+## DRRM-026 Off-campus accounts: 2026-11-06 (PR #95, merged 2026-11-08)
 
 Plan: [[plan/feature/DRRM-026-off-campus-accounts]]
 
 - A Super Admin makes off-campus ERT accounts with an email and password ([[users]]). They set up their own name, address, organization and position, with a data privacy consent ([[auth]]), and have no Report tool.
 - Their assessments are always off campus and belong to no campus, so only Super Admins see them ([[assessments]], [[campus-scoping]]). Schema in `prisma/manual/DRRM-026-off-campus-accounts.sql` ([[database]]).
 
-## DRRM-025 Off-campus building assessments: 2026-11-05 (branch `feat/DRRM-025-off-campus-assessment`, not merged yet)
+## DRRM-025 Off-campus building assessments: 2026-11-05 (PR #94, merged 2026-11-08)
 
 Plan: [[plan/feature/DRRM-025-off-campus-assessment]]
 
@@ -33,13 +41,56 @@ Plan: [[plan/feature/DRRM-025-off-campus-assessment]]
 - **Admins** ([[building-safety]], [[assessment-admin]]): a Campuses | Off-campus switch on the dashboard with a drill-down by location, and a category filter on the Assessments tabs. Off-campus results never count toward a campus score.
 - **Pillar pages** ([[pillars-and-landing]]): the placeholders become each pillar's results, Campus beside Off-campus, including the N/A rate, and `/pillars` is a new overview.
 
-## DRRM-024 Event cluster and unit drill-down: 2026-11-05 (branch `feat/DRRM-024-event-cluster-drilldown`, not merged yet)
+## DRRM-024 Event cluster and unit drill-down: 2026-11-05 (PR #93)
 
 [[plan/feature/DRRM-024-event-cluster-drilldown]] · [[events]]
 
 - Clicking a cluster or unit on an event's summary narrows the whole page to it, with its own link. Each cluster lists its units with no report yet, and a unit's page lists its reports, read-only once the event is completed.
 
-## DRRM-015 MATATAG building assessment: 2026-10-20 → 2026-10-21 (branch `feat/DRRM-015-assessment-form`, not merged yet)
+## DRRM-023 Report 500s, sign-in loader, role routing: 2026-11-04 (PR #92)
+
+Plans: [[plan/fix/DRRM-023-report-500-and-role-routing]] · [[plan/bugs/DRRM-023-report-500-and-role-routing]] · [[auth]] · [[routes]] · [[field-reports]]
+
+- Status reports save on production again, every sign-in ends in a page or an error with a way out, and non-admins no longer mount admin pages.
+
+## DRRM-022 Photos on field reports: 2026-11-03 (PRs #89, #90)
+
+Plans: [[plan/feature/DRRM-022-report-photos]] · [[plan/review/2026-10-29-pr-89-report-photos]] · [[field-reports]] · [[database]]
+
+- Field reports take up to 3 photos of each casualty's injury and 3 of the structural damage, kept in the private `report-photos` Storage bucket and shown to admins only. Schema in `prisma/manual/DRRM-022-report-photos.sql`.
+- The review of PR #89 fixed its findings and added caller checks to the remaining report actions.
+
+## DRRM-021 Landing: turning campus, partners: 2026-10-29 (PR #88)
+
+[[plan/feature/DRRM-021-landing-partners]] · [[pillars-and-landing]]
+
+- The hero turns through the campuses, and the partners bar credits the UP Resilience Institute and the NOAH Center.
+
+## DRRM-020 Type your own cluster: 2026-10-28 (PR #83)
+
+[[plan/feature/DRRM-020-profile-custom-cluster]] · [[auth]]
+
+- ERT members who can't find their cluster in profile setup type it under "Other (please specify)", like unit and position.
+
+## DRRM-019 Export NSED report: 2026-10-28 (PR #81)
+
+[[plan/feature/DRRM-019-nsed-report]] · [[events]]
+
+- Completed UP Manila events export the office's quarterly NSED report as a Word file, filled from the reports in the office's template.
+
+## DRRM-018 Design review fixes: 2026-10-28 (PR #80)
+
+[[plan/feature/DRRM-018-design-review-fixes]] · [[design-system]]
+
+- Fixes from the October 26 design review: a custom Select, placeholders, Unit optional where clusters have none, a readable error when Delete user fails, Campus, Users and Settings reachable on phones, and the Events row download opens the event report PDF (the Excel export and `exceljs` were removed).
+
+## DRRM-017 Slim CLAUDE.md into the vault: 2026-10-26 (PR #76)
+
+[[plan/feature/DRRM-017-slim-claude-md]]
+
+- `CLAUDE.md` keeps the rules every task needs; the area detail moved into the `docs/` module notes.
+
+## DRRM-015 MATATAG building assessment: 2026-10-20 → 2026-10-21 (merged through `dev` in PR #82, 2026-10-28)
 
 Plans: [[plan/feature/DRRM-015-assessment-form]] · [[plan/feature/DRRM-015-phase-1-plan]] · [[plan/feature/DRRM-015-phase-2-plan]] · [[plan/feature/DRRM-015-assessment-print]]
 

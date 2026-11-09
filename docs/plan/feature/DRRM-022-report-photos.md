@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-022
-status: in-review
+status: done
 branch: feat/DRRM-022-report-photos
 modules:
   - '[[field-reports]]'
@@ -14,7 +14,7 @@ tags: [plan, feature]
 
 # [DRRM-022] Feature Plan: Photos on field reports
 
-- **Status:** `[In Review]`
+- **Status:** `[Done]` (merged in PR #90, 2026-11-03)
 - **Target Branch / PR:** `feat/DRRM-022-report-photos` → `dev`
 - **Owner / Author:** Bryan Mangapit
 

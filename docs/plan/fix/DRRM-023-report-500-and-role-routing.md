@@ -1,7 +1,7 @@
 ---
 type: fix
 ticket: DRRM-023
-status: in-progress
+status: done
 branch: fix/DRRM-023-report-500-and-role-routing
 modules:
   - '[[auth]]'
@@ -13,7 +13,7 @@ tags: [plan, fix]
 
 # [DRRM-023] Fix Plan: Report 500s, endless sign-in loader, role routing
 
-- **Status:** `[In Progress]`
+- **Status:** `[Done]` (merged in PR #92, 2026-11-04)
 - **Related Bugs / Audits:** [[plan/bugs/DRRM-023-report-500-and-role-routing]]
 - **Target Branch / PR:** `fix/DRRM-023-report-500-and-role-routing`
 - **Author:** Claude Code
