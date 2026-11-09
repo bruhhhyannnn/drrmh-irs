@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-028
-status: in-review
+status: done
 branch: feat/DRRM-028-nsed-report-v2
 modules:
   - '[[events]]'
@@ -10,7 +10,7 @@ tags: [plan, feature]
 
 # [DRRM-028] Feature Plan: NSED report v2 (chart, unit breakdowns, office sections)
 
-- **Status:** `[In Review]`
+- **Status:** `[Done]` (merged in PR #97, 2026-11-09)
 - **Target Branch / PR:** `feat/DRRM-028-nsed-report-v2`
 - **Owner / Author:** Bryan Mangapit
 
@@ -56,7 +56,7 @@ The NSED report export (DRRM-019) fills the UP Manila office's Word template, bu
 ### The Word file
 
 - [src/app/(admin)/\_lib/nsed-docx.ts](<../../../src/app/(admin)/_lib/nsed-docx.ts>):
-  - `breakdownTableXml`: the per-unit table as raw XML (`{@tableXml}` inside `{#breakdowns}`), since its columns depend on the campus's fields. Category names run bottom to top so the number columns stay narrow; each column is as wide as its longest number.
+  - `breakdownTableXml`: the per-unit table as raw XML (`{@tableXml}` inside `{#breakdowns}`), since its columns depend on the campus's fields. Category names ran bottom to top; DRRM-029 made them horizontal ([[plan/feature/DRRM-029-nsed-breakdown-width]]).
   - `categoryChartXml`: a native Word chart (`word/charts/chart1.xml`, `c:barChart` with `barDir="bar"`, `grouping="stacked"`), values stored in the chart (no embedded workbook), so the office can restyle it in Word. The totals are labels on a last, invisible series whose legend entry is deleted. `fillNsedTemplate` adds the part, its relationship and content type, and drops folder entries (docxtemplater adds `word/`; Word Online and OneDrive fail on those).
 - [public/templates/nsed-report.docx](../../../public/templates/nsed-report.docx): edited as XML (executive summary, centred timeline columns, observers table, damage column, `{@tableXml}`, `{@categoryChart}`, the IC vs IRS section, `NsedTableText` at 12 pt).
 

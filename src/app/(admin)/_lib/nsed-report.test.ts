@@ -2,7 +2,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import PizZip from 'pizzip';
-import { categoryChartXml, fillNsedTemplate } from './nsed-docx';
+import {
+  breakdownLayout,
+  breakdownTableXml,
+  categoryChartXml,
+  fillNsedTemplate,
+} from './nsed-docx';
 import { buildNsedReport, isUpManila, nsedFileName, properName, quarterOf } from './nsed-report';
 import type { SummarySource } from './summary';
 
@@ -215,6 +220,64 @@ test('each breakdown totals its units by field, then missing and casualties', ()
     ]
   );
   assert.deepEqual(data.breakdowns[3].table.totals, ['0', '376', '0', '3']);
+});
+
+const UPM_COLUMNS = [
+  'Faculty',
+  'Admin',
+  'REPS',
+  'RA',
+  'Students',
+  'Philcare',
+  'Security',
+  'Construction W.',
+  'Tenants',
+  'Health W.',
+  'Non-academic staff',
+  'Visitors/Patients',
+  'Missing',
+  'Casualty',
+];
+
+test("a breakdown with UP Manila's 12 fields fits 0.25 in from the paper's edges, headers 8 pt", () => {
+  const table = {
+    unitHeader: 'College/Unit (Pedro Gil)',
+    columns: UPM_COLUMNS,
+    rows: [{ unit: 'College of Allied Medical Professions', counts: UPM_COLUMNS.map(() => '249') }],
+    totals: UPM_COLUMNS.map((_, i) => (i === 4 ? '1,592' : '99')),
+  };
+  const layout = breakdownLayout(table);
+  assert.equal(layout.headerSize, 8);
+  assert.ok(layout.unitWidth >= 1400);
+  // A4 (11920 twips) less 0.25 in (360) on each side.
+  assert.equal(layout.unitWidth + layout.numberWidths.reduce((sum, w) => sum + w, 0), 11200);
+  // "Construction" is the longest word, so its column is the widest.
+  assert.equal(Math.max(...layout.numberWidths), layout.numberWidths[7]);
+
+  const xml = breakdownTableXml(table);
+  assert.match(xml, /<w:tblW w:w="11200" w:type="dxa"\/><w:tblInd w:w="-1080" w:type="dxa"\/>/);
+  assert.doesNotMatch(xml, /textDirection/, 'headers run left to right');
+  assert.match(
+    xml,
+    /<w:sz w:val="16"\/><w:szCs w:val="16"\/><\/w:rPr><w:t xml:space="preserve">Faculty</
+  );
+  assert.match(
+    xml,
+    /<w:sz w:val="20"\/><w:szCs w:val="20"\/><\/w:rPr><w:t xml:space="preserve">1,592</
+  );
+  assert.match(xml, /Visitors\/\u200BPatients/, 'may wrap after the slash');
+});
+
+test('more fields than fit: the smallest header size, and the unit column keeps its room', () => {
+  const columns = [...UPM_COLUMNS.slice(0, -2), 'Contractors', 'Volunteers', 'Missing', 'Casualty'];
+  const layout = breakdownLayout({
+    unitHeader: 'College/Unit (Taft)',
+    columns,
+    rows: [],
+    totals: columns.map(() => '0'),
+  });
+  assert.equal(layout.headerSize, 7);
+  assert.equal(layout.unitWidth, 1400);
 });
 
 test('two reports from one unit make one row', () => {
