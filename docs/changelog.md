@@ -9,6 +9,12 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-030 Timeline of reports on the event summary: 2026-11-09 (branch `feat/DRRM-030-event-report-timeline`)
+
+Plan: [[plan/feature/DRRM-030-event-report-timeline]] · [[events]]
+
+- Event details and campus details show a Timeline of reports card: who reported, from which college or building, and when, first report first, the same rows as the NSED report's timeline. It follows the cluster drill-down.
+
 ## DRRM-028 NSED report v2: 2026-11-09 (branch `feat/DRRM-028-nsed-report-v2`)
 
 Plan: [[plan/feature/DRRM-028-nsed-report-v2]] · [[events]]
