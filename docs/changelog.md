@@ -9,6 +9,14 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-028 NSED report v2: 2026-11-09 (branch `feat/DRRM-028-nsed-report-v2`)
+
+Plan: [[plan/feature/DRRM-028-nsed-report-v2]] · [[events]]
+
+- The NSED report follows the office's official report: an Executive Summary heading with a blank to write it, an observers' comments table, a Structural damage column in the headcount summary, breakdown tables with a row per unit and a column per personnel category (then Missing and Casualty, with a Total row), and the comparison of what reached the Incident Commander with what was sent through the IRS.
+- The headcount by category is a native Word chart: stacked bars per unit, a colour per category, the total at each bar's end.
+- Names in the notes are written with a capital first letter, the timeline's College/Building and Time are centred, and table text is 12 pt.
+
 ## DRRM-027 Pillar page redesign: 2026-11-06 (PR #96, merged 2026-11-08)
 
 Plan: [[plan/feature/DRRM-027-pillar-page-redesign]] · [[pillars-and-landing]]

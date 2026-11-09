@@ -52,6 +52,7 @@ Statuses are taken from each plan's frontmatter as of 2026-11-09. Keep this list
 
 | Plan                                                                                                 | Status      | Branch                              |
 | ---------------------------------------------------------------------------------------------------- | ----------- | ----------------------------------- |
+| [[plan/feature/DRRM-028-nsed-report-v2\|DRRM-028 NSED report v2]]                                    | in-review   | `feat/DRRM-028-nsed-report-v2`      |
 | [[plan/review/2026-09-08-dev-branch-audit\|Dev branch audit (2026-09-08)]]                           | in-progress | `dev`                               |
 | [[plan/fix/DRRM-002-emergency-reports-hardening\|DRRM-002 Emergency reports hardening]]              | approved    | `fix/emergency-reports-hardening`   |
 | [[plan/fix/DRRM-003-report-form-atomicity\|DRRM-003 Report form atomicity]]                          | approved    | `fix/report-form-atomicity`         |
