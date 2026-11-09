@@ -50,21 +50,22 @@ Statuses are taken from each plan's frontmatter as of 2026-11-09. Keep this list
 
 ### Active
 
-| Plan                                                                                                 | Status      | Branch                              |
-| ---------------------------------------------------------------------------------------------------- | ----------- | ----------------------------------- |
-| [[plan/feature/DRRM-028-nsed-report-v2\|DRRM-028 NSED report v2]]                                    | in-review   | `feat/DRRM-028-nsed-report-v2`      |
-| [[plan/review/2026-09-08-dev-branch-audit\|Dev branch audit (2026-09-08)]]                           | in-progress | `dev`                               |
-| [[plan/fix/DRRM-002-emergency-reports-hardening\|DRRM-002 Emergency reports hardening]]              | approved    | `fix/emergency-reports-hardening`   |
-| [[plan/fix/DRRM-003-report-form-atomicity\|DRRM-003 Report form atomicity]]                          | approved    | `fix/report-form-atomicity`         |
-| [[plan/fix/DRRM-004-events-dynamic-clusters\|DRRM-004 Events and dynamic clusters]]                  | approved    | `fix/events-dynamic-clusters`       |
-| [[plan/fix/DRRM-005-settings-hooks-performance\|DRRM-005 Settings, hooks and dashboard performance]] | approved    | `fix/settings-hooks-performance`    |
-| [[plan/fix/DRRM-006-schema-dual-write-sunset\|DRRM-006 Schema normalization and dual-write sunset]]  | approved    | `refactor/schema-dual-write-sunset` |
-| [[plan/feature/2026-09-09-table-redesign\|Data tables redesign]]                                     | approved    | `feature/table-redesign`            |
+| Plan                                                                                                 | Status      | Branch                               |
+| ---------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------ |
+| [[plan/feature/DRRM-029-nsed-breakdown-width\|DRRM-029 NSED breakdown headers left to right]]        | in-review   | `feat/DRRM-029-nsed-breakdown-width` |
+| [[plan/review/2026-09-08-dev-branch-audit\|Dev branch audit (2026-09-08)]]                           | in-progress | `dev`                                |
+| [[plan/fix/DRRM-002-emergency-reports-hardening\|DRRM-002 Emergency reports hardening]]              | approved    | `fix/emergency-reports-hardening`    |
+| [[plan/fix/DRRM-003-report-form-atomicity\|DRRM-003 Report form atomicity]]                          | approved    | `fix/report-form-atomicity`          |
+| [[plan/fix/DRRM-004-events-dynamic-clusters\|DRRM-004 Events and dynamic clusters]]                  | approved    | `fix/events-dynamic-clusters`        |
+| [[plan/fix/DRRM-005-settings-hooks-performance\|DRRM-005 Settings, hooks and dashboard performance]] | approved    | `fix/settings-hooks-performance`     |
+| [[plan/fix/DRRM-006-schema-dual-write-sunset\|DRRM-006 Schema normalization and dual-write sunset]]  | approved    | `refactor/schema-dual-write-sunset`  |
+| [[plan/feature/2026-09-09-table-redesign\|Data tables redesign]]                                     | approved    | `feature/table-redesign`             |
 
 DRRM-002 to DRRM-006 and the table redesign may be partly or fully done in code. Check before you rely on these statuses.
 
 ### Done
 
+- [[plan/feature/DRRM-028-nsed-report-v2|DRRM-028 NSED report v2]] (PR #97)
 - [[plan/feature/DRRM-027-pillar-page-redesign|DRRM-027 Pillar page redesign]] (PR #96)
 - [[plan/feature/DRRM-026-off-campus-accounts|DRRM-026 Off-campus accounts]] (PR #95)
 - [[plan/feature/DRRM-025-off-campus-assessment|DRRM-025 Off-campus building assessments]] (PR #94)

@@ -9,7 +9,13 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
-## DRRM-028 NSED report v2: 2026-11-09 (branch `feat/DRRM-028-nsed-report-v2`)
+## DRRM-029 NSED breakdown headers left to right: 2026-11-09 (branch `feat/DRRM-029-nsed-breakdown-width`)
+
+Plan: [[plan/feature/DRRM-029-nsed-breakdown-width]] · [[events]]
+
+- The NSED breakdown tables read left to right again: they run into the side margins, to 0.25 in from the paper's edges, with 8 pt headers that wrap between words and 10 pt numbers. The pages stay portrait for the printed copies.
+
+## DRRM-028 NSED report v2: 2026-11-09 (PR #97)
 
 Plan: [[plan/feature/DRRM-028-nsed-report-v2]] · [[events]]
 
