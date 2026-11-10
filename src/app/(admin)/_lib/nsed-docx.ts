@@ -29,58 +29,126 @@ const escapeXml = (s: string) =>
 
 // One per cluster, with a column per headcount field, so it goes in as raw XML ({@tableXml}):
 // drawn like the template's tables (black hairlines, grey header that repeats on each page, bold
-// total row), 12 pt. The field names run bottom to top so the narrow number columns fit.
+// total row). Fifteen columns don't fit the text width, so this table runs into the side margins,
+// to 0.25 in from the paper's edges (about as close as office printers print), with 10 pt numbers
+// and headers as large as fit (8 pt with UP Manila's 12 fields), wrapping only between words.
 
-// Arial 12 pt: a digit is about 134 twips wide, a comma 67; cells keep 60 twips each side.
-const CELL_SIDE = 60;
-const numberWidth = (values: string[]) =>
-  Math.max(
-    460,
-    ...values.map((v) => v.replace(/,/g, '').length * 134 + (v.match(/,/g)?.length ?? 0) * 67)
-  ) +
-  2 * CELL_SIDE +
-  40;
+const PAGE_WIDTH = 11920;
+const LEFT_MARGIN = 1440;
+/** 0.25 in from each paper edge. */
+const PAPER_EDGE = 360;
+const BREAKDOWN_WIDTH = PAGE_WIDTH - 2 * PAPER_EDGE;
+const CELL_SIDE = 30;
+const UNIT_MIN_WIDTH = 1400;
+const HEADER_SIZES = [8, 7.5, 7];
+const NUMBER_SIZE = 10;
+
+// Arial Bold widths in 1/1000 em (the regular face is narrower, so these are safe for both).
+const UPPER = [
+  722, 722, 722, 722, 667, 611, 778, 722, 278, 556, 722, 611, 833, 722, 778, 667, 778, 722, 667,
+  611, 722, 667, 944, 667, 667, 611,
+];
+const LOWER = [
+  556, 611, 556, 611, 556, 333, 611, 611, 278, 278, 556, 278, 889, 611, 611, 611, 611, 389, 556,
+  333, 611, 556, 778, 556, 556, 500,
+];
+const PUNCT: Record<string, number> = {
+  '.': 278,
+  ',': 278,
+  '-': 333,
+  '/': 278,
+  '(': 333,
+  ')': 333,
+};
+
+function charWidth(c: string) {
+  if (c >= 'A' && c <= 'Z') return UPPER[c.charCodeAt(0) - 65];
+  if (c >= 'a' && c <= 'z') return LOWER[c.charCodeAt(0) - 97];
+  if (c >= '0' && c <= '9') return 556;
+  return PUNCT[c] ?? 611;
+}
+
+/** Twips a piece of text takes at a font size, with a little to spare for Word's rounding. */
+const textWidth = (text: string, size: number) =>
+  Math.ceil(([...text].reduce((sum, c) => sum + charWidth(c), 0) * size * 20 * 1.02) / 1000);
+
+/** The pieces a header may wrap into: at spaces, and after "-" and "/". */
+const headerWords = (header: string) => header.split(/\s+|(?<=[-/])/).filter(Boolean);
+
+/** After a "/", a zero-width space, so Word may wrap "Visitors/Patients" there. */
+const wrappable = (header: string) => header.replace(/\//g, '/\u200B');
+
+/** Column widths and the header size: the largest size that leaves the unit column its room. */
+export function breakdownLayout(table: NsedBreakdownTable) {
+  const numbers = table.columns.map((_, i) => [
+    ...table.rows.map((r) => r.counts[i]),
+    table.totals[i],
+  ]);
+  const layout = (headerSize: number) => {
+    const numberWidths = table.columns.map(
+      (header, i) =>
+        Math.max(
+          ...headerWords(header).map((w) => textWidth(w, headerSize)),
+          ...numbers[i].map((n) => textWidth(n, NUMBER_SIZE))
+        ) +
+        2 * CELL_SIDE
+    );
+    const unitWidth = BREAKDOWN_WIDTH - numberWidths.reduce((sum, w) => sum + w, 0);
+    return { headerSize, numberWidths, unitWidth };
+  };
+  for (const size of HEADER_SIZES) {
+    const fit = layout(size);
+    if (fit.unitWidth >= UNIT_MIN_WIDTH) return fit;
+  }
+  // More fields than fit: the smallest size, and the table grows past the edges it aims for.
+  const smallest = layout(HEADER_SIZES[HEADER_SIZES.length - 1]);
+  return { ...smallest, unitWidth: UNIT_MIN_WIDTH };
+}
 
 function cell(
   text: string,
   width: number,
-  o: { header?: boolean; bold?: boolean; align?: 'left' | 'center'; rotate?: boolean } = {}
+  o: { size: number; header?: boolean; bold?: boolean; center?: boolean }
 ) {
   const shading = o.header ? '<w:shd w:val="clear" w:color="auto" w:fill="F2F2F2"/>' : '';
-  const direction = o.rotate ? '<w:textDirection w:val="btLr"/>' : '';
-  const vAlign = `<w:vAlign w:val="${o.rotate ? 'center' : o.header ? 'bottom' : 'center'}"/>`;
-  const bold = o.header || o.bold ? '<w:rPr><w:b/><w:bCs/></w:rPr>' : '';
-  const jc = o.align === 'center' ? '<w:jc w:val="center"/>' : '';
+  const vAlign = `<w:vAlign w:val="${o.header ? 'bottom' : 'center'}"/>`;
+  const half = Math.round(o.size * 2);
+  const bold = o.header || o.bold ? '<w:b/><w:bCs/>' : '';
+  const jc = o.center ? '<w:jc w:val="center"/>' : '';
   return (
-    `<w:tc><w:tcPr><w:tcW w:w="${width}" w:type="dxa"/>${shading}${direction}${vAlign}</w:tcPr>` +
+    `<w:tc><w:tcPr><w:tcW w:w="${width}" w:type="dxa"/>${shading}${vAlign}</w:tcPr>` +
     `<w:p><w:pPr><w:pStyle w:val="NsedTableText"/>${jc}</w:pPr>` +
-    `<w:r>${bold}<w:t xml:space="preserve">${escapeXml(text)}</w:t></w:r></w:p></w:tc>`
+    `<w:r><w:rPr>${bold}<w:sz w:val="${half}"/><w:szCs w:val="${half}"/></w:rPr>` +
+    `<w:t xml:space="preserve">${escapeXml(text)}</w:t></w:r></w:p></w:tc>`
   );
 }
 
 export function breakdownTableXml(table: NsedBreakdownTable) {
-  const numberWidths = table.columns.map((_, i) =>
-    numberWidth([...table.rows.map((r) => r.counts[i]), table.totals[i]])
-  );
-  const unitWidth = Math.max(1800, TEXT_WIDTH - numberWidths.reduce((sum, w) => sum + w, 0));
+  const { headerSize, numberWidths, unitWidth } = breakdownLayout(table);
   const widths = [unitWidth, ...numberWidths];
   const tableWidth = widths.reduce((sum, w) => sum + w, 0);
-  // The rotated header row is as tall as its longest field name (bold, about 150 twips a letter).
-  const headerHeight = Math.max(...table.columns.map((c) => c.length)) * 150 + 2 * CELL_SIDE;
 
   const header =
-    `<w:tr><w:trPr><w:cantSplit/><w:trHeight w:val="${headerHeight}" w:hRule="atLeast"/><w:tblHeader/></w:trPr>` +
-    cell(table.unitHeader, unitWidth, { header: true }) +
-    table.columns.map((c, i) => cell(c, numberWidths[i], { header: true, rotate: true })).join('') +
+    `<w:tr><w:trPr><w:cantSplit/><w:tblHeader/></w:trPr>` +
+    cell(table.unitHeader, unitWidth, { size: NUMBER_SIZE, header: true }) +
+    table.columns
+      .map((c, i) =>
+        cell(wrappable(c), numberWidths[i], { size: headerSize, header: true, center: true })
+      )
+      .join('') +
     `</w:tr>`;
   const line = (unit: string, counts: string[], bold = false) =>
     `<w:tr><w:trPr><w:cantSplit/></w:trPr>` +
-    cell(unit, unitWidth, { bold }) +
-    counts.map((n, i) => cell(n, numberWidths[i], { bold, align: 'center' })).join('') +
+    cell(unit, unitWidth, { size: NUMBER_SIZE, bold }) +
+    counts
+      .map((n, i) => cell(n, numberWidths[i], { size: NUMBER_SIZE, bold, center: true }))
+      .join('') +
     `</w:tr>`;
 
   return (
     `<w:tbl><w:tblPr><w:tblW w:w="${tableWidth}" w:type="dxa"/>` +
+    // Word 2013+ measures the indent to the table's border: back out to 0.25 in from the paper.
+    `<w:tblInd w:w="${PAPER_EDGE - LEFT_MARGIN}" w:type="dxa"/>` +
     `<w:tblBorders><w:top ${BORDER}/><w:left ${BORDER}/><w:bottom ${BORDER}/><w:right ${BORDER}/><w:insideH ${BORDER}/><w:insideV ${BORDER}/></w:tblBorders>` +
     `<w:tblLayout w:type="fixed"/>` +
     `<w:tblCellMar><w:top w:w="40" w:type="dxa"/><w:left w:w="${CELL_SIDE}" w:type="dxa"/><w:bottom w:w="40" w:type="dxa"/><w:right w:w="${CELL_SIDE}" w:type="dxa"/></w:tblCellMar>` +

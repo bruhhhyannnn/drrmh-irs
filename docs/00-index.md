@@ -66,6 +66,7 @@ DRRM-002 to DRRM-006 and the table redesign may be partly or fully done in code.
 
 ### Done
 
+- [[plan/feature/DRRM-028-nsed-report-v2|DRRM-028 NSED report v2]] (PR #97)
 - [[plan/feature/DRRM-027-pillar-page-redesign|DRRM-027 Pillar page redesign]] (PR #96)
 - [[plan/feature/DRRM-026-off-campus-accounts|DRRM-026 Off-campus accounts]] (PR #95)
 - [[plan/feature/DRRM-025-off-campus-assessment|DRRM-025 Off-campus building assessments]] (PR #94)
