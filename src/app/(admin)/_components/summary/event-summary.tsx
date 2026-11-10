@@ -31,6 +31,7 @@ import {
   MissingCard,
   OverviewTiles,
   ReportsReceivedChart,
+  TimelineCard,
 } from './sections';
 
 /** Active casualty and damage condition names from Settings, for the analytics legends. */
@@ -234,6 +235,8 @@ export function EventSummary({
         <UnitsCard key={scopeKey} summary={view} scope={scope} links={links} />
       )}
       {scope?.unitId && <UnitReportsCard summary={view} />}
+      {/* A unit's page lists its reports already. */}
+      {!scope?.unitId && <TimelineCard key={`timeline-${scopeKey}`} summary={view} />}
       <HeadcountCard key={`headcount-${scopeKey}`} summary={view} scoped={!!scope} />
       <CasualtiesCard key={`casualties-${scopeKey}`} summary={view} />
       <MissingCard key={`missing-${scopeKey}`} summary={view} />

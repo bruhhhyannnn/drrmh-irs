@@ -3,6 +3,8 @@ import { test } from 'node:test';
 import {
   buildSummary,
   NO_UNIT,
+  reportPlace,
+  reportTimeline,
   resolveScope,
   scopedCoverage,
   scopeHref,
@@ -256,5 +258,37 @@ test('builds scope links', () => {
       { event: 'e2' }
     ),
     '/campus/details?id=c1&event=e2&cluster=pg'
+  );
+});
+
+test('the timeline of reports: who, from where and when, first report first', () => {
+  const at = (h: number, m: number) => new Date(2026, 2, 12, h, m);
+  const who = (first_name: string, last_name: string) => ({ first_name, last_name });
+  const rows = reportTimeline([
+    report('taft', 'cph', 4, { submitted_at: at(9, 41), user: who('Ana', 'Cruz') }),
+    report('pg', 'med', 310, { submitted_at: at(9, 32), user: who('Ben', 'Reyes') }),
+    report('pg', null, 5, { submitted_at: at(9, 35), user: who('Cora', 'Lim') }),
+    report('pg', 'z1', 9, { submitted_at: at(9, 30), unit: { name: 'Zone 1' }, user: null }),
+  ]);
+  assert.deepEqual(
+    rows.map((r) => [r.name, r.place, r.at.getMinutes()]),
+    [
+      ['—', 'Pedro Gil Zone 1', 30],
+      ['Ben Reyes', 'Medicine', 32],
+      ['Cora Lim', 'Pedro Gil cluster', 35],
+      ['Ana Cruz', 'Public Health', 41],
+    ]
+  );
+});
+
+test('the timeline follows a cluster scope', () => {
+  const rows = reportTimeline(scopeSource(drill(), { clusterId: 'taft', unitId: null }).reports);
+  assert.deepEqual(
+    rows.map((r) => r.place),
+    ['Taft cluster']
+  );
+  assert.equal(
+    reportPlace({ cluster: { name: 'PGH' }, unit: { name: ' Zone 10 ' } }),
+    'PGH Zone 10'
   );
 });

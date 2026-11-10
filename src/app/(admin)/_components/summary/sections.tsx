@@ -10,6 +10,7 @@ import {
   firstReportScale,
   headcountOf,
   NO_UNIT,
+  reportTimeline,
   scopedCoverage,
   shortLabel,
   timelineLabels,
@@ -722,6 +723,93 @@ export function MissingCard({ summary }: { summary: Summary }) {
             open={open}
             onToggle={() => setOpen((o) => !o)}
             order=""
+          />
+        </>
+      )}
+    </Card>
+  );
+}
+
+const TIMELINE_GRID = 'grid items-start gap-3 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1.6fr)_88px]';
+
+/** Who reported, from where and when, in the order the reports were sent (as in the NSED report). */
+export function TimelineCard({ summary }: { summary: Summary }) {
+  const [open, setOpen] = useState(false);
+  const rows = reportTimeline(summary.source.reports);
+  const shown = open ? rows : rows.slice(0, SHOW_FIRST);
+
+  return (
+    <Card className="flex flex-col">
+      <div className={cn('flex flex-wrap items-center gap-x-3 gap-y-2 py-4', PAD_X)}>
+        <h2 className="text-[19px] leading-[1.3] font-bold">Timeline of reports</h2>
+        <Chip tone="grey" className="font-landing-mono text-[14px] font-bold">
+          {rows.length}
+        </Chip>
+      </div>
+      {rows.length === 0 ? (
+        <p className={cn('border-t border-line py-6 text-[16px] text-gray-500', PAD_X)}>
+          No reports yet.
+        </p>
+      ) : (
+        <>
+          <div role="table" aria-label="Timeline of reports" className="hidden md:block">
+            <div
+              role="row"
+              className={cn(
+                TIMELINE_GRID,
+                'h-10 items-center border-t border-line bg-gray-50 text-[13px] font-semibold text-gray-600',
+                PAD_X
+              )}
+            >
+              <span role="columnheader">Name</span>
+              <span role="columnheader">College/Building</span>
+              <span role="columnheader" className="text-right">
+                Time
+              </span>
+            </div>
+            {shown.map((t) => (
+              <div
+                key={t.id}
+                role="row"
+                className={cn(TIMELINE_GRID, 'border-t border-line py-3', PAD_X)}
+              >
+                <span role="cell" className="min-w-0 text-[16px] leading-[1.45] font-semibold">
+                  {t.name}
+                </span>
+                <span role="cell" className="min-w-0 text-[16px] leading-[1.45] text-gray-700">
+                  {t.place}
+                </span>
+                <Mono className="text-right text-[14px] leading-[1.6] font-medium text-gray-600">
+                  {formatTime(t.at)}
+                </Mono>
+              </div>
+            ))}
+          </div>
+          <ul className="md:hidden">
+            {shown.map((t) => (
+              <li
+                key={t.id}
+                className={cn(
+                  'flex items-start justify-between gap-3 border-t border-line py-3.5',
+                  PAD_X
+                )}
+              >
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-[17px] leading-[1.35] font-semibold">{t.name}</span>
+                  <span className="text-[15px] leading-[1.4] text-gray-600">{t.place}</span>
+                </div>
+                <Mono className="shrink-0 text-[14px] leading-[1.6] font-medium text-gray-600">
+                  {formatTime(t.at)}
+                </Mono>
+              </li>
+            ))}
+          </ul>
+          <ShowAllFooter
+            showing={shown.length}
+            total={rows.length}
+            open={open}
+            onToggle={() => setOpen((o) => !o)}
+            order=", first report first"
           />
         </>
       )}
