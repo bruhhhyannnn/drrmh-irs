@@ -1,10 +1,18 @@
 'use client';
 
-import { FOCUS_RING } from '@/components/ds';
-import { useSafetyRollup } from '@/components/hooks/use-assessments';
+import { FOCUS_RING, SegmentedControl } from '@/components/ds';
+import { useOffCampusRollup, useSafetyRollup } from '@/components/hooks/use-assessments';
 import { cn } from '@/lib';
 import { percent } from '@/lib/assessment-score';
-import { scopeFromParams, type ChildRow, type SafetyRollup } from '@/lib/building-safety';
+import {
+  scopeFromParams,
+  type ChildRow,
+  type LocationCrumb,
+  type LocationKind,
+  type LocationScope,
+  type SafetyRollup,
+} from '@/lib/building-safety';
+import type { BuildingLocation } from '@/lib/psgc';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { GroupedBars, SERIES_COLORS } from '../../../_components/charts/grouped-bars';
@@ -26,16 +34,44 @@ import {
 // The dashboard's Building safety section (DRRM-015, spec 4.3): Campus → Cluster → Unit →
 // Building, drilled in place. The level lives in the URL (bs_campus, bs_cluster, bs_unit,
 // bs_building, bs_a, bs_b), so Back walks up and a view can be shared. Drilling never moves the
-// top-bar campus switcher; changing the switcher starts over at its campus.
+// top-bar campus switcher; changing the switcher starts over at its campus. The Off-campus view
+// (DRRM-025, bs_view) drills by location instead: bs_region, bs_province, bs_city, bs_barangay.
 
-export type BsKey = 'bs_campus' | 'bs_cluster' | 'bs_unit' | 'bs_building' | 'bs_a' | 'bs_b';
+export type BsKey =
+  | 'bs_view'
+  | 'bs_campus'
+  | 'bs_cluster'
+  | 'bs_unit'
+  | 'bs_region'
+  | 'bs_province'
+  | 'bs_city'
+  | 'bs_barangay'
+  | 'bs_building'
+  | 'bs_a'
+  | 'bs_b';
 export type Go = (next: Partial<Record<BsKey, string | null>>) => void;
 
 /** Drilling to a level clears the levels under it. */
 const DEEPER: Record<BsKey, BsKey[]> = {
+  bs_view: [
+    'bs_campus',
+    'bs_cluster',
+    'bs_unit',
+    'bs_region',
+    'bs_province',
+    'bs_city',
+    'bs_barangay',
+    'bs_building',
+    'bs_a',
+    'bs_b',
+  ],
   bs_campus: ['bs_cluster', 'bs_unit', 'bs_building', 'bs_a', 'bs_b'],
   bs_cluster: ['bs_unit', 'bs_building', 'bs_a', 'bs_b'],
   bs_unit: ['bs_building', 'bs_a', 'bs_b'],
+  bs_region: ['bs_province', 'bs_city', 'bs_barangay', 'bs_building', 'bs_a', 'bs_b'],
+  bs_province: ['bs_city', 'bs_barangay', 'bs_building', 'bs_a', 'bs_b'],
+  bs_city: ['bs_barangay', 'bs_building', 'bs_a', 'bs_b'],
+  bs_barangay: ['bs_building', 'bs_a', 'bs_b'],
   bs_building: ['bs_a', 'bs_b'],
   bs_a: [],
   bs_b: [],
@@ -85,27 +121,55 @@ function BuildingSafetyLevel() {
     if (switcher.current === switcherCampusId) return;
     switcher.current = switcherCampusId;
     const p = new URLSearchParams(params.toString());
-    for (const key of Object.keys(DEEPER)) p.delete(key);
+    // The view stays: only the level within it starts over.
+    for (const key of DEEPER.bs_view) p.delete(key);
     const query = p.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   }, [switcherCampusId, params, pathname, router]);
 
-  if (scope.buildingId) {
-    return <BuildingLevel scope={scope} go={go} isSuperAdmin={isSuperAdmin} />;
-  }
+  const campusId = scope.campusId === ALL_CAMPUSES ? null : scope.campusId;
   return (
-    <AggregateLevel
-      campusId={scope.campusId === ALL_CAMPUSES ? null : scope.campusId}
-      allCampuses={isSuperAdmin && (scope.campusId === ALL_CAMPUSES || !scope.campusId)}
-      clusterId={scope.clusterId}
-      unitId={scope.unitId}
-      go={go}
-      isSuperAdmin={isSuperAdmin}
-    />
+    <>
+      <div className="max-w-sm">
+        <SegmentedControl
+          name="building-safety-view"
+          labelledBy="building-safety"
+          options={[
+            { value: 'campus', label: 'Campuses' },
+            { value: 'off_campus', label: 'Off-campus' },
+          ]}
+          value={scope.view}
+          onChange={(view) => go({ bs_view: view === 'off_campus' ? view : null })}
+        />
+      </div>
+      {scope.buildingId ? (
+        <BuildingLevel scope={scope} go={go} isSuperAdmin={isSuperAdmin} />
+      ) : scope.view === 'off_campus' ? (
+        <OffCampusLevel campusId={campusId} location={scope.location} go={go} />
+      ) : (
+        <AggregateLevel
+          campusId={campusId}
+          allCampuses={isSuperAdmin && (scope.campusId === ALL_CAMPUSES || !scope.campusId)}
+          clusterId={scope.clusterId}
+          unitId={scope.unitId}
+          go={go}
+          isSuperAdmin={isSuperAdmin}
+        />
+      )}
+    </>
   );
 }
 
-const NOUNS = { campus: 'Campus', cluster: 'Cluster', unit: 'Unit', building: 'Building' };
+const NOUNS: Record<ChildRow['kind'], string> = {
+  campus: 'Campus',
+  cluster: 'Cluster',
+  unit: 'Unit',
+  building: 'Building',
+  region: 'Region',
+  province: 'Province',
+  city: 'City or municipality',
+  barangay: 'Barangay',
+};
 const METRICS = ['overall', ...SCORED_PILLARS] as const;
 type Metric = (typeof METRICS)[number];
 const metricLabel = (m: Metric) => (m === 'overall' ? 'Overall' : pillarLabel(m));
@@ -139,6 +203,186 @@ export function trailParts(
   return parts;
 }
 
+const LOCATION_PARAM: Record<LocationKind, BsKey> = {
+  region: 'bs_region',
+  province: 'bs_province',
+  city: 'bs_city',
+  barangay: 'bs_barangay',
+};
+
+/** The URL params that lead to a place. */
+const paramsThrough = (crumbs: { kind: LocationKind; code: string }[]) =>
+  Object.fromEntries(crumbs.map((c) => [LOCATION_PARAM[c.kind], c.code]));
+
+export function crumbsOf(location: BuildingLocation): LocationCrumb[] {
+  return [
+    { kind: 'region', ...location.region },
+    ...(location.province ? [{ kind: 'province' as const, ...location.province }] : []),
+    { kind: 'city', ...location.city },
+    { kind: 'barangay', ...location.barangay },
+  ];
+}
+
+/** The breadcrumb of an off-campus level: Off-campus, then the places down to it. */
+export function locationParts(trail: LocationCrumb[], go: Go) {
+  return [
+    {
+      label: 'Off-campus',
+      onClick: () => go({ bs_view: 'off_campus', bs_region: null }),
+    },
+    ...trail.map((crumb, i) => ({
+      label: crumb.name,
+      onClick: () =>
+        go({
+          bs_view: 'off_campus',
+          bs_building: null,
+          ...paramsThrough(trail.slice(0, i + 1)),
+        }),
+    })),
+  ];
+}
+
+/** The tiles, the chart, the table, sections and most-failed items of one level. */
+function LevelScores({
+  data,
+  noun,
+  onOpen,
+  showCoverage,
+  footer,
+}: {
+  data: Pick<SafetyRollup, 'group' | 'children' | 'sections' | 'mostFailed'>;
+  noun: string;
+  onOpen: (row: ChildRow) => void;
+  showCoverage?: boolean;
+  footer?: React.ReactNode;
+}) {
+  const [metric, setMetric] = useState<Metric>('overall');
+  const value = (row: ChildRow, m: Metric, t: 'current' | 'previous') => {
+    const pooled = t === 'current' ? row.current : row.likeForLike?.previous;
+    if (!pooled) return null;
+    return percent(m === 'overall' ? pooled.overall : pooled.pillars[m]);
+  };
+
+  return (
+    <>
+      <SummaryTiles group={data.group} />
+      <div className="flex flex-col gap-3">
+        <CardHeading
+          level={3}
+          title={`By ${noun.toLowerCase()}`}
+          aside={
+            data.children.length > 6 ? (
+              <div role="group" aria-label="Metric" className="flex flex-wrap gap-1.5">
+                {METRICS.map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    aria-pressed={metric === m}
+                    onClick={() => setMetric(m)}
+                    className={cn(
+                      'h-8 rounded-full border px-3 text-[13px] font-semibold',
+                      metric === m
+                        ? 'bg-brand-solid border-transparent text-white'
+                        : 'border-gray-300 bg-surface text-gray-700 hover:bg-gray-50',
+                      FOCUS_RING
+                    )}
+                  >
+                    {metricLabel(m)}
+                  </button>
+                ))}
+              </div>
+            ) : undefined
+          }
+        />
+        {data.children.length > 6 ? (
+          <RowChart
+            label={`${metricLabel(metric)} by ${noun.toLowerCase()}`}
+            rows={data.children.map((row) => ({
+              id: row.id,
+              name: row.name,
+              value: value(row, metric, 'current'),
+              previous: value(row, metric, 'previous'),
+            }))}
+            onSelect={(id) => onOpen(data.children.find((c) => c.id === id)!)}
+          />
+        ) : (
+          <GroupedBars
+            label={`Scores by ${noun.toLowerCase()}`}
+            groups={METRICS.map(metricLabel)}
+            series={data.children.map((row, i) => ({
+              id: row.id,
+              name: row.name,
+              color: SERIES_COLORS[i % SERIES_COLORS.length],
+              values: METRICS.map((m) => value(row, m, 'current')),
+              previous: METRICS.map((m) => value(row, m, 'previous')),
+            }))}
+            onSelect={(id) => onOpen(data.children.find((c) => c.id === id)!)}
+          />
+        )}
+        <ChildrenTable
+          rows={data.children}
+          noun={noun}
+          onOpen={onOpen}
+          showCoverage={showCoverage}
+        />
+        {footer}
+      </div>
+      <SectionScores rows={data.sections} />
+      <MostFailed groups={data.mostFailed} />
+    </>
+  );
+}
+
+/** Off-campus buildings by location. Never pooled with a campus's numbers. */
+function OffCampusLevel({
+  campusId,
+  location,
+  go,
+}: {
+  campusId: string | null;
+  location: LocationScope;
+  go: Go;
+}) {
+  const { data, isPending, error } = useOffCampusRollup({ campusId, ...location });
+
+  if (isPending) return <Skeleton className="h-80" />;
+  if (error) {
+    return (
+      <Card className="p-6 text-[17px] text-error-700">
+        Building safety couldn&apos;t be loaded: {error.message}
+      </Card>
+    );
+  }
+  if (!data) {
+    return (
+      <Card className="flex flex-col gap-3 p-6">
+        <EmptyNote>This level isn&apos;t available.</EmptyNote>
+      </Card>
+    );
+  }
+
+  const open = (row: ChildRow) =>
+    row.kind === 'building'
+      ? go({ bs_building: row.id })
+      : go(paramsThrough([...data.trail, { kind: row.kind as LocationKind, code: row.id }]));
+  const kinds = new Set(data.children.map((row) => row.kind));
+  const noun = kinds.size === 1 ? NOUNS[data.children[0].kind] : 'Place';
+
+  return (
+    <Card className="flex flex-col gap-5 p-4.5 md:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <Breadcrumb parts={locationParts(data.trail, go)} />
+        <p className="text-[14px] text-gray-600">Not counted in campus scores.</p>
+      </div>
+      {data.group.assessed === 0 ? (
+        <EmptyNote>No off-campus assessments yet.</EmptyNote>
+      ) : (
+        <LevelScores data={data} noun={noun} onOpen={open} showCoverage={false} />
+      )}
+    </Card>
+  );
+}
+
 function AggregateLevel({
   campusId,
   allCampuses,
@@ -159,7 +403,6 @@ function AggregateLevel({
     clusterId,
     unitId,
   });
-  const [metric, setMetric] = useState<Metric>('overall');
 
   if (isPending) return <Skeleton className="h-80" />;
   if (error) {
@@ -194,12 +437,6 @@ function AggregateLevel({
   const childKind = data.children[0]?.kind ?? (data.level === 'unit' ? 'building' : 'cluster');
   const noun = NOUNS[childKind];
   const parts = trailParts(data.trail, go, isSuperAdmin);
-  const value = (row: ChildRow, m: Metric, t: 'current' | 'previous') => {
-    const pooled = t === 'current' ? row.current : row.likeForLike?.previous;
-    if (!pooled) return null;
-    return percent(m === 'overall' ? pooled.overall : pooled.pillars[m]);
-  };
-
   return (
     <Card className="flex flex-col gap-5 p-4.5 md:p-6">
       {parts.length > 0 && <Breadcrumb parts={parts} />}
@@ -212,72 +449,19 @@ function AggregateLevel({
           .
         </EmptyNote>
       ) : (
-        <>
-          <SummaryTiles group={data.group} />
-          <div className="flex flex-col gap-3">
-            <CardHeading
-              level={3}
-              title={`By ${noun.toLowerCase()}`}
-              aside={
-                data.children.length > 6 ? (
-                  <div role="group" aria-label="Metric" className="flex flex-wrap gap-1.5">
-                    {METRICS.map((m) => (
-                      <button
-                        key={m}
-                        type="button"
-                        aria-pressed={metric === m}
-                        onClick={() => setMetric(m)}
-                        className={cn(
-                          'h-8 rounded-full border px-3 text-[13px] font-semibold',
-                          metric === m
-                            ? 'bg-brand-solid border-transparent text-white'
-                            : 'border-gray-300 bg-surface text-gray-700 hover:bg-gray-50',
-                          FOCUS_RING
-                        )}
-                      >
-                        {metricLabel(m)}
-                      </button>
-                    ))}
-                  </div>
-                ) : undefined
-              }
-            />
-            {data.children.length > 6 ? (
-              <RowChart
-                label={`${metricLabel(metric)} by ${noun.toLowerCase()}`}
-                rows={data.children.map((row) => ({
-                  id: row.id,
-                  name: row.name,
-                  value: value(row, metric, 'current'),
-                  previous: value(row, metric, 'previous'),
-                }))}
-                onSelect={(id) => open(data.children.find((c) => c.id === id)!)}
-              />
-            ) : (
-              <GroupedBars
-                label={`Scores by ${noun.toLowerCase()}`}
-                groups={METRICS.map(metricLabel)}
-                series={data.children.map((row, i) => ({
-                  id: row.id,
-                  name: row.name,
-                  color: SERIES_COLORS[i % SERIES_COLORS.length],
-                  values: METRICS.map((m) => value(row, m, 'current')),
-                  previous: METRICS.map((m) => value(row, m, 'previous')),
-                }))}
-                onSelect={(id) => open(data.children.find((c) => c.id === id)!)}
-              />
-            )}
-            <ChildrenTable rows={data.children} noun={noun} onOpen={open} />
-            {data.notAssessed.length > 0 && (
+        <LevelScores
+          data={data}
+          noun={noun}
+          onOpen={open}
+          footer={
+            data.notAssessed.length > 0 && (
               <p className="text-[14px] text-gray-600">
                 <span className="font-semibold">Not yet assessed ({data.notAssessed.length})</span>
                 {data.level === 'unit' && `: ${data.notAssessed.map((b) => b.name).join(', ')}`}
               </p>
-            )}
-          </div>
-          <SectionScores rows={data.sections} />
-          <MostFailed groups={data.mostFailed} />
-        </>
+            )
+          }
+        />
       )}
     </Card>
   );

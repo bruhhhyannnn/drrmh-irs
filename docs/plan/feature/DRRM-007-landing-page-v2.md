@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-007
-status: in-review
+status: done
 branch: feat/DRRM-007-landing-page-v2
 modules:
   - '[[pillars-and-landing]]'
@@ -11,7 +11,7 @@ tags: [plan, feature]
 
 # [DRRM-007] Feature Plan: Landing Page v2
 
-- **Status:** `[In Review]`
+- **Status:** `[Done]` (merged in PR #73, 2026-10-13)
 - **Target Branch / PR:** `feat/DRRM-007-landing-page-v2`
 - **Owner / Author:** Bryan Mangapit
 - **Design source:** Claude Design project "Wire Flow Artboard" → `DRRM-H Landing Page v2.dc.html` (web 1140 / tablet 768 / phone 390 frames)

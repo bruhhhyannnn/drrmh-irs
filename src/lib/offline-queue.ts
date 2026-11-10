@@ -42,7 +42,7 @@ export interface QueuedEntry<TPayload> {
   id: string;
   createdAt: number;
   payload: TPayload;
-  /** Files sent alongside the payload (bystander damage photos). Absent on older entries. */
+  /** Files sent alongside the payload: photos, on bystander and field reports. Absent on older entries. */
   attachments?: Blob[];
   /** Display text for the entry. Absent on older entries. */
   summary?: QueuedSummary;
@@ -232,7 +232,10 @@ function makeKeyValueStore<TRecord>(storeName: string) {
 }
 
 const bystanderQueue = makeQueue<BystanderReportFormData>(BYSTANDER_STORE);
-const fieldReportQueue = makeQueue<ReportFormData & { user_id?: string }>(FIELD_REPORT_STORE);
+/** `id` is the report's own, made on the phone so a replay can't save it twice. */
+const fieldReportQueue = makeQueue<ReportFormData & { id?: string; user_id?: string }>(
+  FIELD_REPORT_STORE
+);
 const assessmentQueue = makeQueue<AssessmentPayload>(ASSESSMENT_STORE);
 const draftStore = makeKeyValueStore<AssessmentDraft>(ASSESSMENT_DRAFT_STORE);
 const cacheStore = makeKeyValueStore<{ key: string; value: unknown; savedAt: number }>(

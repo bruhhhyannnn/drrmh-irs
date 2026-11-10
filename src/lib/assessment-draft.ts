@@ -7,7 +7,8 @@ import {
   type TemplateItem,
   type TemplateSection,
 } from './assessment-template';
-import type { AssessmentPayload } from './schemas';
+import type { BuildingCategory } from './building-place';
+import type { AssessmentDetailsFormData, AssessmentPayload } from './schemas';
 
 // The assessment being filled in, kept on the phone (IndexedDB) until it's submitted. Answers stay
 // in the draft when a floor count or area change makes them stop applying ("set aside"), so ticking
@@ -28,6 +29,19 @@ export interface AssessmentDraft {
   template_version_id: string;
   started_at: string;
   updated_at: number;
+  /**
+   * On or off campus; null until chosen. These location fields are missing from drafts saved
+   * before off-campus assessments existed, which are all on campus: read through locationKindOf
+   * and detailsFromDraft.
+   */
+  location_kind?: BuildingCategory | null;
+  region_code?: string;
+  /** '' where there is none, or the location list's "not under a province" option. */
+  province_code?: string;
+  city_code?: string;
+  barangay_code?: string;
+  /** The map pin of a new off-campus building. */
+  pin?: { lat: number; lng: number; name: string | null } | null;
   cluster_id: string;
   unit_id: string;
   /** '' while adding a new building. */
@@ -69,6 +83,8 @@ export function newDraft(input: {
   cluster_id: string;
   unit_id: string;
   now: Date;
+  /** 'off_campus' for an off-campus account, which has no choice (DRRM-026). */
+  location_kind?: BuildingCategory | null;
 }): AssessmentDraft {
   return {
     version: 1,
@@ -78,6 +94,12 @@ export function newDraft(input: {
     template_version_id: input.template_version_id,
     started_at: input.now.toISOString(),
     updated_at: input.now.getTime(),
+    location_kind: input.location_kind ?? null,
+    region_code: '',
+    province_code: '',
+    city_code: '',
+    barangay_code: '',
+    pin: null,
     cluster_id: input.cluster_id,
     unit_id: input.unit_id,
     building_id: '',
@@ -91,6 +113,28 @@ export function newDraft(input: {
     answers: {},
     comments: {},
     step: 'details',
+  };
+}
+
+/** On or off campus; null until chosen. A draft saved before this choice existed is on campus. */
+export function locationKindOf(draft: AssessmentDraft): BuildingCategory | null {
+  return draft.location_kind === undefined ? 'campus' : draft.location_kind;
+}
+
+/** What assessmentDetailsSchema checks, for the Details and Review steps. */
+export function detailsFromDraft(draft: AssessmentDraft): AssessmentDetailsFormData {
+  return {
+    location_kind: locationKindOf(draft),
+    cluster_id: draft.cluster_id,
+    unit_id: draft.unit_id,
+    region_code: draft.region_code ?? '',
+    province_code: draft.province_code ?? '',
+    city_code: draft.city_code ?? '',
+    barangay_code: draft.barangay_code ?? '',
+    building_id: draft.building_id,
+    new_building_name: draft.new_building_name,
+    incident_commander: draft.incident_commander,
+    event_id: draft.event_id,
   };
 }
 
@@ -330,7 +374,17 @@ export function toPayload(
     template_version_id: draft.template_version_id,
     building: draft.building_id
       ? { id: draft.building_id }
-      : { new: { unit_id: draft.unit_id, name: draft.new_building_name.trim() } },
+      : locationKindOf(draft) === 'off_campus'
+        ? {
+            new_off_campus: {
+              barangay_code: draft.barangay_code ?? '',
+              name: draft.new_building_name.trim(),
+              latitude: draft.pin?.lat ?? null,
+              longitude: draft.pin?.lng ?? null,
+              location_name: draft.pin?.name ?? null,
+            },
+          }
+        : { new: { unit_id: draft.unit_id, name: draft.new_building_name.trim() } },
     event_id: draft.event_id || null,
     incident_commander: draft.incident_commander.trim(),
     floor_count: draft.floor_count,
@@ -344,8 +398,8 @@ export function toPayload(
 
 /**
  * A queued assessment turned back into a draft, so one the server refused can be fixed and
- * sent again (same client_ref). The payload doesn't carry the campus, the cluster, or the unit
- * and name of an existing building; the caller looks those up. Opens on the review step.
+ * sent again (same client_ref). The payload doesn't carry the campus, the cluster, or the unit,
+ * name or location of an existing building; the caller looks those up. Opens on the review step.
  */
 export function draftFromPayload(
   payload: AssessmentPayload,
@@ -355,8 +409,16 @@ export function draftFromPayload(
     unit_id: string;
     building_name: string;
     now: Date;
+    /** A saved building's category. Without it, a saved building is on campus. */
+    location_kind?: BuildingCategory;
+    region_code?: string;
+    province_code?: string;
+    city_code?: string;
+    barangay_code?: string;
   }
 ): AssessmentDraft {
+  const { building } = payload;
+  const off = 'new_off_campus' in building ? building.new_off_campus : null;
   return {
     version: 1,
     client_ref: payload.client_ref,
@@ -365,11 +427,20 @@ export function draftFromPayload(
     template_version_id: payload.template_version_id,
     started_at: payload.started_at,
     updated_at: extras.now.getTime(),
+    location_kind: off ? 'off_campus' : (extras.location_kind ?? 'campus'),
+    region_code: extras.region_code ?? '',
+    province_code: extras.province_code ?? '',
+    city_code: extras.city_code ?? '',
+    barangay_code: off?.barangay_code ?? extras.barangay_code ?? '',
+    pin:
+      off && off.latitude !== null && off.longitude !== null
+        ? { lat: off.latitude, lng: off.longitude, name: off.location_name }
+        : null,
     cluster_id: extras.cluster_id,
-    unit_id: 'new' in payload.building ? payload.building.new.unit_id : extras.unit_id,
-    building_id: 'id' in payload.building ? payload.building.id : '',
-    new_building_name: 'new' in payload.building ? payload.building.new.name : '',
-    building_name: 'new' in payload.building ? '' : extras.building_name,
+    unit_id: 'new' in building ? building.new.unit_id : extras.unit_id,
+    building_id: 'id' in building ? building.id : '',
+    new_building_name: 'new' in building ? building.new.name : (off?.name ?? ''),
+    building_name: 'id' in building ? extras.building_name : '',
     incident_commander: payload.incident_commander,
     event_id: payload.event_id ?? '',
     floor_count: payload.floor_count,

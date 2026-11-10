@@ -46,18 +46,64 @@ const userBaseSchema = z.object({
   custom_position_name: z.string().trim().max(120, 'Keep it under 120 characters').optional(),
   user_type_id: z.string().uuid('User type is required'),
   is_active: z.boolean().default(true),
-  campus_id: z.string().uuid('Campus is required'),
+  /** Checked by needsCampus: an off-campus account has none. */
+  campus_id: z.string(),
+  /** DRRM-026: an account for someone outside UP, made by a Super Admin. */
+  is_off_campus: z.boolean().default(false),
+  address: z.string().trim().max(200, 'Keep it under 200 characters').optional(),
+  organization: z.string().trim().max(200, 'Keep it under 200 characters').optional(),
+  organization_address: z.string().trim().max(200, 'Keep it under 200 characters').optional(),
+  position_title: z.string().trim().max(200, 'Keep it under 200 characters').optional(),
 });
 
-export const userCreateSchema = userBaseSchema.refine(
-  (data) => data.password === data.confirmPassword,
-  {
-    message: "Passwords don't match",
-    path: ['confirmPassword'],
+/** Every account but an off-campus one belongs to a campus. */
+const needsCampus = (data: { is_off_campus: boolean; campus_id: string }, ctx: z.RefinementCtx) => {
+  if (!data.is_off_campus && !z.string().uuid().safeParse(data.campus_id).success) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['campus_id'],
+      message: 'Campus is required',
+    });
   }
-);
+};
 
-export const userEditSchema = userBaseSchema.omit({ password: true, confirmPassword: true });
+export const userCreateSchema = userBaseSchema.superRefine((data, ctx) => {
+  needsCampus(data, ctx);
+  if (data.password !== data.confirmPassword) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['confirmPassword'],
+      message: "Passwords don't match",
+    });
+  }
+});
+
+export const userEditSchema = userBaseSchema
+  .omit({ password: true, confirmPassword: true })
+  .superRefine(needsCampus);
+
+/** What an off-campus account fills in on first sign-in (DRRM-026). */
+const required = (label: string) =>
+  z.string().trim().min(1, `Enter your ${label}.`).max(200, 'Keep it under 200 characters');
+
+export const offCampusProfileSchema = z.object({
+  first_name: required('first name'),
+  middle_name: z.string().trim().max(200).optional(),
+  last_name: required('last name'),
+  suffix: z.string().trim().max(50).optional(),
+  // A picked address is saved as one line: street, barangay, city, province and region (DRRM-026).
+  address: z.string().trim().min(1, 'Enter your address.').max(400, 'Keep it under 400 characters'),
+  organization: required('organization'),
+  organization_address: z
+    .string()
+    .trim()
+    .min(1, "Enter your organization's address.")
+    .max(400, 'Keep it under 400 characters'),
+  position_title: required('position'),
+  consent: z.literal(true, {
+    errorMap: () => ({ message: 'Agree to the data privacy notice to continue.' }),
+  }),
+});
 
 /* ─── Main Tables ─── */
 /** Add / Edit event. Add can tick several campuses: one event is created per campus. */
@@ -279,6 +325,15 @@ export const assessmentPayloadSchema = z.object({
   building: z.union([
     z.object({ id: uuid }),
     z.object({ new: z.object({ unit_id: uuid, name: z.string().trim().min(1).max(120) }) }),
+    z.object({
+      new_off_campus: z.object({
+        barangay_code: z.string().regex(/^\d{10}$/),
+        name: z.string().trim().min(1).max(120),
+        latitude: z.number().min(-90).max(90).nullable(),
+        longitude: z.number().min(-180).max(180).nullable(),
+        location_name: z.string().max(500).nullable(),
+      }),
+    }),
   ]),
   event_id: uuid.nullable(),
   incident_commander: z.string().trim().max(200),
@@ -303,16 +358,38 @@ export const assessmentPayloadSchema = z.object({
 // The Details step: where the building is and who is in charge.
 export const assessmentDetailsSchema = z
   .object({
-    cluster_id: z.string().min(1, 'Choose a cluster'),
-    unit_id: z.string().min(1, 'Choose a college or unit'),
+    /** Nothing is pre-selected: a default nobody noticed would file a building wrongly. */
+    location_kind: z.enum(['campus', 'off_campus']).nullable(),
+    cluster_id: z.string(),
+    unit_id: z.string(),
+    region_code: z.string(),
+    province_code: z.string(),
+    city_code: z.string(),
+    barangay_code: z.string(),
     building_id: z.string(),
     new_building_name: z.string().trim().max(120),
     incident_commander: z.string().trim().max(200),
     event_id: z.string(),
   })
-  .refine((d) => d.building_id || d.new_building_name, {
-    path: ['building_id'],
-    message: 'Choose a building or add one',
+  .superRefine((d, ctx) => {
+    const need = (field: keyof typeof d, message: string) => {
+      if (!d[field]) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [field], message });
+    };
+    if (!d.location_kind) {
+      need('location_kind', 'Choose on campus or off campus');
+      return;
+    }
+    if (d.location_kind === 'campus') {
+      need('cluster_id', 'Choose a cluster');
+      need('unit_id', 'Choose a college or unit');
+    } else {
+      need('region_code', 'Choose a region');
+      need('city_code', 'Choose a city or municipality');
+      need('barangay_code', 'Choose a barangay');
+    }
+    if (!d.building_id && !d.new_building_name) {
+      need('building_id', 'Choose a building or add one');
+    }
   });
 
 /* ─── Checklist editor (DRRM-015 Phase 3, Super Admin) ─── */
@@ -413,6 +490,7 @@ export type SignInFormData = z.infer<typeof signInSchema>;
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 export type UpdatePasswordFormData = z.infer<typeof updatePasswordSchema>;
 export type UserCreateFormData = z.infer<typeof userCreateSchema>;
+export type OffCampusProfileFormData = z.infer<typeof offCampusProfileSchema>;
 export type CampusFormData = z.infer<typeof campusSchema>;
 export type PopulationCategoryFormData = z.infer<typeof populationCategorySchema>;
 export type EventFormData = z.infer<typeof eventSchema>;

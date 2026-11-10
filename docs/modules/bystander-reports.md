@@ -1,6 +1,6 @@
 ---
 type: module
-updated: 2026-10-27
+updated: 2026-10-29
 module: bystander-reports
 paths:
   - src/actions/emergency-reports/index.ts
@@ -19,17 +19,19 @@ Anyone on campus can report an emergency without signing in, usually by scanning
 
 ## Where it lives
 
-| Path                                                                 | What it holds                                                                                |
-| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `src/actions/emergency-reports/index.ts`                             | Create, list, status change, delete, photo URLs, incident types                              |
-| `src/lib/bystander-photos.ts`                                        | Server-only Storage helpers for the private `bystander-photos` bucket                        |
-| `src/components/hooks/use-bystander-reports.ts`                      | Query/mutation hooks                                                                         |
-| `src/app/(public)/bystander-report/page.tsx`                         | Public page shell (light only)                                                               |
-| `src/app/(public)/bystander-report/bystander-report-form.tsx`        | `BystanderReportForm`: 3-step form and send / queue logic                                    |
-| `src/app/(public)/bystander-report/_components/`                     | `StepWhatWhere`, `StepPeopleDamage`, `StepReview`, `ResultScreen`, photo and location fields |
-| `src/app/(public)/bystander-report/_lib/prepare-photo.ts`            | `preparePhoto`: scale to 1600px and re-encode JPEG on the device                             |
-| `src/app/(admin)/emergency-reports/page.tsx`                         | Admin list with tabs and search                                                              |
-| `src/app/(admin)/emergency-reports/_components/bystander-drawer.tsx` | Report detail drawer with status actions and photos                                          |
+| Path                                                                 | What it holds                                                                                  |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `src/actions/emergency-reports/index.ts`                             | Create, list, status change, delete, photo URLs, incident types                                |
+| `src/lib/bystander-photos.ts`                                        | Server-only Storage helpers for the private `bystander-photos` bucket                          |
+| `src/lib/photo-storage.ts`                                           | `photoBucket` (upload, remove, sign) and the JPEG metadata stripper, shared with field reports |
+| `src/components/hooks/use-bystander-reports.ts`                      | Query/mutation hooks                                                                           |
+| `src/app/(public)/bystander-report/page.tsx`                         | Public page shell (light only)                                                                 |
+| `src/app/(public)/bystander-report/bystander-report-form.tsx`        | `BystanderReportForm`: 3-step form and send / queue logic                                      |
+| `src/app/(public)/bystander-report/_components/`                     | `StepWhatWhere`, `StepPeopleDamage`, `StepReview`, `ResultScreen`, location field              |
+| `src/components/ds/photo-field.tsx`                                  | `PhotoField`: the photo picker, shared with the ERT report ([[field-reports]])                 |
+| `src/components/ds/prepare-photo.ts`                                 | `preparePhoto`: scale to 1600px (1280px on field reports) and re-encode JPEG on the device     |
+| `src/app/(admin)/emergency-reports/page.tsx`                         | Admin list with tabs and search                                                                |
+| `src/app/(admin)/emergency-reports/_components/bystander-drawer.tsx` | Report detail drawer with status actions and photos                                            |
 
 ## Data
 
@@ -54,7 +56,7 @@ Anyone on campus can report an emergency without signing in, usually by scanning
 
 None of the admin actions check the caller's role or campus.
 
-`src/lib/bystander-photos.ts`: `uploadBystanderPhotos` (up to `BYSTANDER_MAX_PHOTOS` = 3, max 3 MB, JPEG only, metadata stripped by `stripJpegMetadata`), `removeBystanderPhotos`, `signBystanderPhotos`. Uses `supabaseAdmin` (service role).
+`src/lib/bystander-photos.ts`: `uploadBystanderPhotos` (up to `BYSTANDER_MAX_PHOTOS` = 3, max 3 MB, JPEG only, metadata stripped by `stripJpegMetadata`), `removeBystanderPhotos`, `signBystanderPhotos`. It binds `photoBucket` from `src/lib/photo-storage.ts` to the bucket; that uses `supabaseAdmin` (service role).
 
 ## Client side
 

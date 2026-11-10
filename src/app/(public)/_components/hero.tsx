@@ -2,8 +2,11 @@ import { cn } from '@/lib';
 import { Check, Phone } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { HERO_IMAGES, NAV_LINKS, ROUTES } from './content';
+import { HERO_CAMPUSES, HERO_IMAGES, NAV_LINKS, ROUTES } from './content';
 import { ButtonLink, Container, FOCUS_RING, TextLink } from './primitives';
+
+/** "UP Manila, PGH, UP Diliman and UP System", read out in place of the turning names. */
+const CAMPUS_LIST = `${HERO_CAMPUSES.slice(0, -1).join(', ')} and ${HERO_CAMPUSES.at(-1)}`;
 
 export function Hero() {
   return (
@@ -16,8 +19,11 @@ export function Hero() {
             <span className="text-[12px] font-bold tracking-[.08em] text-[#fbd5d5] uppercase">
               UP Manila · DRRM-H Program
             </span>
-            <h1 className="text-[38px] leading-[1.05] font-extrabold tracking-[-.02em] text-balance md:text-[48px] lg:text-[60px]">
-              Incident reporting for UP Manila
+            <h1
+              aria-label={`Incident reporting for ${CAMPUS_LIST}`}
+              className="text-[38px] leading-[1.05] font-extrabold tracking-[-.02em] text-balance md:text-[48px] lg:text-[60px]"
+            >
+              Incident reporting for <CampusTurns />
             </h1>
             <p className="max-w-140 text-[17px] leading-[1.6] text-pretty text-[#fde8e8] md:text-[19px]">
               Report emergencies, count people during drills and follow every report live.
@@ -125,6 +131,32 @@ function ReportCard() {
         Sign in
       </ButtonLink>
     </div>
+  );
+}
+
+/**
+ * The campus names stacked in one grid cell, each showing for 3s of a 12s loop. Pure CSS: the
+ * `campus-turn` keyframes live in globals.css, and with reduced motion only the first name shows.
+ */
+function CampusTurns() {
+  return (
+    <span
+      aria-hidden
+      className="inline-grid overflow-hidden pb-[.08em] align-bottom text-[#fbd5d5]"
+    >
+      {HERO_CAMPUSES.map((name, i) => (
+        <span
+          key={name}
+          className={cn(
+            'animate-campus-turn col-start-1 row-start-1 whitespace-nowrap opacity-0 motion-reduce:animate-none',
+            i === 0 && 'motion-reduce:opacity-100'
+          )}
+          style={{ animationDelay: `${i * 3}s` }}
+        >
+          {name}
+        </span>
+      ))}
+    </span>
   );
 }
 

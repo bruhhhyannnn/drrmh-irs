@@ -22,6 +22,13 @@ model User {
   created_at          DateTime                    @default(now()) @db.Timestamptz(6)
   updated_at          DateTime                    @default(now()) @updatedAt @db.Timestamptz(6)
   is_profile_complete Boolean                     @default(false)
+  /// DRRM-026: a Super-Admin-made account for someone outside UP. It has no campus, cluster, unit or
+  /// position (CHECK chk_users_off_campus, prisma/manual/DRRM-026-off-campus-accounts.sql).
+  is_off_campus        Boolean                     @default(false)
+  address              String?
+  organization         String?
+  organization_address String?
+  position_title       String?
   cluster_id          String?                     @db.Uuid
   campus_id           String?                     @db.Uuid
   events              Event[]                     @relation("CreatedBy")
@@ -125,6 +132,8 @@ model Report {
   latitude             Decimal?                @db.Decimal(10, 8)
   location_name        String?
   longitude            Decimal?                @db.Decimal(11, 8)
+  /// Structural damage photos: object paths in the private `report-photos` Storage bucket (max 3).
+  damage_photo_paths   String[]                @default([])
   casualties           ReportCasualty[]
   missing_persons      ReportMissingPerson[]
   population_counts    ReportPopulationCount[]
@@ -161,6 +170,9 @@ model ReportCasualty {
   name                String             @default("")
   sex                 String?
   diagnosis           String?
+  /// Photos of the injury on a field report: object paths in the private `report-photos`
+  /// Storage bucket (max 3). Admin-only. Always empty on bystander report casualties.
+  photo_paths         String[]           @default([])
   bystander_reports   bystander_reports? @relation(fields: [bystander_report_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   condition           CasualtyCondition  @relation(fields: [condition_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   report              Report?            @relation(fields: [report_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -302,6 +314,7 @@ model campus {
   clusters              Cluster[]
   events                Event[]
   users                 User[]
+  off_campus_buildings  Building[]
 }
 
 model PopulationCategory {
@@ -501,19 +514,36 @@ model AssessmentItem {
 /// A building under its main unit (campus and cluster come through the unit). Unique
 /// (unit_id, lower(name)) through the expression index uq_buildings_unit_name. floor_count and
 /// `areas` are the current profile, used to pre-fill the next assessment.
+/// Campus (has a unit) or Off-campus (no unit; a PSGC location, and the owning campus, or none when
+/// an off-campus account added it: DRRM-026). CHECK
+/// chk_buildings_place allows only those two shapes, and uq_buildings_campus_barangay_name keeps
+/// off-campus names unique. See prisma/manual/DRRM-025-off-campus-buildings.sql.
 model Building {
-  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  unit_id     String         @db.Uuid
-  name        String
-  floor_count Int            @default(1)
-  is_active   Boolean        @default(true)
-  created_by  String?        @db.Uuid
-  created_at  DateTime       @default(now()) @db.Timestamptz(6)
-  updated_at  DateTime       @default(now()) @updatedAt @db.Timestamptz(6)
-  unit        Unit           @relation(fields: [unit_id], references: [id], onDelete: NoAction)
-  creator     User?          @relation("BuildingCreatedBy", fields: [created_by], references: [id], onDelete: SetNull)
-  areas       BuildingArea[]
-  assessments Assessment[]
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  unit_id       String?        @db.Uuid
+  campus_id     String?        @db.Uuid
+  name          String
+  floor_count   Int            @default(1)
+  is_active     Boolean        @default(true)
+  created_by    String?        @db.Uuid
+  created_at    DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime       @default(now()) @updatedAt @db.Timestamptz(6)
+  region_code   String?
+  region_name   String?
+  province_code String?
+  province_name String?
+  city_code     String?
+  city_name     String?
+  barangay_code String?
+  barangay_name String?
+  latitude      Decimal?       @db.Decimal(10, 8)
+  longitude     Decimal?       @db.Decimal(11, 8)
+  location_name String?
+  unit          Unit?          @relation(fields: [unit_id], references: [id], onDelete: NoAction)
+  campus        campus?        @relation(fields: [campus_id], references: [id], onDelete: NoAction)
+  creator       User?          @relation("BuildingCreatedBy", fields: [created_by], references: [id], onDelete: SetNull)
+  areas         BuildingArea[]
+  assessments   Assessment[]
 
   @@index([unit_id])
   @@map("buildings")

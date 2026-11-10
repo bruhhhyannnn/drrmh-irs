@@ -29,12 +29,19 @@ export default withPWA({
   // Everything in public/ is precached, on every phone, unless excluded. The NSED report
   // template is only fetched by admins exporting a report, online.
   publicExcludes: ['!noprecache/**/*', '!templates/**/*'],
-  // Keep next-pwa's own defaultCache (fonts, images, JS/CSS chunks, Next data); the rule below
-  // is added in front of it rather than replacing it.
+  // Keep next-pwa's own defaultCache (fonts, images, JS/CSS chunks, Next data); the rules below
+  // are added in front of it rather than replacing it.
   extendDefaultRuntimeCaching: true,
   workboxOptions: {
     disableDevLogs: true,
     runtimeCaching: [
+      {
+        // Report and bystander photos (casualty photos are health information) load through
+        // signed Supabase Storage URLs. Never keep them in Cache Storage, where the default
+        // cross-origin rule would leave them on a shared office PC after the link expires.
+        urlPattern: ({ url }) => url.pathname.startsWith('/storage/v1/object/sign/'),
+        handler: 'NetworkOnly',
+      },
       {
         // The ERT landing page and the building assessment open from the cache with any query
         // string (?draft=…, ?view=…): the page is the same for all of them and reads the draft

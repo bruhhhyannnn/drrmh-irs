@@ -6,9 +6,12 @@ import { format } from 'date-fns';
 import { ChartNoAxesColumn, Check, TriangleAlert, UserRound, Users } from 'lucide-react';
 import { useState } from 'react';
 import { formatTime, personName, plural } from '../../_lib/format';
+import { headcountChart } from '../../_lib/headcount-chart';
 import {
   firstReportScale,
-  headcountOf,
+  NO_UNIT,
+  reportTimeline,
+  scopedCoverage,
   shortLabel,
   timelineLabels,
   timelineMilestones,
@@ -16,10 +19,21 @@ import {
   timelineScale,
   type CompareRow,
   type Summary,
+  type SummaryScope,
 } from '../../_lib/summary';
 import { FilterSelect } from '../data-list';
 import { Bar, Card, Chip, Mono } from '../ui';
-import { ColumnChart, DamageChart, Donut, RankedBars, SERIES, SeriesLegend } from './charts';
+import {
+  ColumnChart,
+  DamageChart,
+  Donut,
+  RankedBars,
+  SERIES,
+  SeriesLegend,
+  StackedBars,
+  StackedLegend,
+} from './charts';
+import { coverageLabel, DRILL_ROW, DrillLink, MissingUnits, type ScopeLinks } from './drill-down';
 
 const PAD_X = 'px-4 md:px-5';
 
@@ -59,20 +73,36 @@ const TILE_ICON = {
   amber: 'bg-warning-50 text-warning-700',
 };
 
-export function OverviewTiles({ summary }: { summary: Summary }) {
-  const { totals, clusters } = summary;
+function reportsFrom(summary: Summary, scope?: SummaryScope | null) {
+  const { reported, total } = summary.clusters;
+  if (!scope) return `From ${reported} of ${plural(total, 'cluster', 'clusters')}`;
+  if (scope.unitId) return 'From this unit';
+  const coverage = scopedCoverage(summary);
+  return coverage ? `From ${coverageLabel(coverage)}` : 'From this cluster';
+}
+
+export function OverviewTiles({
+  summary,
+  scope,
+}: {
+  summary: Summary;
+  scope?: SummaryScope | null;
+}) {
+  const { totals } = summary;
   const tiles = [
     {
       label: 'Total affected',
       value: totals.people.toLocaleString(),
-      sub: `Counted in ${plural(totals.clustersCounted, 'cluster', 'clusters')}`,
+      sub: scope
+        ? `In ${scope.unitName ?? scope.clusterName}`
+        : `Counted in ${plural(totals.clustersCounted, 'cluster', 'clusters')}`,
       icon: <Users size={18} aria-hidden />,
       tone: 'neutral' as const,
     },
     {
       label: 'Reports',
       value: totals.reports.toLocaleString(),
-      sub: `From ${clusters.reported} of ${plural(clusters.total, 'cluster', 'clusters')}`,
+      sub: reportsFrom(summary, scope),
       icon: <ChartNoAxesColumn size={18} aria-hidden />,
       tone: 'neutral' as const,
     },
@@ -155,7 +185,7 @@ function NoReportChip() {
   );
 }
 
-export function ClustersCard({ summary }: { summary: Summary }) {
+export function ClustersCard({ summary, links }: { summary: Summary; links: ScopeLinks }) {
   const { done, pending, total, reported } = summary.clusters;
   const maxPeople = Math.max(1, ...done.map((c) => c.people));
   return (
@@ -197,12 +227,22 @@ export function ClustersCard({ summary }: { summary: Summary }) {
           <div
             key={c.id}
             role="row"
-            className={cn('flex flex-col gap-1.5 border-t border-line py-3', PAD_X)}
+            className={cn('flex flex-col gap-0.5 border-t border-line py-2', PAD_X)}
           >
-            <div className={CLUSTER_GRID}>
+            <div className={cn(CLUSTER_GRID, DRILL_ROW, 'py-1')}>
               <div role="cell" className="flex min-w-0 items-center gap-3">
                 <DoneMark />
-                <span className="text-[17px] leading-[1.3] font-bold">{c.name}</span>
+                <div className="flex min-w-0 flex-col gap-px">
+                  <DrillLink
+                    href={links({ clusterId: c.id })}
+                    className="text-[17px] leading-[1.3] font-bold"
+                  >
+                    {c.name}
+                  </DrillLink>
+                  {c.coverage && (
+                    <span className="text-[14px] text-gray-500">{coverageLabel(c.coverage)}</span>
+                  )}
+                </div>
               </div>
               <Mono className="text-right text-[16px] font-semibold">{c.reports}</Mono>
               <Mono
@@ -221,8 +261,15 @@ export function ClustersCard({ summary }: { summary: Summary }) {
               </div>
             </div>
             {c.units.map((u) => (
-              <div key={u.name} className={CLUSTER_GRID}>
-                <span className="pl-9 text-[16px] text-gray-600">{u.name}</span>
+              <div key={u.name} className={cn(CLUSTER_GRID, DRILL_ROW, 'py-1')}>
+                <div className="min-w-0 pl-9">
+                  <DrillLink
+                    href={links({ clusterId: c.id, unitId: u.id ?? NO_UNIT })}
+                    className="text-[16px] text-gray-600"
+                  >
+                    {u.name}
+                  </DrillLink>
+                </div>
                 <span />
                 <span />
                 <Mono className="text-right text-[14px] font-medium text-gray-600">
@@ -230,21 +277,35 @@ export function ClustersCard({ summary }: { summary: Summary }) {
                 </Mono>
               </div>
             ))}
+            <MissingUnits coverage={c.coverage} className="pl-9" />
           </div>
         ))}
         {pending.map((p) => (
           <div
             key={p.id}
             role="row"
-            className={cn(CLUSTER_GRID, 'border-t border-line py-3', PAD_X)}
+            className={cn('flex flex-col gap-0.5 border-t border-line py-2', PAD_X)}
           >
-            <div role="cell" className="flex min-w-0 items-center gap-3">
-              <PendingMark />
-              <span className="text-[17px] leading-[1.3] font-bold text-gray-600">{p.name}</span>
+            <div className={cn(CLUSTER_GRID, DRILL_ROW, 'py-1')}>
+              <div role="cell" className="flex min-w-0 items-center gap-3">
+                <PendingMark />
+                <div className="flex min-w-0 flex-col gap-px">
+                  <DrillLink
+                    href={links({ clusterId: p.id })}
+                    className="text-[17px] leading-[1.3] font-bold text-gray-600"
+                  >
+                    {p.name}
+                  </DrillLink>
+                  {p.coverage && (
+                    <span className="text-[14px] text-gray-500">{coverageLabel(p.coverage)}</span>
+                  )}
+                </div>
+              </div>
+              <div className="col-span-3 flex justify-end">
+                <NoReportChip />
+              </div>
             </div>
-            <div className="col-span-3 flex justify-end">
-              <NoReportChip />
-            </div>
+            <MissingUnits coverage={p.coverage} className="pl-9" />
           </div>
         ))}
         <div
@@ -269,14 +330,20 @@ export function ClustersCard({ summary }: { summary: Summary }) {
       {/* Phone: stacked rows */}
       <ul className="md:hidden">
         {done.map((c) => (
-          <li key={c.id} className={cn('flex flex-col gap-1.5 border-t border-line py-3', PAD_X)}>
-            <div className="flex items-center gap-3">
+          <li key={c.id} className={cn('flex flex-col gap-0.5 border-t border-line py-2', PAD_X)}>
+            <div className={cn('flex items-center gap-3 py-1', DRILL_ROW)}>
               <DoneMark />
               <div className="flex min-w-0 flex-1 flex-col gap-px">
-                <span className="text-[17px] leading-[1.3] font-bold">{c.name}</span>
+                <DrillLink
+                  href={links({ clusterId: c.id })}
+                  className="text-[17px] leading-[1.3] font-bold"
+                >
+                  {c.name}
+                </DrillLink>
                 <span className="text-[14px] text-gray-500">
                   {plural(c.reports, 'report', 'reports')}
                   {c.casualties > 0 && ` · ${plural(c.casualties, 'casualty', 'casualties')}`}
+                  {c.coverage && ` · ${coverageLabel(c.coverage)}`}
                 </span>
               </div>
               <Mono className="text-[17px] font-bold">{c.people.toLocaleString()}</Mono>
@@ -284,21 +351,40 @@ export function ClustersCard({ summary }: { summary: Summary }) {
             {c.units.map((u) => (
               <div
                 key={u.name}
-                className="flex items-center justify-between gap-3 pl-9 text-[16px] text-gray-600"
+                className={cn(
+                  'flex min-h-10 items-center justify-between gap-3 text-[16px] text-gray-600',
+                  DRILL_ROW
+                )}
               >
-                <span>{u.name}</span>
+                <div className="min-w-0 pl-9">
+                  <DrillLink href={links({ clusterId: c.id, unitId: u.id ?? NO_UNIT })}>
+                    {u.name}
+                  </DrillLink>
+                </div>
                 <Mono className="text-[14px] font-medium">{u.people.toLocaleString()}</Mono>
               </div>
             ))}
+            <MissingUnits coverage={c.coverage} className="pl-9" />
           </li>
         ))}
         {pending.map((p) => (
-          <li key={p.id} className={cn('flex items-center gap-3 border-t border-line py-3', PAD_X)}>
-            <PendingMark />
-            <span className="min-w-0 flex-1 text-[17px] leading-[1.3] font-bold text-gray-600">
-              {p.name}
-            </span>
-            <NoReportChip />
+          <li key={p.id} className={cn('flex flex-col gap-0.5 border-t border-line py-2', PAD_X)}>
+            <div className={cn('flex items-center gap-3 py-1', DRILL_ROW)}>
+              <PendingMark />
+              <div className="flex min-w-0 flex-1 flex-col gap-px">
+                <DrillLink
+                  href={links({ clusterId: p.id })}
+                  className="text-[17px] leading-[1.3] font-bold text-gray-600"
+                >
+                  {p.name}
+                </DrillLink>
+                {p.coverage && (
+                  <span className="text-[14px] text-gray-500">{coverageLabel(p.coverage)}</span>
+                )}
+              </div>
+              <NoReportChip />
+            </div>
+            <MissingUnits coverage={p.coverage} className="pl-9" />
           </li>
         ))}
         <li
@@ -325,60 +411,70 @@ export function ClustersCard({ summary }: { summary: Summary }) {
 
 /* ─── Headcount ──────────────────────────────────────────────────────────────────────── */
 
+const HEADCOUNT_FIRST = 10;
+
+/**
+ * Headcount by category, a stacked bar per unit that reported, cluster by cluster: the same chart
+ * as the NSED report (headcount-chart.ts).
+ */
 export function HeadcountCard({ summary }: { summary: Summary }) {
-  const [clusterId, setClusterId] = useState('');
-  const reports = summary.source.reports.filter((r) => !clusterId || r.cluster_id === clusterId);
-  const rows = clusterId ? headcountOf(reports) : summary.headcount.rows;
-  const total = rows.reduce((sum, r) => sum + r.count, 0);
-  const max = Math.max(1, ...rows.map((r) => r.count));
-  const half = Math.ceil(rows.length / 2);
+  const [open, setOpen] = useState(false);
+  const chart = headcountChart(summary.source);
+  const series = chart.series.map((s) => ({ ...s, color: `#${s.color}` }));
+  // People counted: the fields, without the Missing and Casualty series at the end.
+  const people = series.slice(0, -2).reduce((sum, s) => sum + s.total, 0);
+  const units = chart.clusters.reduce((sum, c) => sum + c.units.length, 0);
+
+  // The first rows, cluster by cluster, until Show all.
+  let left = open ? Infinity : HEADCOUNT_FIRST;
+  const groups = chart.clusters.flatMap((c) => {
+    const rows = c.units.slice(0, Math.max(0, left));
+    left -= rows.length;
+    return rows.length
+      ? [{ key: c.id, name: chart.clusters.length > 1 ? c.name : undefined, rows }]
+      : [];
+  });
 
   return (
-    <Card className="flex flex-col gap-4 p-4.5 md:p-6">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <h2 className="text-[19px] leading-[1.3] font-bold">Headcount</h2>
-        <span className="text-[14px] font-semibold text-gray-600">
-          <Mono className="text-[16px] font-bold text-gray-900">{total.toLocaleString()}</Mono>{' '}
-          people
-        </span>
-        <div className="flex-1" />
-        <FilterSelect
-          label="Headcount for cluster"
-          allLabel="All clusters"
-          value={clusterId}
-          onChange={setClusterId}
-          options={summary.clusters.done.map((c) => ({ value: c.id, label: c.name }))}
-        />
+    <Card className="flex flex-col">
+      <div className={cn('flex flex-col gap-4 pt-4.5 pb-4 md:pt-6', PAD_X, 'md:px-6')}>
+        <div className="flex flex-col gap-0.5">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <h2 className="text-[19px] leading-[1.3] font-bold">Headcount</h2>
+            <span className="text-[14px] font-semibold text-gray-600">
+              <Mono className="text-[16px] font-bold text-gray-900">{people.toLocaleString()}</Mono>{' '}
+              people
+            </span>
+          </div>
+          {units > 0 && (
+            <span className="text-[14px] leading-[1.4] text-gray-500">
+              By category, in {plural(units, 'unit', 'units')} that reported
+            </span>
+          )}
+        </div>
+        {units ? (
+          <>
+            <StackedLegend series={series.filter((s) => s.total > 0)} />
+            <StackedBars label="Headcount by category, per unit" groups={groups} series={series} />
+          </>
+        ) : (
+          <p className="text-[16px] text-gray-500">No people counted yet.</p>
+        )}
+        {units > 0 && (
+          <span className="border-t border-line pt-3 text-[14px] text-pretty text-gray-500">
+            Bars add missing persons and casualties to the people counted, as in the NSED report.
+            Categories at 0 are not listed.
+          </span>
+        )}
       </div>
-      {rows.length ? (
-        <ul
-          className="grid grid-cols-1 gap-x-10 gap-y-3 lg:grid-flow-col lg:grid-cols-2"
-          style={{ gridTemplateRows: `repeat(${half}, auto)` }}
-        >
-          {rows.map((r) => (
-            <li
-              key={r.id}
-              className="grid min-w-0 grid-cols-[112px_minmax(0,1fr)_32px_36px] items-center gap-3 md:grid-cols-[200px_minmax(0,1fr)_40px_44px] lg:grid-cols-[150px_minmax(0,1fr)_36px_40px]"
-            >
-              <span className="text-[14px] leading-[1.3] font-semibold text-pretty text-gray-700">
-                {r.name}
-              </span>
-              <Bar value={r.count} max={max} />
-              <Mono className="text-right text-[14px] font-bold">{r.count.toLocaleString()}</Mono>
-              <Mono className="text-right text-[13px] font-medium text-gray-500">
-                {total ? `${Math.round((r.count / total) * 100)}%` : '0%'}
-              </Mono>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-[16px] text-gray-500">No people counted yet.</p>
-      )}
-      <span className="border-t border-line pt-3 text-[14px] text-gray-500">
-        {clusterId
-          ? `${rows.length} of ${summary.headcount.fieldsTotal} fields have people counted in this cluster. Fields at 0 are not listed.`
-          : `${rows.length} of ${summary.headcount.fieldsTotal} fields have people counted. Fields at 0 are not listed.`}
-      </span>
+      <ShowAllFooter
+        showing={Math.min(units, HEADCOUNT_FIRST)}
+        total={units}
+        open={open}
+        onToggle={() => setOpen((o) => !o)}
+        order=" units"
+        first={HEADCOUNT_FIRST}
+      />
     </Card>
   );
 }
@@ -393,14 +489,16 @@ function ShowAllFooter({
   open,
   onToggle,
   order,
+  first = SHOW_FIRST,
 }: {
   showing: number;
   total: number;
   open: boolean;
   onToggle: () => void;
   order: string;
+  first?: number;
 }) {
-  if (total <= SHOW_FIRST) return null;
+  if (total <= first) return null;
   return (
     <div
       className={cn(
@@ -651,6 +749,93 @@ export function MissingCard({ summary }: { summary: Summary }) {
   );
 }
 
+const TIMELINE_GRID = 'grid items-start gap-3 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1.6fr)_88px]';
+
+/** Who reported, from where and when, in the order the reports were sent (as in the NSED report). */
+export function TimelineCard({ summary }: { summary: Summary }) {
+  const [open, setOpen] = useState(false);
+  const rows = reportTimeline(summary.source.reports);
+  const shown = open ? rows : rows.slice(0, SHOW_FIRST);
+
+  return (
+    <Card className="flex flex-col">
+      <div className={cn('flex flex-wrap items-center gap-x-3 gap-y-2 py-4', PAD_X)}>
+        <h2 className="text-[19px] leading-[1.3] font-bold">Timeline of reports</h2>
+        <Chip tone="grey" className="font-landing-mono text-[14px] font-bold">
+          {rows.length}
+        </Chip>
+      </div>
+      {rows.length === 0 ? (
+        <p className={cn('border-t border-line py-6 text-[16px] text-gray-500', PAD_X)}>
+          No reports yet.
+        </p>
+      ) : (
+        <>
+          <div role="table" aria-label="Timeline of reports" className="hidden md:block">
+            <div
+              role="row"
+              className={cn(
+                TIMELINE_GRID,
+                'h-10 items-center border-t border-line bg-gray-50 text-[13px] font-semibold text-gray-600',
+                PAD_X
+              )}
+            >
+              <span role="columnheader">Name</span>
+              <span role="columnheader">College/Building</span>
+              <span role="columnheader" className="text-right">
+                Time
+              </span>
+            </div>
+            {shown.map((t) => (
+              <div
+                key={t.id}
+                role="row"
+                className={cn(TIMELINE_GRID, 'border-t border-line py-3', PAD_X)}
+              >
+                <span role="cell" className="min-w-0 text-[16px] leading-[1.45] font-semibold">
+                  {t.name}
+                </span>
+                <span role="cell" className="min-w-0 text-[16px] leading-[1.45] text-gray-700">
+                  {t.place}
+                </span>
+                <Mono className="text-right text-[14px] leading-[1.6] font-medium text-gray-600">
+                  {formatTime(t.at)}
+                </Mono>
+              </div>
+            ))}
+          </div>
+          <ul className="md:hidden">
+            {shown.map((t) => (
+              <li
+                key={t.id}
+                className={cn(
+                  'flex items-start justify-between gap-3 border-t border-line py-3.5',
+                  PAD_X
+                )}
+              >
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-[17px] leading-[1.35] font-semibold">{t.name}</span>
+                  <span className="text-[15px] leading-[1.4] text-gray-600">{t.place}</span>
+                </div>
+                <Mono className="shrink-0 text-[14px] leading-[1.6] font-medium text-gray-600">
+                  {formatTime(t.at)}
+                </Mono>
+              </li>
+            ))}
+          </ul>
+          <ShowAllFooter
+            showing={shown.length}
+            total={rows.length}
+            open={open}
+            onToggle={() => setOpen((o) => !o)}
+            order=", first report first"
+          />
+        </>
+      )}
+    </Card>
+  );
+}
+
 /* ─── Analytics ──────────────────────────────────────────────────────────────────────── */
 
 function ChartCard({
@@ -738,6 +923,8 @@ export function FirstReportChart({ summary, compare }: { summary: Summary; compa
   const max = firstReportScale(compare ? [summary, compare] : [summary]);
   const ticks = [0, 1, 2, 3, 4].map((i) => Math.round((max / 4) * i));
   const other = new Map(compare?.firstReport.map((r) => [r.name, r.minutes]));
+  // Clusters with no report have no time to show, so they stay out of the chart.
+  const reported = summary.firstReport.filter((r) => r.minutes !== null);
   const label = (m: number | null | undefined) =>
     m === null ? 'No report' : m === undefined ? '—' : `${m} min`;
   return (
@@ -750,11 +937,11 @@ export function FirstReportChart({ summary, compare }: { summary: Summary; compa
       }
       legend={compare && <SeriesLegend a={shortLabel(summary)} b={shortLabel(compare)} />}
     >
-      {summary.firstReport.length ? (
+      {reported.length ? (
         <RankedBars
           max={max}
           axis={{ ticks, unit: 'min' }}
-          rows={summary.firstReport.map((r) => ({
+          rows={reported.map((r) => ({
             key: r.id,
             name: r.name,
             values: [
@@ -777,19 +964,19 @@ export function FirstReportChart({ summary, compare }: { summary: Summary; compa
           }))}
         />
       ) : (
-        <p className="text-[16px] text-gray-500">No clusters at this campus yet.</p>
+        <p className="text-[16px] text-gray-500">No cluster has reported yet.</p>
       )}
     </ChartCard>
   );
 }
 
-export function AnalyticsGrid({ summary }: { summary: Summary }) {
+export function AnalyticsGrid({ summary, scoped }: { summary: Summary; scoped?: boolean }) {
   const { totals, damage } = summary;
   const units = new Set(summary.casualties.map((c) => `${c.cluster}/${c.unit}`)).size;
   return (
     <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
       <ReportsReceivedChart summary={summary} />
-      <FirstReportChart summary={summary} />
+      {!scoped && <FirstReportChart summary={summary} />}
       <ChartCard
         title="Casualties by condition"
         subtitle={

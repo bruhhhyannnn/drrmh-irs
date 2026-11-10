@@ -64,6 +64,7 @@ Server-checked scope: `requireAdmin(token, campusId)` in `src/lib/server-auth.ts
 
 ## Rules and gotchas
 
+- A record with no campus (an off-campus account's building or assessment, DRRM-026) is in scope only for all campuses: `inScope(scope, null)` is true only when `scope.campusId` is null. So only a Super Admin on All campuses sees it, and an Administrator never does.
 - Read the campus through `useScopedCampusId()`. Do not add a per-page campus filter.
 - The client-side lock is the only guard for the older actions; a crafted request can read another campus. New admin actions should use `requireAdmin` so the server picks the campus.
 - `''` means All campuses in the store and in `adminScope`. Convert it to `undefined` / `null` before passing it to a query.

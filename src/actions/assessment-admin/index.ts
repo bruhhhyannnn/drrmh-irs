@@ -12,10 +12,10 @@ import type {
   AssessmentRecord,
   BuildingScores,
 } from '@/lib/assessment-template';
+import { buildingInCampus, buildingPlaceSelect, toBuildingPlace } from '@/lib/building-place';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
 import { requireAdmin } from '@/lib/server-auth';
-import type { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
@@ -28,9 +28,6 @@ const isUuid = (value: unknown): value is string => z.string().uuid().safeParse(
 /** How many submissions the Assessments tab loads; it filters and pages on the client. */
 const LIST_LIMIT = 1000;
 
-const inCampus = (campusId: string | null): Prisma.BuildingWhereInput =>
-  campusId ? { unit: { cluster: { campus_id: campusId } } } : {};
-
 /** Every submission in scope, newest first. [] when the caller isn't an admin. */
 export async function getAssessmentList(
   token: string | null,
@@ -40,7 +37,7 @@ export async function getAssessmentList(
   if (!caller.ok) return [];
 
   const rows = await prisma.assessment.findMany({
-    where: { building: inCampus(caller.scope.campusId) },
+    where: { building: buildingInCampus(caller.scope.campusId) },
     orderBy: { ended_at: 'desc' },
     take: LIST_LIMIT,
     select: {
@@ -48,21 +45,7 @@ export async function getAssessmentList(
       ended_at: true,
       needs_follow_up: true,
       ...scoredInclude,
-      building: {
-        select: {
-          id: true,
-          name: true,
-          unit: {
-            select: {
-              id: true,
-              name: true,
-              cluster: {
-                select: { id: true, name: true, campus: { select: { id: true, name: true } } },
-              },
-            },
-          },
-        },
-      },
+      building: { select: { id: true, name: true, ...buildingPlaceSelect } },
     },
   });
   return rows.map((r) => {
@@ -70,9 +53,7 @@ export async function getAssessmentList(
     return {
       id: r.id,
       building: { id: r.building.id, name: r.building.name },
-      unit: { id: r.building.unit.id, name: r.building.unit.name },
-      cluster: { id: r.building.unit.cluster.id, name: r.building.unit.cluster.name },
-      campus: r.building.unit.cluster.campus,
+      ...toBuildingPlace(r.building),
       evaluator_name: scored.evaluator_name,
       event_name: scored.event_name,
       ended_at: scored.ended_at,
@@ -89,7 +70,7 @@ export async function getBuildingSummaries(
 ): Promise<BuildingScores[]> {
   const caller = await requireAdmin(token, campusId);
   if (!caller.ok) return [];
-  return loadBuildingScores({ is_active: true, ...inCampus(caller.scope.campusId) });
+  return loadBuildingScores({ is_active: true, ...buildingInCampus(caller.scope.campusId) });
 }
 
 /** Any assessment in the caller's scope; null when refused, missing or at another campus. */

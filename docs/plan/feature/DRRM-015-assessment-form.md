@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-015
-status: in-progress
+status: done
 branch: feat/DRRM-015-assessment-form
 modules:
   - '[[assessments]]'
@@ -14,7 +14,7 @@ tags: [plan, feature]
 
 # [DRRM-015] Feature Plan: MATATAG building assessment
 
-- **Status:** `[In Progress]` (Phase 1 built: `docs/plan/feature/DRRM-015-phase-1-plan.md`)
+- **Status:** `[Done]` (merged in PR #82, 2026-10-28)
 - **Target Branch / PR:** `feat/DRRM-015-assessment-form`, in this worktree (`workspaces/drrmh-irs/Form`) only, built in three phases (Section 6)
 - **Test environment:** this worktree's `.env.development.local`, a Supabase project separate from the one the `dev` worktree uses. Schema changes, the seed and test assessments go there. Production gets the SQL and the seed later, through the Supabase SQL editor.
 - **Owner / Author:** DevJom

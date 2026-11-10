@@ -367,3 +367,98 @@ export function DamageChart({
     </div>
   );
 }
+
+/** Colour swatches with each series' name and total: Faculty ■ 120  Students ■ 1,500 */
+export function StackedLegend({
+  series,
+}: {
+  series: { name: string; color: string; total: number }[];
+}) {
+  return (
+    <ul className="flex flex-wrap gap-x-4 gap-y-2 text-[14px] font-medium text-gray-600">
+      {series.map((s) => (
+        <li key={s.name} className="flex items-center gap-1.5">
+          <span
+            aria-hidden
+            className="size-2.5 shrink-0 rounded-[3px]"
+            style={{ background: s.color }}
+          />
+          {s.name}
+          <Mono className="text-[14px] font-bold text-gray-900">{s.total.toLocaleString()}</Mono>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
+ * Horizontal stacked bars, one per row, in labelled groups: name | bar | total. The name sits over
+ * the bar on phones. Every segment's value is in the row's label (and on hover), and each colour's
+ * total is in the legend.
+ */
+export function StackedBars({
+  groups,
+  series,
+  label,
+}: {
+  groups: {
+    key: string;
+    /** Left out for a single group. */
+    name?: string;
+    rows: { key: string; name: string; values: number[]; total: number }[];
+  }[];
+  series: { name: string; color: string }[];
+  label: string;
+}) {
+  const max = Math.max(1, ...groups.flatMap((g) => g.rows.map((r) => r.total)));
+  return (
+    <figure className="flex flex-col gap-4" aria-label={label}>
+      {groups.map((g) => (
+        <div key={g.key} className="flex flex-col gap-2.5">
+          {g.name && (
+            <span className="text-[13px] font-bold tracking-[0.04em] text-gray-500 uppercase">
+              {g.name}
+            </span>
+          )}
+          {g.rows.map((row) => {
+            const parts = row.values
+              .map((value, i) => ({ value, ...series[i] }))
+              .filter((p) => p.value > 0);
+            return (
+              <div
+                key={row.key}
+                role="img"
+                aria-label={`${row.name}: ${
+                  parts.map((p) => `${p.value.toLocaleString()} ${p.name}`).join(', ') || 'none'
+                }`}
+                className="grid grid-cols-[minmax(0,1fr)_52px] items-center gap-x-3 gap-y-1 md:grid-cols-[200px_minmax(0,1fr)_56px] lg:grid-cols-[240px_minmax(0,1fr)_60px]"
+              >
+                <span className="col-span-2 text-[14px] leading-[1.3] font-semibold text-pretty text-gray-700 md:col-span-1">
+                  {row.name}
+                </span>
+                <div className="h-3.5 overflow-hidden rounded-full bg-gray-100">
+                  <div
+                    className="flex h-full overflow-hidden rounded-full"
+                    style={{ width: `${(row.total / max) * 100}%` }}
+                  >
+                    {parts.map((p) => (
+                      <div
+                        key={p.name}
+                        title={`${p.name}: ${p.value.toLocaleString()}`}
+                        className="h-full min-w-0.5"
+                        style={{ flexGrow: p.value, flexBasis: 0, background: p.color }}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <Mono className="text-right text-[14px] font-bold text-gray-900">
+                  {row.total.toLocaleString()}
+                </Mono>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </figure>
+  );
+}

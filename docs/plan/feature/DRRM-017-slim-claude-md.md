@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-017
-status: in-review
+status: done
 branch: feat/DRRM-017-slim-claude-md
 modules:
   - '[[auth]]'
@@ -16,7 +16,7 @@ tags: [plan, feature, docs]
 
 # [DRRM-017] Feature Plan: Slim CLAUDE.md, move area knowledge into the vault
 
-- **Status:** `[In Review]` (built and verified on 2026-10-22, waiting for the user's review)
+- **Status:** `[Done]` (merged in PR #76, 2026-10-26)
 - **Target Branch / PR:** `feat/DRRM-017-slim-claude-md`
 - **Owner / Author:** DevJom
 

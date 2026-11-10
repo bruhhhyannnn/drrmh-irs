@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-008
-status: in-review
+status: done
 branch: feat/DRRM-008-bystander-report-v2
 modules:
   - '[[bystander-reports]]'
@@ -12,7 +12,7 @@ tags: [plan, feature]
 
 # [DRRM-008] Feature Plan: Bystander Report v2
 
-- **Status:** `[In Review]`
+- **Status:** `[Done]` (merged in PR #73, 2026-10-13)
 - **Target Branch / PR:** `feat/DRRM-008-bystander-report-v2`
 - **Owner / Author:** Bryan Mangapit
 - **Design source:** Claude Design project → `DRRM-H Redesign - Bystander.dc.html` (screens 24–28: web 1140 / tablet 768 / phone 390). Admin side follows SA13 in `DRRM-H Redesign - Super Admin.dc.html` for the new fields only.

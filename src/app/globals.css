@@ -74,6 +74,32 @@
       opacity: 0;
     }
   }
+
+  /* Landing page hero — four campus names taking turns in the heading on a 12s loop */
+  --animate-campus-turn: campus-turn 12s cubic-bezier(0.2, 0.7, 0.3, 1) infinite both;
+
+  @keyframes campus-turn {
+    0% {
+      opacity: 0;
+      transform: translateY(0.35em);
+    }
+    4% {
+      opacity: 1;
+      transform: none;
+    }
+    25% {
+      opacity: 1;
+      transform: none;
+    }
+    29% {
+      opacity: 0;
+      transform: translateY(-0.35em);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-0.35em);
+    }
+  }
 }
 
 /* Landing page fonts — next/font sets --font-figtree / --font-spline-sans-mono on the page root,

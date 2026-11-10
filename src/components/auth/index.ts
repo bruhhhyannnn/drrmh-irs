@@ -1,6 +1,7 @@
 export { ForgotPasswordForm } from '../../app/(auth)/forgot-password/forgot-password-form';
 export { SignInForm } from '../../app/(auth)/signin/sign-in-form';
 export { UpdatePasswordForm } from '../../app/(auth)/update-password/update-password-form';
+export { AccountLoadFailed } from './account-load-failed';
 export { AuthProvider } from './auth-provider';
 export { AuthShell } from './auth-shell';
 export { ProfileDrawer } from './profile-drawer';

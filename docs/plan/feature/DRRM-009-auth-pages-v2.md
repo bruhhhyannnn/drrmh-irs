@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-009
-status: in-review
+status: done
 branch: feat/DRRM-009-auth-pages-v2
 modules:
   - '[[auth]]'
@@ -11,7 +11,7 @@ tags: [plan, feature]
 
 # [DRRM-009] Feature Plan: Auth Pages v2
 
-- **Status:** `[In Review]`
+- **Status:** `[Done]` (merged in PR #73, 2026-10-13)
 - **Target Branch / PR:** `feat/DRRM-009-auth-pages-v2`
 - **Owner / Author:** Bryan Mangapit
 - **Design source:** Claude Design project → `DRRM-H Redesign - Sign-in.dc.html` (screens 5, 32, A1–A6, 29: web 1140 / tablet 768 / phone 390).

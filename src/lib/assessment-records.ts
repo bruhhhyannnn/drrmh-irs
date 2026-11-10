@@ -8,7 +8,9 @@ import {
   type SafeAnswer,
   type ScoredAssessment,
 } from './assessment-template';
-import { scoresFromPillarRows } from './building-safety';
+import { buildingPlaceSelect, NO_CAMPUS_NAME, toBuildingPlace } from './building-place';
+import { scoresFromPillarRows, type AnswerFact } from './building-safety';
+import type { HistoryRow } from './pillar-trends';
 import { prisma } from './prisma';
 
 // Loaders shared by the ERT and admin assessment actions: a checklist version as the app sees it,
@@ -192,7 +194,7 @@ const personName = (p: { first_name: string | null; last_name: string | null }) 
  * caller decides who may see it through `where`. */
 export async function loadAssessmentRecord(
   where: Prisma.AssessmentWhereInput
-): Promise<(AssessmentRecord & { campus_id: string; building_id: string }) | null> {
+): Promise<(AssessmentRecord & { campus_id: string | null; building_id: string }) | null> {
   const a = await prisma.assessment.findFirst({
     where,
     select: {
@@ -205,17 +207,7 @@ export async function loadAssessmentRecord(
       floor_count: true,
       needs_follow_up: true,
       building: {
-        select: {
-          name: true,
-          unit: {
-            select: {
-              name: true,
-              cluster: {
-                select: { name: true, campus_id: true, campus: { select: { name: true } } },
-              },
-            },
-          },
-        },
+        select: { name: true, ...buildingPlaceSelect },
       },
       evaluator: { select: { first_name: true, last_name: true } },
       event: { select: { name: true } },
@@ -227,15 +219,18 @@ export async function loadAssessmentRecord(
   if (!a) return null;
   const version = await loadVersion({ id: a.template_version_id });
   if (!version) return null;
+  const place = toBuildingPlace(a.building);
 
   return {
     id: a.id,
     building_id: a.building_id,
-    campus_id: a.building.unit.cluster.campus_id,
+    campus_id: place.campus?.id ?? null,
     building_name: a.building.name,
-    unit_name: a.building.unit.name,
-    cluster_name: a.building.unit.cluster.name,
-    campus_name: a.building.unit.cluster.campus.name,
+    unit_name: place.unit?.name ?? null,
+    cluster_name: place.cluster?.name ?? null,
+    campus_name: place.campus?.name ?? NO_CAMPUS_NAME,
+    location: place.location,
+    place_label: place.label,
     evaluator_name: personName(a.evaluator),
     incident_commander: a.incident_commander,
     event_name: a.event?.name ?? null,
@@ -286,6 +281,66 @@ export function toScoredAssessment(
   };
 }
 
+/** The scored answers behind a group of buildings' section scores and most-failed items, and which
+ * assessments count as current and as the like-for-like pair. */
+export async function loadRollupFacts(buildings: BuildingScores[]): Promise<{
+  facts: AnswerFact[];
+  ids: { current: string[]; lflCurrent: string[]; lflPrevious: string[] };
+}> {
+  const reassessed = buildings.filter((b) => b.latest && b.previous);
+  const ids = {
+    current: buildings.flatMap((b) => (b.latest ? [b.latest.id] : [])),
+    lflCurrent: reassessed.map((b) => b.latest!.id),
+    lflPrevious: reassessed.map((b) => b.previous!.id),
+  };
+  const assessmentIds = [...ids.current, ...ids.lflPrevious];
+  if (assessmentIds.length === 0) return { facts: [], ids };
+
+  const [itemMeta, rows] = await Promise.all([
+    loadScoredItemMeta(),
+    prisma.assessmentAnswerRow.findMany({
+      where: { assessment_id: { in: assessmentIds }, answer: { not: null } },
+      select: { assessment_id: true, item_id: true, answer: true },
+    }),
+  ]);
+  const facts: AnswerFact[] = [];
+  for (const r of rows) {
+    const meta = itemMeta.get(r.item_id);
+    if (!meta || !r.answer) continue;
+    facts.push({ assessment_id: r.assessment_id, ...meta, answer: r.answer });
+  }
+  return { facts, ids };
+}
+
+/** Every assessment of these buildings with its tally in one pillar, for the pillar page's charts
+ * over time (DRRM-027). */
+export async function loadPillarHistory(
+  where: Prisma.BuildingWhereInput,
+  pillar: PillarCode
+): Promise<HistoryRow[]> {
+  const rows = await prisma.assessment.findMany({
+    where: { building: where },
+    select: {
+      building_id: true,
+      ended_at: true,
+      pillar_scores: {
+        where: { pillar: { code: pillar } },
+        select: { safe_count: true, counted_count: true, na_count: true },
+      },
+    },
+  });
+  return rows.map((r) => {
+    const score = r.pillar_scores[0];
+    return {
+      building_id: r.building_id,
+      ended_at: r.ended_at.toISOString(),
+      tally: score
+        ? { safe: score.safe_count, counted: score.counted_count, na: score.na_count }
+        : { safe: 0, counted: 0, na: 0 },
+    };
+  });
+}
+
 /** Buildings by name, each with its latest assessment and the one before it. */
 export async function loadBuildingScores(
   where: Prisma.BuildingWhereInput
@@ -297,15 +352,7 @@ export async function loadBuildingScores(
       id: true,
       name: true,
       floor_count: true,
-      unit: {
-        select: {
-          id: true,
-          name: true,
-          cluster: {
-            select: { id: true, name: true, campus: { select: { id: true, name: true } } },
-          },
-        },
-      },
+      ...buildingPlaceSelect,
       assessments: { orderBy: { ended_at: 'desc' }, take: 2, select: scoredSelect },
       _count: { select: { assessments: true } },
     },
@@ -314,9 +361,7 @@ export async function loadBuildingScores(
     id: b.id,
     name: b.name,
     floor_count: b.floor_count,
-    unit: { id: b.unit.id, name: b.unit.name },
-    cluster: { id: b.unit.cluster.id, name: b.unit.cluster.name },
-    campus: b.unit.cluster.campus,
+    ...toBuildingPlace(b),
     assessment_count: b._count.assessments,
     latest: b.assessments[0] ? toScoredAssessment(b.assessments[0]) : null,
     previous: b.assessments[1] ? toScoredAssessment(b.assessments[1]) : null,

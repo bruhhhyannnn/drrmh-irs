@@ -11,20 +11,35 @@ import {
   missingPersonsMeta,
   OptionTile,
   PeopleDrawer,
+  photoBytes,
+  PhotoField,
   PrivacyDrawer,
   Stepper,
   type CasualtyEntry,
   type PersonEntry,
+  type PhotoItem,
 } from '@/components/ds';
 import { useCampusPopulationCategories } from '@/components/hooks/use-population-categories';
 import { useCasualtyConditions, useDamageConditions } from '@/components/hooks/use-settings';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn, type ReportFormData } from '@/lib';
+import {
+  cn,
+  REPORT_MAX_PHOTOS,
+  REPORT_PHOTO_BUDGET_BYTES,
+  REPORT_PHOTO_MAX_BYTES,
+  REPORT_PHOTO_MAX_EDGE,
+  reportPhotoFiles,
+  toReportPhotoFormData,
+  type ReportFormData,
+} from '@/lib';
+import { newUuid } from '@/lib/assessment-draft';
 import { getAllQueuedCount, isNetworkError, queueFieldReport } from '@/lib/offline-queue';
+import { getAccessToken } from '@/lib/supabase';
 import { useAuthStore, useOfflineQueueStore, useRateAppStore } from '@/store';
 import { useQueryClient } from '@tanstack/react-query';
-import { Check, RotateCcw, Shield, WifiOff } from 'lucide-react';
+import { Check, RotateCcw, Shield, TriangleAlert, WifiOff } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import {
   Avatar,
   Card,
@@ -90,6 +105,7 @@ export function ErtReportForm({
     restored?.missingPersons ?? []
   );
   const [casualties, setCasualties] = useState<CasualtyEntry[]>(restored?.casualties ?? []);
+  const [damagePhotos, setDamagePhotos] = useState<PhotoItem[]>([]);
   /** Set by every change the member makes; null until then, so an untouched form isn't saved. */
   const [savedAt, setSavedAt] = useState<number | null>(restored?.savedAt ?? null);
   const [restoredAt, setRestoredAt] = useState<number | null>(restored?.savedAt ?? null);
@@ -101,9 +117,14 @@ export function ErtReportForm({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const finishedRef = useRef(false);
+  /** The report's id, made before the first try and kept for retries, so it saves only once. */
+  const reportIdRef = useRef<string | null>(null);
 
   const touch = () => setSavedAt(Date.now());
 
+  // Photos don't fit in the draft, so it only counts them, to say they need adding again.
+  const casualtyPhotos = casualties.flatMap((c) => c.photos ?? []);
+  const photoCount = damagePhotos.length + casualtyPhotos.length;
   useEffect(() => {
     if (savedAt === null || finishedRef.current) return;
     saveDraft(userId, {
@@ -113,10 +134,26 @@ export function ErtReportForm({
       counts,
       damageId,
       missingPersons,
-      casualties,
+      casualties: casualties.map(({ photos: _photos, ...casualty }) => casualty),
+      photoCount,
       savedAt,
     });
-  }, [userId, eventId, location, counts, damageId, missingPersons, casualties, savedAt]);
+  }, [
+    userId,
+    eventId,
+    location,
+    counts,
+    damageId,
+    missingPersons,
+    casualties,
+    photoCount,
+    savedAt,
+  ]);
+
+  // Photo previews are object URLs; release them when the page goes away.
+  const photosRef = useRef<PhotoItem[]>([]);
+  photosRef.current = [...damagePhotos, ...casualtyPhotos];
+  useEffect(() => () => photosRef.current.forEach((p) => URL.revokeObjectURL(p.url)), []);
 
   const openDrawer = (name: DrawerName) => {
     setDrawerKey((k) => k + 1);
@@ -136,12 +173,15 @@ export function ErtReportForm({
 
   const startOver = () => {
     clearDraft(userId);
+    reportIdRef.current = null;
     setEventId(defaultEventId);
     setLocation(null);
     setCounts({});
     setDamageId('');
     setMissingPersons([]);
+    [...damagePhotos, ...casualtyPhotos].forEach((p) => URL.revokeObjectURL(p.url));
     setCasualties([]);
+    setDamagePhotos([]);
     setSavedAt(null);
     setRestoredAt(null);
     setConfirmingStartOver(false);
@@ -174,7 +214,9 @@ export function ErtReportForm({
       return;
     }
 
-    const payload: ReportFormData & { user_id: string } = {
+    reportIdRef.current ??= newUuid();
+    const payload: ReportFormData & { id: string; user_id: string } = {
+      id: reportIdRef.current,
       event_id: selectedEvent.id,
       cluster_id: clusterId,
       unit_id: profile.unit_id ?? null,
@@ -197,15 +239,20 @@ export function ErtReportForm({
         diagnosis: diagnosis ?? null,
       })),
     };
+    const photos = reportPhotoFiles(
+      damagePhotos.map((p) => p.blob),
+      casualties.map((c) => (c.photos ?? []).map((p) => p.blob))
+    );
 
     const finish = () => {
       finishedRef.current = true;
+      reportIdRef.current = null;
       clearDraft(userId);
     };
 
     // The page notices the queued report and shows "Report saved on this phone".
     const saveOffline = async () => {
-      await queueFieldReport(payload, undefined, {
+      await queueFieldReport(payload, photos, {
         title: selectedEvent.name,
         subtitle: place ? `Status report · ${place}` : 'Status report',
       });
@@ -219,14 +266,21 @@ export function ErtReportForm({
         await saveOffline();
         return;
       }
+      let result;
       try {
-        await createReport(payload);
+        result = await createReport(await getAccessToken(), payload, toReportPhotoFormData(photos));
       } catch (err) {
         if (!isNetworkError(err)) throw err;
         await saveOffline();
         return;
       }
+      if (!result.ok) throw new Error(result.error);
       finish();
+      if (result.photoCount < photos.length) {
+        toast(`Only ${result.photoCount} of ${photos.length} photos were saved with the report.`, {
+          icon: <TriangleAlert size={18} className="shrink-0 text-warning-700" aria-hidden />,
+        });
+      }
       useRateAppStore.getState().reportSent();
       queryClient.invalidateQueries({ queryKey: ['reports'] });
       // The page switches to the submitted report once this comes back.
@@ -296,6 +350,7 @@ export function ErtReportForm({
           {restoredAt && (
             <DraftRestored
               at={restoredAt}
+              photosLost={restored?.photoCount ?? 0}
               confirming={confirmingStartOver}
               onStartOver={() => setConfirmingStartOver(true)}
               onConfirm={startOver}
@@ -442,6 +497,30 @@ export function ErtReportForm({
                 <FieldError id="damage-error">
                   {showErrors && missing.damage ? 'Choose the structural damage.' : undefined}
                 </FieldError>
+                <div className="mt-2">
+                  <PhotoField
+                    id="damage-photos"
+                    max={REPORT_MAX_PHOTOS}
+                    maxBytes={REPORT_PHOTO_MAX_BYTES}
+                    maxEdge={REPORT_PHOTO_MAX_EDGE}
+                    roomBytes={
+                      REPORT_PHOTO_BUDGET_BYTES -
+                      photoBytes(damagePhotos) -
+                      photoBytes(casualtyPhotos)
+                    }
+                    photos={damagePhotos}
+                    onAdd={(added) => {
+                      setDamagePhotos((list) => [...list, ...added]);
+                      touch();
+                    }}
+                    onRemove={(id) => {
+                      const photo = damagePhotos.find((p) => p.id === id);
+                      if (photo) URL.revokeObjectURL(photo.url);
+                      setDamagePhotos((list) => list.filter((p) => p.id !== id));
+                      touch();
+                    }}
+                  />
+                </div>
               </div>
             )}
           </SectionCard>
@@ -552,6 +631,7 @@ export function ErtReportForm({
           touch();
         }}
         conditions={activeConditions}
+        photos={{ budgetBytes: REPORT_PHOTO_BUDGET_BYTES - photoBytes(damagePhotos) }}
       />
       <PrivacyDrawer open={drawer === 'privacy'} onClose={() => setDrawer(null)} />
     </>
@@ -561,12 +641,15 @@ export function ErtReportForm({
 /** "Draft restored from 9:14 AM." with Start over, which asks before clearing. */
 function DraftRestored({
   at,
+  photosLost,
   confirming,
   onStartOver,
   onConfirm,
   onCancel,
 }: {
   at: number;
+  /** Photos the draft had; they aren't kept in it. */
+  photosLost: number;
   confirming: boolean;
   onStartOver: () => void;
   onConfirm: () => void;
@@ -589,6 +672,7 @@ function DraftRestored({
             <>
               <strong className="font-bold">Draft restored from {formatTime(at)}.</strong> Counts
               and choices are as you left them.
+              {photosLost > 0 && ' Photos aren’t kept in a draft, so add them again.'}
             </>
           )}
         </span>

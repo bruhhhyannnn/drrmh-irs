@@ -1,7 +1,7 @@
 ---
 type: module
 module: settings-lookups
-updated: 2026-10-28
+updated: 2026-11-05
 verified: true
 paths:
   - src/actions/settings/index.ts
@@ -27,7 +27,7 @@ Read this before adding or changing a lookup table or the Settings page.
   - There is no locations table: a report's location is free text plus coordinates.
   - User types and event statuses are seeded tables with getters here, but they have no tab.
 - **New lookup table:** extend this generic pattern instead of writing a bespoke CRUD page. The steps are under Rules and gotchas below.
-- **Buildings** for the MATATAG assessment are fixed on the Buildings tab ([[assessments]]).
+- **Buildings** for the MATATAG assessment are fixed on the Buildings tab ([[assessments]]). It lists campus buildings only; off-campus ones come from assessments and can't be edited here ([[0010-off-campus-buildings]]).
 
 ## Where it lives
 

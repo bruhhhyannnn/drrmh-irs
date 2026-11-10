@@ -27,11 +27,23 @@ export const HERO_IMAGES = [
   '/upm-drrmh-background-4.jpg',
 ] as const;
 
+/** The campus names that take turns in the hero heading; the first one stays with reduced motion. */
+export const HERO_CAMPUSES = ['UP Manila', 'PGH', 'UP Diliman', 'UP System'] as const;
+
 export const PARTNERS = [
   { logo: '/up-logo.png', alt: 'UP Manila logo', name: 'UP Manila' },
   { logo: '/upm-drrmh-logo.png', alt: 'DRRM-H logo', name: 'DRRM-H Center' },
-  { logo: '/irs-logo.png', alt: 'IRS logo', name: 'Incident Reporting System' },
 ] as const;
+
+/** After the divider in the partners bar. NOAH's logo is a wordmark, so it has no name beside it. */
+export const PARTNER_INSTITUTES = {
+  upri: {
+    logo: '/upri-logo.png',
+    alt: 'UP Resilience Institute logo',
+    name: 'UP Resilience Institute',
+  },
+  noah: { logo: '/noah-logo.png', alt: 'NOAH Center logo' },
+} as const;
 
 export const AUDIENCES: {
   icon: LucideIcon;

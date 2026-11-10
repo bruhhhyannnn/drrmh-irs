@@ -4,7 +4,7 @@ import { Button, Select } from '@/components/ds';
 import { useCampusOverview, useDeleteCampus } from '@/components/hooks/use-campus';
 import { useCampusEventOptions } from '@/components/hooks/use-events';
 import { Pencil, Trash2 } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import toast from 'react-hot-toast';
 import { ConfirmDialog } from '../../_components/confirm-dialog';
@@ -37,11 +37,12 @@ function defaultEvent(events: EventOption[]) {
 
 function CampusDetails() {
   const router = useRouter();
-  const campusId = useSearchParams().get('id') ?? undefined;
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const campusId = searchParams.get('id') ?? undefined;
   const { data: campus, isPending } = useCampusOverview(campusId);
   const { data: events = [], isPending: eventsPending } = useCampusEventOptions(campusId);
   const deleteCampus = useDeleteCampus();
-  const [pickedId, setPickedId] = useState('');
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -66,7 +67,17 @@ function CampusDetails() {
   }
 
   const { events: eventCount, users, clusters, population_categories: fields } = campus._count;
-  const selected = events.find((e) => e.id === pickedId) ?? defaultEvent(events);
+  const selected = events.find((e) => e.id === searchParams.get('event')) ?? defaultEvent(events);
+
+  // The picked event lives in the link, so a shared cluster or unit link opens the same event.
+  // Replacing the entry keeps Back from stepping through every event looked at.
+  const pickEvent = (eventId: string) => {
+    const next = new URLSearchParams(searchParams.toString());
+    next.set('event', eventId);
+    next.delete('cluster');
+    next.delete('unit');
+    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+  };
 
   const remove = () =>
     deleteCampus.mutate(campus.id, {
@@ -118,6 +129,7 @@ function CampusDetails() {
         <EventSummary
           key={selected.id}
           eventId={selected.id}
+          linkParams={{ event: selected.id }}
           before={
             <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2.5 rounded-[18px] border border-gray-200 bg-surface px-4 py-3 md:px-5">
               <label htmlFor="campus-event" className="text-[16px] font-semibold text-gray-600">
@@ -128,7 +140,7 @@ function CampusDetails() {
                   id="campus-event"
                   variant="filter"
                   value={selected.id}
-                  onChange={setPickedId}
+                  onChange={pickEvent}
                   options={events.map((e) => ({
                     value: e.id,
                     label: `${e.name} · ${capitalize(e.status.name)}`,

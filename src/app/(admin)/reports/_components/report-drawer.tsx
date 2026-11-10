@@ -29,16 +29,18 @@ import {
   useDamageConditions,
   useUnits,
 } from '@/components/hooks/use-settings';
+import { newUuid } from '@/lib/assessment-draft';
 import {
   getQueuedFieldReportCount,
   getQueuedReportCount,
   isNetworkError,
   queueFieldReport,
 } from '@/lib/offline-queue';
+import { getAccessToken } from '@/lib/supabase';
 import { useAuthStore, useOfflineQueueStore } from '@/store';
 import { useQueryClient } from '@tanstack/react-query';
 import { UserRound, Users } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import {
@@ -53,8 +55,10 @@ import {
 import { useEventTitle } from '../../_components/shell/campus-switcher';
 import { Avatar, Skeleton } from '../../_components/ui';
 import { formatDateTime, personName } from '../../_lib/format';
+import { ReportDetails } from './report-details';
+import { ReportPhotos } from './report-photos';
 
-type Report = NonNullable<ReturnType<typeof useReport>['data']>;
+export type Report = NonNullable<ReturnType<typeof useReport>['data']>;
 
 const toSex = (sex: string | null): PersonSex =>
   sex === 'male' || sex === 'female' ? sex : 'unknown';
@@ -68,6 +72,7 @@ export function ReportDrawer({
   onClose,
   reportId,
   campusId,
+  readOnly,
 }: {
   open: boolean;
   onClose: () => void;
@@ -75,6 +80,8 @@ export function ReportDrawer({
   reportId?: string;
   /** The top-bar campus, which limits the events Add report offers. */
   campusId?: string;
+  /** Show `reportId` to read, with nothing to edit or save. */
+  readOnly?: boolean;
 }) {
   const { data: report, isPending } = useReport(reportId);
   const eventTitle = useEventTitle();
@@ -86,7 +93,7 @@ export function ReportDrawer({
       open={open}
       onClose={onClose}
       size="wide"
-      title={isEdit ? 'Edit report' : 'Add report'}
+      title={readOnly ? 'Report' : isEdit ? 'Edit report' : 'Add report'}
       subtitle={
         isEdit
           ? report
@@ -97,11 +104,13 @@ export function ReportDrawer({
       footer={
         <DrawerButtons>
           <DrawerButton variant="outline" onClick={onClose}>
-            Cancel
+            {readOnly ? 'Close' : 'Cancel'}
           </DrawerButton>
-          <DrawerButton type="submit" form="report-form" loading={saving}>
-            {isEdit ? 'Update report' : 'Submit report'}
-          </DrawerButton>
+          {!readOnly && (
+            <DrawerButton type="submit" form="report-form" loading={saving}>
+              {isEdit ? 'Update report' : 'Submit report'}
+            </DrawerButton>
+          )}
         </DrawerButtons>
       }
     >
@@ -111,6 +120,8 @@ export function ReportDrawer({
           <Skeleton className="h-48" />
           <Skeleton className="h-64" />
         </div>
+      ) : readOnly && report ? (
+        <ReportDetails report={report} />
       ) : (
         <ReportForm
           report={isEdit ? (report ?? null) : null}
@@ -162,13 +173,20 @@ function ReportForm({
   );
   const [casualties, setCasualties] = useState<CasualtyEntry[]>(
     (report?.casualties ?? []).map((c) => ({
+      // The id keeps the casualty's photos with it when the report saves.
+      id: c.id,
       name: c.name,
       age: c.age,
       sex: toSex(c.sex),
       condition_id: c.condition_id,
       diagnosis: c.diagnosis,
+      photoCount: c.photo_paths.length,
     }))
   );
+  // Saving takes off only the casualties removed here, so one added since the form opened stays.
+  const [loadedCasualtyIds] = useState(() => (report?.casualties ?? []).map((c) => c.id));
+  /** A new report's id, made before the first try and kept for retries, so it saves only once. */
+  const newReportIdRef = useRef<string | null>(null);
   const [damageId, setDamageId] = useState(report?.damage_condition_id ?? '');
   const [people, setPeople] = useState<'missing' | 'casualty' | null>(null);
   const [peopleKey, setPeopleKey] = useState(0);
@@ -224,6 +242,7 @@ function ReportForm({
       })),
       report_missing_persons: missing.map((p) => ({ name: p.name, age: p.age, sex: p.sex })),
       report_casualties: casualties.map((c) => ({
+        ...(c.id && { id: c.id }),
         condition_id: c.condition_id,
         name: c.name,
         age: c.age,
@@ -235,10 +254,18 @@ function ReportForm({
     onSaving(true);
     try {
       if (report) {
-        await saveEdits.mutateAsync({ id: report.id, data: payload });
+        const kept = new Set(casualties.map((c) => c.id));
+        const removed_casualty_ids = loadedCasualtyIds.filter((id) => !kept.has(id));
+        await saveEdits.mutateAsync({ id: report.id, data: { ...payload, removed_casualty_ids } });
         toast.success('Report updated');
       } else {
-        const create = { ...payload, event_id: eventId, user_id: userProfile?.id };
+        newReportIdRef.current ??= newUuid();
+        const create = {
+          ...payload,
+          id: newReportIdRef.current,
+          event_id: eventId,
+          user_id: userProfile?.id,
+        };
         const saveOffline = async () => {
           await queueFieldReport(create, undefined, {
             title: event?.name ?? 'Status report',
@@ -257,7 +284,8 @@ function ReportForm({
           await saveOffline();
         } else {
           try {
-            await createReport(create);
+            const result = await createReport(await getAccessToken(), create);
+            if (!result.ok) throw new Error(result.error);
             for (const key of ['reports', 'event-summary', 'dashboard', 'events']) {
               queryClient.invalidateQueries({ queryKey: [key] });
             }
@@ -519,6 +547,14 @@ function ReportForm({
           </div>
           <FieldError id="report-damage-error">{errors.damage}</FieldError>
         </DrawerSection>
+
+        {report && (
+          <ReportPhotos
+            reportId={report.id}
+            damageCount={report.damage_photo_paths.length}
+            casualtyCount={report.casualties.reduce((n, c) => n + c.photo_paths.length, 0)}
+          />
+        )}
       </DrawerBody>
 
       {/* Over the report drawer, outside its sliding panel. A new key per open starts fresh. */}
