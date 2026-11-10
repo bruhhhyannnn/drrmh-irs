@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import PizZip from 'pizzip';
+import { headcountChart } from './headcount-chart';
 import {
   breakdownLayout,
   breakdownTableXml,
@@ -9,7 +10,7 @@ import {
   fillNsedTemplate,
 } from './nsed-docx';
 import { buildNsedReport, isUpManila, nsedFileName, properName, quarterOf } from './nsed-report';
-import type { SummarySource } from './summary';
+import { scopeSource, type SummarySource } from './summary';
 
 // The NSED report (DRRM-019): what the app fills into the UP Manila office's Word template, and
 // that the template in public/ takes it.
@@ -311,6 +312,52 @@ test('names are written with a capital first letter, whatever case they were typ
   assert.equal(properName('  maria   santos '), 'Maria Santos');
   assert.equal(properName("o'neil-smith jr."), "O'Neil-Smith Jr.");
   assert.equal(properName('JOSE RIZAL III'), 'Jose Rizal III');
+});
+
+test('the headcount chart on the summary: units grouped by cluster, series with totals', () => {
+  const chart = headcountChart(drill());
+  assert.deepEqual(
+    chart.clusters.map((c) => [c.name, c.units.map((u) => [u.name, u.values, u.total])]),
+    [
+      [
+        'Pedro Gil',
+        [
+          ['Newborn Screening Reference Center', [10, 1500, 0, 0], 1510],
+          ['National Institutes of Health', [40, 302, 2, 0], 344],
+          ['UP Manila Phi House Dormitory', [0, 12, 1, 0], 13],
+        ],
+      ],
+      [
+        'PGH',
+        [
+          ['Zone 2', [0, 176, 0, 0], 176],
+          ['Zone 10', [0, 200, 0, 3], 203],
+        ],
+      ],
+    ],
+    'clusters with no report are left out'
+  );
+  assert.deepEqual(
+    chart.series.map((s) => [s.name, s.total]),
+    [
+      ['Faculty', 50],
+      ['Students', 2190],
+      ['Missing', 3],
+      ['Casualty', 3],
+    ]
+  );
+
+  // A cluster's page shows that cluster's units only; an event with no reports, no bars.
+  const pgh = headcountChart(scopeSource(drill(), { clusterId: 'pgh', unitId: null }));
+  assert.deepEqual(
+    pgh.clusters.map((c) => c.name),
+    ['PGH']
+  );
+  assert.deepEqual(
+    pgh.series.map((s) => s.total),
+    [0, 376, 0, 3]
+  );
+  assert.deepEqual(headcountChart(source([])).clusters, []);
 });
 
 test('the chart: a bar per unit, a stacked series per field, then missing and casualties', () => {

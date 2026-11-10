@@ -237,7 +237,7 @@ export function EventSummary({
       {scope?.unitId && <UnitReportsCard summary={view} />}
       {/* A unit's page lists its reports already. */}
       {!scope?.unitId && <TimelineCard key={`timeline-${scopeKey}`} summary={view} />}
-      <HeadcountCard key={`headcount-${scopeKey}`} summary={view} scoped={!!scope} />
+      <HeadcountCard key={`headcount-${scopeKey}`} summary={view} />
       <CasualtiesCard key={`casualties-${scopeKey}`} summary={view} />
       <MissingCard key={`missing-${scopeKey}`} summary={view} />
 

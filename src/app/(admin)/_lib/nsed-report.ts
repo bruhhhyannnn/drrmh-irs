@@ -1,5 +1,12 @@
 import { format } from 'date-fns';
 import { formatTime } from './format';
+import {
+  bySubmitted,
+  headcountChart,
+  headcountColumns,
+  orderedClusters,
+  unitsOf,
+} from './headcount-chart';
 import { reportPlace as placeOf, reportTimeline, type SummarySource } from './summary';
 
 // The NSED report for the UP Manila DRRM-H office: what the app fills into the office's Word
@@ -69,10 +76,6 @@ export function isUpManila(campusName: string) {
   return /^(up|university of the philippines)[\s-]+manila$/i.test(campusName.trim());
 }
 
-// UP Manila's clusters in the order the office's report lists them; any other cluster follows,
-// by name.
-const CLUSTER_ORDER = ['pedro gil', 'padre faura', 'taft', 'pgh'];
-
 const ORDINALS = ['1st', '2nd', '3rd', '4th'];
 
 const WORDS = [
@@ -122,26 +125,6 @@ export function properName(name: string) {
     .replace(/\b(Ii|Iii|Iv|Vi|Vii)\b/g, (numeral) => numeral.toUpperCase());
 }
 
-// The office's short names for the headcount fields (column headers and the chart legend) and
-// the chart colours of its reports; a field not listed keeps its name and takes a spare colour.
-const FIELD_STYLES: { match: RegExp; label: string; color: string }[] = [
-  { match: /^faculty/i, label: 'Faculty', color: '1A5E80' },
-  { match: /^admin/i, label: 'Admin', color: 'E87333' },
-  { match: /^reps/i, label: 'REPS', color: '1A6B2A' },
-  { match: /^ra\b/i, label: 'RA', color: '12A0D8' },
-  { match: /^student/i, label: 'Students', color: '9C2A91' },
-  { match: /^philcare/i, label: 'Philcare', color: '4CA935' },
-  { match: /^security/i, label: 'Security', color: '6390A8' },
-  { match: /^construction/i, label: 'Construction W.', color: 'F0A070' },
-  { match: /^tenant/i, label: 'Tenants', color: '5E9C6C' },
-  { match: /^health/i, label: 'Health W.', color: '5CC1EA' },
-  { match: /^non[\s-]?academic/i, label: 'Non-academic staff', color: 'C474BC' },
-  { match: /^(visitor|guest|patient)/i, label: 'Visitors/Patients', color: '8CC870' },
-];
-const MISSING_COLOR = 'A4C2D2';
-const CASUALTY_COLOR = 'F6C8AB';
-const SPARE_COLORS = ['7F7F7F', 'BF9000', '4472C4', 'A5A5A5', '70AD47', 'FFC000'];
-
 /** "a", "a and b", "a, b, and c". */
 function list(items: string[], comma = items.length > 2) {
   if (items.length <= 1) return items[0] ?? '';
@@ -186,8 +169,6 @@ function the(place: string) {
 
 const peopleOf = (r: SummaryReport) => r.population_counts.reduce((sum, pc) => sum + pc.count, 0);
 
-const zoneNumber = (unit: string | undefined) => Number(unit?.match(/^zone\s*(\d+)/i)?.[1] ?? NaN);
-
 /** Structural damage in these reports: each place once per condition, "no damage" left out. */
 function damageOf(reports: SummaryReport[]) {
   const seen = new Set<string>();
@@ -203,20 +184,6 @@ function damageOf(reports: SummaryReport[]) {
     }
   }
   return damage;
-}
-
-/** A cluster's reports by unit: zones by number (PGH), other units by their first report. */
-function unitsOf(reports: SummaryReport[]) {
-  const byUnit = new Map<string, { name: string; reports: SummaryReport[] }>();
-  for (const r of reports) {
-    const key = r.unit_id ?? 'none';
-    const unit = byUnit.get(key) ?? { name: r.unit?.name.trim() || 'No unit', reports: [] };
-    unit.reports.push(r);
-    byUnit.set(key, unit);
-  }
-  const units = [...byUnit.values()];
-  const byZone = units.every((u) => !Number.isNaN(zoneNumber(u.name)));
-  return byZone ? units.sort((a, b) => zoneNumber(a.name) - zoneNumber(b.name)) : units;
 }
 
 /** Missing persons, casualties and damage in one cluster's reports, as the office writes them. */
@@ -286,24 +253,12 @@ function noteOf(reports: SummaryReport[]) {
 
 export function buildNsedReport(source: SummarySource): NsedReportData {
   const { event } = source;
-  const reports = [...source.reports].sort(
-    (a, b) => new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime()
-  );
+  const reports = bySubmitted(source.reports);
   const firstAt = reports[0] ? new Date(reports[0].submitted_at) : null;
   const start = event.started_at ? new Date(event.started_at) : firstAt;
   const quarter = quarterOf(event, start);
 
-  // Active clusters plus any inactive one that still has reports, in the office's order.
-  const clusterNames = new Map(source.clusters.map((c) => [c.id, c.name]));
-  for (const r of reports)
-    if (!clusterNames.has(r.cluster_id)) clusterNames.set(r.cluster_id, r.cluster.name);
-  const rank = (name: string) => {
-    const i = CLUSTER_ORDER.indexOf(name.trim().toLowerCase());
-    return i === -1 ? CLUSTER_ORDER.length : i;
-  };
-  const clusters = [...clusterNames.entries()]
-    .map(([id, name]) => ({ id, name, reports: reports.filter((r) => r.cluster_id === id) }))
-    .sort((a, b) => rank(a.name) - rank(b.name) || a.name.localeCompare(b.name));
+  const clusters = orderedClusters(source, reports);
 
   const clusterRows = clusters.map((c) => ({
     ...c,
@@ -317,46 +272,9 @@ export function buildNsedReport(source: SummarySource): NsedReportData {
     clusterRows.reduce((sum, c) => sum + c[key], 0);
   const damagedAreas = clusterRows.reduce((sum, c) => sum + c.damage.length, 0);
 
-  // Headcount fields: the campus's fields in their order, then any other field reported.
-  const categories = [...source.fields];
-  for (const r of reports) {
-    for (const pc of r.population_counts) {
-      if (!categories.some((c) => c.id === pc.category.id)) categories.push(pc.category);
-    }
-  }
-  let spare = 0;
-  const fields = categories.map((c) => {
-    const style = FIELD_STYLES.find((f) => f.match.test(c.name.trim()));
-    return {
-      id: c.id,
-      label: style?.label ?? c.name,
-      color: style?.color ?? SPARE_COLORS[spare++ % SPARE_COLORS.length],
-    };
-  });
-  const countOf = (categoryId: string, rs: SummaryReport[]) =>
-    rs.reduce(
-      (sum, r) =>
-        sum +
-        r.population_counts
-          .filter((pc) => pc.category.id === categoryId)
-          .reduce((s, pc) => s + pc.count, 0),
-      0
-    );
-  /** A unit's (or a cluster's) counts: each field, then missing persons, then casualties. */
-  const countsOf = (rs: SummaryReport[]) => [
-    ...fields.map((f) => countOf(f.id, rs)),
-    rs.reduce((sum, r) => sum + r.missing_persons.length, 0),
-    rs.reduce((sum, r) => sum + r.casualties.length, 0),
-  ];
-  const columns = [
-    ...fields.map((f) => ({ name: f.label, color: f.color })),
-    { name: 'Missing', color: MISSING_COLOR },
-    { name: 'Casualty', color: CASUALTY_COLOR },
-  ];
-
-  // The chart: every unit that reported, cluster by cluster in the office's order.
-  const chartUnits = clusterRows.flatMap((c) => unitsOf(c.reports));
-  const chartCounts = chartUnits.map((u) => countsOf(u.reports));
+  const { columns, countsOf } = headcountColumns(source, reports);
+  const chart = headcountChart(source);
+  const chartUnits = chart.clusters.flatMap((c) => c.units);
 
   return {
     quarterOrdinal: quarter ? ORDINALS[quarter.quarter - 1] : '',
@@ -413,8 +331,12 @@ export function buildNsedReport(source: SummarySource): NsedReportData {
     }),
     chart: {
       units: chartUnits.map((u) => u.name),
-      series: columns.map((col, i) => ({ ...col, values: chartCounts.map((counts) => counts[i]) })),
-      totals: chartCounts.map((counts) => counts.reduce((sum, n) => sum + n, 0)),
+      series: chart.series.map(({ name, color }, i) => ({
+        name,
+        color,
+        values: chartUnits.map((u) => u.values[i]),
+      })),
+      totals: chartUnits.map((u) => u.total),
     },
   };
 }

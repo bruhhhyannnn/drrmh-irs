@@ -6,9 +6,9 @@ import { format } from 'date-fns';
 import { ChartNoAxesColumn, Check, TriangleAlert, UserRound, Users } from 'lucide-react';
 import { useState } from 'react';
 import { formatTime, personName, plural } from '../../_lib/format';
+import { headcountChart } from '../../_lib/headcount-chart';
 import {
   firstReportScale,
-  headcountOf,
   NO_UNIT,
   reportTimeline,
   scopedCoverage,
@@ -23,7 +23,16 @@ import {
 } from '../../_lib/summary';
 import { FilterSelect } from '../data-list';
 import { Bar, Card, Chip, Mono } from '../ui';
-import { ColumnChart, DamageChart, Donut, RankedBars, SERIES, SeriesLegend } from './charts';
+import {
+  ColumnChart,
+  DamageChart,
+  Donut,
+  RankedBars,
+  SERIES,
+  SeriesLegend,
+  StackedBars,
+  StackedLegend,
+} from './charts';
 import { coverageLabel, DRILL_ROW, DrillLink, MissingUnits, type ScopeLinks } from './drill-down';
 
 const PAD_X = 'px-4 md:px-5';
@@ -402,62 +411,70 @@ export function ClustersCard({ summary, links }: { summary: Summary; links: Scop
 
 /* ─── Headcount ──────────────────────────────────────────────────────────────────────── */
 
-export function HeadcountCard({ summary, scoped }: { summary: Summary; scoped?: boolean }) {
-  const [clusterId, setClusterId] = useState('');
-  const reports = summary.source.reports.filter((r) => !clusterId || r.cluster_id === clusterId);
-  const rows = clusterId ? headcountOf(reports) : summary.headcount.rows;
-  const total = rows.reduce((sum, r) => sum + r.count, 0);
-  const max = Math.max(1, ...rows.map((r) => r.count));
-  const half = Math.ceil(rows.length / 2);
+const HEADCOUNT_FIRST = 10;
+
+/**
+ * Headcount by category, a stacked bar per unit that reported, cluster by cluster: the same chart
+ * as the NSED report (headcount-chart.ts).
+ */
+export function HeadcountCard({ summary }: { summary: Summary }) {
+  const [open, setOpen] = useState(false);
+  const chart = headcountChart(summary.source);
+  const series = chart.series.map((s) => ({ ...s, color: `#${s.color}` }));
+  // People counted: the fields, without the Missing and Casualty series at the end.
+  const people = series.slice(0, -2).reduce((sum, s) => sum + s.total, 0);
+  const units = chart.clusters.reduce((sum, c) => sum + c.units.length, 0);
+
+  // The first rows, cluster by cluster, until Show all.
+  let left = open ? Infinity : HEADCOUNT_FIRST;
+  const groups = chart.clusters.flatMap((c) => {
+    const rows = c.units.slice(0, Math.max(0, left));
+    left -= rows.length;
+    return rows.length
+      ? [{ key: c.id, name: chart.clusters.length > 1 ? c.name : undefined, rows }]
+      : [];
+  });
 
   return (
-    <Card className="flex flex-col gap-4 p-4.5 md:p-6">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <h2 className="text-[19px] leading-[1.3] font-bold">Headcount</h2>
-        <span className="text-[14px] font-semibold text-gray-600">
-          <Mono className="text-[16px] font-bold text-gray-900">{total.toLocaleString()}</Mono>{' '}
-          people
-        </span>
-        <div className="flex-1" />
-        {!scoped && (
-          <FilterSelect
-            label="Headcount for cluster"
-            allLabel="All clusters"
-            value={clusterId}
-            onChange={setClusterId}
-            options={summary.clusters.done.map((c) => ({ value: c.id, label: c.name }))}
-          />
+    <Card className="flex flex-col">
+      <div className={cn('flex flex-col gap-4 pt-4.5 pb-4 md:pt-6', PAD_X, 'md:px-6')}>
+        <div className="flex flex-col gap-0.5">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <h2 className="text-[19px] leading-[1.3] font-bold">Headcount</h2>
+            <span className="text-[14px] font-semibold text-gray-600">
+              <Mono className="text-[16px] font-bold text-gray-900">{people.toLocaleString()}</Mono>{' '}
+              people
+            </span>
+          </div>
+          {units > 0 && (
+            <span className="text-[14px] leading-[1.4] text-gray-500">
+              By category, in {plural(units, 'unit', 'units')} that reported
+            </span>
+          )}
+        </div>
+        {units ? (
+          <>
+            <StackedLegend series={series.filter((s) => s.total > 0)} />
+            <StackedBars label="Headcount by category, per unit" groups={groups} series={series} />
+          </>
+        ) : (
+          <p className="text-[16px] text-gray-500">No people counted yet.</p>
+        )}
+        {units > 0 && (
+          <span className="border-t border-line pt-3 text-[14px] text-pretty text-gray-500">
+            Bars add missing persons and casualties to the people counted, as in the NSED report.
+            Categories at 0 are not listed.
+          </span>
         )}
       </div>
-      {rows.length ? (
-        <ul
-          className="grid grid-cols-1 gap-x-10 gap-y-3 lg:grid-flow-col lg:grid-cols-2"
-          style={{ gridTemplateRows: `repeat(${half}, auto)` }}
-        >
-          {rows.map((r) => (
-            <li
-              key={r.id}
-              className="grid min-w-0 grid-cols-[112px_minmax(0,1fr)_32px_36px] items-center gap-3 md:grid-cols-[200px_minmax(0,1fr)_40px_44px] lg:grid-cols-[150px_minmax(0,1fr)_36px_40px]"
-            >
-              <span className="text-[14px] leading-[1.3] font-semibold text-pretty text-gray-700">
-                {r.name}
-              </span>
-              <Bar value={r.count} max={max} />
-              <Mono className="text-right text-[14px] font-bold">{r.count.toLocaleString()}</Mono>
-              <Mono className="text-right text-[13px] font-medium text-gray-500">
-                {total ? `${Math.round((r.count / total) * 100)}%` : '0%'}
-              </Mono>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-[16px] text-gray-500">No people counted yet.</p>
-      )}
-      <span className="border-t border-line pt-3 text-[14px] text-gray-500">
-        {clusterId
-          ? `${rows.length} of ${summary.headcount.fieldsTotal} fields have people counted in this cluster. Fields at 0 are not listed.`
-          : `${rows.length} of ${summary.headcount.fieldsTotal} fields have people counted. Fields at 0 are not listed.`}
-      </span>
+      <ShowAllFooter
+        showing={Math.min(units, HEADCOUNT_FIRST)}
+        total={units}
+        open={open}
+        onToggle={() => setOpen((o) => !o)}
+        order=" units"
+        first={HEADCOUNT_FIRST}
+      />
     </Card>
   );
 }
@@ -472,14 +489,16 @@ function ShowAllFooter({
   open,
   onToggle,
   order,
+  first = SHOW_FIRST,
 }: {
   showing: number;
   total: number;
   open: boolean;
   onToggle: () => void;
   order: string;
+  first?: number;
 }) {
-  if (total <= SHOW_FIRST) return null;
+  if (total <= first) return null;
   return (
     <div
       className={cn(
