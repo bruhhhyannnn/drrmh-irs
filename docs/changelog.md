@@ -9,6 +9,12 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-031 Headcount by category chart on the event summary: 2026-11-10 (branch `feat/DRRM-031-headcount-by-unit-chart`)
+
+Plan: [[plan/feature/DRRM-031-headcount-by-unit-chart]] · [[events]]
+
+- The Headcount card on event details and campus details shows the NSED report's chart: a stacked bar per unit by category, then missing persons and casualties, with each bar's total, grouped by cluster. The legend gives each category's total. It replaces the per-field bars and the cluster picker; the cluster drill-down narrows it.
+
 ## DRRM-030 Timeline of reports on the event summary: 2026-11-09 (branch `feat/DRRM-030-event-report-timeline`)
 
 Plan: [[plan/feature/DRRM-030-event-report-timeline]] · [[events]]

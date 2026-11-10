@@ -1,6 +1,6 @@
 ---
 type: module
-updated: 2026-11-09
+updated: 2026-11-10
 module: events
 paths:
   - src/actions/events/index.ts
@@ -9,6 +9,7 @@ paths:
   - src/app/(admin)/_lib/summary.ts
   - src/app/(admin)/_lib/status.ts
   - src/app/(admin)/_lib/nsed-report.ts
+  - src/app/(admin)/_lib/headcount-chart.ts
   - src/app/(admin)/_lib/nsed-docx.ts
   - public/templates/nsed-report.docx
   - src/app/(admin)/_components/summary
@@ -73,6 +74,7 @@ Every mutation calls `revalidatePath` on `/events`, `/events/details` and `/dash
 - Export PDF (event details, and the download icon on each `/events` row and phone card) opens `/events/report?id=` in a new tab (see [[print]]). The Excel export was removed in DRRM-018.
 - Export NSED report (event details only, when the event is completed and its campus is UP Manila, `isUpManila`): the office's quarterly NSED report as a Word file. `downloadNsedReport` is imported on click, fetches `public/templates/nsed-report.docx`, fills it with `buildNsedReport(source)` through docxtemplater + pizzip and saves `NSED Report Q1 2026.docx`. The app fills what it records (date and times, headcount per cluster, the timeline, the headcount summary with structural damage, one breakdown table and note per cluster, the headcount-by-category chart, the IRS side of the IC vs IRS table); the rest are yellow `[Add …]` and `[…]` blanks for the office (the executive summary, the observers' comments, the IC figures, the analyses). Tags and rules: [[plan/feature/DRRM-019-nsed-report]], changes in [[plan/feature/DRRM-028-nsed-report-v2]].
 - Timeline of reports (`TimelineCard`, DRRM-030): who reported, from which college or building, and when, first report first, on the event summary after Clusters (or Units) and before Headcount. It uses `reportTimeline` and `reportPlace` from `summary.ts`, which the NSED report's timeline uses too, follows the cluster drill-down, and is left out on a unit's page (`UnitReportsCard` lists those reports).
+- Headcount (`HeadcountCard`, DRRM-031): the NSED report's headcount-by-category chart, a stacked bar per unit that reported (grouped by cluster, first 10 then Show all) with a colour per category, then Missing and Casualty, and the total at each bar's end; the legend gives each category's total. Both are built by `headcountChart(source)` in `headcount-chart.ts`, so the card and the Word chart agree. It follows the cluster drill-down. The per-field `summary.headcount.rows` stays for the print report.
 - Drill-down (`_components/summary/drill-down.tsx`, DRRM-024): clicking a cluster or unit narrows the whole summary. The scope lives in the link (`&cluster=<id>&unit=<id or none>`). `resolveScope` validates it (a bad link shows the whole event with a note), `scopeSource` filters the source, and `buildSummary` runs on the result, so every section agrees. Compare and exports always stay whole-event, and the Completed banner reads the full summary. On a unit's page, reports open in `ReportDrawer`, read-only once the event is completed. On `/campus/details`, the picked event is the `event` param, because `id` is the campus there.
 - Units with no report yet: `getEventSummarySource` loads each active cluster's active units, and `buildSummary` adds a `coverage` to each cluster (`4 of 6 units`, and the missing names). Reports with no unit or a deactivated unit stay in the numbers but not in coverage. On a completed event, a unit created after `ended_at` isn't expected.
 - The event "calendar" is the This month card on the dashboard (`MonthCard` in `(admin)/dashboard/page.tsx`), fed by `getDashboard`. There is no separate calendar page.
@@ -88,7 +90,7 @@ Every mutation calls `revalidatePath` on `/events`, `/events/details` and `/dash
 - The Complete dialog lists clusters that have not reported yet (from `useSummary`). Once Completed, ERT Members cannot send or edit reports for it.
 - `summary.ts` reads casualty and damage severity from condition wording with regexes. Renaming a condition in Settings can change its colour and rank.
 - `getEventSummarySource` is shared by campus details, event details, the print report and the NSED report. Changing its `select` affects all four.
-- The NSED report's fixed wording lives in the template, not the code: edit `public/templates/nsed-report.docx` in Word and keep the `{…}` tags. Two parts are built in code, because their shape depends on the data: each breakdown table (`{@tableXml}`, a row per unit and a column per personnel category; it runs into the side margins, to 0.25 in from the paper's edges, so its headers fit left to right at 8 pt, see `breakdownLayout`) and the headcount-by-category chart (`{@categoryChart}`, a native Word chart added as `word/charts/chart1.xml`, values stored in the chart, the totals drawn as labels on a hidden last series). The short category names and chart colours are `FIELD_STYLES` in `nsed-report.ts`, matched by name; a new field keeps its full name and takes a spare colour. `public/templates/` is left out of the service worker's precache (`publicExcludes` in `next.config.ts`).
+- The NSED report's fixed wording lives in the template, not the code: edit `public/templates/nsed-report.docx` in Word and keep the `{…}` tags. Two parts are built in code, because their shape depends on the data: each breakdown table (`{@tableXml}`, a row per unit and a column per personnel category; it runs into the side margins, to 0.25 in from the paper's edges, so its headers fit left to right at 8 pt, see `breakdownLayout`) and the headcount-by-category chart (`{@categoryChart}`, a native Word chart added as `word/charts/chart1.xml`, values stored in the chart, the totals drawn as labels on a hidden last series). The short category names and chart colours are `FIELD_STYLES` in `headcount-chart.ts` (shared with the summary's Headcount card), matched by name; a new field keeps its full name and takes a spare colour. `public/templates/` is left out of the service worker's precache (`publicExcludes` in `next.config.ts`).
 - The NSED report lists clusters Pedro Gil, Padre Faura, Taft, PGH (the office's order), then others by name. Within a cluster, units are listed in the order they first reported, and a cluster made of numbered zones is listed by zone. Two reports from one unit add up to one row.
 
 ## Decisions

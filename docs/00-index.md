@@ -50,17 +50,18 @@ Statuses are taken from each plan's frontmatter as of 2026-11-09. Keep this list
 
 ### Active
 
-| Plan                                                                                                 | Status      | Branch                                |
-| ---------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------- |
-| [[plan/feature/DRRM-030-event-report-timeline\|DRRM-030 Timeline of reports on the event summary]]   | in-review   | `feat/DRRM-030-event-report-timeline` |
-| [[plan/feature/DRRM-028-nsed-report-v2\|DRRM-028 NSED report v2]]                                    | in-review   | `feat/DRRM-028-nsed-report-v2`        |
-| [[plan/review/2026-09-08-dev-branch-audit\|Dev branch audit (2026-09-08)]]                           | in-progress | `dev`                                 |
-| [[plan/fix/DRRM-002-emergency-reports-hardening\|DRRM-002 Emergency reports hardening]]              | approved    | `fix/emergency-reports-hardening`     |
-| [[plan/fix/DRRM-003-report-form-atomicity\|DRRM-003 Report form atomicity]]                          | approved    | `fix/report-form-atomicity`           |
-| [[plan/fix/DRRM-004-events-dynamic-clusters\|DRRM-004 Events and dynamic clusters]]                  | approved    | `fix/events-dynamic-clusters`         |
-| [[plan/fix/DRRM-005-settings-hooks-performance\|DRRM-005 Settings, hooks and dashboard performance]] | approved    | `fix/settings-hooks-performance`      |
-| [[plan/fix/DRRM-006-schema-dual-write-sunset\|DRRM-006 Schema normalization and dual-write sunset]]  | approved    | `refactor/schema-dual-write-sunset`   |
-| [[plan/feature/2026-09-09-table-redesign\|Data tables redesign]]                                     | approved    | `feature/table-redesign`              |
+| Plan                                                                                                         | Status      | Branch                                  |
+| ------------------------------------------------------------------------------------------------------------ | ----------- | --------------------------------------- |
+| [[plan/feature/DRRM-031-headcount-by-unit-chart\|DRRM-031 Headcount by category chart on the event summary]] | in-review   | `feat/DRRM-031-headcount-by-unit-chart` |
+| [[plan/feature/DRRM-030-event-report-timeline\|DRRM-030 Timeline of reports on the event summary]]           | in-review   | `feat/DRRM-030-event-report-timeline`   |
+| [[plan/feature/DRRM-028-nsed-report-v2\|DRRM-028 NSED report v2]]                                            | in-review   | `feat/DRRM-028-nsed-report-v2`          |
+| [[plan/review/2026-09-08-dev-branch-audit\|Dev branch audit (2026-09-08)]]                                   | in-progress | `dev`                                   |
+| [[plan/fix/DRRM-002-emergency-reports-hardening\|DRRM-002 Emergency reports hardening]]                      | approved    | `fix/emergency-reports-hardening`       |
+| [[plan/fix/DRRM-003-report-form-atomicity\|DRRM-003 Report form atomicity]]                                  | approved    | `fix/report-form-atomicity`             |
+| [[plan/fix/DRRM-004-events-dynamic-clusters\|DRRM-004 Events and dynamic clusters]]                          | approved    | `fix/events-dynamic-clusters`           |
+| [[plan/fix/DRRM-005-settings-hooks-performance\|DRRM-005 Settings, hooks and dashboard performance]]         | approved    | `fix/settings-hooks-performance`        |
+| [[plan/fix/DRRM-006-schema-dual-write-sunset\|DRRM-006 Schema normalization and dual-write sunset]]          | approved    | `refactor/schema-dual-write-sunset`     |
+| [[plan/feature/2026-09-09-table-redesign\|Data tables redesign]]                                             | approved    | `feature/table-redesign`                |
 
 DRRM-002 to DRRM-006 and the table redesign may be partly or fully done in code. Check before you rely on these statuses.
 
