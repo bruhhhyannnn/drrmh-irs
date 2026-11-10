@@ -36,8 +36,8 @@ Templates stay in `public/templates/`, picked by campus in code. Uploading templ
 - Acceptance criteria:
   - [x] `nsedTemplateFor(campusName)`: "UP Manila" and "PGH" → the UP Manila template, "UP Diliman" → the UP Diliman template, any other campus → no button.
   - [x] UP Diliman template made from UPRI's report: letterhead, header and footer, and fixed wording kept. The cover letter (page 1) is removed. Everything that changes each NSED is a yellow `[Add …]` blank: the report's date, the signatories (UPRI's names and the signature image are removed), the staff who prepared it, the observations, the comparison with the previous quarter, the overall assessment, the link to the event report PDF. The two app screenshots become `[Insert a screenshot …]` blanks.
-  - [x] Filled from the IRS: the drill date, quarter and start time; reports received, clusters that reported out of the campus's clusters, individuals counted; people by category; casualties by condition; minutes to the first and last report.
-  - [x] The table: a header row (No. | Cluster | College/Unit | Reports | Casualties | Headcount) that repeats on each page, then per cluster a bold "Cluster Total" row and its units (No. and Cluster merged down), in the order they first reported, then GRAND TOTAL. Reports with no unit read "No unit specified".
+  - [x] Filled from the IRS: the drill date, quarter and start time; reports received, clusters that reported out of the campus's clusters, individuals counted; people by category; casualties by condition; missing persons (UPRI's report has no line or column for them, since its drill had none; added so a drill with missing persons still reports them); minutes to the first and last report.
+  - [x] The table: a header row (No. | Cluster | College/Unit | Reports | Casualties | Missing | Headcount) that repeats on each page, then per cluster a bold "Cluster Total" row and its units (No. and Cluster merged down), in the order they first reported, then GRAND TOTAL. Reports with no unit read "No unit specified".
   - [x] Saved as `NSED-2026-Q4-UP-Diliman-report.docx`, as UPRI names it. UP Manila and PGH keep `NSED Report Q4 2026.docx`.
   - [x] UP Manila's report is unchanged.
 
@@ -56,7 +56,7 @@ Not in scope: the comparison with the previous quarter (needs the previous event
 
 ### UP Diliman template tags
 
-`{drillDate}` `{quarter}` `{quarterOrdinal}` `{year}` `{startTime}` `{reportCount}` `{reportVerb}` `{clusterCount}` `{individuals}` `{categoryCounts}` `{clustersReported}` `{clustersTotal}` `{#hasCasualties}` `{casualtyCount}` `{casualtyBreakdown}` `{/hasCasualties}` `{^hasCasualties}` `{#hasReports}` `{firstReportAfter}` `{lastReportAfter}` `{/hasReports}` `{@clusterTable}`
+`{drillDate}` `{quarter}` `{quarterOrdinal}` `{year}` `{startTime}` `{reportCount}` `{reportVerb}` `{clusterCount}` `{individuals}` `{categoryCounts}` `{clustersReported}` `{clustersTotal}` `{#hasCasualties}` `{casualtyCount}` `{casualtyBreakdown}` `{/hasCasualties}` `{^hasCasualties}` `{#hasMissing}` `{missingCount}` `{/hasMissing}` `{^hasMissing}` `{#hasReports}` `{firstReportAfter}` `{lastReportAfter}` `{/hasReports}` `{@clusterTable}`
 
 ---
 

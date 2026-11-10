@@ -31,7 +31,8 @@ function report(
   unit: string | null,
   time: Date,
   counts: number[],
-  casualties: string[] = []
+  casualties: string[] = [],
+  missing = 0
 ): Report {
   n++;
   return {
@@ -52,7 +53,12 @@ function report(
       diagnosis: null,
       condition: { name: condition },
     })),
-    missing_persons: [],
+    missing_persons: Array.from({ length: missing }, (_, i) => ({
+      id: `m${n}-${i}`,
+      name: '',
+      age: null,
+      sex: null,
+    })),
   };
 }
 
@@ -83,7 +89,7 @@ const drill = () =>
   source([
     report('cssp', 'Office of the Dean', at(9, 22), [400, 40, 8, 0]),
     report('coe', 'Department of Industrial Engineering', at(9, 23), [20, 4, 0, 0]),
-    report('cssp', 'Department of Psychology', at(9, 30), [90, 8, 0, 0]),
+    report('cssp', 'Department of Psychology', at(9, 30), [90, 8, 0, 0], [], 2),
     report('cmu', 'Annex 108', at(9, 25), [100, 10, 10, 4], [MODERATE, MINOR, MODERATE]),
     report('sam', null, at(15, 59), [100, 4, 0, 0]),
     report('cssp', 'Office of the Dean', at(10, 5), [0, 0, 0, 0]),
@@ -115,7 +121,9 @@ test('the table: clusters and units in the order they first reported, with a gra
       ['Sampaguita Residence Hall', 1, 0, 104, [['No unit specified', 1, 104]]],
     ]
   );
-  assert.deepEqual(table.total, { reports: 6, casualties: 3, headcount: 798 });
+  assert.deepEqual(table.total, { reports: 6, casualties: 3, missing: 2, headcount: 798 });
+  assert.equal(table.clusters[0].missing, 2);
+  assert.equal(table.clusters[0].units[1].missing, 2);
 });
 
 test('the counts UPRI writes in its summary', () => {
@@ -138,6 +146,8 @@ test('the counts UPRI writes in its summary', () => {
     data.casualtyBreakdown,
     'two individuals with moderate injuries and one individual with minor injuries'
   );
+  assert.equal(data.hasMissing, true);
+  assert.equal(data.missingCount, 'two missing persons');
   assert.equal(data.firstReportAfter, '22 minutes');
   assert.equal(data.lastReportAfter, '419 minutes');
   assert.equal(nsedDilimanFileName(drill()), 'NSED-2026-Q4-UP-Diliman-report.docx');
@@ -155,12 +165,12 @@ test('one report reads in the singular', () => {
 test('the table XML: header row repeats, clusters merge down over their units', () => {
   const xml = clusterTableXml(clusterTableOf(drill().reports));
   const text = xml.replace(/<[^>]+>/g, '');
-  assert.match(text, /^No\.ClusterCollege\/UnitReportsCasualtiesHeadcount/);
+  assert.match(text, /^No\.ClusterCollege\/UnitReportsCasualtiesMissingHeadcount/);
   assert.match(
     text,
-    /1College of Social Sciences and PhilosophyCluster Total30546Office of the Dean20448/
+    /1College of Social Sciences and PhilosophyCluster Total302546Office of the Dean200448/
   );
-  assert.match(text, /GRAND TOTAL63798$/);
+  assert.match(text, /GRAND TOTAL632798$/);
   assert.match(xml, /<w:tblHeader\/>/);
   assert.equal((xml.match(/<w:vMerge w:val="restart"\/>/g) ?? []).length, 8, 'No. and Cluster');
   assert.equal((xml.match(/<w:vMerge w:val="continue"\/>/g) ?? []).length, 10, 'one per unit');
@@ -183,9 +193,11 @@ test('the UP Diliman template in public/ fills without leftover tags or anyoneâ€
   assert.match(text, /In all, 4 of the 5 Colleges\/Units/);
   assert.match(text, /recorded three victims, referred to as casualties, consisting of two/);
   assert.doesNotMatch(text, /recorded no casualties/);
+  assert.match(text, /The submitted reports recorded two missing persons\. \[Add where/);
+  assert.doesNotMatch(text, /No missing persons were reported/);
   assert.match(text, /first report was recorded at 22 minutes after the drill started/);
   assert.match(text, /NSED Q4 2026 â€“ UP Diliman Event Report PDF/);
-  assert.match(text, /GRAND TOTAL63798/);
+  assert.match(text, /GRAND TOTAL632798/);
   // UPRI's blanks stay highlighted.
   for (const blank of [
     '[Add the names and positions of the staff who prepared the report]',
@@ -222,5 +234,6 @@ test('an event with no reports fills too', () => {
   assert.match(text, /a total of 0 reports were received from 0 out of 5 clusters/);
   assert.match(text, /No reports were received\./);
   assert.match(text, /The submitted reports recorded no casualties\./);
+  assert.match(text, /No missing persons were reported\./);
   assert.doesNotMatch(text, /first report was recorded/);
 });

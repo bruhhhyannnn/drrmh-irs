@@ -36,6 +36,9 @@ export interface NsedDilimanData {
   casualtyCount: string;
   /** "two individuals with moderate injuries and one individual with minor injuries". */
   casualtyBreakdown: string;
+  hasMissing: boolean;
+  /** "two missing persons". */
+  missingCount: string;
   hasReports: boolean;
   /** "22 minutes", from the start. */
   firstReportAfter: string;
@@ -46,6 +49,7 @@ export interface NsedDilimanData {
 export interface NsedClusterCounts {
   reports: number;
   casualties: number;
+  missing: number;
   headcount: number;
 }
 
@@ -74,6 +78,7 @@ const inSentence = (name: string) =>
 const countsOf = (reports: SummaryReport[]): NsedClusterCounts => ({
   reports: reports.length,
   casualties: reports.reduce((sum, r) => sum + r.casualties.length, 0),
+  missing: reports.reduce((sum, r) => sum + r.missing_persons.length, 0),
   headcount: reports.reduce(
     (sum, r) => sum + r.population_counts.reduce((s, pc) => s + pc.count, 0),
     0
@@ -163,6 +168,10 @@ export function buildNsedDilimanReport(source: SummarySource): NsedDilimanData {
     hasCasualties: casualties.length > 0,
     casualtyCount: `${inWords(casualties.length)} ${casualties.length === 1 ? 'victim' : 'victims'}`,
     casualtyBreakdown: list(breakdown, false),
+    hasMissing: table.total.missing > 0,
+    missingCount: `${inWords(table.total.missing)} missing ${
+      table.total.missing === 1 ? 'person' : 'persons'
+    }`,
     hasReports: reports.length > 0,
     firstReportAfter: plural(minutesAfter(firstAt), 'minute', 'minutes'),
     lastReportAfter: plural(minutesAfter(lastAt), 'minute', 'minutes'),

@@ -14,7 +14,7 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 Plan: [[plan/feature/DRRM-032-nsed-report-pgh-diliman]] · [[events]]
 
 - PGH events can export the NSED report too, on the UP Manila office's template.
-- UP Diliman events export UPRI's NSED report: the drill date, the counts in the executive summary and a table of the clusters and units that reported (with a header row, cluster totals and a grand total) are filled in; the signatories, observations, comparison with the last quarter and screenshots are yellow blanks for UPRI.
+- UP Diliman events export UPRI's NSED report: the drill date, the counts in the executive summary and a table of the clusters and units that reported (with a header row, a Missing column, cluster totals and a grand total), including missing persons, are filled in; the signatories, observations, comparison with the last quarter and screenshots are yellow blanks for UPRI.
 
 ## DRRM-031 Headcount by category chart on the event summary: 2026-11-10 (branch `feat/DRRM-031-headcount-by-unit-chart`)
 

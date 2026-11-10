@@ -337,12 +337,12 @@ function addChartPart(zip: PizZip, chart: NsedChart) {
 
 /* ─── UP Diliman cluster table ───────────────────────────────────────────────────────── */
 
-// UPRI's table, with a header row added: No. | Cluster | College/Unit | Reports | Casualties |
-// Headcount. A bold "Cluster Total" row per cluster, its units under it (No. and Cluster merged
-// down), and a GRAND TOTAL row. Letter paper with 1 in margins leaves 9360 twips; 9 pt like
-// UPRI's table.
+// UPRI's table, with a header row and a Missing column added: No. | Cluster | College/Unit |
+// Reports | Casualties | Missing | Headcount. A bold "Cluster Total" row per cluster, its units
+// under it (No. and Cluster merged down), and a GRAND TOTAL row. Letter paper with 1 in margins
+// leaves 9360 twips; 9 pt like UPRI's table.
 
-const DILIMAN_WIDTHS = [500, 2400, 3160, 1000, 1150, 1150];
+const DILIMAN_WIDTHS = [500, 2100, 2760, 900, 1100, 900, 1100];
 const DILIMAN_SIZE = 18;
 
 function dilimanCell(
@@ -372,7 +372,7 @@ function dilimanCell(
 }
 
 const countCells = (c: NsedClusterCounts, bold = false) =>
-  [c.reports, c.casualties, c.headcount]
+  [c.reports, c.casualties, c.missing, c.headcount]
     .map((n, i) =>
       dilimanCell(n.toLocaleString('en-US'), DILIMAN_WIDTHS[3 + i], { bold, center: true })
     )
@@ -385,7 +385,7 @@ export function clusterTableXml(table: NsedClusterTable) {
     `<w:tr><w:trPr><w:cantSplit/>${header ? '<w:tblHeader/>' : ''}</w:trPr>${cells}</w:tr>`;
 
   const header = tr(
-    ['No.', 'Cluster', 'College/Unit', 'Reports', 'Casualties', 'Headcount']
+    ['No.', 'Cluster', 'College/Unit', 'Reports', 'Casualties', 'Missing', 'Headcount']
       .map((h, i) =>
         dilimanCell(h, DILIMAN_WIDTHS[i], { header: true, center: i !== 1 && i !== 2 })
       )
