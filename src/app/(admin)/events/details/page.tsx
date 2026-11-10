@@ -23,7 +23,7 @@ import {
 import { EventSummary, useSummary } from '../../_components/summary/event-summary';
 import { Card, Chip, Skeleton } from '../../_components/ui';
 import { formatEventWindow } from '../../_lib/format';
-import { isUpManila } from '../../_lib/nsed-report';
+import { nsedTemplateFor } from '../../_lib/nsed-report';
 import { capitalize, eventStatusKey, eventTone } from '../../_lib/status';
 import { DeleteEventDialog, type DeletableEvent } from '../_components/delete-event-dialog';
 import { EventDrawer } from '../_components/event-drawer';
@@ -106,7 +106,7 @@ function EventDetails() {
               <Download size={16} aria-hidden />
               Export PDF
             </Button>
-            {status === 'completed' && isUpManila(event.campus.name) && (
+            {status === 'completed' && nsedTemplateFor(event.campus.name) && (
               <ExportNsedButton eventId={event.id} />
             )}
             <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
@@ -156,8 +156,9 @@ function EventDetails() {
 }
 
 /**
- * Export NSED report: the UP Manila office's quarterly report as a Word file, filled from this
- * event's reports in the browser. docxtemplater loads on the first click.
+ * Export NSED report: the campus's quarterly NSED report as a Word file (the UP Manila DRRM-H
+ * office's, also for PGH, or UPRI's UP Diliman report), filled from this event's reports in the
+ * browser. docxtemplater loads on the first click.
  */
 function ExportNsedButton({ eventId }: { eventId: string }) {
   const { data: source } = useEventSummarySource(eventId);

@@ -9,7 +9,13 @@ import {
   categoryChartXml,
   fillNsedTemplate,
 } from './nsed-docx';
-import { buildNsedReport, isUpManila, nsedFileName, properName, quarterOf } from './nsed-report';
+import {
+  buildNsedReport,
+  nsedFileName,
+  nsedTemplateFor,
+  properName,
+  quarterOf,
+} from './nsed-report';
 import { scopeSource, type SummarySource } from './summary';
 
 // The NSED report (DRRM-019): what the app fills into the UP Manila office's Word template, and
@@ -109,11 +115,14 @@ const drill = () =>
     }),
   ]);
 
-test('only UP Manila events offer the report', () => {
-  assert.equal(isUpManila('UP Manila'), true);
-  assert.equal(isUpManila(' University of the Philippines Manila '), true);
-  assert.equal(isUpManila('UP Diliman'), false);
-  assert.equal(isUpManila('UP PGH'), false);
+test('UP Manila and PGH get the office report, UP Diliman its own, other campuses none', () => {
+  assert.equal(nsedTemplateFor('UP Manila'), 'manila');
+  assert.equal(nsedTemplateFor(' University of the Philippines Manila '), 'manila');
+  assert.equal(nsedTemplateFor('PGH'), 'manila');
+  assert.equal(nsedTemplateFor('UP Diliman'), 'diliman');
+  assert.equal(nsedTemplateFor('University of the Philippines Diliman'), 'diliman');
+  assert.equal(nsedTemplateFor('UP Los Baños'), null);
+  assert.equal(nsedTemplateFor('UP PGH Annex'), null);
 });
 
 test('the quarter comes from the Quarter field, then the name, then the start date', () => {

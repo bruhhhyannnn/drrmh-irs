@@ -71,14 +71,23 @@ export interface NsedChart {
   totals: number[];
 }
 
-/** The report is the UP Manila office's, so only UP Manila events offer it. */
-export function isUpManila(campusName: string) {
-  return /^(up|university of the philippines)[\s-]+manila$/i.test(campusName.trim());
+/**
+ * Which NSED report a campus gets, or null for none. UP Manila's DRRM-H office report also covers
+ * PGH; UP Diliman's is UPRI's report to the UP President (nsed-diliman.ts).
+ */
+export type NsedTemplate = 'manila' | 'diliman';
+
+export function nsedTemplateFor(campusName: string): NsedTemplate | null {
+  const name = campusName.trim();
+  if (/^(up|university of the philippines)[\s-]+manila$/i.test(name)) return 'manila';
+  if (/^(pgh|philippine general hospital)$/i.test(name)) return 'manila';
+  if (/^(up|university of the philippines)[\s-]+diliman$/i.test(name)) return 'diliman';
+  return null;
 }
 
-const ORDINALS = ['1st', '2nd', '3rd', '4th'];
+export const ORDINALS = ['1st', '2nd', '3rd', '4th'];
 
-const WORDS = [
+export const WORDS = [
   'zero',
   'one',
   'two',
@@ -105,7 +114,7 @@ const WORDS = [
 // The same test summary.ts uses for "no damage".
 const NO_DAMAGE = /^(none|no\b)|no visible/i;
 
-const num = (n: number) => n.toLocaleString('en-US');
+export const num = (n: number) => n.toLocaleString('en-US');
 
 /** "one (1)", as the office writes counts in sentences; digits past twenty. */
 const counted = (n: number) => (n <= 20 ? `${WORDS[n]} (${n})` : num(n));
@@ -126,13 +135,13 @@ export function properName(name: string) {
 }
 
 /** "a", "a and b", "a, b, and c". */
-function list(items: string[], comma = items.length > 2) {
+export function list(items: string[], comma = items.length > 2) {
   if (items.length <= 1) return items[0] ?? '';
   return `${items.slice(0, -1).join(', ')}${comma ? ',' : ''} and ${items[items.length - 1]}`;
 }
 
 /** "Minor injuries — no hospitalization needed" → "minor injuries". */
-function shortCondition(name: string) {
+export function shortCondition(name: string) {
   const short = name
     .split(' — ')[0]
     .replace(/\s*\(.*\)\s*$/, '')

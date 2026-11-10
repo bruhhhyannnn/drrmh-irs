@@ -1,20 +1,30 @@
 import Docxtemplater from 'docxtemplater';
 import PizZip from 'pizzip';
 import {
+  buildNsedDilimanReport,
+  nsedDilimanFileName,
+  type NsedClusterCounts,
+  type NsedClusterTable,
+  type NsedDilimanData,
+} from './nsed-diliman';
+import {
   buildNsedReport,
   nsedFileName,
+  nsedTemplateFor,
   type NsedBreakdownTable,
   type NsedChart,
   type NsedReportData,
 } from './nsed-report';
 import type { SummarySource } from './summary';
 
-// Fills the office's NSED report template in the browser. The template is public/templates/
-// nsed-report.docx: the office's letterhead with the report's fixed wording and docxtemplater
-// tags ({drillDate}, {#timeline}…{/timeline}). Loaded on click, so the events pages don't carry
-// docxtemplater until someone exports.
+// Fills an NSED report template in the browser: the UP Manila DRRM-H office's (public/templates/
+// nsed-report.docx, also PGH's) or UPRI's UP Diliman report (nsed-report-diliman.docx). Each is
+// the office's own file with its fixed wording and docxtemplater tags ({drillDate},
+// {#timeline}…{/timeline}). Loaded on click, so the events pages don't carry docxtemplater until
+// someone exports.
 
 const NSED_TEMPLATE_URL = '/templates/nsed-report.docx';
+const DILIMAN_TEMPLATE_URL = '/templates/nsed-report-diliman.docx';
 
 const DOCX_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
@@ -325,6 +335,99 @@ function addChartPart(zip: PizZip, chart: NsedChart) {
   );
 }
 
+/* ─── UP Diliman cluster table ───────────────────────────────────────────────────────── */
+
+// UPRI's table, with a header row and a Missing column added: No. | Cluster | College/Unit |
+// Reports | Casualties | Missing | Headcount. A bold "Cluster Total" row per cluster, its units
+// under it (No. and Cluster merged down), and a GRAND TOTAL row. Letter paper with 1 in margins
+// leaves 9360 twips; 9 pt like UPRI's table.
+
+const DILIMAN_WIDTHS = [500, 2100, 2760, 900, 1100, 900, 1100];
+const DILIMAN_SIZE = 18;
+
+function dilimanCell(
+  text: string,
+  width: number,
+  o: {
+    header?: boolean;
+    bold?: boolean;
+    center?: boolean;
+    merge?: 'restart' | 'continue';
+    span?: number;
+  }
+) {
+  const shading = o.header ? '<w:shd w:val="clear" w:color="auto" w:fill="F2F2F2"/>' : '';
+  const span = o.span ? `<w:gridSpan w:val="${o.span}"/>` : '';
+  const merge = o.merge ? `<w:vMerge w:val="${o.merge}"/>` : '';
+  const bold = o.header || o.bold ? '<w:b/><w:bCs/>' : '';
+  const jc = o.center ? '<w:jc w:val="center"/>' : '';
+  const run = text
+    ? `<w:r><w:rPr>${bold}<w:sz w:val="${DILIMAN_SIZE}"/><w:szCs w:val="${DILIMAN_SIZE}"/></w:rPr>` +
+      `<w:t xml:space="preserve">${escapeXml(text)}</w:t></w:r>`
+    : '';
+  return (
+    `<w:tc><w:tcPr><w:tcW w:w="${width}" w:type="dxa"/>${span}${merge}${shading}<w:vAlign w:val="center"/></w:tcPr>` +
+    `<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:left="0" w:firstLine="0"/>${jc}</w:pPr>${run}</w:p></w:tc>`
+  );
+}
+
+const countCells = (c: NsedClusterCounts, bold = false) =>
+  [c.reports, c.casualties, c.missing, c.headcount]
+    .map((n, i) =>
+      dilimanCell(n.toLocaleString('en-US'), DILIMAN_WIDTHS[3 + i], { bold, center: true })
+    )
+    .join('');
+
+export function clusterTableXml(table: NsedClusterTable) {
+  if (!table.clusters.length) return '<w:p><w:r><w:t>No reports were received.</w:t></w:r></w:p>';
+  const [noWidth, clusterWidth, unitWidth] = DILIMAN_WIDTHS;
+  const tr = (cells: string, header = false) =>
+    `<w:tr><w:trPr><w:cantSplit/>${header ? '<w:tblHeader/>' : ''}</w:trPr>${cells}</w:tr>`;
+
+  const header = tr(
+    ['No.', 'Cluster', 'College/Unit', 'Reports', 'Casualties', 'Missing', 'Headcount']
+      .map((h, i) =>
+        dilimanCell(h, DILIMAN_WIDTHS[i], { header: true, center: i !== 1 && i !== 2 })
+      )
+      .join(''),
+    true
+  );
+  const rows = table.clusters.flatMap((c, i) => [
+    tr(
+      dilimanCell(String(i + 1), noWidth, { bold: true, center: true, merge: 'restart' }) +
+        dilimanCell(c.name, clusterWidth, { bold: true, merge: 'restart' }) +
+        dilimanCell('Cluster Total', unitWidth, { bold: true }) +
+        countCells(c, true)
+    ),
+    ...c.units.map((u) =>
+      tr(
+        dilimanCell('', noWidth, { merge: 'continue' }) +
+          dilimanCell('', clusterWidth, { merge: 'continue' }) +
+          dilimanCell(u.name, unitWidth, {}) +
+          countCells(u)
+      )
+    ),
+  ]);
+  const total = tr(
+    dilimanCell('GRAND TOTAL', noWidth + clusterWidth + unitWidth, { bold: true, span: 3 }) +
+      countCells(table.total, true)
+  );
+  const width = DILIMAN_WIDTHS.reduce((sum, w) => sum + w, 0);
+
+  return (
+    `<w:tbl><w:tblPr><w:tblW w:w="${width}" w:type="dxa"/><w:jc w:val="center"/>` +
+    `<w:tblBorders><w:top ${BORDER}/><w:left ${BORDER}/><w:bottom ${BORDER}/><w:right ${BORDER}/><w:insideH ${BORDER}/><w:insideV ${BORDER}/></w:tblBorders>` +
+    `<w:tblLayout w:type="fixed"/>` +
+    `<w:tblCellMar><w:top w:w="60" w:type="dxa"/><w:left w:w="80" w:type="dxa"/><w:bottom w:w="60" w:type="dxa"/><w:right w:w="80" w:type="dxa"/></w:tblCellMar>` +
+    `<w:tblLook w:val="0000" w:firstRow="0" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="1" w:noVBand="1"/></w:tblPr>` +
+    `<w:tblGrid>${DILIMAN_WIDTHS.map((w) => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>` +
+    header +
+    rows.join('') +
+    total +
+    `</w:tbl>`
+  );
+}
+
 /* ─── Fill and download ──────────────────────────────────────────────────────────────── */
 
 /** The template filled with one event's report, as .docx bytes. */
@@ -342,25 +445,54 @@ export function fillNsedTemplate(template: ArrayBuffer | Uint8Array, data: NsedR
   });
   const zip = doc.getZip();
   if (data.chart.units.length) addChartPart(zip, data.chart);
-  // docxtemplater adds a "word/" folder entry; Word Online and OneDrive fail on those. Deleted
-  // from the index only, since zip.remove() on a folder would take its files with it.
-  for (const [name, entry] of Object.entries(zip.files)) {
-    if (entry.dir) delete zip.files[name];
-  }
+  dropFolderEntries(zip);
   return zip.generate({ type: 'uint8array', compression: 'DEFLATE' });
 }
 
-/** Builds the event's NSED report from its reports and downloads it. */
-export async function downloadNsedReport(source: SummarySource) {
-  const res = await fetch(NSED_TEMPLATE_URL);
+/** docxtemplater adds a "word/" folder entry; Word Online and OneDrive fail on those. */
+function dropFolderEntries(zip: PizZip) {
+  // Deleted from the index only, since zip.remove() on a folder would take its files with it.
+  for (const [name, entry] of Object.entries(zip.files)) {
+    if (entry.dir) delete zip.files[name];
+  }
+}
+
+/** UPRI's UP Diliman template filled with one event's report, as .docx bytes. */
+export function fillNsedDilimanTemplate(template: ArrayBuffer | Uint8Array, data: NsedDilimanData) {
+  const doc = new Docxtemplater(new PizZip(template), {
+    paragraphLoop: true,
+    linebreaks: true,
+    nullGetter: () => '',
+  });
+  doc.render({ ...data, clusterTable: clusterTableXml(data.table) });
+  const zip = doc.getZip();
+  dropFolderEntries(zip);
+  return zip.generate({ type: 'uint8array', compression: 'DEFLATE' });
+}
+
+async function loadTemplate(url: string) {
+  const res = await fetch(url);
   if (!res.ok) throw new Error('The NSED report template could not be loaded.');
-  const bytes = fillNsedTemplate(await res.arrayBuffer(), buildNsedReport(source));
+  return res.arrayBuffer();
+}
+
+/** Builds the event's NSED report, on its campus's template, and downloads it. */
+export async function downloadNsedReport(source: SummarySource) {
+  const template = nsedTemplateFor(source.event.campus.name);
+  if (!template) throw new Error('This campus has no NSED report.');
+  const bytes =
+    template === 'diliman'
+      ? fillNsedDilimanTemplate(
+          await loadTemplate(DILIMAN_TEMPLATE_URL),
+          buildNsedDilimanReport(source)
+        )
+      : fillNsedTemplate(await loadTemplate(NSED_TEMPLATE_URL), buildNsedReport(source));
 
   // Copied into a plain ArrayBuffer, which is what Blob takes.
   const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: DOCX_TYPE }));
   const a = document.createElement('a');
   a.href = url;
-  a.download = nsedFileName(source);
+  a.download = template === 'diliman' ? nsedDilimanFileName(source) : nsedFileName(source);
   a.click();
   URL.revokeObjectURL(url);
 }
