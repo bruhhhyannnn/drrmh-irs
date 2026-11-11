@@ -70,19 +70,19 @@ function AssessmentDetails() {
           ) : undefined
         }
         actions={
-          <>
-            <Button variant="outline" size="sm" onClick={printPdf}>
-              <Printer size={16} aria-hidden />
-              Print
-            </Button>
-            {isSuperAdmin && (
-              <Button variant="outline" size="sm" onClick={() => setDeleting(true)}>
-                <Trash2 size={16} aria-hidden />
-                Delete
-              </Button>
-            )}
-          </>
+          <Button variant="outline" size="sm" onClick={printPdf}>
+            <Printer size={16} aria-hidden />
+            Print
+          </Button>
         }
+        menu={[
+          isSuperAdmin && {
+            label: 'Delete assessment',
+            icon: Trash2,
+            danger: true,
+            onSelect: () => setDeleting(true),
+          },
+        ]}
       />
       <div className="flex flex-col gap-5">
         <AssessmentRecordBody record={record} />

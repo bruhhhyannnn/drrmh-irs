@@ -1,9 +1,9 @@
 'use client';
 
-import { Button, Select } from '@/components/ds';
+import { Select } from '@/components/ds';
 import { useCampusOverview, useDeleteCampus } from '@/components/hooks/use-campus';
 import { useCampusEventOptions } from '@/components/hooks/use-events';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Users } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -105,18 +105,15 @@ function CampusDetails() {
           </Chip>
         }
         subtitle={`${plural(eventCount, 'event', 'events')} · ${plural(users, 'user', 'users')} · ${plural(fields, 'population field', 'population fields')}`}
-        actions={
-          <>
-            <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
-              <Pencil size={16} aria-hidden />
-              Edit
-            </Button>
-            <Button size="sm" variant="danger" onClick={() => setDeleting(true)}>
-              <Trash2 size={16} aria-hidden />
-              Delete
-            </Button>
-          </>
-        }
+        menu={[
+          { label: 'Edit campus', icon: Pencil, onSelect: () => setEditing(true) },
+          {
+            label: 'Population fields',
+            icon: Users,
+            href: `/settings/population-fields?campus=${campus.id}`,
+          },
+          { label: 'Delete campus', icon: Trash2, danger: true, onSelect: () => setDeleting(true) },
+        ]}
       />
 
       {eventsPending ? (

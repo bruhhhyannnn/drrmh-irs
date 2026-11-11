@@ -1,6 +1,5 @@
 'use client';
 
-import { ButtonLink } from '@/components/ds';
 import { ListChecks } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
@@ -27,14 +26,13 @@ export default function AssessmentsPage() {
       <PageHeader
         title="Assessments"
         subtitle="Building safety checklists (MATATAG)"
-        actions={
-          isSuperAdmin ? (
-            <ButtonLink href="/assessments/checklist" variant="outline" size="sm">
-              <ListChecks size={16} aria-hidden />
-              Edit checklist
-            </ButtonLink>
-          ) : undefined
-        }
+        menu={[
+          isSuperAdmin && {
+            label: 'Edit checklist',
+            icon: ListChecks,
+            href: '/assessments/checklist',
+          },
+        ]}
       />
       <Suspense fallback={<Skeleton className="h-80" />}>
         <AssessmentLists />

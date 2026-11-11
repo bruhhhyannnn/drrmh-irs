@@ -21,7 +21,7 @@ import {
   useScopedCampusId,
 } from '../../_components/shell/campus-switcher';
 import { EventSummary, useSummary } from '../../_components/summary/event-summary';
-import { Card, Chip, Skeleton } from '../../_components/ui';
+import { CampusMark, Card, Chip, Skeleton } from '../../_components/ui';
 import { formatEventWindow } from '../../_lib/format';
 import { nsedTemplateFor } from '../../_lib/nsed-report';
 import { capitalize, eventStatusKey, eventTone } from '../../_lib/status';
@@ -81,6 +81,7 @@ function EventDetails() {
     <>
       <PageHeader
         back={{ href: '/events', label: 'Events' }}
+        logo={<CampusMark name={event.campus.name} />}
         title={title}
         chip={
           <Chip tone={eventTone(event.status.name)} dot>
@@ -100,7 +101,7 @@ function EventDetails() {
             )}
             <Button
               size="sm"
-              variant={status === 'completed' ? 'primary' : 'outline'}
+              variant={status === 'ongoing' ? 'outline' : 'primary'}
               onClick={exportPdf}
             >
               <Download size={16} aria-hidden />
@@ -109,27 +110,23 @@ function EventDetails() {
             {status === 'completed' && nsedTemplateFor(event.campus.name) && (
               <ExportNsedButton eventId={event.id} />
             )}
-            <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
-              <Pencil size={16} aria-hidden />
-              Edit
-            </Button>
-            <Button
-              size="sm"
-              variant="danger"
-              onClick={() =>
-                setDeleting({
-                  id: event.id,
-                  name: event.name,
-                  campus: event.campus.name,
-                  reports: event._count.reports,
-                })
-              }
-            >
-              <Trash2 size={16} aria-hidden />
-              Delete
-            </Button>
           </>
         }
+        menu={[
+          { label: 'Edit event', icon: Pencil, onSelect: () => setEditing(true) },
+          {
+            label: 'Delete event',
+            icon: Trash2,
+            danger: true,
+            onSelect: () =>
+              setDeleting({
+                id: event.id,
+                name: event.name,
+                campus: event.campus.name,
+                reports: event._count.reports,
+              }),
+          },
+        ]}
       />
 
       <EventSummary key={event.id} eventId={event.id} />
