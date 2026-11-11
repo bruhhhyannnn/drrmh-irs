@@ -189,10 +189,6 @@ function ChecklistEditor() {
                   <Plus size={16} aria-hidden />
                   Add section
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setDeletingDraft(true)}>
-                  <Trash2 size={16} aria-hidden />
-                  Delete draft
-                </Button>
                 <Button size="sm" onClick={() => setPublishing(true)}>
                   <CheckCircle2 size={16} aria-hidden />
                   Publish version
@@ -201,6 +197,14 @@ function ChecklistEditor() {
             )}
           </>
         }
+        menu={[
+          isDraft && {
+            label: 'Delete draft',
+            icon: Trash2,
+            danger: true,
+            onSelect: () => setDeletingDraft(true),
+          },
+        ]}
       />
 
       {/* Version bar & DRRM pillar counts */}

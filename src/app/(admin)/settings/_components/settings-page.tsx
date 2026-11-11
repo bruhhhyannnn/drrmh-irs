@@ -5,8 +5,9 @@ import { Button, FOCUS_RING } from '@/components/ds';
 import { cn } from '@/lib';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { PageHeader } from '../../_components/page-header';
+import { Skeleton } from '../../_components/ui';
 import { LookupTable } from './lookup-table';
 import { PopulationFields } from './population-fields';
 
@@ -93,7 +94,9 @@ export function SettingsPage({ tab }: { tab: SettingsTab }) {
       {lookup ? (
         <LookupTable key={lookup.table} {...lookup} adding={adding} onAddingChange={setAdding} />
       ) : (
-        <PopulationFields />
+        <Suspense fallback={<Skeleton className="h-96" />}>
+          <PopulationFields />
+        </Suspense>
       )}
     </>
   );
