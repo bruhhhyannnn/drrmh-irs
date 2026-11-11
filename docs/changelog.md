@@ -9,6 +9,12 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-033 PageHeader ⋯ menu: 2026-11-11 (branch `feat/DRRM-033-page-header-menu`)
+
+Plan: [[plan/feature/DRRM-033-page-header-menu]] · [[design-system]] · [[events]]
+
+- Page headers keep the often-used actions as buttons (exports, Add …, Complete event) and put Edit, Delete and other rare ones behind a ⋯ More actions button: a dropdown on tablet and web, a bottom sheet on phone. Event details, campus details, Assessments, assessment details and the checklist editor use it. Event details shows the campus logo beside the title, and Population fields in the campus ⋯ opens Settings on that campus.
+
 ## DRRM-032 NSED report for PGH and UP Diliman: 2026-11-10 (branch `feat/DRRM-032-nsed-report-pgh-diliman`)
 
 Plan: [[plan/feature/DRRM-032-nsed-report-pgh-diliman]] · [[events]]
