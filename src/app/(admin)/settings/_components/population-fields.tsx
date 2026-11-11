@@ -24,6 +24,7 @@ import {
 import { cn, populationCategorySchema, type PopulationCategoryFormData } from '@/lib';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { GripVertical, Pencil, Plus, Trash2 } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import { useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
@@ -67,7 +68,7 @@ function slugify(name: string) {
 }
 
 /**
- * One campus at a time, picked from tabs with field counts; administrators get their own campus
+ * One campus at a time, picked from tabs with field counts (or `?campus=`); administrators get their own campus
  * without tabs. Rows are dragged by their handle (mouse, pen or touch) or moved with the arrow
  * keys; the order is the order of the headcount fields in the ERT and bystander forms, and it
  * is saved on drop.
@@ -77,12 +78,15 @@ export function PopulationFields() {
   const scopedId = useScopedCampusId();
   const { data: campuses = [], isPending } = useCampuses();
   const { data: counts = [] } = useCampusPopulationCategoryCounts();
+  // Campus details' "Population fields" opens with that campus picked (?campus=).
+  const linkedId = useSearchParams().get('campus') ?? '';
   const [picked, setPicked] = useState('');
 
   const active = campuses.filter((c) => c.is_active);
   const countFor = (id: string) => counts.find((c) => c.campus_id === id)?.count ?? 0;
   const campusId =
     (picked && active.some((c) => c.id === picked) && picked) ||
+    (linkedId && active.some((c) => c.id === linkedId) && linkedId) ||
     (scopedId && active.some((c) => c.id === scopedId) && scopedId) ||
     active.find((c) => countFor(c.id) > 0)?.id ||
     active[0]?.id ||

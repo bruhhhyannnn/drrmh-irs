@@ -53,6 +53,7 @@ Statuses are taken from each plan's frontmatter as of 2026-11-09. Keep this list
 | Plan                                                                                                         | Status      | Branch                                  |
 | ------------------------------------------------------------------------------------------------------------ | ----------- | --------------------------------------- |
 | [[plan/feature/DRRM-034-admin-report-photos\|DRRM-034 Photos in the admin report drawer]]                    | in-review   | `feat/DRRM-034-admin-report-photos`     |
+| [[plan/feature/DRRM-033-page-header-menu\|DRRM-033 PageHeader ⋯ menu]]                                       | in-review   | `feat/DRRM-033-page-header-menu`        |
 | [[plan/feature/DRRM-032-nsed-report-pgh-diliman\|DRRM-032 NSED report for PGH and UP Diliman]]               | in-review   | `feat/DRRM-032-nsed-report-pgh-diliman` |
 | [[plan/feature/DRRM-031-headcount-by-unit-chart\|DRRM-031 Headcount by category chart on the event summary]] | in-review   | `feat/DRRM-031-headcount-by-unit-chart` |
 | [[plan/feature/DRRM-030-event-report-timeline\|DRRM-030 Timeline of reports on the event summary]]           | in-review   | `feat/DRRM-030-event-report-timeline`   |
