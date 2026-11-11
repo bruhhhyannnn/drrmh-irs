@@ -47,10 +47,24 @@ export function useReport(id?: string) {
 export function useSaveReportEdits() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: ReportEditData }) => {
-      const result = await saveReportEdits(await getAccessToken(), id, data);
+    /** `photos`: new photos, named by `reportPhotoFiles`. */
+    mutationFn: async ({
+      id,
+      data,
+      photos,
+    }: {
+      id: string;
+      data: ReportEditData;
+      photos?: File[];
+    }) => {
+      const result = await saveReportEdits(
+        await getAccessToken(),
+        id,
+        data,
+        toReportPhotoFormData(photos)
+      );
       if (!result.ok) throw new Error(result.error);
-      return result.report;
+      return { report: result.report, photoCount: result.photoCount };
     },
     onSuccess: (_data, { id }) => {
       for (const key of ['reports', 'event-summary', 'dashboard']) {

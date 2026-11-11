@@ -9,6 +9,11 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-034 Photos in the admin Add / Edit report drawer: 2026-11-11 (branch `feat/DRRM-034-admin-report-photos`)
+
+Plan: [[plan/feature/DRRM-034-admin-report-photos]] · [[field-reports]]
+
+- Admins can attach photos of the structural damage and of each casualty's injury when adding or editing a report, as ERT members do. Edit shows the saved photos with remove buttons and deletes a removed one only when the report saves. The casualty and missing persons drawers have an Edit button per person.
 ## DRRM-033 PageHeader ⋯ menu: 2026-11-11 (branch `feat/DRRM-033-page-header-menu`)
 
 Plan: [[plan/feature/DRRM-033-page-header-menu]] · [[design-system]] · [[events]]

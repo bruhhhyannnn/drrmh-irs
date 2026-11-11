@@ -1,4 +1,4 @@
-import type { PhotoItem } from './photo-field';
+import type { PhotoItem, SavedPhoto } from './photo-field';
 
 // People entered in the missing persons / casualties drawers, and the short text summaries
 // shown for them. Shared by the bystander and ERT report forms.
@@ -21,6 +21,11 @@ export interface CasualtyEntry extends PersonEntry {
   photos?: PhotoItem[];
   /** Photos already saved with the casualty. */
   photoCount?: number;
+  /**
+   * The saved photos still kept, with links to show them (admin Edit report). Unset when they
+   * couldn't be loaded: then they are all kept and `photoCount` says how many there are.
+   */
+  savedPhotos?: SavedPhoto[];
 }
 
 /** How a person without a name is shown. The name itself is stored blank. */
@@ -36,9 +41,10 @@ const SEX_LABELS: Record<PersonSex, string | null> = {
 
 /** "Female · 34 yrs · Cut on the left arm · 2 photos" — only the parts that are known. */
 export function personMeta(
-  person: PersonEntry & Pick<CasualtyEntry, 'diagnosis' | 'photos' | 'photoCount'>
+  person: PersonEntry & Pick<CasualtyEntry, 'diagnosis' | 'photos' | 'photoCount' | 'savedPhotos'>
 ) {
-  const photos = person.photos?.length || person.photoCount || 0;
+  const savedCount = person.savedPhotos ? person.savedPhotos.length : (person.photoCount ?? 0);
+  const photos = savedCount + (person.photos?.length ?? 0);
   const parts = [
     SEX_LABELS[person.sex],
     person.age != null ? `${person.age} yrs` : null,
