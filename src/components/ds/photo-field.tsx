@@ -16,10 +16,20 @@ export interface PhotoItem {
   url: string;
 }
 
+/** A photo already saved with the report: its storage path and a signed link to show it. */
+export interface SavedPhoto {
+  path: string;
+  url: string;
+}
+
 interface PhotoFieldProps {
   photos: PhotoItem[];
   onAdd: (photos: PhotoItem[]) => void;
   onRemove: (id: string) => void;
+  /** Photos already saved, shown before the new ones; they count towards `max`. */
+  saved?: SavedPhoto[];
+  /** Takes a saved photo off (by path). It is deleted when the report saves, not before. */
+  onRemoveSaved?: (path: string) => void;
   /** Prefix for the element ids, when more than one field can be on the page. */
   id?: string;
   label?: string;
@@ -47,6 +57,8 @@ export function PhotoField({
   photos,
   onAdd,
   onRemove,
+  saved = [],
+  onRemoveSaved,
   id = 'photos',
   label = 'Photos of the damage',
   subject = 'the damage',
@@ -59,7 +71,7 @@ export function PhotoField({
   const inputRef = useRef<HTMLInputElement>(null);
   const [isPreparing, setIsPreparing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const room = max - photos.length;
+  const room = max - saved.length - photos.length;
 
   const onFiles = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -115,9 +127,20 @@ export function PhotoField({
         {label}
       </FieldLabel>
       <div role="group" aria-labelledby={`${id}-label`} className="grid grid-cols-3 gap-2">
-        {photos.map((photo, i) => (
+        {[
+          ...saved.map((photo) => ({
+            key: photo.path,
+            url: photo.url,
+            remove: () => onRemoveSaved?.(photo.path),
+          })),
+          ...photos.map((photo) => ({
+            key: photo.id,
+            url: photo.url,
+            remove: () => onRemove(photo.id),
+          })),
+        ].map((photo, i) => (
           <div
-            key={photo.id}
+            key={photo.key}
             className="relative aspect-square overflow-hidden rounded-[14px] border border-line bg-gray-100"
           >
             <img
@@ -128,7 +151,7 @@ export function PhotoField({
             <button
               type="button"
               aria-label={`Remove photo ${i + 1}`}
-              onClick={() => onRemove(photo.id)}
+              onClick={photo.remove}
               className={cn(
                 'absolute top-0 right-0 grid size-11 place-items-center rounded-[14px]',
                 FOCUS_RING,

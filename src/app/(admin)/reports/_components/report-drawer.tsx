@@ -12,23 +12,35 @@ import {
   OTHER_OPTION,
   OTHER_VALUE,
   PeopleDrawer,
+  photoBytes,
+  PhotoField,
   SelectField,
   Stepper,
   TextInput,
   type CasualtyEntry,
   type PersonEntry,
   type PersonSex,
+  type PhotoItem,
   type PickedLocation,
+  type SavedPhoto,
 } from '@/components/ds';
 import { useCampusClusters } from '@/components/hooks/use-campus';
 import { useOngoingEventOptions } from '@/components/hooks/use-events';
 import { useCampusPopulationCategories } from '@/components/hooks/use-population-categories';
-import { useReport, useSaveReportEdits } from '@/components/hooks/use-reports';
+import { useReport, useReportPhotoUrls, useSaveReportEdits } from '@/components/hooks/use-reports';
 import {
   useCasualtyConditions,
   useDamageConditions,
   useUnits,
 } from '@/components/hooks/use-settings';
+import {
+  REPORT_MAX_PHOTOS,
+  REPORT_PHOTO_BUDGET_BYTES,
+  REPORT_PHOTO_MAX_BYTES,
+  REPORT_PHOTO_MAX_EDGE,
+  reportPhotoFiles,
+  toReportPhotoFormData,
+} from '@/lib';
 import { newUuid } from '@/lib/assessment-draft';
 import {
   getQueuedFieldReportCount,
@@ -40,7 +52,7 @@ import { getAccessToken } from '@/lib/supabase';
 import { useAuthStore, useOfflineQueueStore } from '@/store';
 import { useQueryClient } from '@tanstack/react-query';
 import { UserRound, Users } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import {
@@ -56,16 +68,21 @@ import { useEventTitle } from '../../_components/shell/campus-switcher';
 import { Avatar, Skeleton } from '../../_components/ui';
 import { formatDateTime, personName } from '../../_lib/format';
 import { ReportDetails } from './report-details';
-import { ReportPhotos } from './report-photos';
 
 export type Report = NonNullable<ReturnType<typeof useReport>['data']>;
 
 const toSex = (sex: string | null): PersonSex =>
   sex === 'male' || sex === 'female' ? sex : 'unknown';
 
+/** How many photos a report holds: its damage's and its casualties'. */
+const savedPhotoCount = (report: Report) =>
+  report.damage_photo_paths.length +
+  report.casualties.reduce((n, c) => n + c.photo_paths.length, 0);
+
 /**
  * Add report / Edit report: the same fields as the ERT report in a drawer — where, headcount
- * steppers, the people drawers and damage tiles. Edits save in one write.
+ * steppers, the people drawers, damage tiles and photos of the damage and of each casualty's
+ * injury. Edits save in one write; a saved photo taken off is deleted only when the report saves.
  */
 export function ReportDrawer({
   open,
@@ -84,6 +101,9 @@ export function ReportDrawer({
   readOnly?: boolean;
 }) {
   const { data: report, isPending } = useReport(reportId);
+  // Edit shows the saved photos, so it waits for their links; a failure still opens the form.
+  const hasPhotos = !readOnly && !!report && savedPhotoCount(report) > 0;
+  const photoUrls = useReportPhotoUrls(reportId, hasPhotos);
   const eventTitle = useEventTitle();
   const [saving, setSaving] = useState(false);
   const isEdit = !!reportId;
@@ -114,7 +134,7 @@ export function ReportDrawer({
         </DrawerButtons>
       }
     >
-      {isEdit && (isPending || !report) ? (
+      {isEdit && (isPending || !report || (hasPhotos && photoUrls.isPending)) ? (
         <div className="flex flex-col gap-4" aria-busy="true">
           <Skeleton className="h-12 w-60" />
           <Skeleton className="h-48" />
@@ -125,6 +145,7 @@ export function ReportDrawer({
       ) : (
         <ReportForm
           report={isEdit ? (report ?? null) : null}
+          photoUrls={photoUrls.data?.byPath ?? null}
           campusId={campusId}
           onSaving={setSaving}
           onDone={onClose}
@@ -136,11 +157,14 @@ export function ReportDrawer({
 
 function ReportForm({
   report,
+  photoUrls,
   campusId: scopedCampusId,
   onSaving,
   onDone,
 }: {
   report: Report | null;
+  /** Signed links to the report's saved photos by path; null when they couldn't be loaded. */
+  photoUrls: Record<string, string> | null;
   campusId?: string;
   onSaving: (saving: boolean) => void;
   onDone: () => void;
@@ -151,6 +175,15 @@ function ReportForm({
   const saveEdits = useSaveReportEdits();
   const { data: events = [] } = useOngoingEventOptions(scopedCampusId, { enabled: !report });
   const eventTitle = useEventTitle();
+
+  /**
+   * One place's saved photos with their links. Undefined when a link is missing: then the form
+   * can't show them, sends no keep list, and the server keeps them all.
+   */
+  const savedFrom = (paths: string[]): SavedPhoto[] | undefined =>
+    paths.every((path) => photoUrls?.[path])
+      ? paths.map((path) => ({ path, url: photoUrls![path] }))
+      : undefined;
 
   const [eventId, setEventId] = useState(report?.event_id ?? '');
   const event = events.find((e) => e.id === eventId);
@@ -181,6 +214,7 @@ function ReportForm({
       condition_id: c.condition_id,
       diagnosis: c.diagnosis,
       photoCount: c.photo_paths.length,
+      savedPhotos: savedFrom(c.photo_paths),
     }))
   );
   // Saving takes off only the casualties removed here, so one added since the form opened stays.
@@ -188,6 +222,16 @@ function ReportForm({
   /** A new report's id, made before the first try and kept for retries, so it saves only once. */
   const newReportIdRef = useRef<string | null>(null);
   const [damageId, setDamageId] = useState(report?.damage_condition_id ?? '');
+  const [damageSaved, setDamageSaved] = useState(() => savedFrom(report?.damage_photo_paths ?? []));
+  /** Saved damage photos the form couldn't load; they stay with the report. */
+  const damageUnloaded = damageSaved ? 0 : (report?.damage_photo_paths.length ?? 0);
+  const [damagePhotos, setDamagePhotos] = useState<PhotoItem[]>([]);
+  const casualtyPhotos = casualties.flatMap((c) => c.photos ?? []);
+
+  // New photo previews are object URLs; release them when the drawer closes.
+  const photosRef = useRef<PhotoItem[]>([]);
+  photosRef.current = [...damagePhotos, ...casualtyPhotos];
+  useEffect(() => () => photosRef.current.forEach((p) => URL.revokeObjectURL(p.url)), []);
   const [people, setPeople] = useState<'missing' | 'casualty' | null>(null);
   const [peopleKey, setPeopleKey] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -250,14 +294,39 @@ function ReportForm({
         diagnosis: c.diagnosis ?? null,
       })),
     };
+    // New photos only; saved ones stay in Storage and are listed by path below.
+    const photos = reportPhotoFiles(
+      damagePhotos.map((p) => p.blob),
+      casualties.map((c) => (c.photos ?? []).map((p) => p.blob))
+    );
+    const warnIfDropped = (saved: number) => {
+      if (saved < photos.length) {
+        toast(`Only ${saved} of ${photos.length} new photos were saved with the report.`, {
+          icon: '⚠️',
+        });
+      }
+    };
 
     onSaving(true);
     try {
       if (report) {
         const kept = new Set(casualties.map((c) => c.id));
         const removed_casualty_ids = loadedCasualtyIds.filter((id) => !kept.has(id));
-        await saveEdits.mutateAsync({ id: report.id, data: { ...payload, removed_casualty_ids } });
+        const { photoCount } = await saveEdits.mutateAsync({
+          id: report.id,
+          data: {
+            ...payload,
+            report_casualties: payload.report_casualties.map((c, i) => ({
+              ...c,
+              ...(c.id && { photo_paths: casualties[i].savedPhotos?.map((p) => p.path) }),
+            })),
+            damage_photo_paths: damageSaved?.map((p) => p.path),
+            removed_casualty_ids,
+          },
+          photos,
+        });
         toast.success('Report updated');
+        warnIfDropped(photoCount);
       } else {
         newReportIdRef.current ??= newUuid();
         const create = {
@@ -267,7 +336,7 @@ function ReportForm({
           user_id: userProfile?.id,
         };
         const saveOffline = async () => {
-          await queueFieldReport(create, undefined, {
+          await queueFieldReport(create, photos, {
             title: event?.name ?? 'Status report',
             subtitle: 'Added from the admin dashboard',
           });
@@ -284,12 +353,17 @@ function ReportForm({
           await saveOffline();
         } else {
           try {
-            const result = await createReport(await getAccessToken(), create);
+            const result = await createReport(
+              await getAccessToken(),
+              create,
+              toReportPhotoFormData(photos)
+            );
             if (!result.ok) throw new Error(result.error);
             for (const key of ['reports', 'event-summary', 'dashboard', 'events']) {
               queryClient.invalidateQueries({ queryKey: [key] });
             }
             toast.success('Report submitted');
+            warnIfDropped(result.photoCount);
           } catch (err) {
             if (!isNetworkError(err)) throw err;
             await saveOffline();
@@ -546,15 +620,36 @@ function ReportForm({
             ))}
           </div>
           <FieldError id="report-damage-error">{errors.damage}</FieldError>
+          <div className="mt-2">
+            <PhotoField
+              id="report-damage-photos"
+              max={REPORT_MAX_PHOTOS - damageUnloaded}
+              maxBytes={REPORT_PHOTO_MAX_BYTES}
+              maxEdge={REPORT_PHOTO_MAX_EDGE}
+              roomBytes={
+                REPORT_PHOTO_BUDGET_BYTES - photoBytes(damagePhotos) - photoBytes(casualtyPhotos)
+              }
+              saved={damageSaved}
+              onRemoveSaved={(path) =>
+                setDamageSaved((list) => list?.filter((p) => p.path !== path))
+              }
+              photos={damagePhotos}
+              onAdd={(added) => setDamagePhotos((list) => [...list, ...added])}
+              onRemove={(id) => {
+                const photo = damagePhotos.find((p) => p.id === id);
+                if (photo) URL.revokeObjectURL(photo.url);
+                setDamagePhotos((list) => list.filter((p) => p.id !== id));
+              }}
+            />
+            {damageUnloaded > 0 && (
+              <p className="mt-2 text-[13px] text-gray-500">
+                {damageUnloaded === 1
+                  ? 'One saved photo couldn’t be loaded. It stays with the report.'
+                  : `${damageUnloaded} saved photos couldn’t be loaded. They stay with the report.`}
+              </p>
+            )}
+          </div>
         </DrawerSection>
-
-        {report && (
-          <ReportPhotos
-            reportId={report.id}
-            damageCount={report.damage_photo_paths.length}
-            casualtyCount={report.casualties.reduce((n, c) => n + c.photo_paths.length, 0)}
-          />
-        )}
       </DrawerBody>
 
       {/* Over the report drawer, outside its sliding panel. A new key per open starts fresh. */}
@@ -570,6 +665,7 @@ function ReportForm({
               conditions={conditions}
               people={missing}
               onSave={setMissing}
+              allowEdit
             />
             <PeopleDrawer
               key={`casualty-${peopleKey}`}
@@ -580,6 +676,8 @@ function ReportForm({
               conditions={conditions}
               people={casualties}
               onSave={setCasualties}
+              photos={{ budgetBytes: REPORT_PHOTO_BUDGET_BYTES - photoBytes(damagePhotos) }}
+              allowEdit
             />
           </>,
           document.body

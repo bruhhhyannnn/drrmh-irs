@@ -1,7 +1,7 @@
 'use client';
 
 import { cn, REPORT_MAX_PHOTOS, REPORT_PHOTO_MAX_BYTES, REPORT_PHOTO_MAX_EDGE } from '@/lib';
-import { User, X } from 'lucide-react';
+import { Pencil, User, X } from 'lucide-react';
 import { useState } from 'react';
 import { Drawer } from './drawer';
 import { Button, FieldError, FieldLabel, OptionTile, SegmentedControl, TextInput } from './fields';
@@ -13,7 +13,7 @@ import {
   type PersonEntry,
   type PersonSex,
 } from './people';
-import { photoBytes, PhotoField, type PhotoItem } from './photo-field';
+import { photoBytes, PhotoField, type PhotoItem, type SavedPhoto } from './photo-field';
 
 const SEX_OPTIONS = [
   { value: 'male', label: 'Male' },
@@ -55,6 +55,10 @@ interface Draft {
   condition_id: string;
   diagnosis: string;
   photos: PhotoItem[];
+  /** Carried over from the person being edited, so it stays the same saved row. */
+  id?: string;
+  photoCount?: number;
+  savedPhotos?: SavedPhoto[];
 }
 
 const EMPTY_DRAFT: Draft = {
@@ -66,11 +70,35 @@ const EMPTY_DRAFT: Draft = {
   photos: [],
 };
 
+/** The person loaded into the form, to change them in place. */
+function toDraft(person: Person): Draft {
+  const casualty = 'condition_id' in person ? person : null;
+  return {
+    name: person.name,
+    age: person.age == null ? '' : String(person.age),
+    sex: person.sex,
+    condition_id: casualty?.condition_id ?? '',
+    diagnosis: casualty?.diagnosis ?? '',
+    photos: casualty?.photos ?? [],
+    id: casualty?.id,
+    photoCount: casualty?.photoCount,
+    savedPhotos: casualty?.savedPhotos,
+  };
+}
+
 type Person = PersonEntry | CasualtyEntry;
 
-/** Releases the photos' preview URLs, once nothing shows them any more. */
-const revokePhotos = (person: Person | Draft) => {
-  if ('photos' in person) person.photos?.forEach((photo) => URL.revokeObjectURL(photo.url));
+const photosOf = (person: Person | Draft) => ('photos' in person ? (person.photos ?? []) : []);
+
+/**
+ * Releases the photos' preview URLs, once nothing shows them any more. Photos the people in
+ * `keep` still hold stay: an edited person carries the same photos as the one it replaced.
+ */
+const revokePhotos = (people: (Person | Draft)[], keep: (Person | Draft)[] = []) => {
+  const kept = new Set(keep.flatMap(photosOf));
+  for (const photo of people.flatMap(photosOf)) {
+    if (!kept.has(photo)) URL.revokeObjectURL(photo.url);
+  }
 };
 
 /**
@@ -93,6 +121,8 @@ type PeopleDrawerProps = {
    * of everyone in the drawer together, when they all go up in one report.
    */
   photos?: { budgetBytes?: number };
+  /** Each listed person gets an Edit button that loads them into the form to change. */
+  allowEdit?: boolean;
 } & (
   | { kind: 'missing'; people: PersonEntry[]; onSave: (people: PersonEntry[]) => SaveResult }
   | { kind: 'casualty'; people: CasualtyEntry[]; onSave: (people: CasualtyEntry[]) => SaveResult }
@@ -113,6 +143,8 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
   const nameRequired = audience === 'ert';
   const [people, setPeople] = useState<Person[]>(props.people);
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
+  /** The listed person the form is changing; null while it adds a new one. */
+  const [editing, setEditing] = useState<number | null>(null);
   const [errors, setErrors] = useState<{ name?: string; age?: string; condition?: string }>({});
   const [saving, setSaving] = useState(false);
   const isPassedIn = (person: Person) => (props.people as Person[]).includes(person);
@@ -122,10 +154,11 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
     !!draft.name.trim() ||
     !!draft.age.trim() ||
     (isCasualty && (!!draft.condition_id || !!draft.diagnosis.trim() || !!draft.photos.length));
+  // The person being edited is still in the list, holding the photos the form shows.
   const photoRoomBytes =
     (props.photos?.budgetBytes ?? Infinity) -
     photoBytes(draft.photos) -
-    people.reduce((sum, p) => sum + ('photos' in p ? photoBytes(p.photos) : 0), 0);
+    people.reduce((sum, p, i) => sum + (i === editing ? 0 : photoBytes(photosOf(p))), 0);
 
   /** Validates the draft; returns the person to add, or null after showing the errors. */
   const draftToPerson = (): Person | null => {
@@ -148,38 +181,69 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
           condition_id: draft.condition_id,
           diagnosis: draft.diagnosis.trim() || null,
           ...(draft.photos.length && { photos: draft.photos }),
+          ...(draft.id && { id: draft.id }),
+          ...(draft.photoCount !== undefined && { photoCount: draft.photoCount }),
+          ...(draft.savedPhotos && { savedPhotos: draft.savedPhotos }),
         }
       : person;
   };
 
+  /** The list with the draft in it: in the edited person's place, or added at the end. */
+  const withDraft = (person: Person) =>
+    editing === null ? [...people, person] : people.map((p, i) => (i === editing ? person : p));
+
   const addDraft = () => {
     const person = draftToPerson();
     if (!person) return;
-    setPeople((list) => [...list, person]);
+    setPeople(withDraft(person));
     setDraft(EMPTY_DRAFT);
+    setEditing(null);
+  };
+
+  const startEdit = (index: number) => {
+    // The form's current contents are dropped; photos still on someone in the list stay.
+    revokePhotos([draft], people);
+    setErrors({});
+    setDraft(toDraft(people[index]));
+    setEditing(index);
+  };
+
+  const cancelEdit = () => {
+    // Photos added in the form, and not on the person, are dropped.
+    if (editing !== null) revokePhotos([draft], [people[editing], ...props.people]);
+    setErrors({});
+    setDraft(EMPTY_DRAFT);
+    setEditing(null);
   };
 
   const removePerson = (index: number) => {
     const person = people[index];
-    if (!isPassedIn(person)) revokePhotos(person);
+    if (editing === index) {
+      revokePhotos([draft], props.people);
+      setDraft(EMPTY_DRAFT);
+      setEditing(null);
+    } else if (editing !== null && index < editing) {
+      setEditing(editing - 1);
+    }
+    if (!isPassedIn(person)) revokePhotos([person], props.people);
     setPeople((list) => list.filter((_, idx) => idx !== index));
   };
 
   const cancel = () => {
-    revokePhotos(draft);
-    people.filter((person) => !isPassedIn(person)).forEach(revokePhotos);
+    revokePhotos([draft, ...people.filter((p) => !isPassedIn(p))], props.people);
     onClose();
   };
 
   const done = async () => {
     let list = people;
-    if (isDraftFilled) {
+    if (isDraftFilled || editing !== null) {
       const person = draftToPerson();
       if (!person) return;
-      list = [...people, person];
+      list = withDraft(person);
       // Kept in the list, so a failed save can be tried again without adding it twice.
       setPeople(list);
       setDraft(EMPTY_DRAFT);
+      setEditing(null);
     }
     setSaving(true);
     let saved: boolean;
@@ -195,7 +259,7 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
       setSaving(false);
     }
     if (!saved) return;
-    props.people.filter((person) => !list.includes(person)).forEach(revokePhotos);
+    revokePhotos(props.people, list);
     onClose();
   };
 
@@ -252,6 +316,20 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
                       {personMeta(person)}
                     </span>
                   </div>
+                  {props.allowEdit && (
+                    <button
+                      type="button"
+                      aria-label={`Edit ${name}`}
+                      aria-pressed={editing === i}
+                      onClick={() => (editing === i ? cancelEdit() : startEdit(i))}
+                      className={cn(
+                        'grid size-10 shrink-0 place-items-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 aria-pressed:bg-gray-100 aria-pressed:text-gray-900',
+                        FOCUS_RING
+                      )}
+                    >
+                      <Pencil size={16} aria-hidden />
+                    </button>
+                  )}
                   <button
                     type="button"
                     aria-label={`Remove ${name}`}
@@ -272,7 +350,11 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
 
       <div className="flex flex-col gap-4 rounded-2xl border border-line bg-gray-50 p-5">
         <span className="text-[15px] large-text:text-[17px] font-bold">
-          {people.length ? kindCopy.another : kindCopy.first}
+          {editing !== null
+            ? `Edit ${people[editing]?.name || UNKNOWN_PERSON}`
+            : people.length
+              ? kindCopy.another
+              : kindCopy.first}
         </span>
 
         {isCasualty && (
@@ -392,18 +474,43 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
             maxBytes={REPORT_PHOTO_MAX_BYTES}
             roomBytes={photoRoomBytes}
             photos={draft.photos}
+            saved={draft.savedPhotos}
             onAdd={(added) => setDraft((d) => ({ ...d, photos: [...d.photos, ...added] }))}
             onRemove={(id) => {
               const photo = draft.photos.find((p) => p.id === id);
-              if (photo) URL.revokeObjectURL(photo.url);
+              // A photo still on a person in the list keeps its preview until a save drops it.
+              if (photo && !people.some((p) => photosOf(p).includes(photo))) {
+                URL.revokeObjectURL(photo.url);
+              }
               setDraft((d) => ({ ...d, photos: d.photos.filter((p) => p.id !== id) }));
             }}
+            onRemoveSaved={(path) =>
+              setDraft((d) => ({
+                ...d,
+                savedPhotos: d.savedPhotos?.filter((p) => p.path !== path),
+              }))
+            }
           />
         )}
 
-        <Button variant="outline" fullWidth onClick={addDraft}>
-          Add to list
-        </Button>
+        {editing !== null ? (
+          <div className="flex flex-wrap-reverse gap-2">
+            <div className="flex flex-[1_1_120px] flex-col">
+              <Button variant="ghost" fullWidth onClick={cancelEdit}>
+                Cancel edit
+              </Button>
+            </div>
+            <div className="flex flex-[1_1_120px] flex-col">
+              <Button variant="outline" fullWidth onClick={addDraft}>
+                {isCasualty ? 'Update casualty' : 'Update person'}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <Button variant="outline" fullWidth onClick={addDraft}>
+            Add to list
+          </Button>
+        )}
       </div>
     </Drawer>
   );

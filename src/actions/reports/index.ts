@@ -14,6 +14,7 @@ import { unitIdForName } from '@/lib/lookup-names';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
 import { checkReportCaller, reportSaveFailure, type ReportRefusal } from '@/lib/report-caller';
+import { mergePhotoPaths, newPhotoRoom } from '@/lib/report-photo-edits';
 import {
   removeReportPhotos,
   REPORT_PHOTO_SELECT,
@@ -282,14 +283,23 @@ async function saveNewReport(
   }
 }
 
+/** Saved photo paths a place keeps; unset keeps them all. Checked against the database. */
+const keepPhotoPaths = z.array(z.string()).max(20).optional();
+
 const reportEditSchema = reportSchema.omit({ event_id: true }).extend({
   // A casualty already on the report sends its id, so it keeps its row and photos.
   report_casualties: z
-    .array(casualtySchema.extend({ id: z.string().uuid().optional() }))
+    .array(
+      casualtySchema.extend({
+        id: z.string().uuid().optional(),
+        photo_paths: keepPhotoPaths,
+      })
+    )
     .default([]),
   // The casualties the form loaded and took off. Only these go, so one added since the form
   // opened stays.
   removed_casualty_ids: z.array(z.string().uuid()).default([]),
+  damage_photo_paths: keepPhotoPaths,
 });
 export type ReportEditData = z.input<typeof reportEditSchema>;
 
@@ -297,13 +307,34 @@ export type ReportEditData = z.input<typeof reportEditSchema>;
 const lockReport = (tx: Prisma.TransactionClient, id: string) =>
   tx.$queryRaw`SELECT id FROM reports WHERE id = ${id}::uuid FOR UPDATE`;
 
+/** The report's saved photos: the damage's, and each casualty's by id. */
+async function savedReportPhotos(db: Prisma.TransactionClient, id: string) {
+  const report = await db.report.findUnique({
+    where: { id },
+    select: { damage_photo_paths: true, casualties: { select: { id: true, photo_paths: true } } },
+  });
+  return {
+    damage: report?.damage_photo_paths ?? [],
+    casualties: new Map((report?.casualties ?? []).map((c) => [c.id, c.photo_paths])),
+  };
+}
+
 /**
- * Edit report: where, headcount, people and damage in one write, so a failure leaves the
- * report as it was. Headcount and missing persons are replaced; casualties that keep their id
- * are updated in place, new ones added, and only `removed_casualty_ids` are deleted, with their
- * photos once the write has committed. Only the report's owner or an in-scope admin may.
+ * Edit report: where, headcount, people, damage and photos in one write, so a failure leaves
+ * the report as it was. Headcount and missing persons are replaced; casualties that keep their
+ * id are updated in place, new ones added, and only `removed_casualty_ids` are deleted.
+ * Photos: `damage_photo_paths` and each casualty's `photo_paths` say which saved photos stay
+ * (unset keeps them all); new ones come in `photos`, named as for `createReport`, and are
+ * uploaded first. Photos taken off, and uploads that didn't fit, are deleted once the write has
+ * committed; on a failure only the uploads go. `photoCount` is how many new photos were saved.
+ * Only the report's owner or an in-scope admin may.
  */
-export async function saveReportEdits(token: string | null, id: string, data: ReportEditData) {
+export async function saveReportEdits(
+  token: string | null,
+  id: string,
+  data: ReportEditData,
+  photos?: FormData
+) {
   const caller = checkReportCaller(await requireProfile(token), await reportOwner(id));
   if (!caller.ok) return caller;
   const parsed = reportEditSchema.safeParse(data);
@@ -319,24 +350,58 @@ export async function saveReportEdits(token: string | null, id: string, data: Re
     report_missing_persons,
     report_casualties,
     removed_casualty_ids,
+    damage_photo_paths: keepDamage,
     ...fields
   } = parsed.data;
   const removed = { report_id: id, id: { in: removed_casualty_ids } };
+  // A casualty sent with an id that isn't on this report is updated nowhere, so it takes no
+  // photos (they would belong to nothing).
+  const savedBefore = await savedReportPhotos(prisma, id);
+  const casualtySaved = (c: { id?: string }) =>
+    c.id ? (savedBefore.casualties.get(c.id) ?? null) : [];
+
+  const grouped = groupReportPhotos(photoFiles(photos), report_casualties.length);
+  const uploaded: string[] = [];
+  let committed = false;
+  const upload = async (files: File[], room: number) => {
+    const paths = await uploadReportPhotos(id, files.slice(0, room));
+    uploaded.push(...paths);
+    return paths;
+  };
 
   try {
+    const [newDamage, ...newCasualty] = await Promise.all([
+      upload(grouped.damage, newPhotoRoom(savedBefore.damage, keepDamage)),
+      ...report_casualties.map((c, i) => {
+        const saved = casualtySaved(c);
+        return upload(grouped.casualties[i], saved ? newPhotoRoom(saved, c.photo_paths) : 0);
+      }),
+    ]);
     const unitId = await reportUnitId(fields.cluster_id, fields.unit_id, fields.unit_name);
-    const { report, photoPaths } = await prisma.$transaction(async (tx) => {
+    const { report, photoPaths, photoCount } = await prisma.$transaction(async (tx) => {
       await lockReport(tx, id);
       const gone = await tx.reportCasualty.findMany({
         where: removed,
         select: { photo_paths: true },
       });
+      // Read again under the lock, so the merge works on what is saved now.
+      const saved = await savedReportPhotos(tx, id);
+      const damage = mergePhotoPaths(saved.damage, keepDamage, newDamage);
+      const casualties = report_casualties.map(({ photo_paths: keep, ...casualty }, i) => {
+        const existing = casualty.id ? saved.casualties.get(casualty.id) : [];
+        const merged = existing
+          ? mergePhotoPaths(existing, keep, newCasualty[i])
+          : { paths: [], removed: newCasualty[i] };
+        return { casualty, merged };
+      });
+      const merges = [damage, ...casualties.map((c) => c.merged)];
       const report = await tx.report.update({
         where: { id },
         data: {
           cluster_id: fields.cluster_id,
           unit_id: unitId,
           damage_condition_id: fields.damage_condition_id || null,
+          damage_photo_paths: damage.paths,
           latitude: fields.latitude ?? null,
           longitude: fields.longitude ?? null,
           location_name: fields.location_name ?? null,
@@ -348,19 +413,37 @@ export async function saveReportEdits(token: string | null, id: string, data: Re
           missing_persons: { deleteMany: {}, create: report_missing_persons },
           casualties: {
             deleteMany: removed,
-            updateMany: report_casualties.flatMap(({ id: casualtyId, ...casualty }) =>
-              casualtyId ? [{ where: { id: casualtyId }, data: casualty }] : []
+            updateMany: casualties.flatMap(
+              ({ casualty: { id: casualtyId, ...casualty }, merged }) =>
+                casualtyId
+                  ? [
+                      {
+                        where: { id: casualtyId },
+                        data: { ...casualty, photo_paths: merged.paths },
+                      },
+                    ]
+                  : []
             ),
-            create: report_casualties.filter((c) => !c.id),
+            create: casualties
+              .filter(({ casualty }) => !casualty.id)
+              .map(({ casualty, merged }) => ({ ...casualty, photo_paths: merged.paths })),
           },
         },
       });
-      return { report, photoPaths: gone.flatMap((c) => c.photo_paths) };
+      const kept = new Set(merges.flatMap((m) => m.paths));
+      return {
+        report,
+        photoPaths: [...gone.flatMap((c) => c.photo_paths), ...merges.flatMap((m) => m.removed)],
+        photoCount: uploaded.filter((path) => kept.has(path)).length,
+      };
     });
+    committed = true;
     await removeReportPhotos(photoPaths);
     revalidatePath('/reports');
-    return { ok: true as const, report: serializeReport(report) };
+    return { ok: true as const, report: serializeReport(report), photoCount };
   } catch (err) {
+    // Nothing points at this edit's uploads unless it committed.
+    if (!committed) await removeReportPhotos(uploaded);
     throw toFriendlyError(err, 'report');
   }
 }
@@ -395,6 +478,8 @@ export type ReportPhotoUrls =
       ok: true;
       damage: string[];
       casualties: { id: string; name: string; condition: string | null; urls: string[] }[];
+      /** Every signed link by its storage path, for Edit report to show and remove photos. */
+      byPath: Record<string, string>;
     }
   | ReportRefusal;
 
@@ -446,6 +531,7 @@ export async function getReportPhotoUrls(
         condition: c.condition?.name ?? null,
         urls: signed(c.photo_paths),
       })),
+      byPath: Object.fromEntries(urls),
     };
   } catch {
     return {
