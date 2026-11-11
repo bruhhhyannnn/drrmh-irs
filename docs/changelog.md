@@ -9,6 +9,12 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-034 Photos in the admin Add / Edit report drawer: 2026-11-11 (branch `feat/DRRM-034-admin-report-photos`)
+
+Plan: [[plan/feature/DRRM-034-admin-report-photos]] · [[field-reports]]
+
+- Admins can attach photos of the structural damage and of each casualty's injury when adding or editing a report, as ERT members do. Edit shows the saved photos with remove buttons and deletes a removed one only when the report saves. The casualty and missing persons drawers have an Edit button per person.
+
 ## DRRM-032 NSED report for PGH and UP Diliman: 2026-11-10 (branch `feat/DRRM-032-nsed-report-pgh-diliman`)
 
 Plan: [[plan/feature/DRRM-032-nsed-report-pgh-diliman]] · [[events]]
