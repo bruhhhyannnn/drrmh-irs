@@ -120,10 +120,12 @@ export function useCampusEventOptions(campusId?: string) {
   });
 }
 
+/** The summary source query, also fetched on demand (Export NSED report on an Events row). */
+export const eventSummarySourceQuery = (eventId: string) => ({
+  queryKey: ['event-summary', eventId],
+  queryFn: () => getEventSummarySource(eventId),
+});
+
 export function useEventSummarySource(eventId?: string) {
-  return useQuery({
-    queryKey: ['event-summary', eventId],
-    queryFn: () => getEventSummarySource(eventId!),
-    enabled: !!eventId,
-  });
+  return useQuery({ ...eventSummarySourceQuery(eventId ?? ''), enabled: !!eventId });
 }

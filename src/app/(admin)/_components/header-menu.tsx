@@ -6,6 +6,7 @@ import { AnimatePresence, motion, MotionConfig } from 'framer-motion';
 import { Ellipsis, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 /** One action in a page's ⋯ menu: runs `onSelect`, or opens `href`. */
 export type HeaderMenuItem = {
@@ -196,8 +197,9 @@ function SheetMenu({ items, menuId, onClose, onSelect, title }: MenuProps & { ti
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-60 flex items-end" onKeyDown={onKeyDown}>
+  // Portalled to <body>, so a card or row's stacking (z-10) can't put it under the tab bar.
+  return createPortal(
+    <div className="font-landing fixed inset-0 z-60 flex items-end" onKeyDown={onKeyDown}>
       <motion.div
         aria-hidden
         className="absolute inset-0 bg-[rgba(16,24,40,.45)]"
@@ -253,7 +255,8 @@ function SheetMenu({ items, menuId, onClose, onSelect, title }: MenuProps & { ti
           Cancel
         </Button>
       </motion.div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
