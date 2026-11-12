@@ -310,6 +310,9 @@ model campus {
   id                    String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name                  String
   is_active             Boolean                    @default(true)
+  /// Uploaded logo in the public `campus-logos` bucket (DRRM-036). Left out of default reads
+  /// (`omit` in src/lib/prisma.ts); read through getCampusLogos.
+  logo_path             String?
   population_categories CampusPopulationCategory[]
   clusters              Cluster[]
   events                Event[]
