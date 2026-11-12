@@ -44,7 +44,7 @@ const INCLUDE_MAP: Partial<Record<SettingsTable, object>> = {
   },
   units: {
     cluster: { select: { name: true, campus_id: true } },
-    _count: { select: { users: true, reports: true } },
+    _count: { select: { users: true, reports: true, buildings: true } },
   },
   positions: { _count: { select: { users: true } } },
   casualty_conditions: { _count: { select: { casualties: true } } },

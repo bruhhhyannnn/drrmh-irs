@@ -1,7 +1,15 @@
 'use client';
 
 import type { SettingsTable } from '@/actions/settings';
-import { Drawer, SelectField, Switch, SwitchField, TextInput } from '@/components/ds';
+import {
+  Drawer,
+  FOCUS_RING,
+  SegmentedControl,
+  SelectField,
+  Switch,
+  SwitchField,
+  TextInput,
+} from '@/components/ds';
 import {
   useCampus,
   useCreateSetting,
@@ -13,12 +21,13 @@ import {
   buildingSchema,
   casualtyConditionSchema,
   clusterSchema,
+  cn,
   damageConditionSchema,
   positionSchema,
   unitSchema,
 } from '@/lib';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Pencil, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Info, Pencil, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
@@ -47,7 +56,7 @@ import {
   FormGrid,
 } from '../../_components/drawer-parts';
 import { useIsSuperAdmin, useScopedCampusId } from '../../_components/shell/campus-switcher';
-import { Card } from '../../_components/ui';
+import { Card, Mono } from '../../_components/ui';
 import { formatDate, plural } from '../../_lib/format';
 import { capitalize } from '../../_lib/status';
 
@@ -67,7 +76,13 @@ interface LookupRow {
   unit?: { name: string; cluster_id: string; cluster: { name: string; campus_id: string } };
   _count?: Partial<
     Record<
-      'units' | 'users' | 'reports' | 'casualties' | 'bystander_reports' | 'assessments',
+      | 'units'
+      | 'users'
+      | 'reports'
+      | 'casualties'
+      | 'bystander_reports'
+      | 'assessments'
+      | 'buildings',
       number
     >
   >;
@@ -81,6 +96,61 @@ const SCHEMAS = {
   casualty_conditions: casualtyConditionSchema,
   damage_conditions: damageConditionSchema,
 } as const;
+
+/**
+ * What the Used by column counts per table (DRRM-040): a row with none of them is unused, so
+ * deleting it changes nothing else.
+ */
+const USED_BY: Partial<
+  Record<
+    SettingsTable,
+    { key: 'users' | 'units' | 'reports' | 'buildings'; one: string; many: string }[]
+  >
+> = {
+  clusters: [
+    { key: 'users', one: 'user', many: 'users' },
+    { key: 'units', one: 'unit', many: 'units' },
+    { key: 'reports', one: 'report', many: 'reports' },
+  ],
+  units: [
+    { key: 'users', one: 'user', many: 'users' },
+    { key: 'reports', one: 'report', many: 'reports' },
+    { key: 'buildings', one: 'building', many: 'buildings' },
+  ],
+  positions: [{ key: 'users', one: 'user', many: 'users' }],
+};
+
+type UseFilter = 'all' | 'used' | 'unused';
+
+/** How much points at the row, by the table's Used by counts. */
+function usedTotal(table: SettingsTable, row: LookupRow) {
+  return (USED_BY[table] ?? []).reduce((n, u) => n + (row._count?.[u.key] ?? 0), 0);
+}
+
+/** "38 users 210 reports 3 buildings", or an outlined Unused. */
+function UsedBy({ table, row }: { table: SettingsTable; row: LookupRow }) {
+  const parts = (USED_BY[table] ?? []).filter((u) => (row._count?.[u.key] ?? 0) > 0);
+  if (!parts.length) {
+    return (
+      <span className="inline-flex h-6 items-center rounded-full border border-dashed border-gray-400 px-2.5 text-[13px] font-semibold text-gray-600">
+        Unused
+      </span>
+    );
+  }
+  return (
+    <span className="flex min-w-0 flex-wrap gap-x-2.5 gap-y-0.5 text-[15px] leading-[1.4] text-gray-700">
+      {parts.map((u) => {
+        const n = row._count?.[u.key] ?? 0;
+        return (
+          <span key={u.key} className="whitespace-nowrap">
+            <Mono className="font-bold text-gray-900">{n.toLocaleString()}</Mono>{' '}
+            {n === 1 ? u.one : u.many}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
 
 /** "3 units, 12 users and 40 reports are linked to it." — what still points at this row. */
 function linkedWarning(row: LookupRow) {
@@ -126,6 +196,9 @@ export function LookupTable({
   const [query, setQuery] = useState('');
   const [clusterId, setClusterId] = useState('');
   const [page, setPage] = useState(1);
+  const [use, setUse] = useState<UseFilter>('all');
+  // Used by sorts most used first, then least; off keeps the list by name.
+  const [sortUsed, setSortUsed] = useState<'none' | 'desc' | 'asc'>('none');
   // The row stays set while the drawer slides out, so its title doesn't flip to Add.
   const [drawer, setDrawer] = useState<{ open: boolean; row: LookupRow | null }>({
     open: false,
@@ -149,7 +222,8 @@ export function LookupTable({
     (c) => !campusId || c.campus_id === campusId
   );
 
-  const rows = ((data ?? []) as LookupRow[]).filter((r) => {
+  const usage = USED_BY[table];
+  const inScope = ((data ?? []) as LookupRow[]).filter((r) => {
     if (isClusters && campusId && r.campus_id !== campusId) return false;
     if (isUnits && campusId && r.cluster?.campus_id !== campusId) return false;
     if (isUnits && clusterId && r.cluster_id !== clusterId) return false;
@@ -157,6 +231,23 @@ export function LookupTable({
     if (isBuildings && clusterId && r.unit?.cluster_id !== clusterId) return false;
     return !query.trim() || r.name.toLowerCase().includes(query.trim().toLowerCase());
   });
+  const unusedCount = usage ? inScope.filter((r) => usedTotal(table, r) === 0).length : 0;
+  const filtered =
+    usage && use !== 'all'
+      ? inScope.filter((r) => (usedTotal(table, r) === 0) === (use === 'unused'))
+      : inScope;
+  const rows =
+    usage && sortUsed !== 'none'
+      ? [...filtered].sort((a, b) =>
+          sortUsed === 'desc'
+            ? usedTotal(table, b) - usedTotal(table, a)
+            : usedTotal(table, a) - usedTotal(table, b)
+        )
+      : filtered;
+  const pickUse = (next: UseFilter) => {
+    setUse(next);
+    setPage(1);
+  };
   const totalPages = Math.max(1, Math.ceil(rows.length / 10));
   const current = Math.min(page, totalPages);
   const shown = rows.slice((current - 1) * 10, current * 10);
@@ -225,14 +316,35 @@ export function LookupTable({
           },
         ]
       : []),
-    ...(isClusters
+    ...(usage
       ? [
           {
-            key: 'units',
-            header: 'Units',
-            width: '56px',
-            align: 'right' as const,
-            cell: (r: LookupRow) => <NumberCell value={r._count?.units ?? 0} />,
+            key: 'used-by',
+            header: (
+              <button
+                type="button"
+                onClick={() =>
+                  setSortUsed((s) => (s === 'none' ? 'desc' : s === 'desc' ? 'asc' : 'none'))
+                }
+                aria-label={`Used by, ${sortUsed === 'none' ? 'not sorted' : sortUsed === 'desc' ? 'most used first' : 'least used first'}. Change the sort`}
+                className={cn(
+                  'inline-flex items-center gap-1 rounded font-semibold hover:text-gray-900',
+                  sortUsed !== 'none' && 'text-gray-900',
+                  FOCUS_RING
+                )}
+              >
+                Used by
+                {sortUsed === 'desc' ? (
+                  <ArrowDown size={13} aria-hidden />
+                ) : sortUsed === 'asc' ? (
+                  <ArrowUp size={13} aria-hidden />
+                ) : (
+                  <ArrowUpDown size={13} aria-hidden className="text-gray-400" />
+                )}
+              </button>
+            ),
+            width: 'minmax(0,1.3fr)',
+            cell: (r: LookupRow) => <UsedBy table={table} row={r} />,
           },
         ]
       : []),
@@ -270,6 +382,8 @@ export function LookupTable({
             label="Delete"
             icon={<Trash2 size={18} aria-hidden />}
             onClick={() => setDeleting(r)}
+            // Red only when nothing points at it; in use, the dialog says what does.
+            tone={usage && usedTotal(table, r) === 0 ? 'danger' : undefined}
           />
         </RowActions>
       ),
@@ -309,10 +423,60 @@ export function LookupTable({
               options={scopedClusters.map((c) => ({ value: c.id, label: c.name }))}
             />
           )}
-          <ListCount loading={isPending}>
-            {plural(rows.length, singular, noun.split(' ').pop()!)}
-          </ListCount>
+          {usage ? (
+            <div className="ml-auto">
+              <span id={`${table}-use-label`} className="sr-only">
+                Show
+              </span>
+              <SegmentedControl
+                name={`${table}-use`}
+                labelledBy={`${table}-use-label`}
+                value={use}
+                onChange={(v) => pickUse(v as UseFilter)}
+                options={[
+                  { value: 'all', label: <UseOption label="All" count={inScope.length} /> },
+                  {
+                    value: 'used',
+                    label: <UseOption label="In use" count={inScope.length - unusedCount} />,
+                  },
+                  { value: 'unused', label: <UseOption label="Unused" count={unusedCount} /> },
+                ]}
+              />
+            </div>
+          ) : (
+            <ListCount loading={isPending}>
+              {plural(rows.length, singular, noun.split(' ').pop()!)}
+            </ListCount>
+          )}
         </ListToolbar>
+        {usage && unusedCount > 0 && use !== 'unused' && (
+          <div className="mx-4 mb-3 flex items-start gap-2.5 rounded-[14px] border border-line bg-gray-25 px-3.5 py-3 text-[15px] leading-[1.45] text-gray-700 md:mx-5">
+            <Info size={18} aria-hidden className="mt-0.5 shrink-0 text-gray-500" />
+            <p>
+              <span className="font-bold text-gray-900">
+                {plural(unusedCount, singular, noun.split(' ').pop()!)}{' '}
+                {unusedCount === 1 ? 'is' : 'are'} unused
+              </span>
+              : no{' '}
+              {listNames(
+                usage.map((u) => u.many),
+                'or'
+              )}{' '}
+              point at {unusedCount === 1 ? 'it' : 'them'}, so deleting{' '}
+              {unusedCount === 1 ? 'it' : 'them'} changes nothing else.{' '}
+              <button
+                type="button"
+                onClick={() => pickUse('unused')}
+                className={cn(
+                  'text-brand-500 rounded font-semibold underline decoration-2 underline-offset-3 hover:text-brand-600',
+                  FOCUS_RING
+                )}
+              >
+                Show unused
+              </button>
+            </p>
+          </div>
+        )}
         <DataTable
           label={label}
           columns={columns}
@@ -326,15 +490,7 @@ export function LookupTable({
               title={r.name}
               subtitle={parentOf(r)}
               meta={[
-                ...(isClusters
-                  ? [
-                      {
-                        label: 'Units',
-                        value: r._count?.units ?? 0,
-                        tone: r._count?.units ? ('default' as const) : ('muted' as const),
-                      },
-                    ]
-                  : []),
+                ...(usage ? [{ label: 'Used by', value: <UsedBy table={table} row={r} /> }] : []),
                 ...(isBuildings ? [{ label: 'Floors', value: r.floor_count ?? 1 }] : []),
                 { label: 'Created', value: formatDate(r.created_at) },
                 {
@@ -651,4 +807,20 @@ function LookupFormBody({
       </DrawerBody>
     </form>
   );
+}
+
+/** A segment's label with its count. */
+function UseOption({ label, count }: { label: string; count: number }) {
+  return (
+    <span className="flex items-center gap-1.5 whitespace-nowrap">
+      {label}
+      <Mono className="text-[13px] font-semibold text-gray-500">{count}</Mono>
+    </span>
+  );
+}
+
+/** "users, reports or buildings". */
+function listNames(names: string[], joiner: string) {
+  if (names.length <= 1) return names[0] ?? '';
+  return `${names.slice(0, -1).join(', ')} ${joiner} ${names[names.length - 1]}`;
 }

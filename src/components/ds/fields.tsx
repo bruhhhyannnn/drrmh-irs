@@ -319,7 +319,7 @@ export function SegmentedControl({
 }: {
   name: string;
   labelledBy: string;
-  options: { value: string; label: string }[];
+  options: { value: string; label: React.ReactNode }[];
   value: string;
   onChange: (value: string) => void;
 }) {
