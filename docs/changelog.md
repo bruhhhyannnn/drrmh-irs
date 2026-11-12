@@ -9,6 +9,14 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-039 Google profile photos: 2026-11-12 (branch `feat/DRRM-039-google-profile-photos`)
+
+Plan: [[plan/feature/DRRM-039-google-profile-photos]] · [[users]] · [[auth]]
+
+- Members who sign in with Google show their Google profile photo on Users, beside Reported by on Reports and in the account button, instead of initials. Initials stay for everyone else and when a photo fails to load.
+- The photo is taken from the verified sign-in at every sign-in, loads from Google, is never cached by the app, and anyone can turn it off in My profile (Show my Google photo). The data privacy notice says so.
+- Needs `prisma/manual/DRRM-039-avatar-url.sql`; until it runs, initials show. Confirm with the UP Manila Data Protection Officer before release.
+
 ## DRRM-038 Dashboard: Needs attention and the campuses: 2026-11-12 (branch `feat/DRRM-038-dashboard-needs-attention`)
 
 Plan: [[plan/feature/DRRM-038-dashboard-needs-attention]] · [[dashboard]]

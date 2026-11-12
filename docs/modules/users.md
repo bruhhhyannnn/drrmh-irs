@@ -1,6 +1,6 @@
 ---
 type: module
-updated: 2026-11-06
+updated: 2026-11-12
 module: users
 paths:
   - src/actions/users
@@ -40,7 +40,9 @@ The admin Users page: list, search, add, edit, deactivate and delete user accoun
 
 - `getUsers(token, query?, campusId?)`: users matching name, email or username (case-insensitive), newest first, in the caller's scope: an Administrator's own campus, or for a Super Admin the campus asked for (or all). `[]` when the caller isn't an admin.
 - `getUser(token, id)`: one user with relations; `null` outside the caller's scope.
-- `getMyProfile(token)`: the signed-in person's own profile, found from the verified token (inactive accounts included); used by `AuthProvider`.
+- `getMyProfile(token)`: the signed-in person's own profile, found from the verified token (inactive accounts included); used by `AuthProvider`. It also saves their Google profile photo from that verified session (`googlePhoto` in `src/lib/google-photo.ts`: `user_metadata.avatar_url`, else `picture`, Google accounts only and only `https://*.googleusercontent.com`; email-and-password accounts get none) and returns `avatar: { url, show }` (DRRM-039).
+- `getAvatars(token, userIds)`: admins only (`requireAdmin`); the photos to show by user id, leaving out users who turned theirs off. `setShowMyGooglePhoto(token, show)`: My profile's switch, for the caller's own account.
+- `users.avatar_url` and `show_avatar` (prisma/manual/DRRM-039-avatar-url.sql) are left out of default reads (`omit` in `src/lib/prisma.ts`); `src/lib/avatars.ts` reads and writes them with its own queries, which do nothing before the SQL runs. The photos are never copied into Storage.
 - `createUser(data, token)`: checks the caller (an Administrator only on their own campus, never a Super Admin; off campus only by a Super Admin), then resolves `custom_unit_name` / `custom_position_name` to ids (`withNamedAssignment`), then creates the Supabase Auth user (`email_confirm: true`) with the password, then the `users` row. `is_profile_complete` is `true` only for admin user types. If the row insert fails, the Auth user is deleted. Revalidates `/users`.
 - `updateUser(token, id, data)`: resolves the typed names the same way, then updates the `users` row only. Revalidates `/users`.
 - `setUserActive(token, id, isActive)`: the Active switch and its Undo. Revalidates `/users`.
@@ -51,6 +53,7 @@ Errors from Prisma go through `toFriendlyError(err, 'user')` (see [[database]]).
 
 ## Client side
 
+- Profile photos (DRRM-039): `Avatar` (`(admin)/_components/avatar.tsx`) takes `src` and renders a plain `<img referrerPolicy="no-referrer" loading="lazy">`, falling back to the initials if it fails. `useAvatars(ids)` feeds Users (40 px), Reports' Reported by (36 px), and the account button reads the profile's own `avatar`. My profile has Show my Google photo (on by default; Google accounts only). The service worker never caches `googleusercontent.com` (`next.config.ts`). Admin pages only.
 - Route `/users` inside the `(admin)` shell.
 - Hooks: `useUsers(query, campusId)` (key `['users', query, campusId]`), `useUser(id)`, `useCreateUser` (also invalidates `dashboard` and `campuses-overview`), `useUpdateUser` (both also invalidate `units` / `positions` when a name was typed), `useSetUserActive`, `useDeleteUser` (invalidates only when `ok`).
 - The page reads the campus from `useScopedCampusId()` and `useIsSuperAdmin()` (see [[campus-scoping]]). A Campus column shows only when All campuses is picked.

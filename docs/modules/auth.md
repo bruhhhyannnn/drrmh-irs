@@ -1,7 +1,7 @@
 ---
 type: module
 module: auth
-updated: 2026-11-06
+updated: 2026-11-12
 verified: true
 paths:
   - src/actions/auth
@@ -67,7 +67,7 @@ Read this before touching sign-in, the profile, role checks or the setup gate.
 
 - `provisionGoogleUser(authId, email, fullName)`: throws `DOMAIN_NOT_ALLOWED` unless the email ends in `@up.edu.ph`. Returns the existing profile by `auth_id`; else links a profile with the same email (sets `auth_id`); else creates an `ERT Member` with `username` = email local part + first 6 hex of the auth id. A `P2002` race falls back to linking by email. Returns `{ userTypeName }`.
 
-Profile actions used by this module live in `src/actions/users` (see [[users]]): `getMyProfile(token)` and `completeUserProfile(token, data)`. Both work only on the account behind the verified token (since the DRRM-025/026 security review).
+Profile actions used by this module live in `src/actions/users` (see [[users]]): `getMyProfile(token)` (which also refreshes the Google profile photo from the verified session, DRRM-039) and `completeUserProfile(token, data)`. Both work only on the account behind the verified token (since the DRRM-025/026 security review).
 
 Token-verified helpers in `src/lib/server-auth.ts` (used by assessment, checklist and building-safety actions):
 
