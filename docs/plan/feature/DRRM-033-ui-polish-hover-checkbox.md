@@ -72,16 +72,16 @@ All hovers ease in over 120ms. Focus rings are unchanged.
 
 **DataTable rows**
 
-- [ ] Rows that open something:
+- [x] Rows that open something:
   - Get `bg-hover` and a 3px maroon inset edge (`shadow-[inset_3px_0_0_var(--brand-solid)]`).
   - Their name link turns maroon and underlined.
   - Have `cursor-pointer`.
-- [ ] Rows that open nothing get the background only.
-- [ ] DataTable takes an optional row link (for example `rowHref(row)`) and uses a stretched link:
+- [x] Rows that open nothing get the background only.
+- [x] DataTable takes an optional row link (for example `rowHref(row)`) and uses a stretched link:
   - The name `<a>` gets `after:absolute after:inset-0`, and the row is `relative`.
   - Action buttons are `relative z-10`, so they still work on their own.
   - The name stays a real link for keyboard and screen readers.
-- [ ] Use the row link on Events (opens event details). Remove the **View** button there.
+- [x] Use the row link on Events (opens event details). Remove the **View** button there.
 
 **Checkbox component** (`src/components/ds/checkbox.tsx`, exported from `ds/index.ts`)
 
@@ -128,7 +128,7 @@ All hovers ease in over 120ms. Focus rings are unchanged.
 
 - [x] Tokens and Tailwind colours
 - [ ] Replace hover classes across `src/` (33 places), then check light and dark
-- [ ] DataTable row hover and row link; use on Events; remove View
+- [x] DataTable row hover and row link; use on Events; remove View
 - [ ] `Checkbox` component; move the square; replace the three browser checkboxes
 - [ ] Chip `wrap` and the casualties and damage columns
 - [ ] Update `docs/modules/design-system.md` and `events.md`

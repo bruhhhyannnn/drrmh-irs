@@ -4,6 +4,7 @@ import { FOCUS_RING, Select, type SelectOption } from '@/components/ds';
 import { cn } from '@/lib';
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import Link from 'next/link';
+import { createContext, useContext } from 'react';
 import { Card, Skeleton } from './ui';
 
 // One table pattern for every admin list: tabs, a toolbar, a grid table on tablet and web, and a
@@ -320,6 +321,18 @@ export function TableSkeleton<T>({ columns, rows = 6 }: { columns: Column<T>[]; 
  * Grid table on tablet and web, a card per row on phone. Pass `card` to render the phone
  * card; rows render as table rows only when it is omitted.
  */
+/**
+ * The page a table row opens, when the whole row is a link. A `NameCell` whose `href` matches
+ * stretches its link over the row (`after:absolute after:inset-0`), so a click anywhere opens it
+ * while the name stays the one real link for keyboard and screen readers.
+ */
+const RowHrefContext = createContext<string | undefined>(undefined);
+
+/** Row hover: a visible fill, plus a maroon edge on rows that open something. */
+const ROW_HOVER = 'transition-[background-color,box-shadow] duration-120 ease-out hover:bg-hover';
+const ROW_LINK_HOVER =
+  'group/row relative cursor-pointer hover:shadow-[inset_3px_0_0_var(--brand-solid)]';
+
 export function DataTable<T>({
   label,
   columns,
@@ -329,6 +342,7 @@ export function DataTable<T>({
   loading,
   empty,
   rowClassName,
+  rowHref,
 }: {
   label: string;
   columns: Column<T>[];
@@ -338,6 +352,8 @@ export function DataTable<T>({
   loading?: boolean;
   empty: React.ReactNode;
   rowClassName?: (row: T) => string | undefined;
+  /** The page the whole row opens; the row's `NameCell` with the same `href` carries the link. */
+  rowHref?: (row: T) => string;
 }) {
   if (loading && !rows.length) return <TableSkeleton columns={columns} />;
   if (!rows.length) {
@@ -351,24 +367,30 @@ export function DataTable<T>({
     <>
       <div role="table" aria-label={label} className="hidden md:block">
         <TableHead columns={columns} />
-        {rows.map((row) => (
-          <div
-            key={rowKey(row)}
-            role="row"
-            style={gridTracks(columns)}
-            className={cn(
-              GRID_ROW,
-              'min-h-16 border-b border-line py-2.5 last:border-b-0',
-              rowClassName?.(row)
-            )}
-          >
-            {columns.map((c) => (
-              <TableCell key={c.key} column={c}>
-                {c.cell(row)}
-              </TableCell>
-            ))}
-          </div>
-        ))}
+        {rows.map((row) => {
+          const href = rowHref?.(row);
+          return (
+            <RowHrefContext.Provider key={rowKey(row)} value={href}>
+              <div
+                role="row"
+                style={gridTracks(columns)}
+                className={cn(
+                  GRID_ROW,
+                  'min-h-16 border-b border-line py-2.5 last:border-b-0',
+                  ROW_HOVER,
+                  href && ROW_LINK_HOVER,
+                  rowClassName?.(row)
+                )}
+              >
+                {columns.map((c) => (
+                  <TableCell key={c.key} column={c}>
+                    {c.cell(row)}
+                  </TableCell>
+                ))}
+              </div>
+            </RowHrefContext.Provider>
+          );
+        })}
       </div>
       <ul aria-label={label} className="flex flex-col gap-2.5 px-3 pb-3 md:hidden">
         {rows.map((row) => (
@@ -396,11 +418,15 @@ export function NameCell({
   muted?: boolean;
   href?: string;
 }) {
+  // The row's own link: stretched over the row, and maroon and underlined while it is hovered.
+  const rowHref = useContext(RowHrefContext);
+  const rowLink = !!href && href === rowHref;
   const title = (
     <span
       className={cn(
-        'truncate text-[16px] leading-[1.35]',
-        muted ? 'font-medium text-gray-700' : 'font-semibold text-gray-900'
+        'truncate text-[16px] leading-[1.35] transition-colors duration-120 ease-out',
+        muted ? 'font-medium text-gray-700' : 'font-semibold text-gray-900',
+        rowLink && 'group-hover/row:text-brand-600'
       )}
     >
       {primary}
@@ -411,7 +437,14 @@ export function NameCell({
       {avatar}
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         {href ? (
-          <Link href={href} className={cn('min-w-0 truncate rounded hover:underline', FOCUS_RING)}>
+          <Link
+            href={href}
+            className={cn(
+              'min-w-0 truncate rounded decoration-2 underline-offset-3 hover:underline',
+              rowLink && 'group-hover/row:underline after:absolute after:inset-0',
+              FOCUS_RING
+            )}
+          >
             {title}
           </Link>
         ) : (
@@ -497,8 +530,9 @@ export function IconAction({
   );
 }
 
+/** Row buttons sit above a row's stretched link, so they still work on their own. */
 export function RowActions({ children }: { children: React.ReactNode }) {
-  return <div className="flex">{children}</div>;
+  return <div className="relative z-10 flex">{children}</div>;
 }
 
 /** The one next step on a row, e.g. Review or Verify. */
@@ -550,6 +584,7 @@ export function MobileCard({
   meta = [],
   actions = [],
   handle,
+  href,
   className,
 }: {
   title: React.ReactNode;
@@ -560,12 +595,15 @@ export function MobileCard({
   meta?: { label: string; value: React.ReactNode; tone?: keyof typeof META_TONES }[];
   actions?: CardAction[];
   handle?: React.ReactNode;
+  /** The page the card opens: the title links there and the link covers the card. */
+  href?: string;
   className?: string;
 }) {
   return (
     <div
       className={cn(
         'flex flex-col gap-3 rounded-[18px] border border-gray-200 bg-surface p-4',
+        href && 'relative',
         className
       )}
     >
@@ -573,7 +611,19 @@ export function MobileCard({
         {handle}
         {avatar}
         <div className="flex min-w-0 flex-1 flex-col gap-0.75">
-          <span className="text-[17px] leading-[1.35] font-bold text-pretty">{title}</span>
+          {href ? (
+            <Link
+              href={href}
+              className={cn(
+                'rounded text-[17px] leading-[1.35] font-bold text-pretty after:absolute after:inset-0 after:rounded-[18px]',
+                FOCUS_RING
+              )}
+            >
+              {title}
+            </Link>
+          ) : (
+            <span className="text-[17px] leading-[1.35] font-bold text-pretty">{title}</span>
+          )}
           {subtitle && (
             <span className="text-[14px] leading-[1.4] [overflow-wrap:anywhere] text-gray-500">
               {subtitle}
@@ -598,7 +648,7 @@ export function MobileCard({
         </dl>
       )}
       {actions.length > 0 && (
-        <div className="flex gap-2 border-t border-line pt-3">
+        <div className="relative z-10 flex gap-2 border-t border-line pt-3">
           {actions.map((a) => {
             const className = cn(
               // Sized to their labels, so a longer one ("Export PDF") fits; under 360px the labels
