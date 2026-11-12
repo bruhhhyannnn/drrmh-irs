@@ -12,7 +12,24 @@ export async function getDashboard(campusId: string | undefined, monthStart: Dat
   const campus = campusId ? { campus_id: campusId } : {};
   const reportScope = campusId ? { cluster: { campus_id: campusId } } : {};
 
-  const [events, reportCount, userCount, pendingBystander, clusterGroups] = await Promise.all([
+  const pendingWhere = {
+    ...(campusId && { clusters: { campus_id: campusId } }),
+    OR: [{ status_id: null }, { bystander_report_statuses: { name: 'pending' } }],
+  };
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+  const [
+    events,
+    reportCount,
+    userCount,
+    pendingBystander,
+    clusterGroups,
+    oldestPending,
+    reportsThisWeek,
+    incompleteProfiles,
+    buildings,
+    campusesWithoutFields,
+  ] = await Promise.all([
     prisma.event.findMany({
       where: campus,
       select: {
@@ -29,14 +46,28 @@ export async function getDashboard(campusId: string | undefined, monthStart: Dat
     }),
     prisma.report.count({ where: reportScope }),
     prisma.user.count({ where: campus }),
-    prisma.bystander_reports.count({
-      where: {
-        ...(campusId && { clusters: { campus_id: campusId } }),
-        OR: [{ status_id: null }, { bystander_report_statuses: { name: 'pending' } }],
+    prisma.bystander_reports.count({ where: pendingWhere }),
+    prisma.report.groupBy({ by: ['cluster_id'], where: reportScope, _count: { _all: true } }),
+    prisma.bystander_reports.findFirst({
+      where: pendingWhere,
+      orderBy: { submitted_at: 'asc' },
+      select: { submitted_at: true },
+    }),
+    prisma.report.count({ where: { ...reportScope, submitted_at: { gte: weekAgo } } }),
+    prisma.user.count({ where: { ...campus, is_profile_complete: false } }),
+    // Each building's latest assessment says whether it needs structural follow-up.
+    prisma.building.findMany({
+      where: { is_active: true, ...campus },
+      select: {
+        assessments: { orderBy: { ended_at: 'desc' }, take: 1, select: { needs_follow_up: true } },
       },
     }),
-    prisma.report.groupBy({ by: ['cluster_id'], where: reportScope, _count: { _all: true } }),
+    // Campuses not set up yet (no active population fields), across all campuses only.
+    campusId
+      ? Promise.resolve(0)
+      : prisma.campus.count({ where: { population_categories: { none: { is_active: true } } } }),
   ]);
+  const followUpBuildings = buildings.filter((b) => b.assessments[0]?.needs_follow_up).length;
 
   const topClusters = clusterGroups.sort((a, b) => b._count._all - a._count._all).slice(0, 8);
   const clusterNames = await prisma.cluster.findMany({
@@ -134,7 +165,15 @@ export async function getDashboard(campusId: string | undefined, monthStart: Dat
       reports: reportCount,
       users: userCount,
       pendingBystander,
+      reportsThisWeek,
+      incompleteProfiles,
       ...statusCounts,
+    },
+    /** What the Needs attention card lists (with `ongoing`). */
+    attention: {
+      oldestPendingAt: oldestPending?.submitted_at ?? null,
+      followUpBuildings,
+      campusesWithoutFields,
     },
     ongoing: ongoingCards,
     nextEvent,
