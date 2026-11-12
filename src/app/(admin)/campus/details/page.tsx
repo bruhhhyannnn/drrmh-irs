@@ -4,7 +4,7 @@ import { Button, FOCUS_RING, Select } from '@/components/ds';
 import { useCampusOverview, useDeleteCampus } from '@/components/hooks/use-campus';
 import { useCampusEventOptions } from '@/components/hooks/use-events';
 import { cn } from '@/lib';
-import { useCampusScopeStore } from '@/store';
+import { useAuthStore, useCampusScopeStore } from '@/store';
 import {
   ArrowRight,
   Building2,
@@ -19,11 +19,13 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { CampusBackdrop } from '../../_components/campus-backdrop';
 import { ConfirmDialog } from '../../_components/confirm-dialog';
 import { PageHeader } from '../../_components/page-header';
+import { useIsSuperAdmin } from '../../_components/shell/campus-switcher';
+import { campusPageHref } from '../../_components/shell/nav';
 import { CompletedChip } from '../../_components/summary/completed-note';
 import { EventSummary } from '../../_components/summary/event-summary';
 import { CampusMark, Card, Chip, Mono, Skeleton } from '../../_components/ui';
@@ -58,7 +60,14 @@ function CampusDetails() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const campusId = searchParams.get('id') ?? undefined;
+  const isSuperAdmin = useIsSuperAdmin();
+  const ownCampusId = useAuthStore((s) => s.userProfile?.campus_id ?? null);
+  // Administrators only see their own campus (read-only); any other id goes to theirs.
+  const elsewhere = !isSuperAdmin && searchParams.get('id') !== ownCampusId;
+  const campusId = (elsewhere ? ownCampusId : searchParams.get('id')) ?? undefined;
+  useEffect(() => {
+    if (elsewhere && ownCampusId) router.replace(campusPageHref(ownCampusId));
+  }, [elsewhere, ownCampusId, router]);
   const { data: campus, isPending } = useCampusOverview(campusId);
   const { data: events = [], isPending: eventsPending } = useCampusEventOptions(campusId);
   const deleteCampus = useDeleteCampus();
@@ -79,7 +88,10 @@ function CampusDetails() {
   if (!campus) {
     return (
       <>
-        <PageHeader title="Campus not found" back={{ href: '/campus', label: 'Campus' }} />
+        <PageHeader
+          title="Campus not found"
+          back={isSuperAdmin ? { href: '/campus', label: 'Campus' } : undefined}
+        />
         <Card className="p-8 text-[17px] text-gray-600">
           This campus doesn&apos;t exist anymore. It may have been deleted.
         </Card>
@@ -133,7 +145,7 @@ function CampusDetails() {
     <>
       <CampusBackdrop name={campus.name} />
       <PageHeader
-        back={{ href: '/campus', label: 'Campus' }}
+        back={isSuperAdmin ? { href: '/campus', label: 'Campus' } : undefined}
         logo={<CampusMark name={campus.name} className="size-16 md:size-24" />}
         title={campus.name}
         chip={
@@ -143,13 +155,19 @@ function CampusDetails() {
         }
         subtitle={plural(clusters, 'cluster', 'clusters')}
         menu={[
-          { label: 'Edit campus', icon: Pencil, onSelect: () => setEditing(true) },
+          // Administrators get the page read-only: no Edit or Delete.
+          isSuperAdmin && { label: 'Edit campus', icon: Pencil, onSelect: () => setEditing(true) },
           {
             label: 'Population fields',
             icon: Users,
             href: `/settings/population-fields?campus=${campus.id}`,
           },
-          { label: 'Delete campus', icon: Trash2, danger: true, onSelect: () => setDeleting(true) },
+          isSuperAdmin && {
+            label: 'Delete campus',
+            icon: Trash2,
+            danger: true,
+            onSelect: () => setDeleting(true),
+          },
         ]}
       />
 

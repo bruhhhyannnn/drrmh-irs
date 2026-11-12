@@ -5,27 +5,29 @@ import { figtree, FOCUS_RING, splineSansMono } from '@/components/ds';
 import { usePendingBystanderCount } from '@/components/hooks/use-bystander-reports';
 import { cn, getInitials } from '@/lib';
 import { useAuthStore } from '@/store';
-import { ArrowUpRight, ChevronDown, Menu } from 'lucide-react';
+import { ChevronDown, Menu } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { Fragment, useEffect, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
 import packageJson from '../../../../../package.json';
+import { CampusMark, Mono } from '../ui';
 import { CampusLabel, CampusSwitcher, useIsSuperAdmin, useScopedCampusId } from './campus-switcher';
-import { isActivePath, MORE_HREF, navFor, SUPER_ADMIN_HREFS, type NavItem } from './nav';
+import {
+  CAMPUSES_KEY,
+  campusPageHref,
+  isActiveItem,
+  isActivePath,
+  isSuperAdminPath,
+  MORE_HREF,
+} from './nav';
+import { useNav, useSidebarCampuses, type SidebarCampus } from './use-nav';
 
 const { version } = packageJson;
 
 // One shell for every admin page: sidebar on web (≥1024px), an 88px icon rail on tablet
 // (≥768px), bottom tabs on phone. The top bar holds the campus switcher (super admins) or the
 // assigned campus (administrators) and the account button.
-
-/** The DRRM pillar items open in a new tab: they will become their own apps. */
-function newTabProps(item: NavItem) {
-  return item.newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {};
-}
-
-const NEW_TAB_NOTE = <span className="sr-only"> (opens in a new tab)</span>;
 
 function usePendingBadge() {
   const campusId = useScopedCampusId();
@@ -43,8 +45,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         'font-landing isolate min-h-dvh bg-canvas text-gray-900 antialiased'
       )}
     >
-      <Sidebar />
-      <Rail />
+      {/* The nav reads the open campus from the link. */}
+      <Suspense>
+        <Sidebar />
+        <Rail />
+      </Suspense>
       <div className="flex min-h-dvh min-w-0 flex-col md:pl-22 lg:pl-60">
         <TopBar />
         <main className="relative mx-auto flex w-full max-w-7xl min-w-0 flex-1 flex-col gap-6 px-4 pt-4 pb-26 md:px-6 md:pt-6 md:pb-10 lg:px-8 lg:pt-8">
@@ -57,15 +62,16 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Keeps administrators on their own campus: the Campus pages send them to the dashboard, and
- * without an assigned campus there is nothing to scope the pages to.
+ * Keeps administrators on their own campus: the campus list sends them to the dashboard (their
+ * campus page checks the campus itself), and without an assigned campus there is nothing to
+ * scope the pages to.
  */
 function CampusScopeGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const isSuperAdmin = useIsSuperAdmin();
   const hasCampus = useAuthStore((s) => !!s.userProfile?.campus_id);
-  const blocked = !isSuperAdmin && SUPER_ADMIN_HREFS.some((href) => isActivePath(pathname, href));
+  const blocked = !isSuperAdmin && isSuperAdminPath(pathname);
 
   useEffect(() => {
     if (blocked) router.replace('/dashboard');
@@ -90,11 +96,62 @@ function roleLabel(type?: string) {
   return type === 'Super Admin' ? 'Super admin' : 'Administrator';
 }
 
+const SIDE_ITEM = 'flex h-11 items-center gap-3 rounded-xl px-3 text-[14px]';
+const sideState = (on: boolean) =>
+  on
+    ? 'bg-brand-25 text-brand-500 font-bold'
+    : 'font-medium text-gray-600 transition-colors duration-120 ease-out hover:bg-hover hover:text-gray-900';
+
+/** The campus a super admin's campus page shows, so its sidebar row lights up. */
+function useOpenCampusId() {
+  const pathname = usePathname();
+  const id = useSearchParams().get('id');
+  return pathname === '/campus/details' ? id : null;
+}
+
+/** "Live" with a green dot: the campus has an ongoing event. */
+function LiveDot({ compact = false }: { compact?: boolean }) {
+  return compact ? (
+    <span
+      aria-hidden
+      className="absolute top-1.5 right-4 size-2.5 rounded-full border-2 border-surface bg-success-500"
+    />
+  ) : (
+    <span className="flex shrink-0 items-center gap-1 text-[12px] font-semibold text-success-700">
+      <span aria-hidden className="size-1.5 rounded-full bg-success-500" />
+      Live
+    </span>
+  );
+}
+
+function SidebarCampusLinks({ campuses }: { campuses: SidebarCampus[] }) {
+  const openId = useOpenCampusId();
+  return campuses.map((c) => {
+    const on = openId === c.id;
+    return (
+      <Link
+        key={c.id}
+        href={campusPageHref(c.id)}
+        aria-current={on ? 'page' : undefined}
+        className={cn(SIDE_ITEM, sideState(on), FOCUS_RING)}
+      >
+        <CampusMark name={c.name} size={22} />
+        <span className="min-w-0 flex-1 truncate">{c.name}</span>
+        {c.live && <LiveDot />}
+      </Link>
+    );
+  });
+}
+
 function Sidebar() {
   const pathname = usePathname();
   const pending = usePendingBadge();
   const userType = useAuthStore((s) => s.userProfile?.user_type?.name);
-  const nav = navFor(useIsSuperAdmin());
+  const isSuperAdmin = useIsSuperAdmin();
+  const nav = useNav();
+  const { campuses, total } = useSidebarCampuses(isSuperAdmin);
+  const listed = new Set(campuses.map((c) => c.id));
+  const openId = useOpenCampusId();
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-line bg-surface lg:flex">
       <Link
@@ -119,7 +176,13 @@ function Sidebar() {
       </Link>
       <nav aria-label="Main" className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-3">
         {nav.map((item) => {
-          const on = isActivePath(pathname, item.href);
+          const campusItem = item.key === CAMPUSES_KEY;
+          // All campuses lights up on the list, and on a campus page the list above doesn't show.
+          const on =
+            campusItem && isSuperAdmin
+              ? pathname === '/campus' ||
+                (pathname === '/campus/details' && !(openId && listed.has(openId)))
+              : isActiveItem(pathname, item);
           return (
             <div key={item.key} className="flex flex-col">
               {item.group && (
@@ -127,25 +190,20 @@ function Sidebar() {
                   {item.group}
                 </span>
               )}
+              {campusItem && isSuperAdmin && <SidebarCampusLinks campuses={campuses} />}
               <Link
                 href={item.href}
-                {...newTabProps(item)}
                 aria-current={on ? 'page' : undefined}
-                className={cn(
-                  'flex h-11 items-center gap-3 rounded-xl px-3 text-[14px]',
-                  on
-                    ? 'bg-brand-25 text-brand-500 font-bold'
-                    : 'font-medium text-gray-600 transition-colors duration-120 ease-out hover:bg-hover hover:text-gray-900',
-                  FOCUS_RING
-                )}
+                className={cn(SIDE_ITEM, sideState(on), FOCUS_RING)}
               >
-                <item.icon size={20} aria-hidden className="shrink-0" />
+                {campusItem && !isSuperAdmin && item.label !== 'Campus' ? (
+                  <CampusMark name={item.label} size={22} />
+                ) : (
+                  <item.icon size={20} aria-hidden className="shrink-0" />
+                )}
                 <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                {item.newTab && (
-                  <>
-                    <ArrowUpRight size={16} aria-hidden className="shrink-0 text-gray-400" />
-                    {NEW_TAB_NOTE}
-                  </>
+                {campusItem && isSuperAdmin && total > 0 && (
+                  <Mono className="shrink-0 text-[13px] font-semibold text-gray-500">{total}</Mono>
                 )}
                 {item.key === 'bystander' && pending > 0 && (
                   <span className="font-landing-mono bg-error-600 grid h-5.5 min-w-5.5 place-items-center rounded-full px-1.75 text-[12px] font-bold text-white">
@@ -175,10 +233,39 @@ function BadgeDot({ className }: { className: string }) {
   );
 }
 
+function RailCampusLinks({ campuses }: { campuses: SidebarCampus[] }) {
+  const openId = useOpenCampusId();
+  return campuses.map((c) => {
+    const on = openId === c.id;
+    return (
+      <Link
+        key={c.id}
+        href={campusPageHref(c.id)}
+        aria-current={on ? 'page' : undefined}
+        aria-label={c.live ? `${c.name}, live` : c.name}
+        className={cn(RAIL_ITEM, sideState(on), FOCUS_RING)}
+      >
+        <CampusMark name={c.name} size={22} />
+        <span aria-hidden className="max-w-full truncate px-1">
+          {c.name.replace(/^UP\s+/i, '')}
+        </span>
+        {c.live && <LiveDot compact />}
+      </Link>
+    );
+  });
+}
+
+const RAIL_ITEM =
+  'relative flex w-18 flex-col items-center gap-1 rounded-[14px] pt-2 pb-1.75 text-center text-[11px] leading-[1.2]';
+
 function Rail() {
   const pathname = usePathname();
   const pending = usePendingBadge();
-  const nav = navFor(useIsSuperAdmin());
+  const isSuperAdmin = useIsSuperAdmin();
+  const nav = useNav();
+  const { campuses } = useSidebarCampuses(isSuperAdmin);
+  const listed = new Set(campuses.map((c) => c.id));
+  const openId = useOpenCampusId();
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-22 flex-col items-center gap-1 overflow-y-auto border-r border-line bg-surface px-2 py-3.5 md:flex lg:hidden">
       <Link
@@ -196,28 +283,28 @@ function Rail() {
       </Link>
       <nav aria-label="Main" className="flex flex-col items-center gap-1">
         {nav.map((item) => {
-          const on = isActivePath(pathname, item.href);
+          const campusItem = item.key === CAMPUSES_KEY;
+          const on =
+            campusItem && isSuperAdmin
+              ? pathname === '/campus' ||
+                (pathname === '/campus/details' && !(openId && listed.has(openId)))
+              : isActiveItem(pathname, item);
           return (
-            <Fragment key={item.key}>
-              {/* The rail has no group titles; a rule sets the pillars (separate apps) apart. */}
-              {item.group && item.newTab && (
-                <span aria-hidden className="bg-line my-1.5 h-px w-10 shrink-0" />
-              )}
+            <div key={item.key} className="flex flex-col items-center gap-1">
+              {/* The rail has no group titles; a rule sets each group apart. */}
+              {item.group && <span aria-hidden className="bg-line my-1.5 h-px w-10 shrink-0" />}
+              {campusItem && isSuperAdmin && <RailCampusLinks campuses={campuses} />}
               <Link
                 href={item.href}
-                {...newTabProps(item)}
                 aria-current={on ? 'page' : undefined}
-                className={cn(
-                  'relative flex w-18 flex-col items-center gap-1 rounded-[14px] pt-2 pb-1.75 text-center text-[11px] leading-[1.2]',
-                  on
-                    ? 'bg-brand-25 text-brand-500 font-bold'
-                    : 'font-medium text-gray-600 transition-colors duration-120 ease-out hover:bg-hover hover:text-gray-900',
-                  FOCUS_RING
-                )}
+                className={cn(RAIL_ITEM, sideState(on), FOCUS_RING)}
               >
-                <item.icon size={20} aria-hidden />
-                <span>{item.short}</span>
-                {item.newTab && NEW_TAB_NOTE}
+                {campusItem && !isSuperAdmin && item.label !== 'Campus' ? (
+                  <CampusMark name={item.label} size={22} />
+                ) : (
+                  <item.icon size={20} aria-hidden />
+                )}
+                <span>{campusItem && isSuperAdmin ? 'All' : item.short}</span>
                 {item.key === 'bystander' && pending > 0 && (
                   <>
                     <BadgeDot className="top-1.25 right-4.5" />
@@ -225,7 +312,7 @@ function Rail() {
                   </>
                 )}
               </Link>
-            </Fragment>
+            </div>
           );
         })}
       </nav>
@@ -236,11 +323,11 @@ function Rail() {
 function BottomTabs() {
   const pathname = usePathname();
   const pending = usePendingBadge();
-  const nav = navFor(useIsSuperAdmin());
+  const nav = useNav();
   const tabs = nav.filter((n) => n.tab);
-  // The More page and the pages it opens (Campus, Users, Settings…) light up More.
+  // The More page and the pages it opens (Reports, Users, Settings…) light up More.
   const moreActive =
-    isActivePath(pathname, MORE_HREF) || nav.some((n) => !n.tab && isActivePath(pathname, n.href));
+    isActivePath(pathname, MORE_HREF) || nav.some((n) => !n.tab && isActiveItem(pathname, n));
 
   return (
     <nav
@@ -249,7 +336,11 @@ function BottomTabs() {
       className="fixed inset-x-0 bottom-0 z-40 grid h-17 grid-cols-5 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       {tabs.map((item) => {
-        const on = isActivePath(pathname, item.href);
+        // Campuses lights up on the list and on any campus page.
+        const on = isActiveItem(
+          pathname,
+          item.key === CAMPUSES_KEY ? { ...item, href: '/campus' } : item
+        );
         return (
           <Link
             key={item.key}

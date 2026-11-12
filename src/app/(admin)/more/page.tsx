@@ -5,13 +5,13 @@ import { Button, FOCUS_RING } from '@/components/ds';
 import { AppearanceSetting } from '@/components/theme';
 import { cn } from '@/lib';
 import { useAuthStore } from '@/store';
-import { ArrowUpRight, ChevronRight, LogOut, User, type LucideIcon } from 'lucide-react';
+import { ChevronRight, LogOut, User, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import packageJson from '../../../../package.json';
 import { PageHeader } from '../_components/page-header';
-import { useIsSuperAdmin } from '../_components/shell/campus-switcher';
-import { moreGroups, navFor } from '../_components/shell/nav';
+import { moreGroups } from '../_components/shell/nav';
+import { useNav } from '../_components/shell/use-nav';
 
 const { version } = packageJson;
 
@@ -22,11 +22,11 @@ const ROW = cn(
 );
 
 /**
- * The More tab on phone: every page the sidebar has that the bottom tabs don't (Campus, Users,
- * Settings…), then My profile, Appearance and Sign out, as the sidebar and profile give on web.
+ * The More tab on phone: every page the sidebar has that the bottom tabs don't (Reports,
+ * Assessments, Users, Settings), under the sidebar's group titles, then My profile, Appearance and Sign out, as the sidebar and profile give on web.
  */
 export default function MorePage() {
-  const nav = navFor(useIsSuperAdmin());
+  const nav = useNav();
   const { userProfile, user } = useAuthStore();
   const { signOut, signingOut } = useSignOut();
   const [profileOpen, setProfileOpen] = useState(false);
@@ -39,21 +39,9 @@ export default function MorePage() {
       {moreGroups(nav).map((group) => (
         <Group key={group.title} title={group.title}>
           {group.items.map((item) => (
-            <Link
-              key={item.key}
-              href={item.href}
-              {...(item.newTab && { target: '_blank', rel: 'noopener noreferrer' })}
-              className={ROW}
-            >
+            <Link key={item.key} href={item.href} className={ROW}>
               <RowText icon={item.icon} label={item.label} sub={item.description} />
-              {item.newTab ? (
-                <>
-                  <ArrowUpRight size={18} aria-hidden className="shrink-0 text-gray-400" />
-                  <span className="sr-only"> (opens in a new tab)</span>
-                </>
-              ) : (
-                <ChevronRight size={18} aria-hidden className="shrink-0 text-gray-400" />
-              )}
+              <ChevronRight size={18} aria-hidden className="shrink-0 text-gray-400" />
             </Link>
           ))}
         </Group>

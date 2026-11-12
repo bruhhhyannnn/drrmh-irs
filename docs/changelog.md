@@ -9,6 +9,14 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-037 Campus-first navigation: 2026-11-12 (branch `feat/DRRM-037-campus-first-navigation`)
+
+Plan: [[plan/feature/DRRM-037-campus-first-navigation]] · [[routes]] · [[pillars-and-landing]]
+
+- The sidebar leads with the campuses: each campus with events (with its logo and a Live dot during an event) opens its campus page, then All campuses. Records and Manage follow; the DRRM pillars are gone from the nav (their pages still open by link). The tablet rail shows the campus logos too.
+- Administrators see only their own campus there, and can now open their campus page (read-only: no Edit or Delete).
+- Phone tabs: Home, Campuses (Campus for administrators), Events, Bystander, More; Reports is on the More page under Records.
+
 ## DRRM-036 Campus page as the hub, logo upload: 2026-11-12 (branch `feat/DRRM-036-campus-page-hub-logo-upload`)
 
 Plan: [[plan/feature/DRRM-036-campus-page-hub-logo-upload]] · [[campus-scoping]] · [[database]]

@@ -1,6 +1,6 @@
 ---
 type: module
-updated: 2026-11-06
+updated: 2026-11-12
 module: pillars-and-landing
 paths:
   - src/app/(pillars)
@@ -14,7 +14,7 @@ tags: [module]
 
 # DRRM pillar pages and public landing page
 
-The public landing page at `/` introduces the system to anyone and links to the bystander report form and sign-in. The DRRM pillar pages show each pillar's building assessment results, Campus beside Off-campus: `/pillars` is an overview and `/pillars/<slug>` a pillar's detail. Administrators and Super Admins open them in a new tab from the admin sidebar. `src/lib/campus-logo.ts` maps a campus name to its logo file and is used by several modules.
+The public landing page at `/` introduces the system to anyone and links to the bystander report form and sign-in. The DRRM pillar pages show each pillar's building assessment results, Campus beside Off-campus: `/pillars` is an overview and `/pillars/<slug>` a pillar's detail. Administrators and Super Admins open them by URL; since DRRM-037 the admin sidebar no longer lists them (Assessments covers the same results). `src/lib/campus-logo.ts` maps a campus name to its logo file and is used by several modules.
 
 **Related:** [[architecture]] · [[bystander-reports]] · [[auth]] · [[building-safety]] · [[design-system]] · [[print]]
 
@@ -73,7 +73,7 @@ The pillar pages read `Building`, `Assessment`, `AssessmentPillarScore` and `Ass
   5. **Trends and activity:** quarterly score trend (Chart A, Campus vs Off-campus in `LineChart`), score bands (Chart B in `BandBars` with interactive drill-down and no-score note), better/same/worse (Chart C in `ChangeBar` with drill-down), and monthly activity & overdue (Chart E in `ActivityBars`).
   6. **Folded sections:** 5. By checklist section (Chart D, section score bars lowest first) and Does the checklist fit? (questions most often answered N/A).
   - **Rehabilitation & Recovery:** dedicated view showing continuity plan status tiles (in place, missing, N/A), buildings lacking a plan, places, quarterly adoption trend, plan change (`lost a plan`, `kept a plan`, `gained a plan`), and activity & overdue.
-- The admin sidebar builds the pillar items from `PILLARS` in `src/app/(admin)/_components/shell/nav.ts` with `newTab: true` and the group label "DRRM pillars"; `admin-shell.tsx` adds `target="_blank"`.
+- The admin sidebar's DRRM pillars group was removed in DRRM-037; the `(pillars)` route group stays and nothing in the admin nav links to it.
 - Campus logos: `ownCampusLogo` returns `/up-<slug>-logo.png` when the campus is in `CAMPUS_LOGOS` (baguio, cebu, diliman, losbanos, manila, mindanao, openuniversity, tacloban, visayas), else `null`. `campusLogo` falls back to `/up-logo.png`. Used by the print `Letterhead`, the admin `CampusMark` (shows initials when `null`), and the bystander form's campus step.
 
 ## Rules and gotchas
@@ -81,7 +81,7 @@ The pillar pages read `Building`, `Assessment`, `AssessmentPillarScore` and `Ass
 - The landing page and pillar page are server components; the `(pillars)` layout is a client component because of `ProtectedRoute`.
 - `ProtectedRoute` sends ERT Members and Bystanders to `/home`, so pillar pages are admin-only in practice.
 - `dynamicParams = false` plus `generateStaticParams` from `PILLARS`: an unknown slug is a 404, and a new pillar only needs an entry in `PILLARS`.
-- If a pillar later becomes its own app, change `pillarHref` in `src/lib/pillars.ts`; the sidebar and the pillar nav both use it.
+- If a pillar later becomes its own app, change `pillarHref` in `src/lib/pillars.ts`; the pillar nav uses it.
 - A score leaves N/A answers out, so always show the N/A rate and building count beside a pillar score. Recovery has one item and reads as counts, not a percent.
 - `PILLARS` order matters: building safety and the assessment score views filter out `rehabilitation-recovery` (not scored) and look pillars up by slug.
 - `campusSlug` strips accents, a leading "UP " and every non-letter ("UP Los Baños" becomes `losbanos`). A new campus logo needs the file in `public/` and the slug added to `CAMPUS_LOGOS`.
