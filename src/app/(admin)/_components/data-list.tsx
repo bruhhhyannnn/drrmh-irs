@@ -582,7 +582,8 @@ export function RowButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'flex h-9 items-center gap-1.5 rounded-full border-[1.5px] border-gray-300 bg-surface px-3.5 text-[14px] font-bold whitespace-nowrap text-gray-900 transition-colors duration-120 ease-out hover:border-gray-400 hover:bg-hover',
+        // Above a clickable row's stretched link, so it does its own step.
+        'relative z-10 flex h-9 items-center gap-1.5 rounded-full border-[1.5px] border-gray-300 bg-surface px-3.5 text-[14px] font-bold whitespace-nowrap text-gray-900 transition-colors duration-120 ease-out hover:border-gray-400 hover:bg-hover',
         FOCUS_RING
       )}
     >

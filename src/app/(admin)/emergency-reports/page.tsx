@@ -3,11 +3,14 @@
 import {
   useBystanderReports,
   useDeleteBystanderReport,
+  useMarkBystanderReportSeen,
   useUpdateBystanderReportStatus,
   type BystanderStatus,
 } from '@/components/hooks/use-bystander-reports';
 import { useDebounced } from '@/components/hooks/use-debounced';
-import { Check, Eye, Trash2, X } from 'lucide-react';
+import { cn } from '@/lib';
+import { differenceInMinutes, format, isYesterday } from 'date-fns';
+import { Camera, Check, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { ConfirmDialog } from '../_components/confirm-dialog';
@@ -28,7 +31,7 @@ import {
 } from '../_components/data-list';
 import { PageHeader } from '../_components/page-header';
 import { useScopedCampusId } from '../_components/shell/campus-switcher';
-import { Card, Chip } from '../_components/ui';
+import { CampusMark, Card, Chip } from '../_components/ui';
 import { formatDate, formatTime, plural } from '../_lib/format';
 import { bystanderStatusKey, bystanderTone, capitalize } from '../_lib/status';
 import { BystanderDrawer, type BystanderRow } from './_components/bystander-drawer';
@@ -37,6 +40,46 @@ type Tab = 'action' | 'verified' | 'dismissed' | 'all';
 
 const statusOf = (r: BystanderRow) => bystanderStatusKey(r.bystander_report_statuses?.name);
 const placeOf = (r: BystanderRow) => [r.clusters?.name, r.units?.name].filter(Boolean).join(' · ');
+
+/** "25 min ago" or "3 h ago" within a day, then "Yesterday, 4:12 PM" or the date (DRRM-042). */
+function sentAge(at: Date | string, now = new Date()) {
+  const date = new Date(at);
+  const minutes = Math.max(0, differenceInMinutes(now, date));
+  if (minutes < 60) return `${Math.max(1, minutes)} min ago`;
+  if (minutes < 24 * 60) return `${Math.floor(minutes / 60)} h ago`;
+  if (isYesterday(date)) return `Yesterday, ${format(date, 'h:mm a')}`;
+  return formatDate(date);
+}
+
+/** The incident, with a red dot while no admin has opened it. */
+function IncidentName({ report }: { report: BystanderRow }) {
+  return (
+    <span className="flex min-w-0 items-center gap-2">
+      {report.unopened && (
+        <span aria-hidden className="bg-error-600 size-2 shrink-0 rounded-full" />
+      )}
+      <span className="truncate">{report.bystander_incident_types?.name ?? 'Incident'}</span>
+      {report.unopened && <span className="sr-only">, unopened</span>}
+    </span>
+  );
+}
+
+/** Where, and a camera with the count when the bystander attached photos. */
+function PlaceLine({ report, campus }: { report: BystanderRow; campus?: string }) {
+  return (
+    <span className="inline-flex flex-wrap items-center gap-x-1.5">
+      {campus && <span className="lg:hidden">{campus} · </span>}
+      {placeOf(report)}
+      {report.photo_paths.length > 0 && (
+        <span className="inline-flex items-center gap-1">
+          · <Camera size={13} aria-hidden />
+          <span className="sr-only">photos:</span>
+          {report.photo_paths.length}
+        </span>
+      )}
+    </span>
+  );
+}
 
 function PeopleChips({ report }: { report: BystanderRow }) {
   const casualties = report.report_casualties.length;
@@ -67,6 +110,12 @@ export default function BystanderReportsPage() {
 
   const allCampuses = !campusId;
   const open = reports.find((r) => r.id === openId) ?? null;
+  const markSeen = useMarkBystanderReportSeen();
+  /** Opens the report; the first admin to open it clears its unopened mark. */
+  const openReport = (r: BystanderRow) => {
+    setOpenId(r.id);
+    if (r.unopened) markSeen.mutate(r.id);
+  };
   const counts = { action: 0, verified: 0, dismissed: 0, all: reports.length };
   for (const r of reports) {
     const s = statusOf(r);
@@ -103,7 +152,7 @@ export default function BystanderReportsPage() {
 
   const nextStep = (r: BystanderRow) => {
     const s = statusOf(r);
-    if (s === 'pending') return { label: 'Review', run: () => setOpenId(r.id) };
+    if (s === 'pending') return { label: 'Review', run: () => openReport(r) };
     if (s === 'reviewed')
       return { label: 'Verify', run: () => setConfirm({ report: r, status: 'verified' }) };
     return null;
@@ -116,13 +165,11 @@ export default function BystanderReportsPage() {
       width: 'minmax(0,1.5fr)',
       cell: (r) => (
         <NameCell
-          primary={r.bystander_incident_types?.name ?? 'Incident'}
+          primary={<IncidentName report={r} />}
           secondary={
-            <>
-              {allCampuses && <span className="lg:hidden">{r.clusters?.campus?.name} · </span>}
-              {placeOf(r)}
-            </>
+            <PlaceLine report={r} campus={allCampuses ? r.clusters?.campus?.name : undefined} />
           }
+          opensRow="open report"
         />
       ),
     },
@@ -133,7 +180,12 @@ export default function BystanderReportsPage() {
             header: 'Campus',
             width: 'minmax(0,0.85fr)',
             hideOnTablet: true,
-            cell: (r: BystanderRow) => <TextCell>{r.clusters?.campus?.name ?? '—'}</TextCell>,
+            cell: (r: BystanderRow) => (
+              <span className="flex min-w-0 items-center gap-2.5">
+                {r.clusters?.campus?.name && <CampusMark name={r.clusters.campus.name} size={26} />}
+                <TextCell>{r.clusters?.campus?.name ?? '—'}</TextCell>
+              </span>
+            ),
           },
         ]
       : []),
@@ -155,15 +207,20 @@ export default function BystanderReportsPage() {
     },
     {
       key: 'submitted',
-      header: 'Submitted',
+      header: 'Sent',
       width: 'minmax(0,1fr)',
       hideOnTablet: true,
+      // Red while unopened, so the oldest waiting report stands out.
       cell: (r) => (
-        <NameCell
-          muted
-          primary={formatDate(r.submitted_at)}
-          secondary={formatTime(r.submitted_at)}
-        />
+        <span
+          title={`${formatDate(r.submitted_at)}, ${formatTime(r.submitted_at)}`}
+          className={cn(
+            'text-[16px] leading-[1.35]',
+            r.unopened ? 'text-error-700 font-bold' : 'text-gray-700'
+          )}
+        >
+          {sentAge(r.submitted_at)}
+        </span>
       ),
     },
     {
@@ -179,15 +236,10 @@ export default function BystanderReportsPage() {
     {
       key: 'actions',
       header: '',
-      width: '72px',
+      width: '40px',
       align: 'right',
       cell: (r) => (
         <RowActions>
-          <IconAction
-            label="View"
-            icon={<Eye size={18} aria-hidden />}
-            onClick={() => setOpenId(r.id)}
-          />
           <IconAction
             label="Delete"
             icon={<Trash2 size={18} aria-hidden />}
@@ -254,6 +306,8 @@ export default function BystanderReportsPage() {
             columns={columns}
             rows={rows}
             rowKey={(r) => r.id}
+            // The whole row opens the report (View is gone).
+            onRowClick={openReport}
             loading={isPending}
             empty={
               debounced
@@ -266,10 +320,11 @@ export default function BystanderReportsPage() {
               const step = nextStep(r);
               return (
                 <MobileCard
-                  title={r.bystander_incident_types?.name ?? 'Incident'}
+                  title={<IncidentName report={r} />}
                   subtitle={[allCampuses && r.clusters?.campus?.name, placeOf(r)]
                     .filter(Boolean)
                     .join(' · ')}
+                  onOpen={() => openReport(r)}
                   chip={
                     <Chip tone={bystanderTone(statusOf(r))} dot>
                       {capitalize(statusOf(r))}
@@ -277,9 +332,13 @@ export default function BystanderReportsPage() {
                   }
                   meta={[
                     {
-                      label: 'Submitted',
-                      value: `${formatDate(r.submitted_at).replace(/, \d{4}$/, '')} · ${formatTime(r.submitted_at)}`,
+                      label: 'Sent',
+                      value: sentAge(r.submitted_at),
+                      tone: r.unopened ? ('red' as const) : ('default' as const),
                     },
+                    ...(r.photo_paths.length
+                      ? [{ label: 'Photos', value: r.photo_paths.length }]
+                      : []),
                     ...(r.report_casualties.length
                       ? [
                           {
@@ -300,11 +359,6 @@ export default function BystanderReportsPage() {
                       : []),
                   ]}
                   actions={[
-                    {
-                      label: 'Open',
-                      icon: <Eye size={16} aria-hidden />,
-                      onClick: () => setOpenId(r.id),
-                    },
                     ...(step
                       ? [
                           {
