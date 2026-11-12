@@ -13,7 +13,7 @@ export const PRIVACY_NOTICE_SECTIONS: { title: string; body: React.ReactNode }[]
   },
   {
     title: 'What We Collect',
-    body: "Depending on the form, this may include incident details, location, cluster/unit affiliation, headcount and casualty information, and — for reports submitted by identified users — the submitter's name and role. Bystander reports are accepted anonymously and do not require or store the submitter's identity. Bystanders may add photos of the damage and a contact number for follow-up; both are optional.",
+    body: "Depending on the form, this may include incident details, location, cluster/unit affiliation, headcount and casualty information, and — for reports submitted by identified users — the submitter's name and role. Bystander reports are accepted anonymously and do not require or store the submitter's identity. Bystanders may add photos of the damage and a contact number for follow-up; both are optional. If you sign in with Google, your Google profile photo is shown to DRRM-H administrators so they can recognise members; it loads from Google and is not copied by the system, and you can turn it off in My profile.",
   },
   {
     title: 'Legal Basis',
