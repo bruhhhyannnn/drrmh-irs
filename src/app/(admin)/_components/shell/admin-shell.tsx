@@ -39,14 +39,15 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       className={cn(
         figtree.variable,
         splineSansMono.variable,
-        'font-landing min-h-dvh bg-canvas text-gray-900 antialiased'
+        // isolate: a page's CampusBackdrop (-z-10) paints over this background, under the content.
+        'font-landing isolate min-h-dvh bg-canvas text-gray-900 antialiased'
       )}
     >
       <Sidebar />
       <Rail />
       <div className="flex min-h-dvh min-w-0 flex-col md:pl-22 lg:pl-60">
         <TopBar />
-        <main className="mx-auto flex w-full max-w-7xl min-w-0 flex-1 flex-col gap-6 px-4 pt-4 pb-26 md:px-6 md:pt-6 md:pb-10 lg:px-8 lg:pt-8">
+        <main className="relative mx-auto flex w-full max-w-7xl min-w-0 flex-1 flex-col gap-6 px-4 pt-4 pb-26 md:px-6 md:pt-6 md:pb-10 lg:px-8 lg:pt-8">
           <CampusScopeGate>{children}</CampusScopeGate>
         </main>
       </div>

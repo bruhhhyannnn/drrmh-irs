@@ -5,6 +5,7 @@ import { cn } from '@/lib';
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import Link from 'next/link';
 import { createContext, useContext } from 'react';
+import { HeaderMenu, type HeaderMenuItem } from './header-menu';
 import { Card, Skeleton } from './ui';
 
 // One table pattern for every admin list: tabs, a toolbar, a grid table on tablet and web, and a
@@ -318,21 +319,23 @@ export function TableSkeleton<T>({ columns, rows = 6 }: { columns: Column<T>[]; 
 }
 
 /**
- * Grid table on tablet and web, a card per row on phone. Pass `card` to render the phone
- * card; rows render as table rows only when it is omitted.
+ * What a table row opens when the whole row is clickable: a page (`href`) or something on this
+ * page, such as a drawer (`onOpen`). The row's `NameCell` (with the same `href`, or `opensRow`)
+ * stretches its link or button over the row (`after:absolute after:inset-0`), so a click
+ * anywhere opens it while the name stays the one real control for keyboard and screen readers.
  */
-/**
- * The page a table row opens, when the whole row is a link. A `NameCell` whose `href` matches
- * stretches its link over the row (`after:absolute after:inset-0`), so a click anywhere opens it
- * while the name stays the one real link for keyboard and screen readers.
- */
-const RowHrefContext = createContext<string | undefined>(undefined);
+type RowOpen = { href?: string; onOpen?: () => void };
+const RowOpenContext = createContext<RowOpen | undefined>(undefined);
 
 /** Row hover: a visible fill, plus a maroon edge on rows that open something. */
 const ROW_HOVER = 'transition-[background-color,box-shadow] duration-120 ease-out hover:bg-hover';
 const ROW_LINK_HOVER =
   'group/row relative cursor-pointer hover:shadow-[inset_3px_0_0_var(--brand-solid)]';
 
+/**
+ * Grid table on tablet and web, a card per row on phone. Pass `card` to render the phone
+ * card; rows render as table rows only when it is omitted.
+ */
 export function DataTable<T>({
   label,
   columns,
@@ -343,6 +346,7 @@ export function DataTable<T>({
   empty,
   rowClassName,
   rowHref,
+  onRowClick,
 }: {
   label: string;
   columns: Column<T>[];
@@ -354,6 +358,8 @@ export function DataTable<T>({
   rowClassName?: (row: T) => string | undefined;
   /** The page the whole row opens; the row's `NameCell` with the same `href` carries the link. */
   rowHref?: (row: T) => string;
+  /** What the whole row opens on this page (a drawer); the row's `NameCell opensRow` is its button. */
+  onRowClick?: (row: T) => void;
 }) {
   if (loading && !rows.length) return <TableSkeleton columns={columns} />;
   if (!rows.length) {
@@ -369,8 +375,10 @@ export function DataTable<T>({
         <TableHead columns={columns} />
         {rows.map((row) => {
           const href = rowHref?.(row);
+          const opens = !!href || !!onRowClick;
+          const open = { href, onOpen: onRowClick && (() => onRowClick(row)) };
           return (
-            <RowHrefContext.Provider key={rowKey(row)} value={href}>
+            <RowOpenContext.Provider key={rowKey(row)} value={opens ? open : undefined}>
               <div
                 role="row"
                 style={gridTracks(columns)}
@@ -378,7 +386,7 @@ export function DataTable<T>({
                   GRID_ROW,
                   'min-h-16 border-b border-line py-2.5 last:border-b-0',
                   ROW_HOVER,
-                  href && ROW_LINK_HOVER,
+                  opens && ROW_LINK_HOVER,
                   rowClassName?.(row)
                 )}
               >
@@ -388,7 +396,7 @@ export function DataTable<T>({
                   </TableCell>
                 ))}
               </div>
-            </RowHrefContext.Provider>
+            </RowOpenContext.Provider>
           );
         })}
       </div>
@@ -409,6 +417,7 @@ export function NameCell({
   flag,
   muted,
   href,
+  opensRow,
 }: {
   primary: React.ReactNode;
   secondary?: React.ReactNode;
@@ -417,16 +426,23 @@ export function NameCell({
   /** Lighter weight for secondary columns such as a date. */
   muted?: boolean;
   href?: string;
+  /**
+   * This name opens what the row opens (`DataTable onRowClick`): it becomes the row's button.
+   * The text is read after the name, e.g. "open report".
+   */
+  opensRow?: string;
 }) {
-  // The row's own link: stretched over the row, and maroon and underlined while it is hovered.
-  const rowHref = useContext(RowHrefContext);
-  const rowLink = !!href && href === rowHref;
+  // The row's own control: stretched over the row, and maroon and underlined while it is hovered.
+  const row = useContext(RowOpenContext);
+  const rowLink = !!href && href === row?.href;
+  const rowButton = opensRow && row?.onOpen;
+  const stretched = rowLink || !!rowButton;
   const title = (
     <span
       className={cn(
         'truncate text-[16px] leading-[1.35] transition-colors duration-120 ease-out',
         muted ? 'font-medium text-gray-700' : 'font-semibold text-gray-900',
-        rowLink && 'group-hover/row:text-brand-600'
+        stretched && 'group-hover/row:text-brand-600'
       )}
     >
       {primary}
@@ -436,7 +452,19 @@ export function NameCell({
     <div className="flex min-w-0 flex-1 items-center gap-2.5">
       {avatar}
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        {href ? (
+        {rowButton ? (
+          <button
+            type="button"
+            onClick={rowButton}
+            className={cn(
+              'min-w-0 truncate rounded text-left decoration-2 underline-offset-3 group-hover/row:underline after:absolute after:inset-0 hover:underline',
+              FOCUS_RING
+            )}
+          >
+            {title}
+            <span className="sr-only">, {opensRow}</span>
+          </button>
+        ) : href ? (
           <Link
             href={href}
             className={cn(
@@ -572,6 +600,7 @@ interface CardAction {
   onClick?: () => void;
   href?: string;
   variant?: 'outline' | 'primary' | 'danger';
+  disabled?: boolean;
 }
 
 /** A list row on phone: title, chip, label / value pairs and labelled buttons. */
@@ -585,6 +614,8 @@ export function MobileCard({
   actions = [],
   handle,
   href,
+  onOpen,
+  menu,
   className,
 }: {
   title: React.ReactNode;
@@ -597,13 +628,22 @@ export function MobileCard({
   handle?: React.ReactNode;
   /** The page the card opens: the title links there and the link covers the card. */
   href?: string;
+  /** What the card opens on this page (a drawer): the title is a button covering the card. */
+  onOpen?: () => void;
+  /** Rare actions (Edit, Delete) behind ⋯, a bottom sheet; the buttons then size to their labels. */
+  menu?: { title: string; items: HeaderMenuItem[] };
   className?: string;
 }) {
+  const stretched = cn(
+    'rounded text-left text-[17px] leading-[1.35] font-bold text-pretty after:absolute after:inset-0 after:rounded-[18px]',
+    FOCUS_RING
+  );
+  const hasMenu = !!menu?.items.length;
   return (
     <div
       className={cn(
         'flex flex-col gap-3 rounded-[18px] border border-gray-200 bg-surface p-4',
-        href && 'relative',
+        (href || onOpen) && 'relative',
         className
       )}
     >
@@ -612,15 +652,13 @@ export function MobileCard({
         {avatar}
         <div className="flex min-w-0 flex-1 flex-col gap-0.75">
           {href ? (
-            <Link
-              href={href}
-              className={cn(
-                'rounded text-[17px] leading-[1.35] font-bold text-pretty after:absolute after:inset-0 after:rounded-[18px]',
-                FOCUS_RING
-              )}
-            >
+            <Link href={href} className={stretched}>
               {title}
             </Link>
+          ) : onOpen ? (
+            <button type="button" onClick={onOpen} className={stretched}>
+              {title}
+            </button>
           ) : (
             <span className="text-[17px] leading-[1.35] font-bold text-pretty">{title}</span>
           )}
@@ -647,13 +685,14 @@ export function MobileCard({
           ))}
         </dl>
       )}
-      {actions.length > 0 && (
-        <div className="relative z-10 flex gap-2 border-t border-line pt-3">
+      {(actions.length > 0 || hasMenu) && (
+        <div className="relative z-10 flex items-center gap-2 border-t border-line pt-3">
           {actions.map((a) => {
             const className = cn(
               // Sized to their labels, so a longer one ("Export PDF") fits; under 360px the labels
               // go without their icons.
-              'flex h-11 min-w-0 flex-auto items-center justify-center gap-1.5 rounded-full border-[1.5px] px-2.5 text-[16px] font-bold whitespace-nowrap max-[359px]:[&>svg]:hidden',
+              'flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-full border-[1.5px] text-[16px] font-bold whitespace-nowrap transition-colors duration-120 ease-out disabled:opacity-50 max-[359px]:[&>svg]:hidden',
+              hasMenu ? 'flex-none px-4' : 'flex-auto px-2.5',
               a.variant === 'primary' && 'border-brand-solid bg-brand-solid text-white',
               a.variant === 'danger' && 'border-error-300 bg-surface text-error-700',
               (!a.variant || a.variant === 'outline') && 'border-gray-300 bg-surface text-gray-700',
@@ -665,12 +704,23 @@ export function MobileCard({
                 {a.label}
               </Link>
             ) : (
-              <button key={a.label} type="button" onClick={a.onClick} className={className}>
+              <button
+                key={a.label}
+                type="button"
+                onClick={a.onClick}
+                disabled={a.disabled}
+                className={className}
+              >
                 {a.icon}
                 {a.label}
               </button>
             );
           })}
+          {hasMenu && (
+            <div className="ml-auto">
+              <HeaderMenu variant="sheet" title={menu.title} items={menu.items} />
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -9,10 +9,11 @@ import {
 } from '@/components/hooks/use-events';
 import { useAuthStore } from '@/store';
 import { format } from 'date-fns';
-import { Check, Download, FileText, Pencil, Trash2 } from 'lucide-react';
+import { Check, Download, Pencil, Trash2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import toast from 'react-hot-toast';
+import { CampusBackdrop } from '../../_components/campus-backdrop';
 import { ConfirmDialog } from '../../_components/confirm-dialog';
 import { PageHeader } from '../../_components/page-header';
 import {
@@ -28,6 +29,7 @@ import { nsedTemplateFor } from '../../_lib/nsed-report';
 import { capitalize, eventStatusKey, eventTone } from '../../_lib/status';
 import { DeleteEventDialog, type DeletableEvent } from '../_components/delete-event-dialog';
 import { EventDrawer } from '../_components/event-drawer';
+import { ExportNsedButton } from '../_components/export-nsed';
 
 export default function EventDetailsPage() {
   return (
@@ -80,9 +82,10 @@ function EventDetails() {
 
   return (
     <>
+      <CampusBackdrop name={event.campus.name} />
       <PageHeader
         back={{ href: '/events', label: 'Events' }}
-        logo={<CampusMark name={event.campus.name} />}
+        logo={<CampusMark name={event.campus.name} className="size-12 md:size-16" />}
         title={title}
         chip={
           // A completed event's note minimizes into its chip.
@@ -155,37 +158,6 @@ function EventDetails() {
         eventName={event.name}
       />
     </>
-  );
-}
-
-/**
- * Export NSED report: the campus's quarterly NSED report as a Word file (the UP Manila DRRM-H
- * office's, also for PGH, or UPRI's UP Diliman report), filled from this event's reports in the
- * browser. docxtemplater loads on the first click.
- */
-function ExportNsedButton({ eventId }: { eventId: string }) {
-  const { data: source } = useEventSummarySource(eventId);
-  const [exporting, setExporting] = useState(false);
-
-  const exportNsed = async () => {
-    if (!source) return;
-    setExporting(true);
-    try {
-      const { downloadNsedReport } = await import('../../_lib/nsed-docx');
-      await downloadNsedReport(source);
-    } catch (err) {
-      console.error(err);
-      toast.error('Couldn’t make the NSED report. Please try again.');
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  return (
-    <Button size="sm" variant="outline" onClick={exportNsed} loading={exporting} disabled={!source}>
-      {!exporting && <FileText size={16} aria-hidden />}
-      Export NSED report
-    </Button>
   );
 }
 

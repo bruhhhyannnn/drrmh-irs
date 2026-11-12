@@ -4,7 +4,7 @@ import { Button } from '@/components/ds';
 import { useCampuses } from '@/components/hooks/use-campus';
 import { useDebounced } from '@/components/hooks/use-debounced';
 import { useEvents } from '@/components/hooks/use-events';
-import { Download, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Download, FileText, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import {
@@ -24,16 +24,22 @@ import {
 } from '../_components/data-list';
 import { PageHeader } from '../_components/page-header';
 import { useEventTitle, useScopedCampusId } from '../_components/shell/campus-switcher';
-import { Card, Chip } from '../_components/ui';
+import { CampusMark, Card, Chip } from '../_components/ui';
 import { formatDate, formatTime, plural } from '../_lib/format';
+import { nsedTemplateFor } from '../_lib/nsed-report';
 import { capitalize, eventStatusKey, eventTone, type EventStatus } from '../_lib/status';
 import { DeleteEventDialog, type DeletableEvent } from './_components/delete-event-dialog';
 import { EventDrawer } from './_components/event-drawer';
+import { useExportNsed } from './_components/export-nsed';
 
 type EventRow = NonNullable<ReturnType<typeof useEvents>['data']>[number];
 type Tab = 'all' | EventStatus;
 
 const detailsHref = (id: string) => `/events/details?id=${id}`;
+
+/** A completed event at a campus with an NSED report template exports it from its row. */
+const hasNsed = (e: EventRow) =>
+  eventStatusKey(e.status.name) === 'completed' && !!nsedTemplateFor(e.campus.name);
 
 export default function EventsPage() {
   return (
@@ -55,6 +61,7 @@ function Events() {
   const [tab, setTab] = useState<Tab>('all');
   const [drawer, setDrawer] = useState<{ open: boolean; eventId?: string }>({ open: false });
   const [deleting, setDeleting] = useState<DeletableEvent | null>(null);
+  const { exportNsed, exporting } = useExportNsed();
 
   // The dashboard's Add event lands here with ?add=1.
   useEffect(() => {
@@ -101,7 +108,12 @@ function Events() {
             header: 'Campus',
             width: 'minmax(0,1fr)',
             hideOnTablet: true,
-            cell: (e: EventRow) => <TextCell>{e.campus.name}</TextCell>,
+            cell: (e: EventRow) => (
+              <span className="flex min-w-0 items-center gap-2.5">
+                <CampusMark name={e.campus.name} size={28} />
+                <TextCell>{e.campus.name}</TextCell>
+              </span>
+            ),
           },
         ]
       : []),
@@ -136,10 +148,21 @@ function Events() {
     {
       key: 'actions',
       header: '',
-      width: '108px',
+      width: '144px',
       align: 'right',
       cell: (e) => (
         <RowActions>
+          {hasNsed(e) ? (
+            <IconAction
+              label="Export NSED report"
+              icon={<FileText size={18} aria-hidden />}
+              onClick={() => exportNsed(e.id)}
+              disabled={exporting === e.id}
+            />
+          ) : (
+            // An empty slot keeps the icons lined up down the column.
+            <span aria-hidden className="size-9 shrink-0" />
+          )}
           <IconAction
             label="Export PDF"
             icon={<Download size={18} aria-hidden />}
@@ -221,12 +244,14 @@ function Events() {
             }
             card={(e) => (
               <MobileCard
-                title={eventTitle(e.name, e.campus.name)}
-                subtitle={
+                avatar={<CampusMark name={e.campus.name} size={44} />}
+                title={e.name}
+                subtitle={[
+                  e.campus.name,
                   e.started_at
                     ? `${formatDate(e.started_at)} · ${formatTime(e.started_at)}`
-                    : 'No start time'
-                }
+                    : 'No start time',
+                ].join(' · ')}
                 chip={
                   <Chip tone={eventTone(e.status.name)} dot>
                     {capitalize(e.status.name)}
@@ -247,12 +272,33 @@ function Events() {
                     icon: <Download size={16} aria-hidden />,
                     onClick: () => exportPdf(e),
                   },
-                  {
-                    label: 'Edit',
-                    icon: <Pencil size={16} aria-hidden />,
-                    onClick: () => setDrawer({ open: true, eventId: e.id }),
-                  },
+                  ...(hasNsed(e)
+                    ? [
+                        {
+                          label: 'NSED',
+                          icon: <FileText size={16} aria-hidden />,
+                          onClick: () => exportNsed(e.id),
+                          disabled: exporting === e.id,
+                        },
+                      ]
+                    : []),
                 ]}
+                menu={{
+                  title: eventTitle(e.name, e.campus.name),
+                  items: [
+                    {
+                      label: 'Edit event',
+                      icon: Pencil,
+                      onSelect: () => setDrawer({ open: true, eventId: e.id }),
+                    },
+                    {
+                      label: 'Delete event',
+                      icon: Trash2,
+                      danger: true,
+                      onSelect: () => askDelete(e),
+                    },
+                  ],
+                }}
               />
             )}
           />

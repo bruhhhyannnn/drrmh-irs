@@ -186,6 +186,8 @@
     --line: #eaecf0;
     --hover: #f2f4f7;
     --hover-strong: #e4e7ec;
+    /* The faded campus logo behind event details and the campus page (CampusBackdrop). */
+    --campus-backdrop-opacity: 0.07;
 
     /* Chart series, in fixed order (building safety). Checked with the dataviz validator on
        this surface; values are always printed, since slots 3-5 are under 3:1 on white. */
@@ -251,6 +253,7 @@
     --line: #262c38;
     --hover: #252c3a;
     --hover-strong: #2e3543;
+    --campus-backdrop-opacity: 0.05;
 
     --series-1: #3987e5;
     --series-2: #d95926;

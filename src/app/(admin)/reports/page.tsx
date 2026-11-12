@@ -26,12 +26,8 @@ import {
   type Column,
 } from '../_components/data-list';
 import { PageHeader } from '../_components/page-header';
-import {
-  useEventTitle,
-  useIsSuperAdmin,
-  useScopedCampusId,
-} from '../_components/shell/campus-switcher';
-import { Card, Chip } from '../_components/ui';
+import { useEventTitle, useScopedCampusId } from '../_components/shell/campus-switcher';
+import { CampusMark, Card, Chip } from '../_components/ui';
 import { formatDate, formatTime, personName, plural } from '../_lib/format';
 import { ReportDrawer } from './_components/report-drawer';
 
@@ -52,7 +48,6 @@ const placeOf = (r: ReportRow) => [r.cluster.name, r.unit?.name].filter(Boolean)
 
 export default function ReportsPage() {
   const campusId = useScopedCampusId();
-  const isSuperAdmin = useIsSuperAdmin();
   const eventTitle = useEventTitle();
   const [query, setQuery] = useState('');
   const debounced = useDebounced(query);
@@ -73,6 +68,7 @@ export default function ReportsPage() {
   const deleteReport = useDeleteReport();
   const [drawer, setDrawer] = useState<{ open: boolean; reportId?: string }>({ open: false });
   const [deleting, setDeleting] = useState<ReportRow | null>(null);
+  const openReport = (reportId: string) => setDrawer({ open: true, reportId });
 
   const rows = data?.data ?? [];
   const total = data?.total ?? 0;
@@ -107,7 +103,11 @@ export default function ReportsPage() {
       header: 'Reported by',
       width: 'minmax(0,1.4fr)',
       cell: (r) => (
-        <NameCell primary={personName(r.user) || 'Unknown reporter'} secondary={placeOf(r)} />
+        <NameCell
+          primary={personName(r.user) || 'Unknown reporter'}
+          secondary={placeOf(r)}
+          opensRow="open report"
+        />
       ),
     },
     {
@@ -118,8 +118,9 @@ export default function ReportsPage() {
       cell: (r) => (
         <NameCell
           muted
+          avatar={<CampusMark name={r.event.campus.name} size={26} />}
           primary={r.event.name}
-          secondary={isSuperAdmin ? r.event.campus.name : undefined}
+          secondary={r.event.campus.name}
         />
       ),
     },
@@ -154,7 +155,7 @@ export default function ReportsPage() {
           <IconAction
             label="Edit"
             icon={<Pencil size={18} aria-hidden />}
-            onClick={() => setDrawer({ open: true, reportId: r.id })}
+            onClick={() => openReport(r.id)}
           />
           <IconAction
             label="Delete"
@@ -216,6 +217,8 @@ export default function ReportsPage() {
             columns={columns}
             rows={rows}
             rowKey={(r) => r.id}
+            // The whole row opens the report drawer, as Edit does.
+            onRowClick={(r) => openReport(r.id)}
             loading={isPending || (isFetching && !rows.length)}
             empty={
               debounced || eventId || clusterId
@@ -226,6 +229,7 @@ export default function ReportsPage() {
               <MobileCard
                 title={personName(r.user) || 'Unknown reporter'}
                 subtitle={placeOf(r)}
+                onOpen={() => openReport(r.id)}
                 aside={`${formatDate(r.submitted_at).replace(/, \d{4}$/, '')} · ${formatTime(r.submitted_at)}`}
                 meta={[
                   { label: 'Event', value: eventTitle(r.event.name, r.event.campus.name) },
@@ -248,7 +252,7 @@ export default function ReportsPage() {
                   {
                     label: 'Edit',
                     icon: <Pencil size={16} aria-hidden />,
-                    onClick: () => setDrawer({ open: true, reportId: r.id }),
+                    onClick: () => openReport(r.id),
                   },
                   {
                     label: 'Delete',

@@ -9,6 +9,14 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-035 Campus logos in Events and Reports, NSED in the row, campus backdrop: 2026-11-12 (branch `feat/DRRM-035-campus-logos-events-reports`)
+
+Plan: [[plan/feature/DRRM-035-campus-logos-events-reports]] · [[events]] · [[field-reports]] · [[design-system]]
+
+- Events: the Campus column and the phone cards show the campus logo; completed UP Manila, PGH and UP Diliman events export the NSED report from their row; on phone, Edit and Delete moved under ⋯.
+- Event details: a bigger campus logo beside the title, and the logo faded behind the top of the page.
+- Reports: the Event column shows the campus logo, the event and the campus; the whole row (and the phone card) opens the report.
+
 ## DRRM-034 The completed note minimizes: 2026-11-12 (branch `feat/DRRM-034-page-header-menu-completed-note`)
 
 Plan: [[plan/feature/DRRM-034-page-header-menu-completed-note]] · [[events]]

@@ -1,6 +1,6 @@
 ---
 type: module
-updated: 2026-11-11
+updated: 2026-11-12
 module: field-reports
 paths:
   - src/actions/reports/index.ts
@@ -71,7 +71,7 @@ A field report (status report) is one ERT team leader's headcount, casualties, m
 
 ## Client side
 
-- `/reports` (admin). Uses `useReports`, `useDeleteReport`, `useEvents`, `useSettingsTable('clusters')`, scoped by `useScopedCampusId()`.
+- `/reports` (admin). Uses `useReports`, `useDeleteReport`, `useEvents`, `useSettingsTable('clusters')`, scoped by `useScopedCampusId()`. The whole row (and the phone card) opens the report in `ReportDrawer`, as Edit does (`DataTable onRowClick`; the reporter's name is the row's button, `NameCell opensRow`). The Event column shows the campus logo (26 px), the event and the campus under it (DRRM-035).
 - `ReportDrawer` (admin). Add picks an ongoing event from `useOngoingEventOptions`; cluster, units and headcount fields follow that event's campus. Unit is optional: No unit first, Other (please specify) last, which opens Unit name and sends `unit_name`. Edit uses `useSaveReportEdits`.
 - `/report` (ERT). Guarded by `useErtAccess`, with its queries behind the guard. Shows, in order: `SubmittedReport` if `useMyReport` finds one; `SavedOffline` if a pending queued report for this user exists; `OfflineFirstLoad`; `ReportLoadFailed` (Try again) if the events failed to load or the member's report hit a server fault; `NoOngoingEvent` (with past report via `getMyLatestReport`); else `ErtReportForm`. A dropped connection on the member's report still opens the form, which can save offline. Ongoing events are polled every 30 s.
 - `ErtReportForm` saves a draft to `localStorage` key `irs:ert-report-draft:<userId>` after each change and drops it if its event is no longer ongoing. Photos aren't in the draft (only their count, so a restored draft says to add them again).
