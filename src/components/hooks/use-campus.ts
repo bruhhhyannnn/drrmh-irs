@@ -32,10 +32,11 @@ export function useCampuses(query?: string) {
   });
 }
 
-export function useCampusesOverview() {
+export function useCampusesOverview({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ['campuses-overview'],
-    queryFn: getCampusesOverview,
+    queryFn: () => getCampusesOverview(),
+    enabled,
   });
 }
 

@@ -1,4 +1,3 @@
-import { PILLARS, pillarHref } from '@/lib/pillars';
 import {
   CalendarDays,
   ChartNoAxesColumn,
@@ -24,19 +23,26 @@ export interface NavItem {
   tab?: boolean;
   /** Its line on the phone More page. */
   description?: string;
-  /** Opens in a new tab: the DRRM pillars, which will become their own apps. */
-  newTab?: boolean;
+  /** The path it lights up on, when `href` carries a query (an administrator's campus page). */
+  activePath?: string;
 }
 
-const NAV: NavItem[] = [
-  {
-    key: 'home',
-    label: 'Dashboard',
-    short: 'Home',
-    href: '/dashboard',
-    icon: LayoutGrid,
-    tab: true,
-  },
+/** The campus group's entry point: All campuses for super admins, their campus for the rest. */
+export const CAMPUSES_KEY = 'campuses';
+
+/** The campus page of one campus. */
+export const campusPageHref = (id: string) => `/campus/details?id=${id}`;
+
+const HOME: NavItem = {
+  key: 'home',
+  label: 'Dashboard',
+  short: 'Home',
+  href: '/dashboard',
+  icon: LayoutGrid,
+  tab: true,
+};
+
+const REST: NavItem[] = [
   {
     key: 'events',
     label: 'Events',
@@ -52,7 +58,7 @@ const NAV: NavItem[] = [
     short: 'Reports',
     href: '/reports',
     icon: ChartNoAxesColumn,
-    tab: true,
+    description: 'Status reports from ERT members',
   },
   {
     key: 'bystander',
@@ -71,20 +77,12 @@ const NAV: NavItem[] = [
     description: 'MATATAG building safety assessments',
   },
   {
-    key: 'campus',
-    label: 'Campus',
-    short: 'Campus',
-    href: '/campus',
-    icon: University,
-    group: 'Manage',
-    description: 'Campuses and their details',
-  },
-  {
     key: 'users',
     label: 'Users',
     short: 'Users',
     href: '/users',
     icon: Users,
+    group: 'Manage',
     description: 'ERT members and administrators',
   },
   {
@@ -95,27 +93,41 @@ const NAV: NavItem[] = [
     icon: Settings,
     description: 'Clusters, units, positions and fields',
   },
-  ...PILLARS.map((pillar, i) => ({
-    key: `pillar-${pillar.slug}`,
-    label: pillar.label,
-    short: pillar.short,
-    href: pillarHref(pillar.slug),
-    icon: pillar.icon,
-    newTab: true,
-    description: 'Opens in a new tab',
-    ...(i === 0 && { group: 'DRRM pillars' }),
-  })),
 ];
 
-/** Pages only super admins can open; administrators run one campus. */
-export const SUPER_ADMIN_HREFS = ['/campus', '/assessments/checklist'];
+/**
+ * The nav for the signed-in role, campus first (DRRM-037): Dashboard; the Campuses group (the
+ * sidebar lists the campuses with events before this item, which is All campuses → /campus);
+ * Records; Manage. An administrator's Campus group is their own campus page. The DRRM pillars
+ * left the nav; their pages stay reachable by URL.
+ */
+export function navFor(isSuperAdmin: boolean, ownCampus?: { id: string; name: string } | null) {
+  const campus: NavItem = isSuperAdmin
+    ? {
+        key: CAMPUSES_KEY,
+        label: 'All campuses',
+        short: 'Campuses',
+        href: '/campus',
+        icon: University,
+        group: 'Campuses',
+        tab: true,
+      }
+    : {
+        key: CAMPUSES_KEY,
+        label: ownCampus?.name ?? 'Campus',
+        short: 'Campus',
+        href: ownCampus ? campusPageHref(ownCampus.id) : '/dashboard',
+        activePath: '/campus/details',
+        icon: University,
+        group: 'Campus',
+        tab: true,
+      };
+  return [HOME, campus, ...REST];
+}
 
-/** The nav for the signed-in role. Without Campus, the Manage group starts at Users. */
-export function navFor(isSuperAdmin: boolean): NavItem[] {
-  if (isSuperAdmin) return NAV;
-  return NAV.filter((n) => !SUPER_ADMIN_HREFS.includes(n.href)).map((n) =>
-    n.key === 'users' ? { ...n, group: 'Manage' } : n
-  );
+/** The campus list is super admins' only; administrators may open their own campus page. */
+export function isSuperAdminPath(pathname: string) {
+  return pathname === '/campus' || isActivePath(pathname, '/assessments/checklist');
 }
 
 /** The phone More page, which lists every page that isn't a bottom tab. */
@@ -137,10 +149,14 @@ export function moreGroups(nav: NavItem[]) {
 
 /** A page opened from the More page, which gets a "More" back link on phone. */
 export function isMorePage(nav: NavItem[], pathname: string) {
-  return nav.some((n) => !n.tab && !n.newTab && n.href === pathname);
+  return nav.some((n) => !n.tab && n.href === pathname);
 }
 
 export function isActivePath(pathname: string, href: string) {
   if (href === '/dashboard') return pathname === '/dashboard';
   return pathname === href || pathname.startsWith(`${href}/`);
 }
+
+/** Whether a nav item is the current page. */
+export const isActiveItem = (pathname: string, item: NavItem) =>
+  isActivePath(pathname, item.activePath ?? item.href);
