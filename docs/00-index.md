@@ -52,6 +52,7 @@ Statuses are taken from each plan's frontmatter as of 2026-11-09. Keep this list
 
 | Plan                                                                                                         | Status      | Branch                                          |
 | ------------------------------------------------------------------------------------------------------------ | ----------- | ----------------------------------------------- |
+| [[plan/feature/DRRM-038-dashboard-needs-attention\|DRRM-038 Dashboard: Needs attention]]                     | done        | `feat/DRRM-038-dashboard-needs-attention`       |
 | [[plan/feature/DRRM-037-campus-first-navigation\|DRRM-037 Campus-first navigation]]                          | done        | `feat/DRRM-037-campus-first-navigation`         |
 | [[plan/feature/DRRM-036-campus-page-hub-logo-upload\|DRRM-036 Campus page hub, logo upload]]                 | done        | `feat/DRRM-036-campus-page-hub-logo-upload`     |
 | [[plan/feature/DRRM-035-campus-logos-events-reports\|DRRM-035 Campus logos in Events and Reports]]           | done        | `feat/DRRM-035-campus-logos-events-reports`     |

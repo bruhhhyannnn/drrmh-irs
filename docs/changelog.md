@@ -9,6 +9,13 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-038 Dashboard: Needs attention and the campuses: 2026-11-12 (branch `feat/DRRM-038-dashboard-needs-attention`)
+
+Plan: [[plan/feature/DRRM-038-dashboard-needs-attention]] · [[dashboard]]
+
+- The dashboard greets you by name and leads with Needs attention: bystander reports to review (with the oldest's age), each live drill with its clusters reported, buildings that need structural follow-up and campuses without population fields, each a link.
+- Then the campuses with events, each with its latest event and quick exports (an administrator sees their campus), then the four counts with short sub-lines; the charts, Building safety and the calendar follow unchanged.
+
 ## DRRM-037 Campus-first navigation: 2026-11-12 (branch `feat/DRRM-037-campus-first-navigation`)
 
 Plan: [[plan/feature/DRRM-037-campus-first-navigation]] · [[routes]] · [[pillars-and-landing]]
