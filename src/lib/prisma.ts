@@ -11,7 +11,9 @@ function createPrismaClient() {
     connectionString: process.env.DATABASE_URL!,
     connectionTimeoutMillis: CONNECTION_TIMEOUT_MS,
   });
-  return new PrismaClient({ adapter });
+  // campus.logo_path (DRRM-036) is read only where it's asked for, so a deploy that reaches a
+  // database without the column yet still loads every campus; getCampusLogos reads it.
+  return new PrismaClient({ adapter, omit: { campus: { logo_path: true } } });
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();

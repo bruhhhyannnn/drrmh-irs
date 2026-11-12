@@ -9,6 +9,7 @@ import {
   OptionTile,
   SelectField,
 } from '@/components/ds';
+import { useCampusLogos } from '@/components/hooks/use-campus';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { BystanderFormValues } from '@/lib';
 import { campusLogo } from '@/lib/campus-logo';
@@ -52,6 +53,7 @@ export function StepWhatWhere({
   onOpenPrivacy,
   onContinue,
 }: StepWhatWhereProps) {
+  const { data: logos } = useCampusLogos();
   const campus = campuses.find((c) => c.id === values.campus_id);
   const toOptions = (list: Option[]) => list.map((o) => ({ value: o.id, label: o.name }));
 
@@ -105,7 +107,10 @@ export function StepWhatWhere({
           describedBy={errors.campus_id ? 'campus-help campus-error' : 'campus-help'}
           leading={
             <Image
-              src={campus ? campusLogo(campus.name) : '/up-logo.png'}
+              src={campus ? campusLogo(campus.name, logos?.byName[campus.name]) : '/up-logo.png'}
+              // An uploaded logo is already 512 px in Storage; only bundled files go through
+              // the image optimizer.
+              unoptimized={!!(campus && logos?.byName[campus.name])}
               alt=""
               width={28}
               height={28}

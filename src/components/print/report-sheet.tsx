@@ -1,6 +1,7 @@
 'use client';
 
 import { figtree, FOCUS_RING, splineSansMono } from '@/components/ds';
+import { useCampusLogos } from '@/components/hooks/use-campus';
 import { cn } from '@/lib';
 import { ownCampusLogo } from '@/lib/campus-logo';
 import { Printer } from 'lucide-react';
@@ -139,7 +140,8 @@ export function Sheet({
 }
 
 export function Letterhead({ campus }: { campus: string }) {
-  const logo = ownCampusLogo(campus) ?? '/up-logo.png';
+  const { data: logos } = useCampusLogos();
+  const logo = ownCampusLogo(campus, logos?.byName[campus]) ?? '/up-logo.png';
   return (
     <div className="flex items-center gap-4.5 border-b-[3px] border-brand-500 pb-5">
       <img src={logo} alt={`${campus} logo`} className="size-17 shrink-0 object-contain" />

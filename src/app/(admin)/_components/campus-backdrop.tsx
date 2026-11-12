@@ -1,3 +1,6 @@
+'use client';
+
+import { useCampusLogos } from '@/components/hooks/use-campus';
 import { campusLogo } from '@/lib/campus-logo';
 
 /**
@@ -7,6 +10,7 @@ import { campusLogo } from '@/lib/campus-logo';
  * under the content; cards stay solid surface, so their contrast doesn't change.
  */
 export function CampusBackdrop({ name }: { name: string }) {
+  const { data: logos } = useCampusLogos();
   return (
     <div
       aria-hidden
@@ -15,7 +19,7 @@ export function CampusBackdrop({ name }: { name: string }) {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(161,29,29,.07),transparent_60%)]" />
       <div
         className="absolute -top-20 -right-24 size-85 bg-contain bg-center bg-no-repeat opacity-(--campus-backdrop-opacity) blur-[4px] md:-top-28 md:-right-36 md:size-140"
-        style={{ backgroundImage: `url(${campusLogo(name)})` }}
+        style={{ backgroundImage: `url(${campusLogo(name, logos?.byName[name])})` }}
       />
     </div>
   );

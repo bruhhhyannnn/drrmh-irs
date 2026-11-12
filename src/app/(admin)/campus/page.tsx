@@ -1,19 +1,29 @@
 'use client';
 
-import { Button, FOCUS_RING } from '@/components/ds';
+import { Button } from '@/components/ds';
 import { useCampusesOverview } from '@/components/hooks/use-campus';
-import { cn } from '@/lib';
-import { AlertTriangle, ChevronRight, Plus } from 'lucide-react';
-import Link from 'next/link';
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { PageHeader } from '../_components/page-header';
-import { CampusMark, Card, Chip, Mono, Skeleton } from '../_components/ui';
+import { Card, Skeleton } from '../_components/ui';
 import { plural } from '../_lib/format';
+import { CampusCard, CampusSectionHeading, campusStage } from './_components/campus-card';
 import { CampusDrawer } from './_components/campus-drawer';
 
+/**
+ * Every campus, in three sections: with events (most events first, so the order doesn't jump
+ * around), set up with no events yet, and not set up yet. Cards in a row share one height.
+ */
 export default function CampusPage() {
   const { data: campuses, isPending, error } = useCampusesOverview();
   const [adding, setAdding] = useState(false);
+
+  const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name);
+  const withEvents = (campuses ?? [])
+    .filter((c) => campusStage(c) === 'events')
+    .sort((a, b) => b._count.events - a._count.events || byName(a, b));
+  const ready = (campuses ?? []).filter((c) => campusStage(c) === 'ready').sort(byName);
+  const unset = (campuses ?? []).filter((c) => campusStage(c) === 'unset').sort(byName);
 
   return (
     <>
@@ -21,8 +31,8 @@ export default function CampusPage() {
         title="Campus"
         subtitle={
           campuses
-            ? `${plural(campuses.length, 'campus', 'campuses')}. Open one to see its events and reports.`
-            : 'Open a campus to see its events and reports.'
+            ? `${plural(campuses.length, 'campus', 'campuses')}. Campuses with events come first.`
+            : 'Campuses with events come first.'
         }
         actions={
           <Button size="sm" onClick={() => setAdding(true)}>
@@ -37,9 +47,9 @@ export default function CampusPage() {
           The campuses couldn&apos;t be loaded: {error.message}
         </Card>
       ) : isPending ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3" aria-busy="true">
-          {Array.from({ length: 6 }, (_, i) => (
-            <Skeleton key={i} className="h-44" />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2" aria-busy="true">
+          {Array.from({ length: 4 }, (_, i) => (
+            <Skeleton key={i} className="h-72" />
           ))}
         </div>
       ) : campuses.length === 0 ? (
@@ -47,64 +57,58 @@ export default function CampusPage() {
           No campuses yet. Add the first one to start creating events.
         </Card>
       ) : (
-        <ul className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {campuses.map((campus) => {
-            const stats = [
-              { label: 'Events', value: campus._count.events },
-              { label: 'Users', value: campus._count.users },
-              { label: 'Fields', value: campus._count.population_categories },
-            ];
-            return (
-              <li key={campus.id}>
-                <Link
-                  href={`/campus/details?id=${campus.id}`}
-                  className={cn(
-                    'flex min-w-0 flex-col gap-4 rounded-[22px] border border-gray-200 bg-surface p-5 text-gray-900 shadow-[0_1px_3px_rgba(16,24,40,.08)] transition-[border-color,box-shadow,translate] duration-120 ease-out hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-[0_10px_24px_rgba(16,24,40,.12)] motion-reduce:hover:translate-y-0',
-                    FOCUS_RING
-                  )}
-                >
-                  <div className="flex items-center gap-3.5">
-                    <CampusMark name={campus.name} />
-                    <div className="flex min-w-0 flex-1 flex-col items-start gap-1.5">
-                      <span className="text-[19px] leading-tight font-bold">{campus.name}</span>
-                      <Chip tone={campus.is_active ? 'green' : 'grey'} dot>
-                        {campus.is_active ? 'Active' : 'Inactive'}
-                      </Chip>
-                    </div>
-                    <ChevronRight size={18} aria-hidden className="shrink-0 text-gray-400" />
-                  </div>
-                  <dl className="grid grid-cols-3 gap-2 border-t border-line pt-3.5">
-                    {stats.map((s) => (
-                      <div key={s.label} className="flex flex-col gap-0.5">
-                        <dt className="text-[13px] font-medium text-gray-500">{s.label}</dt>
-                        <dd
-                          className={cn(
-                            'font-landing-mono text-[19px] font-bold',
-                            s.value ? 'text-gray-900' : 'text-gray-400'
-                          )}
-                        >
-                          <Mono>{s.value}</Mono>
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                  {campus._count.population_categories === 0 && (
-                    <div className="bg-warning-50 flex items-start gap-2 rounded-[14px] px-3 py-2.5 text-[14px] leading-[1.45] font-medium text-warning-800">
-                      <AlertTriangle
-                        size={16}
-                        aria-hidden
-                        className="mt-px shrink-0 text-warning-700"
-                      />
-                      <span>
-                        No population fields yet, so ERT headcount has nothing to fill in.
-                      </span>
-                    </div>
-                  )}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        <div className="flex flex-col gap-8">
+          {withEvents.length > 0 && (
+            <section className="flex flex-col gap-3.5" aria-labelledby="campus-with-events">
+              <div id="campus-with-events">
+                <CampusSectionHeading
+                  title="With events"
+                  count={withEvents.length}
+                  note="most events first"
+                />
+              </div>
+              <ul className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2">
+                {withEvents.map((c) => (
+                  <li key={c.id}>
+                    <CampusCard campus={c} size="lg" />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+          {ready.length > 0 && (
+            <section className="flex flex-col gap-3.5" aria-labelledby="campus-ready">
+              <div id="campus-ready">
+                <CampusSectionHeading title="Set up, no events yet" count={ready.length} />
+              </div>
+              <ul className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {ready.map((c) => (
+                  <li key={c.id}>
+                    <CampusCard campus={c} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+          {unset.length > 0 && (
+            <section className="flex flex-col gap-3.5" aria-labelledby="campus-unset">
+              <div id="campus-unset">
+                <CampusSectionHeading
+                  title="Not set up yet"
+                  count={unset.length}
+                  note="no population fields"
+                />
+              </div>
+              <ul className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {unset.map((c) => (
+                  <li key={c.id}>
+                    <CampusCard campus={c} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
       )}
 
       <CampusDrawer open={adding} onClose={() => setAdding(false)} />
