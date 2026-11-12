@@ -52,6 +52,7 @@ Statuses are taken from each plan's frontmatter as of 2026-11-09. Keep this list
 
 | Plan                                                                                                         | Status      | Branch                                          |
 | ------------------------------------------------------------------------------------------------------------ | ----------- | ----------------------------------------------- |
+| [[plan/feature/DRRM-035-campus-logos-events-reports\|DRRM-035 Campus logos in Events and Reports]]           | done        | `feat/DRRM-035-campus-logos-events-reports`     |
 | [[plan/feature/DRRM-034-page-header-menu-completed-note\|DRRM-034 Completed note minimizes]]                 | done        | `feat/DRRM-034-page-header-menu-completed-note` |
 | [[plan/feature/DRRM-033-ui-polish-hover-checkbox\|DRRM-033 Visible hover, row click, Checkbox]]              | done        | `feat/DRRM-033-ui-polish-hover-checkbox`        |
 | [[plan/feature/DRRM-034-admin-report-photos\|DRRM-034 Photos in the admin report drawer]]                    | in-review   | `feat/DRRM-034-admin-report-photos`             |
