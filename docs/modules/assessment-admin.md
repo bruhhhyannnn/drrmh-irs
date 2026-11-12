@@ -1,7 +1,7 @@
 ---
 type: module
 module: assessment-admin
-updated: 2026-11-05
+updated: 2026-11-12
 verified: true
 paths:
   - src/actions/assessment-admin
@@ -34,18 +34,18 @@ Read this before touching the admin assessment pages or their actions.
 
 ## Where it lives
 
-| Path                                                          | What it holds                                                         |
-| ------------------------------------------------------------- | --------------------------------------------------------------------- |
-| `src/actions/assessment-admin/index.ts`                       | List, building summaries, one record, delete                          |
-| `src/app/(admin)/assessments/page.tsx`                        | Page header and the tabs; tab kept in `?tab=`                         |
-| `src/app/(admin)/assessments/_components/buildings-tab.tsx`   | `BuildingsTab`: one row per active building, pillar scores and change |
-| `src/app/(admin)/assessments/_components/assessments-tab.tsx` | `AssessmentsTab`: search, cluster, unit, From/To filters, 10 per page |
-| `src/app/(admin)/assessments/_components/compare-tab.tsx`     | `CompareTab`: building picker; `?building=`, `?a=`, `?b=`             |
-| `src/app/(admin)/assessments/_components/score-cell.tsx`      | `ScoreCell`, `RecoveryCell`                                           |
-| `src/app/(admin)/assessments/details/page.tsx`                | `/assessments/details?id=`: read-only record, Print, Delete           |
-| `src/app/(print)/assessments/report/page.tsx`                 | `/assessments/report?id=`: the A4 print                               |
-| `src/lib/assessment-records.ts`                               | Server-only loaders shared with the ERT and dashboard actions         |
-| `src/lib/admin-scope.ts`                                      | `adminScope`, `inScope`                                               |
+| Path                                                          | What it holds                                                                                                |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `src/actions/assessment-admin/index.ts`                       | List, building summaries, one record, delete                                                                 |
+| `src/app/(admin)/assessments/page.tsx`                        | Page header and the tabs; tab kept in `?tab=`                                                                |
+| `src/app/(admin)/assessments/_components/buildings-tab.tsx`   | `BuildingsTab`: one row per active building, pillar scores and change; quick filters, row opens the building |
+| `src/app/(admin)/assessments/_components/assessments-tab.tsx` | `AssessmentsTab`: search, cluster, unit, From/To filters, 10 per page                                        |
+| `src/app/(admin)/assessments/_components/compare-tab.tsx`     | `CompareTab`: building picker; `?building=`, `?a=`, `?b=`                                                    |
+| `src/app/(admin)/assessments/_components/score-cell.tsx`      | `ScoreCell`, `RecoveryCell`                                                                                  |
+| `src/app/(admin)/assessments/details/page.tsx`                | `/assessments/details?id=`: read-only record, Print, Delete                                                  |
+| `src/app/(print)/assessments/report/page.tsx`                 | `/assessments/report?id=`: the A4 print                                                                      |
+| `src/lib/assessment-records.ts`                               | Server-only loaders shared with the ERT and dashboard actions                                                |
+| `src/lib/admin-scope.ts`                                      | `adminScope`, `inScope`                                                                                      |
 
 ## Data
 
@@ -73,6 +73,7 @@ Shared loaders in `src/lib/assessment-records.ts`:
 
 ## Client side
 
+- Buildings tab (DRRM-042): quick filters with counts above the table, Needs follow-up (latest assessment `needs_follow_up`), Not yet assessed and Not assessed in 6 months; `?filter=follow-up|not-assessed|stale` opens one (the dashboard links to `follow-up`). Scores under 60% are red (`LOW_SCORE` in `score-cell.tsx`, also on the Assessments tab). An assessed building's row opens the building, its history and Compare (`/assessments?tab=compare&building=`); Edit checklist is in the page's ⋯ menu.
 - Routes: `/assessments` (`?tab=buildings|assessments|compare`), `/assessments/details?id=`, `/assessments/report?id=` (in the `(print)` group, opens in a new tab).
 - Hooks in `src/components/hooks/use-assessments.ts`: `useAssessmentList`, `useBuildingSummaries`, `useAdminAssessment`, `useDeleteAssessment` (invalidates `admin-assessments`, `building-summaries`, `building-safety`, `building-history`).
 - Campus comes from `useScopedCampusId()`; `''` means all campuses and is sent as `null`.

@@ -8,6 +8,7 @@ import {
 } from '@/lib/bystander-photos';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
+import { requireAdmin } from '@/lib/server-auth';
 import { randomUUID } from 'crypto';
 import { revalidatePath } from 'next/cache';
 
@@ -97,11 +98,44 @@ export async function getBystanderReports(campusId?: string) {
     },
   });
 
+  const unseen = await unseenBystanderIds(reports.map((r) => r.id));
   return reports.map((r) => ({
     ...r,
     latitude: r.latitude.toNumber(),
     longitude: r.longitude.toNumber(),
+    /** No admin has opened it yet (DRRM-042). */
+    unopened: unseen.has(r.id),
   }));
+}
+
+/**
+ * The reports no admin has opened yet. Reads `seen_at` with its own query, so before
+ * prisma/manual/DRRM-042-bystander-seen.sql runs nothing counts as unopened.
+ */
+async function unseenBystanderIds(ids: string[]): Promise<Set<string>> {
+  if (!ids.length) return new Set();
+  try {
+    const rows = await prisma.$queryRaw<{ id: string }[]>`
+      SELECT id::text AS id FROM public.bystander_reports
+      WHERE id = ANY(${ids}::uuid[]) AND seen_at IS NULL`;
+    return new Set(rows.map((r) => r.id));
+  } catch {
+    return new Set();
+  }
+}
+
+/** An admin opened the report: it stops showing as unopened. Admins only; never throws. */
+export async function markBystanderReportSeen(token: string | null, id: string) {
+  const caller = await requireAdmin(token);
+  if (!caller.ok) return { ok: false as const };
+  try {
+    await prisma.$executeRaw`
+      UPDATE public.bystander_reports SET seen_at = now()
+      WHERE id = ${id}::uuid AND seen_at IS NULL`;
+  } catch {
+    // Before the DRRM-042 SQL runs there is nothing to mark.
+  }
+  return { ok: true as const };
 }
 
 export async function updateBystanderReportStatus(

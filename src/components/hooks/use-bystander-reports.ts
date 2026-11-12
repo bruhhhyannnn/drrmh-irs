@@ -4,8 +4,10 @@ import {
   getBystanderPhotoUrls,
   getBystanderReports,
   getPendingBystanderCount,
+  markBystanderReportSeen,
   updateBystanderReportStatus,
 } from '@/actions/emergency-reports';
+import { getAccessToken } from '@/lib/supabase';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 
 export type BystanderStatus = 'reviewed' | 'verified' | 'dismissed';
@@ -64,5 +66,22 @@ export function useGetBystanderIncidentTypes() {
   return useQuery({
     queryKey: ['bystander-incident-types'],
     queryFn: () => getBystanderIncidentTypes(),
+  });
+}
+
+/**
+ * Opening a report marks it seen, for every admin (DRRM-042). The list updates at once, so the
+ * red dot goes without waiting for a refetch.
+ */
+export function useMarkBystanderReportSeen() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => markBystanderReportSeen(await getAccessToken(), id),
+    onMutate: (id) => {
+      queryClient.setQueriesData<{ id: string; unopened: boolean }[]>(
+        { queryKey: ['bystander-reports'] },
+        (list) => list?.map((r) => (r.id === id ? { ...r, unopened: false } : r))
+      );
+    },
   });
 }
