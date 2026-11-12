@@ -1,14 +1,28 @@
+import { cn } from '@/lib';
 import { percent, recoveryStatus, type Tally } from '@/lib/assessment-score';
 import { pointsChange } from '@/lib/building-safety';
 import { ChangeBadge } from '../../_components/charts/change-badge';
 import { Mono } from '../../_components/ui';
 
-/** "82%" (or "—" when nothing was counted), with the change since the previous assessment. */
+/** Scores under this show in red (DRRM-042). */
+export const LOW_SCORE = 60;
+
+/**
+ * "82%" (or "—" when nothing was counted), with the change since the previous assessment;
+ * under 60% in red.
+ */
 export function ScoreCell({ tally, previous }: { tally: Tally; previous?: Tally | null }) {
   const p = percent(tally);
   return (
     <span className="flex items-baseline gap-1.5 whitespace-nowrap">
-      <Mono className="text-[16px] font-semibold text-gray-900">{p === null ? '—' : `${p}%`}</Mono>
+      <Mono
+        className={cn(
+          'text-[16px] font-semibold',
+          p !== null && p < LOW_SCORE ? 'text-error-700' : 'text-gray-900'
+        )}
+      >
+        {p === null ? '—' : `${p}%`}
+      </Mono>
       <ChangeBadge value={pointsChange(previous, tally)} />
     </span>
   );
