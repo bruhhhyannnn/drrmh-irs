@@ -9,6 +9,14 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-036 Campus page as the hub, logo upload: 2026-11-12 (branch `feat/DRRM-036-campus-page-hub-logo-upload`)
+
+Plan: [[plan/feature/DRRM-036-campus-page-hub-logo-upload]] · [[campus-scoping]] · [[database]]
+
+- Campus list: campuses with events first (most events first), then set up, then not set up yet, each with a heading and count; bigger logos and cards of equal height; each card shows the campus's latest event with Export PDF and NSED report right on it (Open event while it is ongoing).
+- Add and Edit campus take a logo (PNG, JPG or SVG, scaled to 512 × 512 in the browser); it shows everywhere the campus logo does. Needs `prisma/manual/DRRM-036-campus-logo.sql` (a column and a public `campus-logos` bucket); until it runs, logos fall back to the built-in ones.
+- Campus page: a 96 px logo with the campus faded behind the page, a row of counts that open Events, Users, Clusters, Units and Population fields filtered to the campus, and the picked event's actions (Complete event, Export PDF, Export NSED report, Open event details).
+
 ## DRRM-035 Campus logos in Events and Reports, NSED in the row, campus backdrop: 2026-11-12 (branch `feat/DRRM-035-campus-logos-events-reports`)
 
 Plan: [[plan/feature/DRRM-035-campus-logos-events-reports]] · [[events]] · [[field-reports]] · [[design-system]]

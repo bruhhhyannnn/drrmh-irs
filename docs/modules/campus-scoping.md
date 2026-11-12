@@ -1,5 +1,6 @@
 ---
 type: module
+updated: 2026-11-12
 module: campus-scoping
 paths:
   - src/actions/campus-table
@@ -20,18 +21,18 @@ How the admin dashboard limits what it shows to one campus, and the Campus pages
 
 ## Where it lives
 
-| Path                                                    | What it holds                                                                                         |
-| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `src/store/campus-scope.store.ts`                       | `useCampusScopeStore`: `campusId` (`''` = All campuses), persisted as `irs-admin-campus`              |
-| `src/app/(admin)/_components/shell/campus-switcher.tsx` | `useIsSuperAdmin`, `useScopedCampusId`, `useEventTitle`, `CampusSwitcher`, `CampusLabel`              |
-| `src/app/(admin)/_components/shell/admin-shell.tsx`     | `CampusScopeGate`; top bar shows `CampusSwitcher` or `CampusLabel`                                    |
-| `src/app/(admin)/_components/shell/nav.ts`              | `SUPER_ADMIN_HREFS = ['/campus', '/assessments/checklist']`, `navFor(isSuperAdmin)`                   |
-| `src/lib/admin-scope.ts`                                | `adminScope(profile, requestedCampusId)`, `inScope(scope, campusId)` (tests in `admin-scope.test.ts`) |
-| `src/actions/campus-table/index.ts`                     | Campus CRUD and the clusters of a campus                                                              |
-| `src/components/hooks/use-campus.ts`                    | Query hooks for campuses and campus clusters                                                          |
-| `src/app/(admin)/campus/page.tsx`                       | `/campus`: campus cards with event, user and field counts                                             |
-| `src/app/(admin)/campus/details/page.tsx`               | `/campus/details?id=`: one campus, its event summary, edit, delete                                    |
-| `src/app/(admin)/campus/_components/campus-drawer.tsx`  | `CampusDrawer`: add / edit (name, active) with `campusSchema`                                         |
+| Path                                                    | What it holds                                                                                                                    |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `src/store/campus-scope.store.ts`                       | `useCampusScopeStore`: `campusId` (`''` = All campuses), persisted as `irs-admin-campus`                                         |
+| `src/app/(admin)/_components/shell/campus-switcher.tsx` | `useIsSuperAdmin`, `useScopedCampusId`, `useEventTitle`, `CampusSwitcher`, `CampusLabel`                                         |
+| `src/app/(admin)/_components/shell/admin-shell.tsx`     | `CampusScopeGate`; top bar shows `CampusSwitcher` or `CampusLabel`                                                               |
+| `src/app/(admin)/_components/shell/nav.ts`              | `SUPER_ADMIN_HREFS = ['/campus', '/assessments/checklist']`, `navFor(isSuperAdmin)`                                              |
+| `src/lib/admin-scope.ts`                                | `adminScope(profile, requestedCampusId)`, `inScope(scope, campusId)` (tests in `admin-scope.test.ts`)                            |
+| `src/actions/campus-table/index.ts`                     | Campus CRUD and the clusters of a campus                                                                                         |
+| `src/components/hooks/use-campus.ts`                    | Query hooks for campuses and campus clusters                                                                                     |
+| `src/app/(admin)/campus/page.tsx`                       | `/campus`: campus cards in three sections (with events, set up, not set up), `CampusCard` with the latest event and its exports  |
+| `src/app/(admin)/campus/details/page.tsx`               | `/campus/details?id=`: the campus hub: logo and backdrop, counts that link to the lists, the picked event's actions, its summary |
+| `src/app/(admin)/campus/_components/campus-drawer.tsx`  | `CampusDrawer`: add / edit (logo, name, active) with `campusSchema`; `LogoField`, `CampusCard`, `campusStage` beside it          |
 
 ## Data
 
@@ -44,8 +45,10 @@ How the admin dashboard limits what it shows to one campus, and the Campus pages
 `src/actions/campus-table/index.ts` (no caller check; the UI hides the pages from Administrators):
 
 - `getCampuses()`: all campuses by name. Used by the switcher and many pickers.
-- `getCampusesOverview()`: campuses with counts of events, users, clusters and active population categories.
-- `getCampusOverview(id)`: one campus with the same counts.
+- `getCampusesOverview()`: campuses with counts of events, users, clusters and active population categories, and `latestEvent` (an ongoing event, else the latest that started, else the newest; with its report count and `people`, the sum of its reports' population counts). Also feeds the dashboard's campus cards (DRRM-038).
+- `getCampusOverview(id)`: one campus with the same counts plus `units`.
+- `getCampusLogos()`: uploaded logos as public URLs `{ byId, byName }`. Reads `logo_path` with its own query and returns none if the column isn't there yet (before `prisma/manual/DRRM-036-campus-logo.sql`).
+- `setCampusLogo(token, campusId, form | null)`: Super Admins only (`requireAdmin`, role `super_admin`). `logo` in the form (PNG or WebP, up to 1 MB; `logoProblem`) is uploaded to the public `campus-logos` bucket under `<campusId>/<uuid>.<ext>` (`src/lib/campus-logo-storage.ts`), then `logo_path` is set; no file removes it. The old file is deleted after the update; if the update fails, the new upload is. Returns `{ ok, url }` or `{ ok: false, error, retry }`.
 - `createCampus(data)`, `updateCampus(id, data)`, `deleteCampus(id)`: errors through `toFriendlyError(err, 'campus')`; revalidate `/campus` (update also `/campus/details`).
 - `getCampusClusters(campusId)`: `id`, `name`, `is_active` of the campus's clusters.
 
@@ -60,7 +63,10 @@ Server-checked scope: `requireAdmin(token, campusId)` in `src/lib/server-auth.ts
 - `CampusSwitcher` lists All campuses plus active campuses, shows a skeleton until campuses load, and closes on Escape.
 - `CampusScopeGate` redirects non-Super Admins away from `SUPER_ADMIN_HREFS` to `/dashboard`, and shows "No campus assigned" to an Administrator without a `campus_id`.
 - `useEventTitle()` adds " — Campus" to event names for Super Admins only.
-- Hooks: `useCampuses`, `useCampusesOverview`, `useCampusOverview(id)`, `useCreateCampus`, `useUpdateCampus`, `useDeleteCampus` (all invalidate `campuses`, `campus`, `campuses-overview`, `campus-overview`), `useCampusClusters(campusId)` (key `['cluster', campusId]`).
+- Hooks: `useCampuses`, `useCampusesOverview`, `useCampusOverview(id)`, `useCreateCampus`, `useUpdateCampus`, `useDeleteCampus`, `useSetCampusLogo` (all invalidate `campuses`, `campus`, `campuses-overview`, `campus-overview`, `campus-logos`), `useCampusLogos` (10 min stale), `useCampusClusters(campusId)` (key `['cluster', campusId]`).
+- Campus list (DRRM-036): "With events" (most events first, then by name; 80 px logos, 2 columns), "Set up, no events yet" (has population fields) and "Not set up yet" (keeps the warning), each with a count; rows share one height (`items-stretch`, `h-full`). `CampusCard`: the name links to the campus page and its link covers the card; the latest event box has Export PDF and NSED report (completed, where `nsedTemplateFor` has a template) or Open event while it is ongoing, above the link.
+- Logos (DRRM-036): `campusLogo(name, uploaded)` / `ownCampusLogo(name, uploaded)` use the uploaded logo first, then the bundled `/public/up-<campus>-logo.png`, then the UP seal. `CampusMark` and `CampusBackdrop` read `useCampusLogos().byName`, as do the event PDF letterhead and the bystander form. `LogoField` (Add / Edit campus): a 112 px preview, Choose file / Replace / Remove and drag and drop; PNG, JPG or SVG, scaled in the browser to 512 × 512 keeping transparency (`scaleLogo`, WebP or PNG). The logo saves after the campus, so a logo problem never loses the campus.
+- Campus page (DRRM-036): a 96 px logo (64 on phone) and `CampusBackdrop`; ⋯ holds Edit campus, Population fields and Delete campus. A row of counts (Events, Users, Clusters, Units, Population fields) links to those lists and sets the top-bar campus to this one first, so they open filtered. Under the Showing picker: Complete event (while ongoing, `CompleteEventDialog`), Export PDF, Export NSED report (where the template exists) and Open event details.
 
 ## Rules and gotchas
 
