@@ -189,9 +189,11 @@ export function SelectField({
 }
 
 const BUTTON_VARIANTS = {
-  primary: 'bg-brand-solid text-white hover:brightness-92',
-  outline: 'border-[1.5px] border-gray-300 bg-surface text-gray-900 hover:brightness-97',
-  ghost: 'text-gray-700 hover:bg-gray-100',
+  primary:
+    'bg-brand-solid text-white hover:bg-brand-solid-hover hover:shadow-[0_6px_14px_rgba(161,29,29,.28)] active:shadow-none',
+  outline:
+    'border-[1.5px] border-gray-300 bg-surface text-gray-900 hover:border-gray-400 hover:bg-hover',
+  ghost: 'text-gray-700 hover:bg-hover',
   /** Delete next to other actions: red outline. */
   danger: 'border-[1.5px] border-error-300 bg-surface text-error-700 hover:bg-error-50',
   /** The confirm button of a delete dialog. */
@@ -206,13 +208,13 @@ type ButtonStyle = {
 
 function buttonClass({ variant = 'primary', size = 'md', fullWidth }: ButtonStyle) {
   return cn(
-    'items-center justify-center gap-2 rounded-full leading-none font-bold whitespace-nowrap transition-[filter,scale,background-color] duration-120 ease-[cubic-bezier(.2,.7,.3,1)] active:scale-98',
+    'items-center justify-center gap-2 rounded-full leading-none font-bold whitespace-nowrap transition-[filter,scale,background-color,border-color,box-shadow] duration-120 ease-out active:scale-98',
     size === 'md'
       ? 'h-13 px-6 text-[15px] large-text:text-[17px]'
       : 'h-10 px-4.5 text-[14px] large-text:text-[16px]',
     fullWidth ? 'flex w-full' : 'inline-flex',
     BUTTON_VARIANTS[variant],
-    'disabled:cursor-not-allowed disabled:border-transparent disabled:bg-gray-100 disabled:text-gray-400 disabled:brightness-100 disabled:active:scale-100',
+    'disabled:cursor-not-allowed disabled:border-transparent disabled:bg-gray-100 disabled:text-gray-400 disabled:shadow-none disabled:brightness-100 disabled:active:scale-100',
     FOCUS_RING
   );
 }
@@ -289,7 +291,7 @@ export function OptionTile({
         'flex cursor-pointer items-center justify-center gap-1.5 rounded-2xl px-2 text-center leading-tight transition-colors has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-[#5a9ef2]',
         checked
           ? 'border-brand-500 bg-brand-25 text-brand-500 border-2 font-bold'
-          : 'border-[1.5px] border-gray-200 bg-surface font-semibold text-gray-700 hover:border-gray-300 hover:bg-gray-50',
+          : 'border-[1.5px] border-gray-200 bg-surface font-semibold text-gray-700 hover:border-gray-300 hover:bg-hover',
         className
       )}
     >

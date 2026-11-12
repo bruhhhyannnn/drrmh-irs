@@ -32,7 +32,7 @@ export function RowChart({
               disabled={!onSelect}
               onClick={() => onSelect?.(row.id)}
               className={cn(
-                'grid w-full grid-cols-[minmax(0,9rem)_minmax(0,1fr)_3rem] items-center gap-3 rounded-lg py-1.5 text-left enabled:hover:bg-gray-50 md:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_3.5rem]',
+                'grid w-full grid-cols-[minmax(0,9rem)_minmax(0,1fr)_3rem] items-center gap-3 rounded-lg py-1.5 text-left enabled:hover:bg-hover md:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_3.5rem]',
                 FOCUS_RING
               )}
             >

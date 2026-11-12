@@ -187,7 +187,7 @@ export function InstallPrompt() {
               onClick={handleDismiss}
               aria-label="Close"
               className={cn(
-                '-mt-1.5 -mr-1.5 grid size-9 shrink-0 place-items-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-900',
+                '-mt-1.5 -mr-1.5 grid size-9 shrink-0 place-items-center rounded-full text-gray-500 transition-colors duration-120 ease-out hover:bg-hover-strong hover:text-gray-900',
                 FOCUS_RING
               )}
             >

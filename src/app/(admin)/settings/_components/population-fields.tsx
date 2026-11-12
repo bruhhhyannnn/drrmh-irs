@@ -288,7 +288,7 @@ function CampusFields({ campusId, campusName }: { campusId: string; campusName: 
                       <button
                         {...handleProps(i, a.category.name)}
                         className={cn(
-                          'grid h-9 w-7.5 cursor-grab touch-none place-items-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 active:cursor-grabbing',
+                          'grid h-9 w-7.5 cursor-grab touch-none place-items-center rounded-lg text-gray-500 hover:bg-hover-strong hover:text-gray-900 active:cursor-grabbing',
                           FOCUS_RING
                         )}
                       >

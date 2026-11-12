@@ -19,7 +19,7 @@ export default function OfflineFallbackPage() {
       </div>
       <button
         onClick={() => window.location.reload()}
-        className="bg-brand-solid hover:brightness-92 rounded-lg px-5 py-2.5 text-sm font-medium text-white transition-colors"
+        className="bg-brand-solid hover:bg-brand-solid-hover hover:shadow-[0_6px_14px_rgba(161,29,29,.28)] rounded-lg px-5 py-2.5 text-sm font-medium text-white transition-colors"
       >
         Try again
       </button>

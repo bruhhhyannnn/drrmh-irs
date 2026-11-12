@@ -3,6 +3,7 @@
 // from the theme tokens in globals.css, so the controls work in light and dark mode.
 
 export { Banner } from './banner';
+export { CheckBox, Checkbox } from './checkbox';
 export { Drawer } from './drawer';
 export {
   Button,

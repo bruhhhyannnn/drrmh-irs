@@ -157,7 +157,7 @@ function UnansweredButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'flex min-h-11 w-full items-center gap-3 rounded-xl px-2 py-2 text-left text-[15px] hover:bg-gray-50',
+        'flex min-h-11 w-full items-center gap-3 rounded-xl px-2 py-2 text-left text-[15px] hover:bg-hover',
         FOCUS_RING
       )}
     >

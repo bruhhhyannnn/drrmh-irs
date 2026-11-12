@@ -84,7 +84,7 @@ export default async function PillarPage({ params }: Props) {
                 'bg-surface flex min-w-0 items-center gap-3 rounded-[18px] p-4',
                 on
                   ? 'border-brand-500 border-2'
-                  : 'border border-gray-200 hover:border-gray-300 hover:bg-gray-50',
+                  : 'border border-gray-200 hover:border-gray-300 hover:bg-hover',
                 FOCUS_RING
               )}
             >

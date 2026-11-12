@@ -282,7 +282,7 @@ function FlashcardCard({
                 'flex h-14 items-center justify-center gap-1.5 rounded-2xl px-2 text-[16px] font-extrabold transition-[transform,colors] duration-120 active:scale-97',
                 on
                   ? 'border-brand-500 bg-brand-25 text-brand-500 border-2 shadow-xs'
-                  : 'border-[1.5px] border-gray-300 bg-surface text-gray-900 hover:border-gray-400 hover:bg-gray-50',
+                  : 'border-[1.5px] border-gray-300 bg-surface text-gray-900 hover:border-gray-400 hover:bg-hover',
                 FOCUS_RING
               )}
             >

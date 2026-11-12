@@ -110,7 +110,10 @@ function OngoingNow({ data }: { data: Dashboard }) {
         </h2>
         <Link
           href="/events"
-          className={cn('text-brand-500 rounded text-[16px] font-bold hover:underline', FOCUS_RING)}
+          className={cn(
+            'text-brand-500 rounded text-[16px] font-bold decoration-2 underline-offset-3 transition-colors duration-120 ease-out hover:text-brand-600 hover:underline',
+            FOCUS_RING
+          )}
         >
           All events
         </Link>
@@ -216,7 +219,7 @@ function NothingOngoing({ next }: { next: Dashboard['nextEvent'] }) {
         <Link
           href={`/events/details?id=${next.id}`}
           className={cn(
-            'flex min-w-0 flex-[1_1_300px] items-center gap-3.5 rounded-2xl border border-line bg-gray-50 px-3.5 py-3 text-gray-900 hover:border-gray-300',
+            'flex min-w-0 flex-[1_1_300px] items-center gap-3.5 rounded-2xl border border-line bg-gray-50 px-3.5 py-3 text-gray-900 transition-[border-color,box-shadow,translate] duration-120 ease-out hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-[0_10px_24px_rgba(16,24,40,.12)] motion-reduce:hover:translate-y-0',
             FOCUS_RING
           )}
         >
@@ -304,7 +307,7 @@ function StatTiles({ data }: { data: Dashboard }) {
           key={t.label}
           href={t.href}
           className={cn(
-            'flex min-w-0 flex-col gap-1.5 rounded-[18px] border border-gray-200 bg-surface px-4.5 py-4 text-gray-900 shadow-[0_1px_3px_rgba(16,24,40,.06)] hover:border-gray-300',
+            'flex min-w-0 flex-col gap-1.5 rounded-[18px] border border-gray-200 bg-surface px-4.5 py-4 text-gray-900 shadow-[0_1px_3px_rgba(16,24,40,.06)] transition-[border-color,box-shadow,translate] duration-120 ease-out hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-[0_10px_24px_rgba(16,24,40,.12)] motion-reduce:hover:translate-y-0',
             FOCUS_RING
           )}
         >

@@ -109,7 +109,7 @@ export function SignInForm() {
           type="button"
           onClick={changeEmail}
           className={cn(
-            'flex h-11 max-w-full items-center gap-2 self-start rounded-full border border-gray-200 bg-surface pr-3.5 pl-2.5 text-[14px] font-medium text-gray-900 hover:bg-gray-50',
+            'flex h-11 max-w-full items-center gap-2 self-start rounded-full border border-gray-200 bg-surface pr-3.5 pl-2.5 text-[14px] font-medium text-gray-900 hover:bg-hover',
             FOCUS_RING
           )}
         >

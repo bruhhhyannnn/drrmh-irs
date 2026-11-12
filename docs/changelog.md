@@ -9,11 +9,21 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-033 Visible hover, whole-row click, one Checkbox, casualties column fix: 2026-11-12 (branch `feat/DRRM-033-ui-polish-hover-checkbox`)
+
+Plan: [[plan/feature/DRRM-033-ui-polish-hover-checkbox]] · [[design-system]] · [[events]]
+
+- Hovers are visible everywhere: new `hover` and `hover-strong` colours replace the near-invisible gray-50 on rows, menus, nav, icon buttons, outline and primary buttons, links, tabs and clickable cards.
+- On Events, the whole row (and the phone card) opens the event; the View button is gone. Rows show a maroon edge on hover.
+- One design-system `Checkbox` replaces the browser's checkboxes in off-campus setup and Building safety's Show pillars; the square the dialogs draw moved into the design system.
+- Fix: on event details, a long casualty condition no longer overlaps What happened; the chip wraps.
+
 ## DRRM-034 Photos in the admin Add / Edit report drawer: 2026-11-11 (branch `feat/DRRM-034-admin-report-photos`)
 
 Plan: [[plan/feature/DRRM-034-admin-report-photos]] · [[field-reports]]
 
 - Admins can attach photos of the structural damage and of each casualty's injury when adding or editing a report, as ERT members do. Edit shows the saved photos with remove buttons and deletes a removed one only when the report saves. The casualty and missing persons drawers have an Edit button per person.
+
 ## DRRM-033 PageHeader ⋯ menu: 2026-11-11 (branch `feat/DRRM-033-page-header-menu`)
 
 Plan: [[plan/feature/DRRM-033-page-header-menu]] · [[design-system]] · [[events]]

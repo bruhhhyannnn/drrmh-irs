@@ -90,7 +90,7 @@ export function HeaderMenu({
         aria-controls={open ? menuId : undefined}
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          'grid size-11 place-items-center rounded-full border-[1.5px] bg-surface text-gray-900 transition-colors duration-120 ease-out hover:border-gray-400 hover:bg-gray-100',
+          'grid size-11 place-items-center rounded-full border-[1.5px] bg-surface text-gray-900 transition-colors duration-120 ease-out hover:border-gray-400 hover:bg-hover-strong',
           open ? 'border-gray-400 bg-gray-100' : 'border-gray-300',
           FOCUS_RING
         )}
@@ -154,7 +154,7 @@ function DropdownMenu({ items, menuId, onClose, onSelect }: MenuProps) {
                 'min-h-11 gap-3 rounded-[10px] px-3 py-2 text-[14px] transition-colors duration-120 ease-out',
                 item.danger
                   ? 'hover:bg-error-50 focus:bg-error-50'
-                  : 'hover:bg-gray-100 focus:bg-gray-100'
+                  : 'hover:bg-hover focus:bg-hover'
               )}
               iconClassName={item.danger ? 'text-error-700' : 'text-gray-600'}
             />

@@ -99,7 +99,7 @@ export function CampusSwitcher() {
         aria-controls={menuId}
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          'flex h-10 max-w-full min-w-0 items-center gap-2 rounded-full border border-gray-200 bg-surface px-3 text-[14px] font-semibold whitespace-nowrap text-gray-900 hover:bg-gray-50',
+          'flex h-10 max-w-full min-w-0 items-center gap-2 rounded-full border border-gray-200 bg-surface px-3 text-[14px] font-semibold whitespace-nowrap text-gray-900 hover:bg-hover',
           FOCUS_RING
         )}
       >
@@ -132,7 +132,7 @@ export function CampusSwitcher() {
                     'flex min-h-11 items-center gap-3 rounded-xl px-3 text-left text-[14px]',
                     on
                       ? 'bg-brand-25 text-brand-500 font-bold'
-                      : 'font-medium text-gray-900 hover:bg-gray-50',
+                      : 'font-medium text-gray-900 hover:bg-hover',
                     FOCUS_RING
                   )}
                 >

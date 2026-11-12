@@ -39,23 +39,35 @@ const CHIP_TONES: Record<Tone, { box: string; dot: string }> = {
 export function Chip({
   tone,
   dot = false,
+  wrap = false,
   className,
   children,
 }: {
   tone: Tone;
   dot?: boolean;
+  /** Long text (a casualty's condition) wraps onto more lines instead of spilling over. */
+  wrap?: boolean;
   className?: string;
   children: React.ReactNode;
 }) {
   return (
     <span
       className={cn(
-        'inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[13px] font-semibold whitespace-nowrap',
+        'inline-flex gap-1.5 px-2.5 text-[13px] font-semibold',
+        wrap
+          ? 'h-auto min-h-6 min-w-0 items-start rounded-[12px] py-0.5 leading-[1.35] whitespace-normal'
+          : 'h-6 shrink-0 items-center rounded-full whitespace-nowrap',
         CHIP_TONES[tone].box,
         className
       )}
     >
-      {dot && <span aria-hidden className={cn('size-1.5 rounded-full', CHIP_TONES[tone].dot)} />}
+      {dot && (
+        <span
+          aria-hidden
+          // On the first line's middle when the text wraps.
+          className={cn('size-1.5 shrink-0 rounded-full', wrap && 'mt-1.5', CHIP_TONES[tone].dot)}
+        />
+      )}
       {children}
     </span>
   );

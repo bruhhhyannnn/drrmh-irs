@@ -153,7 +153,7 @@ function AccountMenu() {
         aria-label={`Account: ${name}`}
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          'flex h-11 shrink-0 items-center gap-2.5 rounded-full border border-gray-200 bg-surface pr-2.5 pl-1.5 hover:bg-gray-50',
+          'flex h-11 shrink-0 items-center gap-2.5 rounded-full border border-gray-200 bg-surface pr-2.5 pl-1.5 hover:bg-hover',
           FOCUS_RING
         )}
       >
@@ -200,7 +200,7 @@ function AccountMenu() {
                   setOpen(false);
                   markRated();
                 }}
-                className={cn(MENU_ITEM, 'text-gray-900 hover:bg-gray-50')}
+                className={cn(MENU_ITEM, 'text-gray-900 hover:bg-hover')}
               >
                 <Star size={18} aria-hidden className="text-gray-600" />
                 Rate the app
@@ -240,7 +240,7 @@ function MenuButton({
       onClick={onClick}
       className={cn(
         MENU_ITEM,
-        tone === 'danger' ? 'hover:bg-error-50 text-error-700' : 'text-gray-900 hover:bg-gray-50'
+        tone === 'danger' ? 'hover:bg-error-50 text-error-700' : 'text-gray-900 hover:bg-hover'
       )}
     >
       {children}

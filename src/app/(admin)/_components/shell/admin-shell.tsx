@@ -134,7 +134,7 @@ function Sidebar() {
                   'flex h-11 items-center gap-3 rounded-xl px-3 text-[14px]',
                   on
                     ? 'bg-brand-25 text-brand-500 font-bold'
-                    : 'font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                    : 'font-medium text-gray-600 transition-colors duration-120 ease-out hover:bg-hover hover:text-gray-900',
                   FOCUS_RING
                 )}
               >
@@ -210,7 +210,7 @@ function Rail() {
                   'relative flex w-18 flex-col items-center gap-1 rounded-[14px] pt-2 pb-1.75 text-center text-[11px] leading-[1.2]',
                   on
                     ? 'bg-brand-25 text-brand-500 font-bold'
-                    : 'font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                    : 'font-medium text-gray-600 transition-colors duration-120 ease-out hover:bg-hover hover:text-gray-900',
                   FOCUS_RING
                 )}
               >
@@ -316,7 +316,7 @@ function TopBar() {
             aria-label={`My profile: ${name}`}
             onClick={() => setProfileOpen(true)}
             className={cn(
-              'flex h-11 shrink-0 items-center gap-2.5 rounded-full border border-gray-200 bg-surface pr-2.5 pl-1.5 hover:bg-gray-50',
+              'flex h-11 shrink-0 items-center gap-2.5 rounded-full border border-gray-200 bg-surface pr-2.5 pl-1.5 hover:bg-hover',
               FOCUS_RING
             )}
           >

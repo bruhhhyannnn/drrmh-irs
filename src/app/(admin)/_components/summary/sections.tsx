@@ -522,7 +522,7 @@ function ShowAllFooter({
 }
 
 const CAS_GRID =
-  'grid items-start gap-3 md:grid-cols-[minmax(0,1.2fr)_124px_minmax(0,1.5fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.2fr)_128px_minmax(0,1.6fr)_minmax(0,1.1fr)_64px]';
+  'grid items-start gap-3 md:grid-cols-[minmax(0,1.2fr)_minmax(150px,.9fr)_minmax(0,1.5fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.2fr)_minmax(150px,.9fr)_minmax(0,1.6fr)_minmax(0,1.1fr)_64px]';
 
 export function CasualtiesCard({ summary }: { summary: Summary }) {
   const [condition, setCondition] = useState('');
@@ -576,14 +576,20 @@ export function CasualtiesCard({ summary }: { summary: Summary }) {
               <div
                 key={c.id}
                 role="row"
-                className={cn(CAS_GRID, 'border-t border-line py-3', PAD_X)}
+                className={cn(
+                  CAS_GRID,
+                  'border-t border-line py-3 transition-colors duration-120 ease-out hover:bg-hover',
+                  PAD_X
+                )}
               >
                 <div role="cell" className="flex min-w-0 flex-col gap-0.5">
                   <span className="text-[16px] leading-[1.35] font-semibold">{c.name}</span>
                   <span className="text-[14px] text-gray-500">{c.who}</span>
                 </div>
-                <div role="cell" className="flex">
-                  <Chip tone={c.level.tone}>{c.condition}</Chip>
+                <div role="cell" className="flex min-w-0">
+                  <Chip tone={c.level.tone} dot wrap>
+                    {c.condition}
+                  </Chip>
                 </div>
                 <span
                   role="cell"
@@ -614,7 +620,9 @@ export function CasualtiesCard({ summary }: { summary: Summary }) {
                     <span className="text-[17px] leading-[1.35] font-semibold">{c.name}</span>
                     <span className="text-[14px] text-gray-500">{c.who}</span>
                   </div>
-                  <Chip tone={c.level.tone}>{c.condition}</Chip>
+                  <Chip tone={c.level.tone} dot wrap className="max-w-[55%]">
+                    {c.condition}
+                  </Chip>
                 </div>
                 {c.diagnosis && (
                   <span className="text-[16px] leading-[1.45] text-pretty text-gray-700">

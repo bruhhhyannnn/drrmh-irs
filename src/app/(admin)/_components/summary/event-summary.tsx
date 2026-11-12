@@ -181,7 +181,7 @@ export function EventSummary({
                 title="Stop comparing"
                 onClick={() => setCompareId(null)}
                 className={cn(
-                  'grid size-10 place-items-center rounded-full text-gray-600 hover:bg-gray-100',
+                  'grid size-10 place-items-center rounded-full text-gray-600 transition-colors duration-120 ease-out hover:bg-hover-strong hover:text-gray-900',
                   FOCUS_RING
                 )}
               >
@@ -193,7 +193,7 @@ export function EventSummary({
               type="button"
               onClick={() => setCompareId(previous?.id ?? null)}
               className={cn(
-                'flex h-10 items-center gap-2 rounded-full border-[1.5px] border-gray-300 bg-surface px-4 text-[16px] font-bold whitespace-nowrap text-gray-700 hover:bg-gray-50',
+                'flex h-10 items-center gap-2 rounded-full border-[1.5px] border-gray-300 bg-surface px-4 text-[16px] font-bold whitespace-nowrap text-gray-700 transition-colors duration-120 ease-out hover:border-gray-400 hover:bg-hover',
                 FOCUS_RING
               )}
             >

@@ -130,7 +130,8 @@ export function SmartLink({
 }
 
 const BUTTON_VARIANTS = {
-  primary: 'bg-brand-solid text-white hover:brightness-92',
+  primary:
+    'bg-brand-solid text-white hover:bg-brand-solid-hover hover:shadow-[0_6px_14px_rgba(161,29,29,.28)]',
   outline: 'border-[1.5px] border-gray-300 bg-surface text-gray-900 hover:brightness-97',
 };
 

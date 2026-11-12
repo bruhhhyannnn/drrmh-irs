@@ -101,7 +101,7 @@ export function SectionIndex({
             }}
             aria-label="Clear search"
             className={cn(
-              '-mr-1.5 grid size-8 place-items-center rounded-lg text-gray-500 hover:bg-gray-50',
+              '-mr-1.5 grid size-8 place-items-center rounded-lg text-gray-500 transition-colors duration-120 ease-out hover:bg-hover-strong hover:text-gray-900',
               FOCUS_RING
             )}
           >
@@ -127,7 +127,7 @@ export function SectionIndex({
                 'flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[14px] font-semibold whitespace-nowrap transition-colors',
                 on
                   ? 'bg-brand-solid border-transparent text-white'
-                  : 'border-gray-300 bg-surface text-gray-700 hover:bg-gray-50',
+                  : 'border-gray-300 bg-surface text-gray-700 hover:border-gray-400 hover:bg-hover',
                 FOCUS_RING
               )}
             >
@@ -213,7 +213,7 @@ export function SectionIndex({
                     onClick={() => onOpen(step)}
                     className={cn(
                       'flex min-h-11 w-full items-start gap-2 rounded-xl px-3 py-2.5 text-left text-[15px] leading-[1.35]',
-                      isCurrent ? 'bg-brand-25 font-bold text-gray-900' : 'hover:bg-gray-50',
+                      isCurrent ? 'bg-brand-25 font-bold text-gray-900' : 'hover:bg-hover',
                       FOCUS_RING
                     )}
                   >
@@ -237,7 +237,7 @@ export function SectionIndex({
                                 ? 'bg-brand-solid border-transparent font-bold text-white'
                                 : isAnswered
                                   ? 'border-success-300 bg-success-50 font-semibold text-success-700'
-                                  : 'border-gray-200 bg-surface text-gray-600 hover:bg-gray-50',
+                                  : 'border-gray-200 bg-surface text-gray-600 hover:bg-hover',
                               FOCUS_RING
                             )}
                           >
@@ -275,7 +275,7 @@ function QuestionList({
             type="button"
             onClick={() => onOpen(step, item.id)}
             className={cn(
-              'flex min-h-11 w-full items-start gap-2 rounded-xl px-3 py-2.5 text-left text-[15px] leading-[1.35] hover:bg-gray-50',
+              'flex min-h-11 w-full items-start gap-2 rounded-xl px-3 py-2.5 text-left text-[15px] leading-[1.35] hover:bg-hover',
               FOCUS_RING
             )}
           >

@@ -4,7 +4,7 @@ import { Button } from '@/components/ds';
 import { useCampuses } from '@/components/hooks/use-campus';
 import { useDebounced } from '@/components/hooks/use-debounced';
 import { useEvents } from '@/components/hooks/use-events';
-import { Download, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Download, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import {
@@ -32,6 +32,8 @@ import { EventDrawer } from './_components/event-drawer';
 
 type EventRow = NonNullable<ReturnType<typeof useEvents>['data']>[number];
 type Tab = 'all' | EventStatus;
+
+const detailsHref = (id: string) => `/events/details?id=${id}`;
 
 export default function EventsPage() {
   return (
@@ -88,7 +90,7 @@ function Events() {
           primary={e.name}
           // Tablet hides the Campus column, so the campus sits under the name.
           secondary={allCampuses ? <span className="lg:hidden">{e.campus.name}</span> : undefined}
-          href={`/events/details?id=${e.id}`}
+          href={detailsHref(e.id)}
         />
       ),
     },
@@ -134,18 +136,10 @@ function Events() {
     {
       key: 'actions',
       header: '',
-      width: '144px',
-      // View leaves the row on tablet; the name opens the details.
-      tabletWidth: '108px',
+      width: '108px',
       align: 'right',
       cell: (e) => (
         <RowActions>
-          <IconAction
-            label="View"
-            icon={<Eye size={18} aria-hidden />}
-            href={`/events/details?id=${e.id}`}
-            className="md:hidden lg:inline-flex"
-          />
           <IconAction
             label="Export PDF"
             icon={<Download size={18} aria-hidden />}
@@ -215,6 +209,8 @@ function Events() {
             columns={columns}
             rows={rows}
             rowKey={(e) => e.id}
+            // The whole row opens the event; the name is its link.
+            rowHref={(e) => detailsHref(e.id)}
             loading={isPending}
             empty={
               debounced
@@ -244,12 +240,8 @@ function Events() {
                   },
                   ...(e.quarter ? [{ label: 'Quarter', value: e.quarter }] : []),
                 ]}
+                href={detailsHref(e.id)}
                 actions={[
-                  {
-                    label: 'View',
-                    icon: <Eye size={16} aria-hidden />,
-                    href: `/events/details?id=${e.id}`,
-                  },
                   {
                     label: 'Export PDF',
                     icon: <Download size={16} aria-hidden />,

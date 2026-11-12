@@ -107,7 +107,7 @@ function RatePanel({ inAccountMenu }: { inAccountMenu: boolean }) {
             aria-label="Close"
             onClick={dismiss}
             className={cn(
-              'grid size-10 shrink-0 place-items-center rounded-full border border-gray-200 bg-surface text-gray-700 hover:bg-gray-50',
+              'grid size-10 shrink-0 place-items-center rounded-full border border-gray-200 bg-surface text-gray-700 transition-colors duration-120 ease-out hover:bg-hover-strong hover:text-gray-900',
               FOCUS_RING
             )}
           >
@@ -128,7 +128,7 @@ function RatePanel({ inAccountMenu }: { inAccountMenu: boolean }) {
               rel="noopener noreferrer"
               onClick={markRated}
               className={cn(
-                'bg-brand-solid flex h-13 items-center justify-center gap-2 rounded-full px-6 text-[15px] large-text:text-[17px] font-bold whitespace-nowrap text-white hover:brightness-92',
+                'bg-brand-solid flex h-13 items-center justify-center gap-2 rounded-full px-6 text-[15px] large-text:text-[17px] font-bold whitespace-nowrap text-white transition-[background-color,box-shadow] duration-120 ease-out hover:bg-brand-solid-hover hover:shadow-[0_6px_14px_rgba(161,29,29,.28)]',
                 FOCUS_RING
               )}
             >

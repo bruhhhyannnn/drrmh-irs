@@ -2,8 +2,14 @@
 
 import { completeOffCampusProfile } from '@/actions/users';
 import { LocationFields } from '@/components/common/location-fields';
-import { Button, FieldError, FieldLabel, PrivacyDrawer, TextInput } from '@/components/ds';
-import { FOCUS_RING } from '@/components/ds/focus';
+import {
+  Button,
+  Checkbox,
+  FieldError,
+  FieldLabel,
+  PrivacyDrawer,
+  TextInput,
+} from '@/components/ds';
 import { useLocationTree } from '@/components/hooks/use-assessments';
 import { cn, getInitials, supabase } from '@/lib';
 import { locationOptions } from '@/lib/location-options';
@@ -252,14 +258,10 @@ export function OffCampusSetup() {
               required
               placeholder="e.g. Safety Officer"
             />
-            <label className="flex cursor-pointer items-center gap-3 text-[15px] text-gray-700">
-              <input
-                type="checkbox"
-                className={cn('accent-brand-500 size-5 shrink-0', FOCUS_RING)}
-                {...form.register('work_same_as_home')}
-              />
-              My organization&apos;s address is the same as my home address
-            </label>
+            <Checkbox
+              label="My organization’s address is the same as my home address"
+              {...form.register('work_same_as_home')}
+            />
             {!form.watch('work_same_as_home') && (
               <>
                 <AddressPicker
@@ -396,24 +398,19 @@ function AddressPicker({
 function Consent({ form, onReadNotice }: { form: Form; onReadNotice: () => void }) {
   const error = form.formState.errors.consent?.message;
   return (
-    <div className="flex flex-col gap-1.5">
-      <label className="flex cursor-pointer items-start gap-3 text-[15px] leading-normal text-gray-700">
-        <input
-          type="checkbox"
-          className={cn('accent-brand-500 mt-1 size-5 shrink-0', FOCUS_RING)}
-          aria-invalid={!!error}
-          aria-describedby={error ? 'offcampus-consent-error' : undefined}
-          {...form.register('consent')}
-        />
-        <span>
+    <Checkbox
+      id="offcampus-consent"
+      error={error}
+      label={
+        <>
           I agree to the{' '}
           <button type="button" onClick={onReadNotice} className={cn(AUTH_LINK, 'font-semibold')}>
             data privacy notice
           </button>
           , and to DRRM-H keeping these details to manage my account.
-        </span>
-      </label>
-      <FieldError id="offcampus-consent-error">{error}</FieldError>
-    </div>
+        </>
+      }
+      {...form.register('consent')}
+    />
   );
 }
