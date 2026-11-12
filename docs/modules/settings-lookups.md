@@ -1,7 +1,7 @@
 ---
 type: module
 module: settings-lookups
-updated: 2026-11-05
+updated: 2026-11-12
 verified: true
 paths:
   - src/actions/settings/index.ts
@@ -36,7 +36,7 @@ Read this before adding or changing a lookup table or the Settings page.
 | `src/actions/settings/index.ts`                              | Generic CRUD by table name, plus plain getters for each lookup                               |
 | `src/components/hooks/use-settings.ts`                       | `useSettingsTable`, `useCreateSetting`, `useUpdateSetting`, `useDeleteSetting`, getter hooks |
 | `src/app/(admin)/settings/_components/settings-page.tsx`     | `SettingsPage`: `LOOKUPS` map, tab bar, header Add button                                    |
-| `src/app/(admin)/settings/_components/lookup-table.tsx`      | `LookupTable`, `LookupDrawer`, `LookupFormBody`, `linkedWarning`                             |
+| `src/app/(admin)/settings/_components/lookup-table.tsx`      | `LookupTable`, `LookupDrawer`, `LookupFormBody`, `linkedWarning`, `USED_BY`, `UsedBy`        |
 | `src/app/(admin)/settings/_components/population-fields.tsx` | `PopulationFields`: per-campus headcount fields, drag to reorder                             |
 | `src/app/(admin)/settings/<tab>/page.tsx`                    | One 5-line page per tab that renders `<SettingsPage tab="..." />`                            |
 | `src/app/(admin)/settings/page.tsx`                          | Redirects `/settings` to `/settings/clusters`                                                |
@@ -56,7 +56,7 @@ Read this before adding or changing a lookup table or the Settings page.
 `src/actions/settings/index.ts` (no auth or role checks):
 
 - `SettingsTable` type: `clusters`, `units`, `positions`, `casualty_conditions`, `campus`, `damage_conditions`, `buildings`. `MODEL_MAP` maps each to a Prisma model.
-- `getSettingsItems(table, filterId?)`: all rows with `INCLUDE_MAP` extras (parent names, linked record `_count`s). `filterId` narrows clusters by campus or units by cluster.
+- `getSettingsItems(table, filterId?)`: all rows with `INCLUDE_MAP` extras (parent names, linked record `_count`s; units count `users`, `reports` and `buildings` since DRRM-040). `filterId` narrows clusters by campus or units by cluster.
 - `createSettingsItem(table, data)`, `updateSettingsItem(table, id, data)`, `deleteSettingsItem(table, id)`: dynamic `prisma[model]` calls; errors go through `toFriendlyError`; revalidate `/settings` and the tab path from `toSettingsPath`.
 - Getters: `getUnits(clusterId?)`, `getUserTypes()`, `getPositions()`, `getEventStatuses()`, `getDamageConditions()`, `getClusters()`, `getCampus()`, `getCasualtyConditions()`.
 
@@ -67,6 +67,7 @@ Population field actions are listed in [[field-reports]].
 - Routes: `/settings/clusters`, `/settings/units`, `/settings/buildings`, `/settings/positions`, `/settings/casualty-conditions`, `/settings/damage-conditions`, `/settings/population-fields`.
 - `LookupTable` loads the whole table, then filters on the client by the scoped campus (`useScopedCampusId()`), an optional cluster filter (units and buildings), and search. It pages 10 rows at a time.
 - Row actions: Edit (drawer), active switch (`is_active`), Delete (confirm dialog with `linkedWarning`).
+- Used by (DRRM-040), on Clusters (users, units, reports), Units (users, reports, buildings) and Positions (users) (`USED_BY`): the counts, or an outlined Unused chip when nothing points at the row. An All / In use / Unused segmented control with counts filters the table; the Used by header sorts most used first, then least, then by name again. When rows are unused, a note above the table says how many and that deleting them changes nothing else, with Show unused. Delete stays per row: red on an unused row, grey on one in use (whose dialog still says what points at it). The phone card shows Used by too.
 - `LookupFormBody` picks the zod schema from `SCHEMAS` (`clusterSchema`, `unitSchema`, `buildingSchema`, `positionSchema`, `casualtyConditionSchema`, `damageConditionSchema`). Clusters get a Campus field for Super Admins only; Administrators' clusters use their own campus. Units pick a cluster. Buildings pick a unit ("Unit · Cluster") and floors (1 to 200).
 - `PopulationFields`: Super Admins get a tab per active campus; Administrators see their own campus only. Order is saved on drop through `reorderCampusPopulationCategories`.
 - Query keys equal the table name (`['clusters', filterId]`). Building mutations also invalidate `building-summaries`, `admin-assessments`, `assessment-setup`, `building-safety` (`ALSO_SHOWN_IN`).

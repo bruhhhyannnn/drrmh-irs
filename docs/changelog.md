@@ -9,6 +9,12 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-040 Settings: Used by: 2026-11-12 (branch `feat/DRRM-040-settings-used-by`)
+
+Plan: [[plan/feature/DRRM-040-settings-used-by]] · [[settings-lookups]]
+
+- Clusters, Units and Positions show what uses each row (users, units, reports, buildings), or Unused. Filter All / In use / Unused, sort by Used by, and a note says how many are unused and safe to delete.
+
 ## DRRM-039 Google profile photos: 2026-11-12 (branch `feat/DRRM-039-google-profile-photos`)
 
 Plan: [[plan/feature/DRRM-039-google-profile-photos]] · [[users]] · [[auth]]
