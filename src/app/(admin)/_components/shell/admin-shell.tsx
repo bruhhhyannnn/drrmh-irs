@@ -3,7 +3,7 @@
 import { ProfileDrawer } from '@/components/auth';
 import { figtree, FOCUS_RING, splineSansMono } from '@/components/ds';
 import { usePendingBystanderCount } from '@/components/hooks/use-bystander-reports';
-import { cn, getInitials } from '@/lib';
+import { cn } from '@/lib';
 import { useAuthStore } from '@/store';
 import { ChevronDown, Menu } from 'lucide-react';
 import Image from 'next/image';
@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import packageJson from '../../../../../package.json';
-import { CampusMark, Mono } from '../ui';
+import { Avatar, CampusMark, Mono } from '../ui';
 import { CampusLabel, CampusSwitcher, useIsSuperAdmin, useScopedCampusId } from './campus-switcher';
 import {
   CAMPUSES_KEY,
@@ -412,12 +412,12 @@ function TopBar() {
               FOCUS_RING
             )}
           >
-            <span
-              aria-hidden
-              className="bg-brand-solid grid size-8 place-items-center rounded-full text-[13px] font-bold text-white uppercase"
-            >
-              {getInitials(name).slice(0, 2)}
-            </span>
+            <Avatar
+              name={name}
+              size={32}
+              highlight
+              src={userProfile?.avatar?.show ? userProfile.avatar.url : null}
+            />
             <span className="hidden max-w-50 truncate text-[14px] font-semibold lg:inline">
               {name}
             </span>

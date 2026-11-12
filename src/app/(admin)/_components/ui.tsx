@@ -1,4 +1,4 @@
-import { cn, getInitials } from '@/lib';
+import { cn } from '@/lib';
 import type { Tone } from '../_lib/status';
 
 export { Skeleton } from '@/components/ui/skeleton';
@@ -77,32 +77,7 @@ export function Mono({ className, children }: { className?: string; children: Re
   return <span className={cn('font-landing-mono', className)}>{children}</span>;
 }
 
-/** Initials in a circle: maroon for the signed-in admin, grey for everyone else. */
-export function Avatar({
-  name,
-  size = 36,
-  highlight = false,
-}: {
-  name: string;
-  size?: 32 | 36 | 40 | 48;
-  highlight?: boolean;
-}) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        'grid shrink-0 place-items-center rounded-full font-bold uppercase',
-        highlight ? 'bg-brand-solid text-white' : 'bg-gray-100 text-gray-700',
-        size === 32 && 'size-8 text-[14px]',
-        size === 36 && 'size-9 text-[14px]',
-        size === 40 && 'size-10 text-[16px]',
-        size === 48 && 'size-12 text-[18px]'
-      )}
-    >
-      {getInitials(name || '?').slice(0, 2)}
-    </span>
-  );
-}
+export { Avatar } from './avatar';
 
 export { CampusMark } from './campus-mark';
 

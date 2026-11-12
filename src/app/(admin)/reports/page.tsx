@@ -5,6 +5,7 @@ import { useDebounced } from '@/components/hooks/use-debounced';
 import { useEvents } from '@/components/hooks/use-events';
 import { useDeleteReport, useReports } from '@/components/hooks/use-reports';
 import { useSettingsTable } from '@/components/hooks/use-settings';
+import { useAvatars } from '@/components/hooks/use-users';
 import { totalPopulationCount } from '@/lib/utils';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
@@ -27,7 +28,7 @@ import {
 } from '../_components/data-list';
 import { PageHeader } from '../_components/page-header';
 import { useEventTitle, useScopedCampusId } from '../_components/shell/campus-switcher';
-import { CampusMark, Card, Chip } from '../_components/ui';
+import { Avatar, CampusMark, Card, Chip } from '../_components/ui';
 import { formatDate, formatTime, personName, plural } from '../_lib/format';
 import { ReportDrawer } from './_components/report-drawer';
 
@@ -71,6 +72,7 @@ export default function ReportsPage() {
   const openReport = (reportId: string) => setDrawer({ open: true, reportId });
 
   const rows = data?.data ?? [];
+  const { data: avatars } = useAvatars(rows.flatMap((r) => (r.user_id ? [r.user_id] : [])));
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / (data?.perPage ?? 10)));
   const clusterOptions = (clusters as { id: string; name: string; campus_id: string }[])
@@ -104,6 +106,12 @@ export default function ReportsPage() {
       width: 'minmax(0,1.4fr)',
       cell: (r) => (
         <NameCell
+          avatar={
+            <Avatar
+              name={personName(r.user) || '?'}
+              src={r.user_id ? avatars?.[r.user_id] : null}
+            />
+          }
           primary={personName(r.user) || 'Unknown reporter'}
           secondary={placeOf(r)}
           opensRow="open report"

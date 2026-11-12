@@ -3,7 +3,12 @@
 import { Button, Switch } from '@/components/ds';
 import { useDebounced } from '@/components/hooks/use-debounced';
 import { useUserTypes } from '@/components/hooks/use-settings';
-import { useDeleteUser, useSetUserActive, useUsers } from '@/components/hooks/use-users';
+import {
+  useAvatars,
+  useDeleteUser,
+  useSetUserActive,
+  useUsers,
+} from '@/components/hooks/use-users';
 import { useAuthStore } from '@/store';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
@@ -43,6 +48,7 @@ export default function UsersPage() {
   const [query, setQuery] = useState('');
   const debounced = useDebounced(query);
   const { data: users = [], isPending, error } = useUsers(debounced, campusId || undefined);
+  const { data: avatars } = useAvatars(users.map((u) => u.id));
   const { data: userTypes = [] } = useUserTypes();
   const setActive = useSetUserActive();
   const deleteUser = useDeleteUser();
@@ -106,7 +112,7 @@ export default function UsersPage() {
       width: 'minmax(0,1.8fr)',
       cell: (u) => (
         <NameCell
-          avatar={<Avatar name={fullName(u)} highlight={u.id === myId} />}
+          avatar={<Avatar name={fullName(u)} src={avatars?.[u.id]} highlight={u.id === myId} />}
           primary={fullName(u)}
           secondary={u.email}
           flag={u.is_profile_complete ? undefined : 'Profile incomplete'}
@@ -236,7 +242,14 @@ export default function UsersPage() {
             }
             card={(u) => (
               <MobileCard
-                avatar={<Avatar name={fullName(u)} size={40} highlight={u.id === myId} />}
+                avatar={
+                  <Avatar
+                    name={fullName(u)}
+                    src={avatars?.[u.id]}
+                    size={40}
+                    highlight={u.id === myId}
+                  />
+                }
                 title={fullName(u)}
                 subtitle={u.email}
                 chip={
