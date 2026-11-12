@@ -166,7 +166,7 @@ export function ListCount({
 
 export interface Column<T> {
   key: string;
-  header: string;
+  header: React.ReactNode;
   /** A grid track, e.g. `minmax(0,1.4fr)` or `72px`. */
   width: string;
   /** The track on tablet, when it differs (e.g. fewer row actions). */
@@ -517,6 +517,7 @@ export function IconAction({
   onClick,
   href,
   disabled,
+  tone,
   className: wrapperClassName,
 }: {
   label: string;
@@ -524,11 +525,16 @@ export function IconAction({
   onClick?: () => void;
   href?: string;
   disabled?: boolean;
+  /** `danger`: a red icon, e.g. Delete on a row nothing points at. */
+  tone?: 'danger';
   /** On the wrapper, e.g. to hide an action on tablet. */
   className?: string;
 }) {
   const className = cn(
-    'grid size-9 shrink-0 place-items-center rounded-[10px] text-gray-500 transition-colors duration-120 ease-out hover:bg-hover-strong hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-40',
+    'grid size-9 shrink-0 place-items-center rounded-[10px] transition-colors duration-120 ease-out disabled:cursor-not-allowed disabled:opacity-40',
+    tone === 'danger'
+      ? 'text-error-700 hover:bg-error-50'
+      : 'text-gray-500 hover:bg-hover-strong hover:text-gray-900',
     FOCUS_RING
   );
   return (
