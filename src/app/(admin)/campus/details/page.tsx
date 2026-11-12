@@ -9,6 +9,7 @@ import { Suspense, useState } from 'react';
 import toast from 'react-hot-toast';
 import { ConfirmDialog } from '../../_components/confirm-dialog';
 import { PageHeader } from '../../_components/page-header';
+import { CompletedChip } from '../../_components/summary/completed-note';
 import { EventSummary } from '../../_components/summary/event-summary';
 import { CampusMark, Card, Chip, Skeleton } from '../../_components/ui';
 import { formatEventWindow, plural } from '../../_lib/format';
@@ -145,9 +146,13 @@ function CampusDetails() {
                   className="font-semibold text-gray-900"
                 />
               </div>
-              <Chip tone={eventTone(selected.status.name)} dot>
-                {capitalize(selected.status.name)}
-              </Chip>
+              {eventStatusKey(selected.status.name) === 'completed' ? (
+                <CompletedChip eventId={selected.id} />
+              ) : (
+                <Chip tone={eventTone(selected.status.name)} dot>
+                  {capitalize(selected.status.name)}
+                </Chip>
+              )}
               <span className="text-[14px] leading-[1.4] text-gray-500">
                 {formatEventWindow(selected.started_at, selected.ended_at)} ·{' '}
                 {plural(events.length, 'event', 'events')} at this campus
