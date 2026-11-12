@@ -59,7 +59,7 @@ export default function CampusPage() {
                 <Link
                   href={`/campus/details?id=${campus.id}`}
                   className={cn(
-                    'flex min-w-0 flex-col gap-4 rounded-[22px] border border-gray-200 bg-surface p-5 text-gray-900 shadow-[0_1px_3px_rgba(16,24,40,.08)] transition-shadow hover:border-gray-300 hover:shadow-[0_4px_8px_-2px_rgba(16,24,40,.10)]',
+                    'flex min-w-0 flex-col gap-4 rounded-[22px] border border-gray-200 bg-surface p-5 text-gray-900 shadow-[0_1px_3px_rgba(16,24,40,.08)] transition-[border-color,box-shadow,translate] duration-120 ease-out hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-[0_10px_24px_rgba(16,24,40,.12)] motion-reduce:hover:translate-y-0',
                     FOCUS_RING
                   )}
                 >

@@ -46,7 +46,10 @@ export function Breadcrumb({ parts }: { parts: { label: string; onClick?: () => 
                 <button
                   type="button"
                   onClick={part.onClick}
-                  className={cn('text-brand-500 rounded font-semibold hover:underline', FOCUS_RING)}
+                  className={cn(
+                    'text-brand-500 rounded font-semibold decoration-2 underline-offset-3 transition-colors duration-120 ease-out hover:text-brand-600 hover:underline',
+                    FOCUS_RING
+                  )}
                 >
                   {part.label}
                 </button>
@@ -189,7 +192,7 @@ export function ChildrenTable({
                   type="button"
                   onClick={() => onOpen(row)}
                   className={cn(
-                    'text-brand-500 rounded text-left font-semibold hover:underline',
+                    'text-brand-500 rounded text-left font-semibold decoration-2 underline-offset-3 transition-colors duration-120 ease-out hover:text-brand-600 hover:underline',
                     FOCUS_RING
                   )}
                 >

@@ -55,7 +55,7 @@ function BuildingPicker({
         aria-controls={listId}
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          'flex min-h-13 w-full items-center gap-3 rounded-2xl border border-gray-300 bg-surface px-4 py-2 text-left hover:bg-gray-50',
+          'flex min-h-13 w-full items-center gap-3 rounded-2xl border border-gray-300 bg-surface px-4 py-2 text-left transition-colors duration-120 ease-out hover:border-gray-400 hover:bg-hover',
           FOCUS_RING
         )}
       >
@@ -97,7 +97,7 @@ function BuildingPicker({
                   onClick={() => pick(b.id)}
                   className={cn(
                     'flex flex-col gap-0.5 rounded-xl px-3 py-2 text-left',
-                    on ? 'bg-brand-25' : 'hover:bg-gray-50',
+                    on ? 'bg-brand-25' : 'hover:bg-hover',
                     FOCUS_RING
                   )}
                 >

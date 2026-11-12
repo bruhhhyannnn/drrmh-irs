@@ -16,7 +16,7 @@ import { moreGroups, navFor } from '../_components/shell/nav';
 const { version } = packageJson;
 
 const ROW = cn(
-  'flex min-h-16 w-full items-center gap-3.5 border-t border-line px-4 py-2.5 text-left text-gray-900 first:border-t-0 hover:bg-gray-50',
+  'flex min-h-16 w-full items-center gap-3.5 border-t border-line px-4 py-2.5 text-left text-gray-900 first:border-t-0 hover:bg-hover',
   FOCUS_RING,
   'focus-visible:-outline-offset-3'
 );

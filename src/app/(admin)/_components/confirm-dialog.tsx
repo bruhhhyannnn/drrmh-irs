@@ -162,7 +162,7 @@ function DialogPanel({
             aria-checked={checkbox.checked}
             onClick={() => checkbox.onChange(!checkbox.checked)}
             className={cn(
-              'flex items-start gap-3 rounded-2xl border border-gray-300 bg-surface px-3.5 py-3 text-left hover:bg-gray-50',
+              'flex items-start gap-3 rounded-2xl border border-gray-300 bg-surface px-3.5 py-3 text-left transition-colors duration-120 ease-out hover:border-gray-400 hover:bg-hover',
               FOCUS_RING
             )}
           >

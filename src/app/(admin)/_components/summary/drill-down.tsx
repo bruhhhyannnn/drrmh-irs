@@ -24,7 +24,8 @@ const PAD_X = 'px-4 md:px-5';
 export type ScopeLinks = (target: ScopeTarget) => string;
 
 /** A row whose whole area follows the `DrillLink` inside it. */
-export const DRILL_ROW = 'relative -mx-2 rounded-lg px-2 transition-colors hover:bg-gray-50';
+export const DRILL_ROW =
+  'relative -mx-2 rounded-lg px-2 transition-colors duration-120 ease-out hover:bg-hover';
 
 export function DrillLink({
   href,
@@ -124,7 +125,7 @@ export function ScopeBreadcrumb({
                 <Link
                   href={crumb.href}
                   className={cn(
-                    'rounded-sm font-semibold text-brand-500 hover:underline',
+                    'rounded-sm font-semibold text-brand-500 decoration-2 underline-offset-3 transition-colors duration-120 ease-out hover:text-brand-600 hover:underline',
                     FOCUS_RING
                   )}
                 >
@@ -211,7 +212,7 @@ export function UnitReportsCard({ summary }: { summary: Summary }) {
                 type="button"
                 onClick={() => setDrawer({ open: true, reportId: r.id })}
                 className={cn(
-                  'flex min-h-14 w-full items-center gap-3 py-2 text-left transition-colors hover:bg-gray-50',
+                  'flex min-h-14 w-full items-center gap-3 py-2 text-left transition-colors duration-120 ease-out hover:bg-hover',
                   PAD_X,
                   FOCUS_RING
                 )}

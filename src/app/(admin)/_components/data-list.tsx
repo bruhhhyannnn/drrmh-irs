@@ -49,10 +49,10 @@ export function ListTabs<K extends string>({
             aria-selected={on}
             onClick={() => onChange(tab.key)}
             className={cn(
-              'flex h-13 shrink-0 items-center gap-2 border-b-2 px-3 pt-0.5 text-[16px] whitespace-nowrap',
+              'flex h-13 shrink-0 items-center gap-2 border-b-2 px-3 pt-0.5 text-[16px] whitespace-nowrap transition-colors duration-120 ease-out',
               on
                 ? 'border-brand-500 text-brand-500 font-bold'
-                : 'border-transparent font-medium text-gray-600 hover:text-gray-900',
+                : 'border-transparent font-medium text-gray-600 hover:border-gray-300 hover:text-gray-900',
               FOCUS_RING,
               'focus-visible:-outline-offset-3'
             )}
@@ -467,7 +467,7 @@ export function IconAction({
   className?: string;
 }) {
   const className = cn(
-    'grid size-9 shrink-0 place-items-center rounded-[10px] text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-40',
+    'grid size-9 shrink-0 place-items-center rounded-[10px] text-gray-500 transition-colors duration-120 ease-out hover:bg-hover-strong hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-40',
     FOCUS_RING
   );
   return (
@@ -514,7 +514,7 @@ export function RowButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'flex h-9 items-center gap-1.5 rounded-full border-[1.5px] border-gray-300 bg-surface px-3.5 text-[14px] font-bold whitespace-nowrap text-gray-900 hover:bg-gray-50',
+        'flex h-9 items-center gap-1.5 rounded-full border-[1.5px] border-gray-300 bg-surface px-3.5 text-[14px] font-bold whitespace-nowrap text-gray-900 transition-colors duration-120 ease-out hover:border-gray-400 hover:bg-hover',
         FOCUS_RING
       )}
     >
@@ -640,7 +640,9 @@ export function Pager({
   const button = (disabled: boolean) =>
     cn(
       'grid size-10 place-items-center rounded-full border bg-surface',
-      disabled ? 'border-gray-200 text-gray-400' : 'border-gray-300 text-gray-700 hover:bg-gray-50',
+      disabled
+        ? 'border-gray-200 text-gray-400'
+        : 'border-gray-300 text-gray-700 hover:border-gray-400 hover:bg-hover',
       FOCUS_RING
     );
   return (

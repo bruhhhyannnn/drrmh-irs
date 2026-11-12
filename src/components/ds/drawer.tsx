@@ -156,7 +156,7 @@ function DrawerPanel({
             aria-label="Close"
             onClick={onClose}
             className={cn(
-              'grid size-10 shrink-0 place-items-center rounded-full border border-gray-200 bg-surface text-gray-700 transition-colors hover:bg-gray-50',
+              'grid size-10 shrink-0 place-items-center rounded-full border border-gray-200 bg-surface text-gray-700 transition-colors duration-120 ease-out hover:bg-hover-strong hover:text-gray-900',
               FOCUS_RING
             )}
           >

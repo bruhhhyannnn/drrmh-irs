@@ -36,7 +36,7 @@ export function HotlinesSection() {
             <a
               href={`tel:${h.tel}`}
               className={cn(
-                'flex min-h-16 items-center gap-3.5 rounded-2xl border-[1.5px] border-gray-200 bg-surface px-4 py-3 text-gray-900 transition-colors hover:border-gray-300 hover:bg-gray-50',
+                'flex min-h-16 items-center gap-3.5 rounded-2xl border-[1.5px] border-gray-200 bg-surface px-4 py-3 text-gray-900 transition-[border-color,box-shadow,translate] duration-120 ease-out hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-[0_10px_24px_rgba(16,24,40,.12)] motion-reduce:hover:translate-y-0',
                 FOCUS_RING
               )}
             >

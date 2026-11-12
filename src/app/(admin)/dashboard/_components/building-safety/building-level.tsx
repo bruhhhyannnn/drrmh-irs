@@ -225,7 +225,10 @@ function CompareTable({
 }) {
   const head = (label: string, href?: string) =>
     href ? (
-      <Link href={href} className="text-brand-500 hover:underline">
+      <Link
+        href={href}
+        className="text-brand-500 decoration-2 underline-offset-3 transition-colors duration-120 ease-out hover:text-brand-600 hover:underline"
+      >
         {label}
       </Link>
     ) : (

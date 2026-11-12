@@ -121,7 +121,7 @@ function BystanderDetails({ report: r }: { report: BystanderRow }) {
                     target="_blank"
                     rel="noreferrer"
                     className={cn(
-                      'text-brand-500 rounded text-[13px] font-bold hover:underline',
+                      'text-brand-500 rounded text-[13px] font-bold decoration-2 underline-offset-3 transition-colors duration-120 ease-out hover:text-brand-600 hover:underline',
                       FOCUS_RING
                     )}
                   >
@@ -218,7 +218,10 @@ function BystanderDetails({ report: r }: { report: BystanderRow }) {
                 value: (
                   <a
                     href={`tel:${r.contact_number}`}
-                    className={cn('text-brand-500 rounded hover:underline', FOCUS_RING)}
+                    className={cn(
+                      'text-brand-500 rounded decoration-2 underline-offset-3 transition-colors duration-120 ease-out hover:text-brand-600 hover:underline',
+                      FOCUS_RING
+                    )}
                   >
                     {formatPhone(r.contact_number)}
                   </a>

@@ -283,7 +283,7 @@ function LevelScores({
                       'h-8 rounded-full border px-3 text-[13px] font-semibold',
                       metric === m
                         ? 'bg-brand-solid border-transparent text-white'
-                        : 'border-gray-300 bg-surface text-gray-700 hover:bg-gray-50',
+                        : 'border-gray-300 bg-surface text-gray-700 hover:border-gray-400 hover:bg-hover',
                       FOCUS_RING
                     )}
                   >

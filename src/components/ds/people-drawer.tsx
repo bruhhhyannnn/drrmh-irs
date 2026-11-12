@@ -323,7 +323,7 @@ export function PeopleDrawer(props: PeopleDrawerProps) {
                       aria-pressed={editing === i}
                       onClick={() => (editing === i ? cancelEdit() : startEdit(i))}
                       className={cn(
-                        'grid size-10 shrink-0 place-items-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 aria-pressed:bg-gray-100 aria-pressed:text-gray-900',
+                        'grid size-10 shrink-0 place-items-center rounded-full text-gray-500 transition-colors duration-120 ease-out hover:bg-hover-strong hover:text-gray-900 aria-pressed:bg-gray-100 aria-pressed:text-gray-900',
                         FOCUS_RING
                       )}
                     >

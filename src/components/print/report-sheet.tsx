@@ -89,7 +89,7 @@ export function PrintToolbar({ back, label }: { back: React.ReactNode; label: st
         type="button"
         onClick={() => window.print()}
         className={cn(
-          'bg-brand-solid flex h-10 items-center gap-2 rounded-full px-4.5 text-[14px] font-bold text-white hover:brightness-92',
+          'bg-brand-solid flex h-10 items-center gap-2 rounded-full px-4.5 text-[14px] font-bold text-white transition-[background-color,box-shadow] duration-120 ease-out hover:bg-brand-solid-hover hover:shadow-[0_6px_14px_rgba(161,29,29,.28)]',
           FOCUS_RING
         )}
       >
