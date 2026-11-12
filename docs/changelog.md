@@ -9,6 +9,13 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-034 The completed note minimizes: 2026-11-12 (branch `feat/DRRM-034-page-header-menu-completed-note`)
+
+Plan: [[plan/feature/DRRM-034-page-header-menu-completed-note]] · [[events]]
+
+- On a completed event, the "Completed on … by …" note minimizes into the status chip (Completed, with a lock and a chevron), which opens it again. The first visit shows it open and minimizes it after 8 seconds (hover or focus pauses it; Keep open stops it); later visits start minimized unless you kept it open. Remembered per event in this browser. Event details and the campus page.
+- The ⋯ menu half of this plan shipped earlier, in the PageHeader ⋯ menu work (PR #112).
+
 ## DRRM-033 Visible hover, whole-row click, one Checkbox, casualties column fix: 2026-11-12 (branch `feat/DRRM-033-ui-polish-hover-checkbox`)
 
 Plan: [[plan/feature/DRRM-033-ui-polish-hover-checkbox]] · [[design-system]] · [[events]]
