@@ -1,9 +1,16 @@
 'use client';
 
 import { Drawer, SwitchField, TextInput } from '@/components/ds';
-import { useCreateCampus, useUpdateCampus } from '@/components/hooks/use-campus';
+import {
+  useCampusLogos,
+  useCreateCampus,
+  useSetCampusLogo,
+  useUpdateCampus,
+} from '@/components/hooks/use-campus';
 import { campusSchema, type CampusFormData } from '@/lib';
+import { ownCampusLogo } from '@/lib/campus-logo';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import {
@@ -13,8 +20,12 @@ import {
   FormField,
   FormGrid,
 } from '../../_components/drawer-parts';
+import { LogoField, type LogoChoice } from './logo-field';
 
-/** Add campus / Edit campus: a name and Active, on by default. */
+/**
+ * Add campus / Edit campus: the logo, a name and Active (on by default). The logo is saved
+ * after the campus, so a logo problem never loses the campus.
+ */
 export function CampusDrawer({
   open,
   onClose,
@@ -26,20 +37,32 @@ export function CampusDrawer({
 }) {
   const createCampus = useCreateCampus();
   const updateCampus = useUpdateCampus();
+  const setLogo = useSetCampusLogo();
 
-  const save = async (data: CampusFormData) => {
+  const save = async (data: CampusFormData, logo: LogoChoice) => {
+    let saved: { id: string };
     try {
-      if (campus) {
-        await updateCampus.mutateAsync({ id: campus.id, data });
-        toast.success('Campus updated');
-      } else {
-        await createCampus.mutateAsync(data);
-        toast.success(`${data.name} added`);
-      }
-      onClose();
+      saved = campus
+        ? await updateCampus.mutateAsync({ id: campus.id, data })
+        : await createCampus.mutateAsync(data);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'The campus could not be saved.');
+      return;
     }
+    if (logo.kind !== 'keep') {
+      try {
+        await setLogo.mutateAsync({
+          campusId: saved.id,
+          logo: logo.kind === 'new' ? logo.blob : null,
+        });
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'The logo could not be saved.');
+        onClose();
+        return;
+      }
+    }
+    toast.success(campus ? 'Campus updated' : `${data.name} added`);
+    onClose();
   };
 
   return (
@@ -57,9 +80,9 @@ export function CampusDrawer({
           <DrawerButton
             type="submit"
             form="campus-form"
-            loading={createCampus.isPending || updateCampus.isPending}
+            loading={createCampus.isPending || updateCampus.isPending || setLogo.isPending}
           >
-            {campus ? 'Update campus' : 'Create campus'}
+            {campus ? 'Update campus' : 'Add campus'}
           </DrawerButton>
         </DrawerButtons>
       }
@@ -74,8 +97,11 @@ function CampusForm({
   onSave,
 }: {
   campus?: { id: string; name: string; is_active: boolean } | null;
-  onSave: (data: CampusFormData) => Promise<void>;
+  onSave: (data: CampusFormData, logo: LogoChoice) => Promise<void>;
 }) {
+  const { data: logos } = useCampusLogos();
+  const [logo, setLogo] = useState<LogoChoice>({ kind: 'keep' });
+  const uploaded = (campus && logos?.byId[campus.id]) || null;
   const {
     register,
     control,
@@ -86,12 +112,18 @@ function CampusForm({
     defaultValues: { name: campus?.name ?? '', is_active: campus?.is_active ?? true },
   });
 
-  const onSubmit = handleSubmit(onSave);
+  const onSubmit = handleSubmit((data) => onSave(data, logo));
 
   return (
     <form id="campus-form" onSubmit={onSubmit} noValidate>
       <DrawerBody>
         <FormGrid>
+          <LogoField
+            current={uploaded}
+            fallback={campus ? ownCampusLogo(campus.name) : null}
+            value={logo}
+            onChange={setLogo}
+          />
           <FormField
             id="campus-name"
             label="Campus name"
@@ -115,7 +147,7 @@ function CampusForm({
                 <SwitchField
                   id="campus-active"
                   label="Active"
-                  description="Inactive campuses are hidden from the event form."
+                  description="Shows in the campus switcher and campus pickers."
                   checked={field.value}
                   onChange={field.onChange}
                 />
