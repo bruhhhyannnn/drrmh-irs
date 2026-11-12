@@ -11,14 +11,18 @@ export const metadata: Metadata = {
   title: 'IRS | DRRM-H',
   description:
     'UP Manila Disaster Risk Reduction Management in Health Program - Incident Reporting System',
-  icons: {
-    icon: '/irs-logo.png',
-  },
+  // The tab icon and the iPhone home-screen icon come from src/app/favicon.ico, icon.png and
+  // apple-icon.png, which Next.js links on its own.
   manifest: '/manifest.json',
+  appleWebApp: { title: 'IRS', capable: true },
 };
 
 export const viewport: Viewport = {
-  themeColor: '#000000',
+  // The installed app's title bar follows the device theme: white, or the dark canvas.
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0c111d' },
+  ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
