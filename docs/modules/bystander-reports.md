@@ -1,6 +1,6 @@
 ---
 type: module
-updated: 2026-10-29
+updated: 2026-11-12
 module: bystander-reports
 paths:
   - src/actions/emergency-reports/index.ts
@@ -47,7 +47,8 @@ Anyone on campus can report an emergency without signing in, usually by scanning
 `src/actions/emergency-reports/index.ts`:
 
 - `createBystanderReport(data, photos?)`: validates with `bystanderReportSchema`; sets status `pending`; keeps only counts > 0 for fields active at the cluster's campus; uploads photos first, then creates the row; removes the uploads if the row fails. Anonymous, no auth.
-- `getBystanderReports(campusId?)`: everything the list and drawer need, newest first. Campus via `clusters.campus_id`.
+- `getBystanderReports(campusId?)`: everything the list and drawer need, newest first. Campus via `clusters.campus_id`. Each row has `unopened` (no admin has opened it: `seen_at` is null), read with its own query so it is false for all before `prisma/manual/DRRM-042-bystander-seen.sql` runs (DRRM-042).
+- `markBystanderReportSeen(token, id)`: admins only; sets `seen_at` the first time any admin opens the report.
 - `updateBystanderReportStatus(id, statusName)`: `reviewed`, `verified` or `dismissed`.
 - `getPendingBystanderCount(campusId?)`: reports with no status or `pending` (sidebar badge, dashboard tile).
 - `deleteBystanderReport(id)`: deletes the row (people and counts cascade).
@@ -60,6 +61,7 @@ None of the admin actions check the caller's role or campus.
 
 ## Client side
 
+- List (DRRM-042): the whole row (and the phone card) opens the report in the drawer (View is gone); Review / Verify stay as the row's next step, above the row link. The Campus column shows the campus logo. An unopened report has a red dot before the incident and its age in red until someone opens it; the Sent column is relative under 24 hours ("25 min ago", "3 h ago"), then "Yesterday, 4:12 PM" or the date. A camera and the count show when the bystander attached photos. Opening a report marks it seen (`useMarkBystanderReportSeen`, which clears the dot at once).
 - `/bystander-report` (public, no auth). Steps: what and where (required), people and damage (optional), review and send. A single active campus is picked automatically. After sending, the next report keeps the same campus.
 - After a report sends (or a queued one goes through), `ResultScreen` shows `RateAppDialog` until the app is rated on that browser ([[design-system]]). Unit is optional and lists No unit first; there is no Other here, since bystanders are anonymous.
 - `/emergency-reports` (admin). Tabs: Needs action (pending + reviewed), Verified, Dismissed, All. Scoped by `useScopedCampusId()`.

@@ -9,6 +9,13 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-042 Bystander reports and Assessments polish: 2026-11-12 (branch `feat/DRRM-042-bystander-assessments-polish`)
+
+Plan: [[plan/feature/DRRM-042-bystander-assessments-polish]] · [[bystander-reports]] · [[assessment-admin]]
+
+- Bystander reports: the row opens the report; unopened reports get a red dot and a red age until someone opens them; campus logos and a photo count. Needs `prisma/manual/DRRM-042-bystander-seen.sql`; until it runs, no report shows as unopened.
+- Assessments: quick filters (Needs follow-up, Not yet assessed, Not assessed in 6 months), scores under 60% in red, and the row opens the building.
+
 ## DRRM-041 Favicon and app icons: 2026-11-12 (branch `feat/DRRM-041-favicon-app-icons`)
 
 Plan: [[plan/feature/DRRM-041-favicon-app-icons]] · [[offline-pwa]]
