@@ -105,9 +105,9 @@ All hovers ease in over 120ms. Focus rings are unchanged.
 
 **Casualties fix** (`src/app/(admin)/_components/summary/sections.tsx`)
 
-- [ ] `CAS_GRID` gives Condition `minmax(150px,.9fr)` (lg and md) instead of 124–128px.
-- [ ] `Chip` (`src/app/(admin)/_components/ui.tsx`) gets a `wrap` prop: `h-auto min-h-6 py-0.5 whitespace-normal rounded-[12px]`, with the dot aligned to the first line.
-- [ ] Use `wrap` in the Casualties table, the phone list and the Damage table.
+- [x] `CAS_GRID` gives Condition `minmax(150px,.9fr)` (lg and md) instead of 124–128px.
+- [x] `Chip` (`src/app/(admin)/_components/ui.tsx`) gets a `wrap` prop: `h-auto min-h-6 py-0.5 whitespace-normal rounded-[12px]`, with the dot aligned to the first line.
+- [x] Use `wrap` in the Casualties table, the phone list and the Damage table.
 - [ ] Check with "Minor injuries — no hospitalization needed".
 
 ---
@@ -130,7 +130,7 @@ All hovers ease in over 120ms. Focus rings are unchanged.
 - [ ] Replace hover classes across `src/` (33 places), then check light and dark
 - [x] DataTable row hover and row link; use on Events; remove View
 - [x] `Checkbox` component; move the square; replace the three browser checkboxes
-- [ ] Chip `wrap` and the casualties and damage columns
+- [x] Chip `wrap` and the casualties and damage columns
 - [ ] Update `docs/modules/design-system.md` and `events.md`
 
 ---

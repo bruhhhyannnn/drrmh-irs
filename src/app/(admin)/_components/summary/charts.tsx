@@ -354,7 +354,9 @@ export function DamageChart({
                     {d.cluster}
                   </span>
                 </div>
-                <Chip tone={d.level.tone}>{d.condition}</Chip>
+                <Chip tone={d.level.tone} dot wrap className="max-w-[55%]">
+                  {d.condition}
+                </Chip>
               </li>
             ))}
           </ul>
