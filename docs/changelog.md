@@ -9,6 +9,14 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-041 Favicon and app icons: 2026-11-12 (branch `feat/DRRM-041-favicon-app-icons`)
+
+Plan: [[plan/feature/DRRM-041-favicon-app-icons]] · [[offline-pwa]]
+
+- A proper favicon (16 to 48 px) instead of the 1.45 MB logo, an iPhone home-screen icon on white, and a maskable Android icon on maroon.
+- The installed app opens at sign-in (which sends you on), its title bar follows light and dark mode instead of black, and the manifest gains an id, scope and description.
+- The campus logos are 512 px now, so phones precache about 2 MB of them instead of about 25 MB.
+
 ## DRRM-040 Settings: Used by: 2026-11-12 (branch `feat/DRRM-040-settings-used-by`)
 
 Plan: [[plan/feature/DRRM-040-settings-used-by]] · [[settings-lookups]]
