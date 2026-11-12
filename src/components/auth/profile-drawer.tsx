@@ -1,12 +1,14 @@
 'use client';
 
 import { QuestionLanguageSetting } from '@/components/assessment/question-language-setting';
-import { Button, Drawer } from '@/components/ds';
+import { Button, Drawer, SwitchField } from '@/components/ds';
+import { useSetShowMyGooglePhoto } from '@/components/hooks/use-users';
 import { AppearanceSetting } from '@/components/theme';
 import { cn, getInitials } from '@/lib';
 import { useAuthStore } from '@/store';
 import { format } from 'date-fns';
 import { LogOut } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useSignOut } from './use-sign-out';
 
 const BADGE_TONES = {
@@ -33,8 +35,11 @@ function Badge({ tone, children }: { tone: keyof typeof BADGE_TONES; children: R
 export function ProfileDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { userProfile, user } = useAuthStore();
   const { signOut, signingOut } = useSignOut();
+  const setShowPhoto = useSetShowMyGooglePhoto();
 
   if (!userProfile) return null;
+  const photo = userProfile.avatar?.url ?? null;
+  const showPhoto = userProfile.avatar?.show ?? true;
 
   const fullName =
     [userProfile.first_name, userProfile.middle_name, userProfile.last_name, userProfile.suffix]
@@ -82,12 +87,21 @@ export function ProfileDrawer({ open, onClose }: { open: boolean; onClose: () =>
       <div className="flex flex-col gap-7">
         <div className="flex flex-col gap-3.5">
           <div className="flex items-center gap-3.5">
-            <span
-              aria-hidden
-              className="bg-brand-solid grid size-12 shrink-0 place-items-center rounded-full text-[16px] large-text:text-[18px] font-bold text-white uppercase"
-            >
-              {getInitials(fullName).slice(0, 2)}
-            </span>
+            {photo && showPhoto ? (
+              <img
+                src={photo}
+                alt=""
+                referrerPolicy="no-referrer"
+                className="size-12 shrink-0 rounded-full bg-gray-100 object-cover"
+              />
+            ) : (
+              <span
+                aria-hidden
+                className="bg-brand-solid grid size-12 shrink-0 place-items-center rounded-full text-[16px] large-text:text-[18px] font-bold text-white uppercase"
+              >
+                {getInitials(fullName).slice(0, 2)}
+              </span>
+            )}
             <div className="flex min-w-0 flex-col gap-0.5">
               <span className="text-[17px] large-text:text-[19px] leading-[1.3] font-bold">
                 {fullName}
@@ -127,6 +141,18 @@ export function ProfileDrawer({ open, onClose }: { open: boolean; onClose: () =>
           </dl>
         </section>
 
+        {/* Google accounts only: their photo shows to DRRM-H admins unless turned off. */}
+        {photo && (
+          <SwitchField
+            id="show-google-photo"
+            label="Show my Google photo"
+            description="DRRM-H admins see it beside your name. Off, they see your initials."
+            checked={showPhoto}
+            onChange={(show) =>
+              setShowPhoto.mutate(show, { onError: (err) => toast.error(err.message) })
+            }
+          />
+        )}
         <AppearanceSetting />
         <QuestionLanguageSetting />
       </div>

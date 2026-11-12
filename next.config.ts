@@ -43,6 +43,12 @@ export default withPWA({
         handler: 'NetworkOnly',
       },
       {
+        // Google profile photos (DRRM-039) are personal information: they load from Google
+        // each time and are never kept in Cache Storage.
+        urlPattern: ({ url }) => url.hostname.endsWith('googleusercontent.com'),
+        handler: 'NetworkOnly',
+      },
+      {
         // The ERT landing page and the building assessment open from the cache with any query
         // string (?draft=…, ?view=…): the page is the same for all of them and reads the draft
         // from IndexedDB, so a draft reopened offline, or after the default one-day page cache

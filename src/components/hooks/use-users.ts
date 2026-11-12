@@ -1,14 +1,17 @@
 import {
   createUser,
   deleteUser,
+  getAvatars,
   getUser,
   getUsers,
+  setShowMyGooglePhoto,
   setUserActive,
   updateUser,
   type CreateUserInput,
   type UpdateUserInput,
 } from '@/actions/users';
 import { getAccessToken } from '@/lib/supabase';
+import { useAuthStore } from '@/store';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 /** A unit or position typed under "Other (please specify)" is new in the Settings lists. */
@@ -77,6 +80,42 @@ export function useDeleteUser() {
     mutationFn: async (id: string) => deleteUser(await getAccessToken(), id),
     onSuccess: (result) => {
       if (result.ok) queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+}
+
+/**
+ * Members' Google photos for an admin list, by user id (DRRM-039). Users who turned theirs off,
+ * and accounts without one, aren't in it; the list shows their initials.
+ */
+export function useAvatars(userIds: string[]) {
+  const ids = [...new Set(userIds)].sort();
+  return useQuery({
+    queryKey: ['avatars', ids],
+    queryFn: async () => getAvatars(await getAccessToken(), ids),
+    enabled: ids.length > 0,
+    staleTime: 10 * 60_000,
+  });
+}
+
+/** My profile → Show my Google photo; the signed-in profile follows. */
+export function useSetShowMyGooglePhoto() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (show: boolean) => {
+      const result = await setShowMyGooglePhoto(await getAccessToken(), show);
+      if (!result.ok) throw new Error(result.error);
+      return show;
+    },
+    onSuccess: (show) => {
+      const { userProfile, setUserProfile } = useAuthStore.getState();
+      if (userProfile) {
+        setUserProfile({
+          ...userProfile,
+          avatar: { url: userProfile.avatar?.url ?? null, show },
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ['avatars'] });
     },
   });
 }

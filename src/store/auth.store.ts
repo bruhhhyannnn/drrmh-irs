@@ -12,7 +12,10 @@ type UserProfileType = Prisma.UserGetPayload<{
     user_type: true;
     campus: true;
   };
-}>;
+}> & {
+  /** Their Google photo and the Show my Google photo choice (DRRM-039). */
+  avatar?: { url: string | null; show: boolean };
+};
 
 interface AuthState {
   user: User | null;

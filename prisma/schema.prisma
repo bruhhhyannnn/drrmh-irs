@@ -22,6 +22,11 @@ model User {
   created_at          DateTime                    @default(now()) @db.Timestamptz(6)
   updated_at          DateTime                    @default(now()) @updatedAt @db.Timestamptz(6)
   is_profile_complete Boolean                     @default(false)
+  /// Google profile photo URL, saved at sign-in from the verified session (DRRM-039). Left out
+  /// of default reads (`omit` in src/lib/prisma.ts); read through src/lib/avatars.ts.
+  avatar_url          String?
+  /// "Show my Google photo" in My profile; off shows initials (DRRM-039).
+  show_avatar         Boolean                     @default(true)
   /// DRRM-026: a Super-Admin-made account for someone outside UP. It has no campus, cluster, unit or
   /// position (CHECK chk_users_off_campus, prisma/manual/DRRM-026-off-campus-accounts.sql).
   is_off_campus        Boolean                     @default(false)

@@ -2,6 +2,8 @@
 
 import { isAdminUserType } from '@/lib';
 import { inScope } from '@/lib/admin-scope';
+import { avatarsFor, myAvatar, saveAvatar, saveShowAvatar } from '@/lib/avatars';
+import { googlePhoto } from '@/lib/google-photo';
 import { clusterIdForName, positionIdForName, unitIdForName } from '@/lib/lookup-names';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
@@ -136,20 +138,54 @@ export async function getUser(token: string | null, id: string) {
  * The signed-in person's own profile, found from their verified token. Unlike requireProfile it
  * also returns an inactive account, so the app can say so instead of failing to load.
  */
+/**
+ * The signed-in user's profile, found from the verified token. Also refreshes their Google
+ * profile photo from that verified session (DRRM-039): email-and-password accounts get none.
+ * `avatar` is the photo and their Show my Google photo choice.
+ */
 export async function getMyProfile(token: string | null) {
   if (!token) return null;
   const { data, error } = await supabaseAdmin.auth.getUser(token);
   if (error || !data.user) return null;
-  return prisma.user.findUnique({
-    where: { auth_id: data.user.id },
-    include: {
-      cluster: true,
-      unit: { include: { cluster: true } },
-      position: true,
-      user_type: true,
-      campus: true,
-    },
-  });
+  const [profile] = await Promise.all([
+    prisma.user.findUnique({
+      where: { auth_id: data.user.id },
+      include: {
+        cluster: true,
+        unit: { include: { cluster: true } },
+        position: true,
+        user_type: true,
+        campus: true,
+      },
+    }),
+    saveAvatar(data.user.id, googlePhoto(data.user)),
+  ]);
+  if (!profile) return null;
+  return { ...profile, avatar: await myAvatar(data.user.id) };
+}
+
+/** Members' Google photos for the admin lists, by user id (only those who show theirs). */
+export async function getAvatars(token: string | null, userIds: string[]) {
+  const caller = await requireAdmin(token);
+  if (!caller.ok) return {};
+  return avatarsFor([...new Set(userIds)].slice(0, 200));
+}
+
+/** My profile → Show my Google photo. */
+export async function setShowMyGooglePhoto(
+  token: string | null,
+  show: boolean
+): Promise<{ ok: true } | { ok: false; error: string; retry: boolean }> {
+  const caller = await requireProfile(token);
+  if (!caller.ok) return { ok: false, error: 'Please sign in again.', retry: false };
+  const saved = await saveShowAvatar(caller.profile.auth_id, show);
+  return saved
+    ? { ok: true }
+    : {
+        ok: false,
+        error: 'That setting couldn’t be saved yet. Please try again later.',
+        retry: true,
+      };
 }
 
 /**
