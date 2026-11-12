@@ -85,11 +85,11 @@ All hovers ease in over 120ms. Focus rings are unchanged.
 
 **Checkbox component** (`src/components/ds/checkbox.tsx`, exported from `ds/index.ts`)
 
-- [ ] `Checkbox` structure:
+- [x] `Checkbox` structure:
   - A `<label>` with a visually hidden native `<input type="checkbox" className="peer sr-only" {...props}>`, so `form.register()` works.
   - A 20px square, radius 6px, 1.5px border.
   - The label text and an optional `description` under it.
-- [ ] States:
+- [x] States:
   - Default: border gray-300, surface.
   - Hover: border gray-400, `bg-hover`.
   - Checked: brand-solid fill with a white tick (12px, stroke 3). Hover: brand-600.
@@ -97,9 +97,9 @@ All hovers ease in over 120ms. Focus rings are unchanged.
   - `focus-visible`: 2px ring with 2px offset.
   - Disabled: gray-100 fill, gray-200 border. Disabled and checked: gray-300 fill.
   - Error (`aria-invalid`): error-600 border, with the message linked by `aria-describedby`.
-- [ ] The whole row toggles, and is at least 44px tall on touch screens.
-- [ ] Move the `CheckBox` square out of `src/app/(admin)/_components/confirm-dialog.tsx` into the ds file. `confirm-dialog.tsx` and `events/_components/event-drawer.tsx` import it from there.
-- [ ] Replace the browser checkboxes:
+- [x] The whole row toggles, and is at least 44px tall on touch screens.
+- [x] Move the `CheckBox` square out of `src/app/(admin)/_components/confirm-dialog.tsx` into the ds file. `confirm-dialog.tsx` and `events/_components/event-drawer.tsx` import it from there.
+- [x] Replace the browser checkboxes:
   - `src/components/auth/off-campus-setup.tsx`: "same address as home" and the consent checkbox. The consent shows its error message.
   - `src/app/(admin)/dashboard/_components/building-safety/building-level.tsx`: Show pillars, with a 14px label.
 
@@ -129,7 +129,7 @@ All hovers ease in over 120ms. Focus rings are unchanged.
 - [x] Tokens and Tailwind colours
 - [ ] Replace hover classes across `src/` (33 places), then check light and dark
 - [x] DataTable row hover and row link; use on Events; remove View
-- [ ] `Checkbox` component; move the square; replace the three browser checkboxes
+- [x] `Checkbox` component; move the square; replace the three browser checkboxes
 - [ ] Chip `wrap` and the casualties and damage columns
 - [ ] Update `docs/modules/design-system.md` and `events.md`
 

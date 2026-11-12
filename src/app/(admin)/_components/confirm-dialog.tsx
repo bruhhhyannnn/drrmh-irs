@@ -1,9 +1,9 @@
 'use client';
 
-import { Button, FOCUS_RING } from '@/components/ds';
+import { Button, CheckBox, FOCUS_RING } from '@/components/ds';
 import { cn } from '@/lib';
 import { AnimatePresence, motion, MotionConfig } from 'framer-motion';
-import { AlertTriangle, Check } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { useEffect, useId, useRef } from 'react';
 
 interface ConfirmDialogProps {
@@ -197,34 +197,5 @@ function DialogPanel({
         </div>
       </motion.div>
     </div>
-  );
-}
-
-/** 20px checkbox square: maroon with a tick when checked, a dash when `partial`. */
-export function CheckBox({
-  checked,
-  partial,
-  className,
-}: {
-  checked: boolean;
-  partial?: boolean;
-  className?: string;
-}) {
-  const on = checked || partial;
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        'grid size-5 shrink-0 place-items-center rounded-md border-[1.5px] text-white',
-        on ? 'border-brand-solid bg-brand-solid' : 'border-gray-300 bg-surface',
-        className
-      )}
-    >
-      {checked ? (
-        <Check size={12} strokeWidth={3} />
-      ) : partial ? (
-        <span className="h-0.5 w-2 rounded bg-surface" />
-      ) : null}
-    </span>
   );
 }

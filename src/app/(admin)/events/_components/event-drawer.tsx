@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  CheckBox,
   Drawer,
   FOCUS_RING,
   SegmentedControl,
@@ -18,7 +19,6 @@ import type { Prisma } from '@prisma/client';
 import { useEffect, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { CheckBox } from '../../_components/confirm-dialog';
 import {
   DrawerBody,
   DrawerButton,

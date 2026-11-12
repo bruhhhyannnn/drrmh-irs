@@ -1,6 +1,6 @@
 'use client';
 
-import { SelectField } from '@/components/ds';
+import { Checkbox, SelectField } from '@/components/ds';
 import { useBuildingHistory, useCompareAssessments } from '@/components/hooks/use-assessments';
 import { percent } from '@/lib/assessment-score';
 import { comparePair, type CompareRow, type DashboardScope } from '@/lib/building-safety';
@@ -108,15 +108,12 @@ export function BuildingCompareView({
           level={3}
           title="History"
           aside={
-            <label className="flex items-center gap-2 text-[14px] font-medium text-gray-700">
-              <input
-                type="checkbox"
-                checked={showPillars}
-                onChange={(e) => setShowPillars(e.target.checked)}
-                className="size-4 accent-[var(--brand-500)]"
-              />
-              Show pillars
-            </label>
+            <Checkbox
+              size="sm"
+              label="Show pillars"
+              checked={showPillars}
+              onChange={(e) => setShowPillars(e.target.checked)}
+            />
           }
         />
         <LineChart
