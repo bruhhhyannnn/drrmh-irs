@@ -41,7 +41,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       className={cn(
         figtree.variable,
         splineSansMono.variable,
-        // isolate: a page's CampusBackdrop (-z-10) paints over this background, under the content.
+        // isolate: a page's CampusBackdrop (-z-10) paints over this background, under the content;
+        // it spans the content column (relative, below), not the narrower centred <main>.
         'font-landing isolate min-h-dvh bg-canvas text-gray-900 antialiased'
       )}
     >
@@ -50,9 +51,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         <Sidebar />
         <Rail />
       </Suspense>
-      <div className="flex min-h-dvh min-w-0 flex-col md:pl-22 lg:pl-60">
+      <div className="relative flex min-h-dvh min-w-0 flex-col md:pl-22 lg:pl-60">
         <TopBar />
-        <main className="relative mx-auto flex w-full max-w-7xl min-w-0 flex-1 flex-col gap-6 px-4 pt-4 pb-26 md:px-6 md:pt-6 md:pb-10 lg:px-8 lg:pt-8">
+        <main className="mx-auto flex w-full max-w-7xl min-w-0 flex-1 flex-col gap-6 px-4 pt-4 pb-26 md:px-6 md:pt-6 md:pb-10 lg:px-8 lg:pt-8">
           <CampusScopeGate>{children}</CampusScopeGate>
         </main>
       </div>

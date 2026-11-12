@@ -9,6 +9,12 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-043 Campus backdrop cut off on wide screens: 2026-11-12 (branch `fix/DRRM-043-campus-backdrop-clipping`)
+
+Plan: [[plan/fix/DRRM-043-campus-backdrop-clipping]] · [[events]] · [[campus-scoping]]
+
+- The faded campus logo behind the campus page and event details spans the whole content column, so on screens wider than 1280 px it runs off the window edge instead of ending in a hard line.
+
 ## DRRM-042 Bystander reports and Assessments polish: 2026-11-12 (branch `feat/DRRM-042-bystander-assessments-polish`)
 
 Plan: [[plan/feature/DRRM-042-bystander-assessments-polish]] · [[bystander-reports]] · [[assessment-admin]]
