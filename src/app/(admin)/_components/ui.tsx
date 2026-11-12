@@ -1,5 +1,5 @@
 import { cn, getInitials } from '@/lib';
-import { ownCampusLogo } from '@/lib/campus-logo';
+import { campusLogo, ownCampusLogo } from '@/lib/campus-logo';
 import type { Tone } from '../_lib/status';
 
 export { Skeleton } from '@/components/ui/skeleton';
@@ -105,17 +105,32 @@ export function Avatar({
   );
 }
 
-/** The campus logo, or its name in a maroon circle when it has none (e.g. UP PGH). */
-export function CampusMark({ name, size = 56 }: { name: string; size?: 40 | 56 }) {
-  const logo = ownCampusLogo(name);
-  const box = size === 56 ? 'size-14' : 'size-10';
+/**
+ * The campus logo. A campus without its own logo (e.g. UP PGH) shows the UP seal
+ * (`fallback="seal"`, the default in the lists and headers) or its name in a maroon circle
+ * (`fallback="initials"`). `size` is in px; `className` (e.g. `size-12 md:size-16`) overrides it.
+ */
+export function CampusMark({
+  name,
+  size = 56,
+  fallback = 'seal',
+  className,
+}: {
+  name: string;
+  size?: number;
+  fallback?: 'seal' | 'initials';
+  className?: string;
+}) {
+  const own = ownCampusLogo(name);
+  const logo = own ?? (fallback === 'seal' ? campusLogo(name) : null);
+  const box = className ? undefined : { width: size, height: size };
   if (logo) {
     return (
       <span
         role="img"
         aria-label={`${name} logo`}
-        className={cn(box, 'shrink-0 bg-contain bg-center bg-no-repeat')}
-        style={{ backgroundImage: `url(${logo})` }}
+        className={cn('shrink-0 bg-contain bg-center bg-no-repeat', className)}
+        style={{ ...box, backgroundImage: `url(${logo})` }}
       />
     );
   }
@@ -123,10 +138,10 @@ export function CampusMark({ name, size = 56 }: { name: string; size?: 40 | 56 }
     <span
       aria-hidden
       className={cn(
-        box,
-        'bg-brand-25 text-brand-500 grid shrink-0 place-items-center rounded-full border-[1.5px] border-[#fbd5d5] font-extrabold dark:border-brand-100',
-        size === 56 ? 'text-[17px]' : 'text-[13px]'
+        'bg-brand-25 text-brand-500 grid shrink-0 place-items-center rounded-full border-[1.5px] border-brand-100 font-extrabold',
+        className
       )}
+      style={{ ...box, fontSize: Math.max(11, Math.round(size * 0.3)) }}
     >
       {name.replace(/^UP\s+/i, '').slice(0, 4)}
     </span>
