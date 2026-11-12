@@ -1,6 +1,6 @@
 ---
 type: module
-updated: 2026-11-10
+updated: 2026-11-12
 module: events
 paths:
   - src/actions/events/index.ts
@@ -26,22 +26,22 @@ Events are the drills and real incidents that field reports are filed against. A
 
 ## Where it lives
 
-| Path                                                         | What it holds                                                                  |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| `src/actions/events/index.ts`                                | All event reads and writes, plus `getEventSummarySource`                       |
-| `src/components/hooks/use-events.ts`                         | TanStack Query wrappers; `invalidateEventViews`                                |
-| `src/app/(admin)/events/page.tsx`                            | `/events` list with status tabs, search, Export PDF per row                    |
-| `src/app/(admin)/events/details/page.tsx`                    | `/events/details?id=` summary, Complete event dialog                           |
-| `src/app/(admin)/events/_components/event-drawer.tsx`        | Add / Edit event drawer, `CampusChecklist`                                     |
-| `src/app/(admin)/events/_components/delete-event-dialog.tsx` | Delete confirm that names linked report count                                  |
-| `src/app/(admin)/_lib/summary.ts`                            | Pure event summary model: `buildSummary`, `compareSummaries`, `reportTimeline` |
-| `src/app/(admin)/_lib/status.ts`                             | `eventStatusKey`, `eventTone`                                                  |
-| `src/app/(admin)/_lib/nsed-report.ts`                        | `buildNsedReport`: the NSED report's fields from the summary source (tested)   |
-| `src/app/(admin)/_lib/nsed-docx.ts`                          | `fillNsedTemplate`, `downloadNsedReport`: docxtemplater fill and download      |
-| `public/templates/nsed-report.docx`                          | The UP Manila office's NSED report template (letterhead, wording, tags)        |
-| `src/app/(admin)/_lib/nsed-diliman.ts`                       | `buildNsedDilimanReport`: UPRI's UP Diliman NSED report fields (tested)        |
-| `public/templates/nsed-report-diliman.docx`                  | UPRI's UP Diliman NSED report template (letterhead, wording, tags)             |
-| `src/app/(admin)/_components/summary/`                       | `EventSummary`, `useSummary`, charts and sections                              |
+| Path                                                         | What it holds                                                                        |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| `src/actions/events/index.ts`                                | All event reads and writes, plus `getEventSummarySource`                             |
+| `src/components/hooks/use-events.ts`                         | TanStack Query wrappers; `invalidateEventViews`                                      |
+| `src/app/(admin)/events/page.tsx`                            | `/events` list with status tabs, search; the row opens the event, Export PDF per row |
+| `src/app/(admin)/events/details/page.tsx`                    | `/events/details?id=` summary, Complete event dialog                                 |
+| `src/app/(admin)/events/_components/event-drawer.tsx`        | Add / Edit event drawer, `CampusChecklist`                                           |
+| `src/app/(admin)/events/_components/delete-event-dialog.tsx` | Delete confirm that names linked report count                                        |
+| `src/app/(admin)/_lib/summary.ts`                            | Pure event summary model: `buildSummary`, `compareSummaries`, `reportTimeline`       |
+| `src/app/(admin)/_lib/status.ts`                             | `eventStatusKey`, `eventTone`                                                        |
+| `src/app/(admin)/_lib/nsed-report.ts`                        | `buildNsedReport`: the NSED report's fields from the summary source (tested)         |
+| `src/app/(admin)/_lib/nsed-docx.ts`                          | `fillNsedTemplate`, `downloadNsedReport`: docxtemplater fill and download            |
+| `public/templates/nsed-report.docx`                          | The UP Manila office's NSED report template (letterhead, wording, tags)              |
+| `src/app/(admin)/_lib/nsed-diliman.ts`                       | `buildNsedDilimanReport`: UPRI's UP Diliman NSED report fields (tested)              |
+| `public/templates/nsed-report-diliman.docx`                  | UPRI's UP Diliman NSED report template (letterhead, wording, tags)                   |
+| `src/app/(admin)/_components/summary/`                       | `EventSummary`, `useSummary`, charts and sections                                    |
 
 ## Data
 
@@ -75,6 +75,8 @@ Every mutation calls `revalidatePath` on `/events`, `/events/details` and `/dash
 - Mutations invalidate `events`, `event`, `event-summary`, `event-siblings`, `event-compare-options`, `dashboard`, `campus-overview`, `campuses-overview`.
 - Form: `eventSchema` in `src/lib/schemas.ts` (`campus_ids` array, end must be after start).
 - Campus scope comes from `useScopedCampusId()` and `useIsSuperAdmin()` in `(admin)/_components/shell/campus-switcher.tsx`. `useEventTitle()` shows "Name — Campus" to Super Admins only.
+- On `/events` the whole row opens the event (`DataTable` `rowHref`; the name stays the link), and on phone the card does; there is no View button (DRRM-033). Row buttons (Export PDF, Edit, Delete) work on their own.
+- The casualties table's Condition column is `minmax(150px,.9fr)` and its chip wraps (`Chip` `wrap`), so a long condition such as "Minor injuries — no hospitalization needed" no longer runs into What happened; the same wrap is used in the phone list and the units with damage (DRRM-033).
 - Export PDF (event details, and the download icon on each `/events` row and phone card) opens `/events/report?id=` in a new tab (see [[print]]). The Excel export was removed in DRRM-018.
 - Export NSED report (event details only, when the event is completed and `nsedTemplateFor(campus)` names a template: UP Manila and PGH get the UP Manila DRRM-H office's report, UP Diliman gets UPRI's, other campuses none): the campus's quarterly NSED report as a Word file. UP Manila and PGH: `downloadNsedReport` is imported on click, fetches `public/templates/nsed-report.docx`, fills it with `buildNsedReport(source)` through docxtemplater + pizzip and saves `NSED Report Q1 2026.docx`. The app fills what it records (date and times, headcount per cluster, the timeline, the headcount summary with structural damage, one breakdown table and note per cluster, the headcount-by-category chart, the IRS side of the IC vs IRS table); the rest are yellow `[Add …]` and `[…]` blanks for the office (the executive summary, the observers' comments, the IC figures, the analyses). Tags and rules: [[plan/feature/DRRM-019-nsed-report]], changes in [[plan/feature/DRRM-028-nsed-report-v2]].
 - UP Diliman's NSED report (DRRM-032): `buildNsedDilimanReport(source)` fills `public/templates/nsed-report-diliman.docx`, UPRI's report (without the cover letter to the UP President that UPRI sends with it), saved as `NSED-2026-Q4-UP-Diliman-report.docx`. The app fills the drill date, quarter and start time, the counts in the executive summary (reports, clusters that reported out of the campus's clusters, individuals, people by category, casualties by condition, missing persons, minutes to the first and last report) and the cluster table (`{@clusterTable}`: No. | Cluster | College/Unit | Reports | Casualties | Missing | Headcount, a Cluster Total row per cluster with its units under it, first report first, and a GRAND TOTAL). The report's date, the signatories, the observations, the comparison with the previous quarter, the screenshots and the assessment are yellow `[Add …]` blanks for UPRI. Tags: [[plan/feature/DRRM-032-nsed-report-pgh-diliman]].

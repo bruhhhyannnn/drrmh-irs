@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-033
-status: in-progress
+status: done
 branch: feat/DRRM-033-ui-polish-hover-checkbox
 modules:
   - '[[design-system]]'
@@ -11,7 +11,7 @@ tags: [plan, feature, design-round-2026-11-11]
 
 # [DRRM-033] Feature Plan: Visible hover, whole-row click, one Checkbox, casualties column fix
 
-- **Status:** `[In Progress]`
+- **Status:** `[Done]`
 - **Target Branch / PR:** `feat/DRRM-033-ui-polish-hover-checkbox`
 - **Owner / Author:** Bryan Mangapit
 
@@ -108,7 +108,7 @@ All hovers ease in over 120ms. Focus rings are unchanged.
 - [x] `CAS_GRID` gives Condition `minmax(150px,.9fr)` (lg and md) instead of 124–128px.
 - [x] `Chip` (`src/app/(admin)/_components/ui.tsx`) gets a `wrap` prop: `h-auto min-h-6 py-0.5 whitespace-normal rounded-[12px]`, with the dot aligned to the first line.
 - [x] Use `wrap` in the Casualties table, the phone list and the Damage table.
-- [ ] Check with "Minor injuries — no hospitalization needed".
+- [x] Check with "Minor injuries — no hospitalization needed".
 
 ---
 
@@ -127,13 +127,25 @@ All hovers ease in over 120ms. Focus rings are unchanged.
 ## 5. Implementation Tasks
 
 - [x] Tokens and Tailwind colours
-- [ ] Replace hover classes across `src/` (33 places), then check light and dark
+- [x] Replace hover classes across `src/` (33 places), then check light and dark
 - [x] DataTable row hover and row link; use on Events; remove View
 - [x] `Checkbox` component; move the square; replace the three browser checkboxes
 - [x] Chip `wrap` and the casualties and damage columns
-- [ ] Update `docs/modules/design-system.md` and `events.md`
+- [x] Update `docs/modules/design-system.md` and `events.md`
 
 ---
+
+## Notes from the build
+
+- `brand-600` is pink (`#f29393`) in dark mode, so a maroon fill can't use it on hover. A token `--brand-solid-hover` (`#7f1616` in both themes, Tailwind `bg-brand-solid-hover`) carries the primary button and checked checkbox hover.
+- Removing View from the Events phone card would leave no way to open the event there, so `MobileCard` takes an `href` too: the title links to the event and covers the card, the buttons stay above it.
+- The casualties table rows get the row hover, as in SA44.
+- The keyboard focus ring keeps the app's blue ring (`#5a9ef2`), at 2 px with a 2 px offset on the checkbox.
+
+## Verification
+
+- [x] `npm run lint`, `npm run type-check`, `npm run test`, `npm run build`
+- [x] Temporary preview at 1140 px (light and dark) and 390 px: row hover (fill, maroon edge, maroon underlined name); a click on the Campus cell opens the event; Edit runs on its own without opening the row; every Checkbox state; Space toggles and the label toggles; partial has `aria-checked="mixed"` and `indeterminate`; the error is linked with `aria-describedby`; "Minor injuries — no hospitalization needed" wraps inside its column; no sideways scroll on phone.
 
 ## 6. Out of Scope
 
