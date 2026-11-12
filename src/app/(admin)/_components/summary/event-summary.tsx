@@ -19,13 +19,13 @@ import {
 } from '../../_lib/summary';
 import { useEventTitle } from '../shell/campus-switcher';
 import { Mono, Skeleton } from '../ui';
+import { CompletedNote } from './completed-note';
 import { ScopeBreadcrumb, UnitReportsCard, UnitsCard, type ScopeLinks } from './drill-down';
 import {
   AnalyticsGrid,
   CasualtiesCard,
   ClustersCard,
   CompareCard,
-  CompletedBanner,
   FirstReportChart,
   HeadcountCard,
   MissingCard,
@@ -135,7 +135,7 @@ export function EventSummary({
 
   return (
     <div className="flex flex-col gap-6">
-      {summary.completed && <CompletedBanner summary={summary} />}
+      {summary.completed && <CompletedNote summary={summary} />}
       {before}
       {scope && <ScopeBreadcrumb title={title} scope={scope} links={links} />}
       {invalid && (

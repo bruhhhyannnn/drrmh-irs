@@ -20,6 +20,7 @@ import {
   useIsSuperAdmin,
   useScopedCampusId,
 } from '../../_components/shell/campus-switcher';
+import { CompletedChip } from '../../_components/summary/completed-note';
 import { EventSummary, useSummary } from '../../_components/summary/event-summary';
 import { CampusMark, Card, Chip, Skeleton } from '../../_components/ui';
 import { formatEventWindow } from '../../_lib/format';
@@ -84,9 +85,14 @@ function EventDetails() {
         logo={<CampusMark name={event.campus.name} />}
         title={title}
         chip={
-          <Chip tone={eventTone(event.status.name)} dot>
-            {capitalize(event.status.name)}
-          </Chip>
+          // A completed event's note minimizes into its chip.
+          status === 'completed' ? (
+            <CompletedChip eventId={event.id} />
+          ) : (
+            <Chip tone={eventTone(event.status.name)} dot>
+              {capitalize(event.status.name)}
+            </Chip>
+          )
         }
         subtitle={[formatEventWindow(event.started_at, event.ended_at), event.quarter]
           .filter(Boolean)

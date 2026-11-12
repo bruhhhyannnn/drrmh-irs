@@ -2,10 +2,9 @@
 
 import { FOCUS_RING } from '@/components/ds';
 import { cn } from '@/lib';
-import { format } from 'date-fns';
 import { ChartNoAxesColumn, Check, TriangleAlert, UserRound, Users } from 'lucide-react';
 import { useState } from 'react';
-import { formatTime, personName, plural } from '../../_lib/format';
+import { formatTime, plural } from '../../_lib/format';
 import { headcountChart } from '../../_lib/headcount-chart';
 import {
   firstReportScale,
@@ -36,34 +35,6 @@ import {
 import { coverageLabel, DRILL_ROW, DrillLink, MissingUnits, type ScopeLinks } from './drill-down';
 
 const PAD_X = 'px-4 md:px-5';
-
-/* ─── Completed banner ───────────────────────────────────────────────────────────────── */
-
-export function CompletedBanner({ summary }: { summary: Summary }) {
-  const { event } = summary.source;
-  const by = personName(event.completer);
-  const pending = summary.clusters.pending.map((c) => c.name);
-  return (
-    <div className="flex items-start gap-3 rounded-[18px] border border-info-200 bg-info-50 px-4 py-3.5">
-      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-surface text-info-700">
-        <Check size={16} aria-hidden />
-      </span>
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-[17px] leading-[1.4] font-bold">
-          Completed
-          {event.ended_at && ` on ${format(new Date(event.ended_at), "MMM d, yyyy 'at' h:mm a")}`}
-          {by && ` by ${by}`}
-        </span>
-        <span className="text-[16px] leading-normal text-pretty text-gray-600">
-          Reports are locked.{' '}
-          {pending.length > 0 &&
-            `${pending.join(', ')} did not report before the event was completed. `}
-          To reopen it, edit the event and set the status to Ongoing.
-        </span>
-      </div>
-    </div>
-  );
-}
 
 /* ─── Overview tiles ─────────────────────────────────────────────────────────────────── */
 
