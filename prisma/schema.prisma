@@ -593,6 +593,8 @@ model Assessment {
   answers             AssessmentAnswerRow[]
   pillar_scores       AssessmentPillarScore[]
   comments            AssessmentSectionComment[]
+  structural_summary  AssessmentStructuralSummary?
+  structural_findings AssessmentStructuralFinding[]
 
   @@index([building_id, ended_at(sort: Desc)], map: "idx_assessments_building_ended")
   @@index([ended_at(sort: Desc)], map: "idx_assessments_ended")
@@ -650,4 +652,44 @@ model AssessmentSectionComment {
 
   @@unique([assessment_id, section_id], map: "uq_assessment_section_comments_section")
   @@map("assessment_section_comments")
+}
+
+/// The structural integrity part of an assessment (DRRM-044): the RCAsT Material Component's
+/// condition ratings in percent (higher is worse), written once at submit. Assessments from
+/// before it have no row. CHECKs chk_structural_summaries_recommendation ('none', 'local',
+/// 'overall') and chk_structural_summaries_ratings. See src/lib/structural-integrity.ts.
+model AssessmentStructuralSummary {
+  assessment_id    String            @id @db.Uuid
+  tool_version     String
+  lcr_columns      Float             @default(0)
+  lcr_beams        Float             @default(0)
+  lcr_slabs        Float             @default(0)
+  lcr_walls        Float             @default(0)
+  gcr              Float             @default(0)
+  critical_columns AssessmentAnswer?
+  critical_beams   AssessmentAnswer?
+  critical_walls   AssessmentAnswer?
+  recommendation   String
+  created_at       DateTime          @default(now()) @db.Timestamptz(6)
+  assessment       Assessment        @relation(fields: [assessment_id], references: [id], onDelete: Cascade)
+
+  @@map("assessment_structural_summaries")
+}
+
+/// One defect type on one element. CHECK chk_structural_findings_grades: severity and extent
+/// (1 to 4) are set only when the answer is yes. CHECK chk_structural_findings_element.
+model AssessmentStructuralFinding {
+  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assessment_id String           @db.Uuid
+  element       String
+  defect_code   String
+  answer        AssessmentAnswer
+  severity      Int?             @db.SmallInt
+  extent        Int?             @db.SmallInt
+  remarks       String?
+  created_at    DateTime         @default(now()) @db.Timestamptz(6)
+  assessment    Assessment       @relation(fields: [assessment_id], references: [id], onDelete: Cascade)
+
+  @@unique([assessment_id, element, defect_code], map: "uq_structural_findings_check")
+  @@map("assessment_structural_findings")
 }

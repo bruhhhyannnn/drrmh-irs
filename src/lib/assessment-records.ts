@@ -12,6 +12,13 @@ import { buildingPlaceSelect, NO_CAMPUS_NAME, toBuildingPlace } from './building
 import { scoresFromPillarRows, type AnswerFact } from './building-safety';
 import type { HistoryRow } from './pillar-trends';
 import { prisma } from './prisma';
+import {
+  CRITICAL_ELEMENT_CODES,
+  prepareStructuralWrite,
+  type Level,
+  type StructuralElement,
+  type StructuralInput,
+} from './structural-integrity';
 
 // Loaders shared by the ERT and admin assessment actions: a checklist version as the app sees it,
 // one submitted assessment as `AssessmentRecord`, and buildings with their latest two scores.
@@ -190,6 +197,52 @@ export async function loadScoredItemMeta(): Promise<Map<string, ScoredItemMeta>>
 const personName = (p: { first_name: string | null; last_name: string | null }) =>
   [p.first_name, p.last_name].filter(Boolean).join(' ');
 
+/**
+ * The structural integrity answers of one assessment, in form order; null when it has none. Read
+ * with its own queries, so assessments still open on a database where
+ * prisma/manual/DRRM-044-structural-integrity.sql hasn't run yet.
+ */
+async function loadStructural(assessmentId: string): Promise<StructuralInput | null> {
+  try {
+    const [summary, findings] = await Promise.all([
+      prisma.assessmentStructuralSummary.findUnique({
+        where: { assessment_id: assessmentId },
+        select: { critical_columns: true, critical_beams: true, critical_walls: true },
+      }),
+      prisma.assessmentStructuralFinding.findMany({
+        where: { assessment_id: assessmentId },
+        select: {
+          element: true,
+          defect_code: true,
+          answer: true,
+          severity: true,
+          extent: true,
+          remarks: true,
+        },
+      }),
+    ]);
+    if (!summary) return null;
+    const prepared = prepareStructuralWrite({
+      findings: findings.map((f) => ({
+        element: f.element as StructuralElement,
+        defect: f.defect_code,
+        answer: f.answer,
+        severity: f.severity as Level | null,
+        extent: f.extent as Level | null,
+        remarks: f.remarks,
+      })),
+      critical: CRITICAL_ELEMENT_CODES.flatMap((element) => {
+        const answer = summary[`critical_${element}`];
+        return answer ? [{ element, answer }] : [];
+      }),
+    });
+    return { findings: prepared.findings, critical: prepared.critical };
+  } catch (err) {
+    console.error('The structural integrity answers could not be read', err);
+    return null;
+  }
+}
+
 /** One submitted assessment with the version it was answered with; null when not found. The
  * caller decides who may see it through `where`. */
 export async function loadAssessmentRecord(
@@ -217,7 +270,10 @@ export async function loadAssessmentRecord(
     },
   });
   if (!a) return null;
-  const version = await loadVersion({ id: a.template_version_id });
+  const [version, structural] = await Promise.all([
+    loadVersion({ id: a.template_version_id }),
+    loadStructural(a.id),
+  ]);
   if (!version) return null;
   const place = toBuildingPlace(a.building);
 
@@ -243,6 +299,7 @@ export async function loadAssessmentRecord(
       a.answers.map((r) => [r.item_id, { answer: r.answer, remarks: r.remarks }])
     ),
     comments: Object.fromEntries(a.comments.map((c) => [c.section_id, c.comment])),
+    structural,
     template: version.template,
   };
 }

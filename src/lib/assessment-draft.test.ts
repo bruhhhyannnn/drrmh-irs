@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { MATATAG_2025_07_25 } from '../../prisma/data/matatag-2025-07-25';
 import {
+  activeSectionItem,
+  activeStructuralItem,
   answerFilterOf,
   applyBuildingProfile,
   clampFloors,
@@ -15,6 +17,7 @@ import {
   searchQuestions,
   sectionProgress,
   sectionScoredItems,
+  sectionStops,
   setAsideCount,
   stepQuestion,
   toPayload,
@@ -124,6 +127,10 @@ test('steps skip sections with nothing to ask', () => {
     'section:VI',
     'section:VIII',
     'section:X',
+    'structural:columns',
+    'structural:beams',
+    'structural:slabs',
+    'structural:walls',
     'review',
   ]);
 });
@@ -318,11 +325,98 @@ test('flashcard question stepping walks one scored question at a time across sec
     item_id: lastI,
   });
 
-  // From review, Back lands on the last question of the last applicable section (X).
-  const secX = sectionScoredItems(T, d, 'X');
+  // From review, Back lands on the last structural step; from the first structural step, on the
+  // last question of the last applicable section (X).
   assert.deepEqual(stepQuestion(T, { ...d, step: 'review' }, 'prev'), {
-    step: 'section:X',
-    item_id: secX[secX.length - 1].id,
+    step: 'structural:walls',
+    item_id: 'walls:critical',
+  });
+  const secX = sectionScoredItems(T, d, 'X');
+  assert.deepEqual(
+    stepQuestion(T, { ...d, step: 'structural:columns', item_id: 'columns:1.1' }, 'prev'),
+    { step: 'section:X', item_id: secX[secX.length - 1].id }
+  );
+  // From the last section, Next lands on the first column check.
+  assert.deepEqual(
+    stepQuestion(T, { ...d, step: 'section:X', item_id: secX[secX.length - 1].id }, 'next'),
+    { step: 'structural:columns', item_id: 'columns:1.1' }
+  );
+});
+
+test('structural steps go one check at a time, critical crack last', () => {
+  const d = draft({ step: 'structural:columns', item_id: 'columns:1.1' });
+  assert.deepEqual(stepQuestion(T, d, 'next'), {
+    step: 'structural:columns',
+    item_id: 'columns:1.2',
+  });
+  assert.deepEqual(stepQuestion(T, { ...d, item_id: 'columns:2.2' }, 'next'), {
+    step: 'structural:columns',
+    item_id: 'columns:critical',
+  });
+  assert.deepEqual(stepQuestion(T, { ...d, item_id: 'columns:critical' }, 'next'), {
+    step: 'structural:beams',
+    item_id: 'beams:1.1',
+  });
+  // Slabs have no critical-crack check: their last check leads to walls.
+  assert.deepEqual(
+    stepQuestion(T, { ...d, step: 'structural:slabs', item_id: 'slabs:2.2' }, 'next'),
+    { step: 'structural:walls', item_id: 'walls:1.1' }
+  );
+  assert.deepEqual(
+    stepQuestion(T, { ...d, step: 'structural:walls', item_id: 'walls:1.1' }, 'prev'),
+    { step: 'structural:slabs', item_id: 'slabs:2.2' }
+  );
+  assert.deepEqual(
+    stepQuestion(T, { ...d, item_id: 'walls:critical', step: 'structural:walls' }, 'next'),
+    {
+      step: 'review',
+      item_id: undefined,
+    }
+  );
+
+  // A step opens on the first check not done yet; a Yes without grades isn't done.
+  const partly = draft({
+    structural: {
+      findings: { 'beams:1.1': { answer: 'no' }, 'beams:1.2': { answer: 'yes', severity: 2 } },
+      critical: {},
+    },
+  });
+  assert.equal(activeStructuralItem(partly, 'beams').id, 'beams:1.2');
+  assert.equal(activeStructuralItem({ ...partly, item_id: 'beams:1.5' }, 'beams').id, 'beams:1.5');
+  assert.equal(activeStructuralItem(partly, 'slabs').id, 'slabs:1.1');
+});
+
+test("a group's shared prompt is a flashcard stop of its own, before its first area", () => {
+  const d = draft({
+    floor_count: 1,
+    area_type_ids: ['corridors', 'classrooms'],
+    step: 'section:V',
+  });
+  const at = (item_id: string) => ({ ...d, item_id });
+
+  // Sprinklers (V.6) need 3 floors, so V.5's areas lead straight into V.7's intro.
+  assert.deepEqual(
+    sectionStops(T, d, 'V')
+      .slice(3, 10)
+      .map((s) => (s.intro ? `intro ${s.item_id}` : s.item_id)),
+    ['V/4', 'intro V/5', 'V/5.1', 'V/5.4', 'intro V/7', 'V/7.1', 'V/7.4']
+  );
+  assert.deepEqual(stepQuestion(T, at('V/4'), 'next'), { step: 'section:V', item_id: 'V/5' });
+  assert.deepEqual(stepQuestion(T, at('V/5'), 'next'), { step: 'section:V', item_id: 'V/5.1' });
+  assert.deepEqual(stepQuestion(T, at('V/5.4'), 'next'), { step: 'section:V', item_id: 'V/7' });
+  assert.deepEqual(stepQuestion(T, at('V/7'), 'prev'), { step: 'section:V', item_id: 'V/5.4' });
+  assert.deepEqual(stepQuestion(T, at('V/7.1'), 'prev'), { step: 'section:V', item_id: 'V/7' });
+
+  // On the intro, the active question is the group's first area, and the intro is the parent.
+  const active = activeSectionItem(T, at('V/7'), 'V');
+  assert.equal(active?.intro?.id, 'V/7');
+  assert.equal(active?.item.id, 'V/7.1');
+  assert.equal(activeSectionItem(T, at('V/7.1'), 'V')?.intro, undefined);
+
+  // Section I opens on question 1, then I.3's intro after question 2.
+  assert.deepEqual(stepQuestion(T, { ...d, step: 'section:I', item_id: 'I/2' }, 'next'), {
+    step: 'section:I',
+    item_id: 'I/3',
   });
 });
 
@@ -373,4 +467,55 @@ test('a draft can start off campus, for an off-campus account (DRRM-026)', () =>
     location_kind: 'off_campus',
   });
   assert.equal(locationKindOf(d), 'off_campus');
+});
+
+/* ─── Structural integrity (DRRM-044) ─── */
+
+test('structural answers travel in the payload and come back in a reopened draft', () => {
+  const none = toPayload(T, draft(), new Date('2026-10-20T02:00:00Z'));
+  assert.equal('structural' in none, false);
+
+  const d = draft({
+    building_id: 'b1',
+    structural: {
+      findings: {
+        'columns:1.2': { answer: 'yes', severity: 3, extent: 1, remarks: 'Ground floor' },
+        'columns:1.5': { answer: 'no' },
+        // Yes without its grades is not sent.
+        'beams:1.1': { answer: 'yes' },
+      },
+      critical: { columns: 'yes' },
+    },
+  });
+  const payload = toPayload(T, d, new Date('2026-10-20T02:00:00Z'));
+  assert.deepEqual(payload.structural, {
+    findings: [
+      {
+        element: 'columns',
+        defect: '1.2',
+        answer: 'yes',
+        severity: 3,
+        extent: 1,
+        remarks: 'Ground floor',
+      },
+      {
+        element: 'columns',
+        defect: '1.5',
+        answer: 'no',
+        severity: null,
+        extent: null,
+        remarks: null,
+      },
+    ],
+    critical: [{ element: 'columns', answer: 'yes' }],
+  });
+
+  const reopened = draftFromPayload(payload, {
+    campus_id: 'c1',
+    cluster_id: 'k1',
+    unit_id: 'unit1',
+    building_name: 'Main',
+    now: new Date('2026-10-21T00:00:00Z'),
+  });
+  assert.deepEqual(toPayload(T, reopened, new Date('2026-10-20T02:00:00Z')), payload);
 });
