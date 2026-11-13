@@ -7,11 +7,17 @@ import { detailsFromDraft, type DraftStep } from '@/lib/assessment-draft';
 import { scoreAssessment, type AnswerMap } from '@/lib/assessment-score';
 import { itemLabel, type TemplateItem } from '@/lib/assessment-template';
 import { assessmentDetailsSchema } from '@/lib/schemas';
+import {
+  STRUCTURAL_ELEMENTS,
+  structuralInputFromDraft,
+  structuralProgress,
+} from '@/lib/structural-integrity';
 import { useOfflineQueueStore } from '@/store';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Card, Mono } from '../../_components/chrome';
 import type { StepProps } from './details-step';
 import { ScoreSummary } from './score-summary';
+import { StructuralSummary } from './structural-summary';
 
 /** Scores so far, what's still unanswered, and Submit (or Save to send later, offline). */
 export function ReviewStep({
@@ -43,6 +49,20 @@ export function ReviewStep({
     }))
     .filter((g) => g.items.length > 0);
   const missing = score.unanswered.length;
+
+  const structural = structuralProgress(draft.structural);
+  const structuralLeft = STRUCTURAL_ELEMENTS.map((element) => ({
+    element,
+    left: structural[element.code].total - structural[element.code].answered,
+  })).filter((e) => e.left > 0);
+  const structuralMissing = structuralLeft.reduce((n, e) => n + e.left, 0);
+  const left = missing + structuralMissing;
+  // Why the button is greyed out, said beside it rather than left to guess.
+  const blocked = !detailsOk
+    ? 'Finish the Details step first.'
+    : left > 0
+      ? `Answer the ${left === 1 ? 'last question' : `${left} questions`} above first.`
+      : null;
 
   return (
     <div className="flex flex-col gap-5">
@@ -122,20 +142,59 @@ export function ReviewStep({
         </Card>
       )}
 
+      <h2 className="pt-2 text-[22px] font-extrabold">Structural integrity</h2>
+      <StructuralSummary input={structuralInputFromDraft(draft.structural)} />
+
+      {structuralMissing > 0 && (
+        <Card className="flex flex-col gap-3 p-5 md:p-6">
+          <h3 className="text-[18px] font-bold">
+            <Mono>{structuralMissing}</Mono> structural integrity{' '}
+            {structuralMissing === 1 ? 'check still needs' : 'checks still need'} an answer
+          </h3>
+          <ul className="flex flex-col rounded-2xl border border-line bg-surface p-1.5">
+            {structuralLeft.map(({ element, left }) => (
+              <li key={element.code}>
+                <button
+                  type="button"
+                  onClick={() => onOpenStep(`structural:${element.code}`)}
+                  className={cn(
+                    'flex min-h-11 w-full items-center gap-3 rounded-xl px-2 py-2 text-left text-[15px] hover:bg-hover',
+                    FOCUS_RING
+                  )}
+                >
+                  <span className="min-w-0 flex-1 font-semibold text-gray-900">
+                    {element.title.en}
+                  </span>
+                  <Mono className="shrink-0 rounded-full bg-gray-100 px-2.5 py-0.5 text-[12px] font-bold text-gray-600">
+                    {left} left
+                  </Mono>
+                  <ChevronRight size={18} aria-hidden className="shrink-0 text-gray-400" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
       {error && <Banner>{error}</Banner>}
 
       <Button
         fullWidth
         onClick={onSubmit}
         loading={submitting}
-        disabled={missing > 0 || !detailsOk || submitting}
+        disabled={blocked !== null || submitting}
       >
         {isOnline ? 'Submit assessment' : 'Save to send later'}
       </Button>
-      {!isOnline && (
-        <p className="-mt-2 text-center text-[14px] text-gray-600">
-          You&apos;re offline. It sends on its own when you&apos;re back online.
-        </p>
+      {blocked ? (
+        <p className="-mt-2 text-center text-[14px] text-gray-600">{blocked}</p>
+      ) : (
+        !isOnline && (
+          <p className="-mt-2 text-center text-[14px] text-gray-600">
+            You&apos;re offline. Tap Save to send later to keep it on this phone. It sends on its
+            own once you&apos;re back online.
+          </p>
+        )
       )}
     </div>
   );

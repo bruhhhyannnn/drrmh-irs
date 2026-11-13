@@ -27,6 +27,7 @@ import {
   saveAssessmentDraft,
   type QueuedAssessment,
 } from '@/lib/offline-queue';
+import { structuralProgress } from '@/lib/structural-integrity';
 import { useOfflineQueueStore } from '@/store';
 import { useQueryClient } from '@tanstack/react-query';
 import { ChevronRight, CloudOff } from 'lucide-react';
@@ -294,7 +295,13 @@ function HubSection({
 
 function DraftRow({ draft, onDiscard }: { draft: AssessmentDraft; onDiscard: () => void }) {
   const template = useTemplateVersion(draft.template_version_id);
-  const progress = template.data ? Object.values(sectionProgress(template.data, draft)) : [];
+  // The checklist's questions plus the structural integrity checks.
+  const progress = template.data
+    ? [
+        ...Object.values(sectionProgress(template.data, draft)),
+        ...Object.values(structuralProgress(draft.structural)),
+      ]
+    : [];
   const answered = progress.reduce((n, s) => n + s.answered, 0);
   const total = progress.reduce((n, s) => n + s.total, 0);
 

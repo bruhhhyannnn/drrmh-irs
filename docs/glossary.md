@@ -45,6 +45,7 @@ Terms used in the code, the UI and the plans.
 
 ## Assessments
 
+- **RCAsT**: _Rapid Condition Assessment Tool_ (Material Component), by Orozco et al. of the UP Diliman Institute of Civil Engineering. The structural integrity part of the building assessment: ten defects on columns, beams, floor slabs and walls, rated in percent where higher is worse. → [[assessments]]
 - **MATATAG**: _Monitoring and Assessment Tool for Area Threats and Accident Generators_, the UP Resilience Institute building safety checklist (Ver. July 25, 2025). → [[assessments]]
 - **DRRM pillars**: the four pillars of RA 10121: Disaster Prevention and Mitigation, Disaster Preparedness, Disaster Response, Disaster Rehabilitation and Recovery (`src/lib/pillars.ts`, `DrrmPillar`). Every scored checklist item has one pillar.
 - **Template / version**: the checklist lives as `AssessmentTemplate` → `AssessmentTemplateVersion` (`draft` | `published` | `retired`) → sections → items. Only one version is published at a time. → [[0006-versioned-checklist-template]]

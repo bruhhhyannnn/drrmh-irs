@@ -24,6 +24,7 @@ import type { PsgcTree } from '@/lib/psgc';
 import { findBarangay, loadPsgcTree } from '@/lib/psgc-data';
 import { assessmentPayloadSchema, type AssessmentPayload } from '@/lib/schemas';
 import { requireProfile } from '@/lib/server-auth';
+import { prepareStructuralWrite, STRUCTURAL_TOOL_VERSION } from '@/lib/structural-integrity';
 import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
@@ -37,6 +38,10 @@ const isUuid = (value: unknown): value is string => z.string().uuid().safeParse(
 
 const isUniqueViolation = (err: unknown) =>
   err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';
+
+/** A table the code needs isn't in the database yet (a prisma/manual file hasn't run). */
+const isMissingTable = (err: unknown) =>
+  err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2021';
 
 /* ─── Templates ─── */
 
@@ -308,6 +313,16 @@ export async function createAssessment(
       );
     }
 
+    // Queued before DRRM-044: no structural part, and still accepted.
+    const structural = data.structural ? prepareStructuralWrite(data.structural) : null;
+    if (structural && structural.missing > 0) {
+      return fail(
+        structural.missing === 1
+          ? '1 structural integrity check still needs an answer.'
+          : `${structural.missing} structural integrity checks still need an answer.`
+      );
+    }
+
     if (
       'new_off_campus' in data.building &&
       !(await findBarangay(data.building.new_off_campus.barangay_code))
@@ -350,11 +365,43 @@ export async function createAssessment(
           floor_count: data.floor_count,
           started_at: new Date(data.started_at),
           ended_at: new Date(data.ended_at),
-          needs_follow_up: prepared.needsFollowUp,
+          needs_follow_up:
+            prepared.needsFollowUp ||
+            (structural !== null && structural.rating.recommendation !== 'none'),
           areas: { createMany: { data: areaTypeIds.map((area_type_id) => ({ area_type_id })) } },
           answers: { createMany: { data: prepared.answers } },
           comments: { createMany: { data: prepared.comments } },
           pillar_scores: { createMany: { data: pillarScores } },
+          ...(structural
+            ? {
+                structural_summary: {
+                  create: {
+                    tool_version: STRUCTURAL_TOOL_VERSION,
+                    lcr_columns: structural.rating.elements.columns.lcr,
+                    lcr_beams: structural.rating.elements.beams.lcr,
+                    lcr_slabs: structural.rating.elements.slabs.lcr,
+                    lcr_walls: structural.rating.elements.walls.lcr,
+                    gcr: structural.rating.gcr,
+                    critical_columns: structural.rating.elements.columns.critical,
+                    critical_beams: structural.rating.elements.beams.critical,
+                    critical_walls: structural.rating.elements.walls.critical,
+                    recommendation: structural.rating.recommendation,
+                  },
+                },
+                structural_findings: {
+                  createMany: {
+                    data: structural.findings.map((f) => ({
+                      element: f.element,
+                      defect_code: f.defect,
+                      answer: f.answer,
+                      severity: f.severity,
+                      extent: f.extent,
+                      remarks: f.remarks,
+                    })),
+                  },
+                },
+              }
+            : {}),
         },
         select: { id: true },
       });
@@ -377,6 +424,11 @@ export async function createAssessment(
     if (isUniqueViolation(err)) {
       const existing = await findByClientRef(data.client_ref);
       if (existing) return { ok: true, id: existing };
+    }
+    if (isMissingTable(err)) {
+      return fail(
+        "The server isn't ready for the structural integrity checks yet. Ask an administrator to apply the DRRM-044 database update, then submit again."
+      );
     }
     throw toFriendlyError(err, 'assessment');
   }

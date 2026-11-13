@@ -75,6 +75,43 @@
     }
   }
 
+  /* Assessment flashcards (phones): the next question slides in from the side it comes from —
+     the right going forward, the left going back. With reduced motion it only fades. */
+  --animate-card-in-next: card-in-next 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-card-in-prev: card-in-prev 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-card-fade: card-fade 160ms ease-out both;
+
+  @keyframes card-in-next {
+    from {
+      opacity: 0;
+      transform: translateX(32px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes card-in-prev {
+    from {
+      opacity: 0;
+      transform: translateX(-32px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes card-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
   /* Landing page hero — four campus names taking turns in the heading on a 12s loop */
   --animate-campus-turn: campus-turn 12s cubic-bezier(0.2, 0.7, 0.3, 1) infinite both;
 

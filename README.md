@@ -17,7 +17,7 @@
 
 This is the web platform for the UPM DRRM-H Incident Reporting System. It is a centralized system for managing, monitoring, and analyzing incident reports submitted during drills, emergencies, and other DRRM-H-related events, across multiple UP campuses.
 
-ERT members submit status reports through the signed-in `/report` page and check building safety with the MATATAG checklist on `/assessment`, and bystanders submit incident reports anonymously through a QR-accessible public form. All three work offline: they are saved on the device and sent automatically once the connection returns. Administrators get a centralized view of all incidents, headcounts, drill statuses, and post-event summaries.
+ERT members submit status reports through the signed-in `/report` page and check building safety on `/assessment` with the MATATAG checklist and a structural integrity check, and bystanders submit incident reports anonymously through a QR-accessible public form. All three work offline: they are saved on the device and sent automatically once the connection returns. Administrators get a centralized view of all incidents, headcounts, drill statuses, and post-event summaries.
 
 ### What it does
 
@@ -29,7 +29,7 @@ ERT members submit status reports through the signed-in `/report` page and check
 - **Event Details** — Per-cluster headcount board with casualty, missing person, and structural damage breakdowns
 - **Reports** — View, search, edit, and delete field reports with full headcount details and GPS-pinned location
 - **Bystander Reports** — Review public incident submissions and mark them reviewed, verified, or dismissed
-- **Assessments** — Every building's latest MATATAG score overall and per DRRM pillar with the change since its previous assessment, every submitted assessment (filter by cluster, unit and date), a Compare tab for any building's score history and A/B assessment comparison, and each assessment read-only or printed on A4; super admins can delete a wrong one and edit the checklist questions, versions and area gates at `/assessments/checklist`
+- **Assessments** — Every building's latest MATATAG score overall and per DRRM pillar with the change since its previous assessment, every submitted assessment (filter by cluster, unit and date), a Compare tab for any building's score history and A/B assessment comparison, and each assessment read-only or printed on A4 with its structural condition rating, recommendation and defects found; super admins can delete a wrong one and edit the checklist questions, versions and area gates at `/assessments/checklist`
 - **Users** — Manage accounts, roles, and active status
 - **Settings** — Configure clusters, units, buildings (name, unit, floors), positions, casualty conditions, damage conditions, and per-campus population (headcount) fields
 
@@ -38,7 +38,7 @@ ERT members submit status reports through the signed-in `/report` page and check
 - **Landing page** — Public home page with summary stats
 - **ERT home** (`/home`) — Where ERT members land after sign-in: Status report, and Building assessment for those who can use it; a Report | Assessment switch in the top bar moves between the two
 - **ERT Report page** (`/report`) — One status report per member per ongoing event, with location pin, headcount, damage, missing persons, and casualties
-- **Building assessment** (`/assessment`) — The MATATAG checklist (UP Resilience Institute, Ver. July 25, 2025) in English and Filipino: pick the building, set its floors and areas so only the questions that apply are asked, answer Yes / No / N/A section by section, and see the score overall, per DRRM pillar and per section. Drafts are saved on the phone as you go and an assessment submitted offline sends on its own later
+- **Building assessment** (`/assessment`) — The MATATAG checklist (UP Resilience Institute, Ver. July 25, 2025) in English and Filipino: pick the building, set its floors and areas so only the questions that apply are asked, answer Yes / No / N/A section by section, and see the score overall, per DRRM pillar and per section. After the checklist, a structural integrity check (the Rapid Condition Assessment Tool's Material Component) goes over columns, beams, floor slabs and walls: ten defects each, and every defect found is graded by how bad and how widespread it is. It gives a condition rating per element and for the building, and a recommendation (none, a local investigation, or an overall Level 2 investigation) that also flags the building for follow-up. On phones both parts go one question at a time. Drafts are saved on the phone as you go and an assessment submitted offline sends on its own later
 - **Bystander Report** (`/bystander-report`) — Anonymous incident report, reachable by QR code
 - **Offline support (PWA)** — Installable app, offline fallback page, and an on-device queue that syncs reports when back online
 
@@ -154,19 +154,19 @@ The IRS is a centralized web platform consisting of:
 
 ## Roles & Access
 
-| Role                 | Access                                                                                                            |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| **Super Admin**      | All admin pages across all campuses, including Campus management. Picks the campus when creating events and users |
-| **Administrator**    | Admin pages (dashboard, events, reports, bystander reports, assessments, users, settings) for their campus        |
-| **ERT Member**       | Signed-in `/report` page: submit one status report per ongoing event, then add missing persons/casualties         |
-| **Public/Bystander** | `/bystander-report`: anonymous incident reporting via QR code, no sign-in                                         |
+| Role                 | Access                                                                                                               |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| **Super Admin**      | All admin pages across all campuses, including Campus management. Picks the campus when creating events and users    |
+| **Administrator**    | Admin pages (dashboard, events, reports, bystander reports, assessments, users, settings) for their campus           |
+| **ERT Member**       | `/report`: one status report per ongoing event, then missing persons/casualties; `/assessment`: building assessments |
+| **Public/Bystander** | `/bystander-report`: anonymous incident reporting via QR code, no sign-in                                            |
 
 **How accounts are created and signed in:**
 
 - **Google sign-in:** restricted to `@up.edu.ph` accounts. A first-time Google user is created automatically as an **ERT Member**.
 - **Email and password:** for accounts that admins create on the Users page. Includes a forgot-password flow.
 - **Completing the profile:** non-admin users must set their campus, cluster, unit, and position before they can submit reports.
-- **Where users land after sign-in:** admins go to `/dashboard`, and everyone else goes to `/report`.
+- **Where users land after sign-in:** admins go to `/dashboard`, and everyone else goes to `/home`.
 
 ---
 
@@ -1056,6 +1056,31 @@ erDiagram
     string comment
   }
 
+  assessment_structural_summaries {
+    uuid assessment_id PK
+    string tool_version
+    float lcr_columns
+    float lcr_beams
+    float lcr_slabs
+    float lcr_walls
+    float gcr
+    enum critical_columns
+    enum critical_beams
+    enum critical_walls
+    string recommendation
+  }
+
+  assessment_structural_findings {
+    uuid id PK
+    uuid assessment_id FK
+    string element
+    string defect_code
+    enum answer
+    smallint severity
+    smallint extent
+    string remarks
+  }
+
   assessment_templates ||--o{ assessment_template_versions : "versioned_as"
   assessment_template_versions ||--o{ assessment_sections : "contains"
   assessment_sections ||--o{ assessment_items : "contains"
@@ -1077,6 +1102,8 @@ erDiagram
   drrm_pillars ||--o{ assessment_pillar_scores : "scores"
   assessments ||--o{ assessment_section_comments : "has"
   assessment_sections ||--o{ assessment_section_comments : "commented_in"
+  assessments ||--o| assessment_structural_summaries : "rated_as"
+  assessments ||--o{ assessment_structural_findings : "has"
 
   campus ||--o{ clusters : "contains"
   campus ||--o{ campus_population_categories : "configures"
@@ -1122,11 +1149,11 @@ npm run lint:fix     # Auto-fix ESLint issues
 npm run type-check   # TypeScript check (tsc --noEmit)
 npm run seed         # Seed lookup data (clusters, positions, statuses, etc.)
 npm run seed:matatag # Seed the MATATAG checklist (safe to re-run; item ids stay the same)
-npm run test         # Unit tests for the assessment logic (node:test via tsx)
+npm run test         # Unit tests for the pure logic (node:test via tsx)
 npx prisma generate  # Regenerate the Prisma client (also runs on npm install)
 ```
 
-`npm run test` covers the assessment logic only (checklist data, which questions apply, scoring, the draft and its payload); CI doesn't run it yet. CI (`.github/workflows/ci.yml`) runs on pushes and pull requests to `main` and does the following: install, `prisma generate`, `npm audit`, lint, type-check, and build. A Husky pre-commit hook runs ESLint and Prettier on staged files.
+`npm run test` runs `src/**/*.test.ts` and `prisma/**/*.test.ts`: the pure logic in `src/lib` (assessment scoring and drafts, the structural integrity rating, building safety, access, admin scope, the offline queue, schemas), the NSED report and the MATATAG checklist data. It doesn't cover UI or server actions, and CI doesn't run it yet. CI (`.github/workflows/ci.yml`) runs on pushes and pull requests to `main` and does the following: install, `prisma generate`, `npm audit`, lint, type-check, and build. A Husky pre-commit hook runs ESLint and Prettier on staged files.
 
 ---
 
@@ -1151,10 +1178,13 @@ docs/               # Plans, reviews, bug reports, and feature specs
 
 ---
 
-## Developer
+## Developers
 
 **Bryan Mangapit** — Lead Developer
 [bruhhhyannnn.framer.website](https://bruhhhyannnn.framer.website) · [GitHub](https://github.com/bruhhhyannnn) · [LinkedIn](https://linkedin.com/in/bryanmangapit)
+
+**Jomar Lazaro** — Lead Developer
+[devjom.nexoraq.dev](https://devjom.nexoraq.dev) · [GitHub](https://github.com/DevJom) · [LinkedIn](https://linkedin.com/in/jomarlazaro)
 
 ---
 

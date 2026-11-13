@@ -37,6 +37,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { formatDate, formatDateTime } from '../../_lib/format';
 import { AssessmentLink } from '../_lib/nav';
+import { StructuralPrint } from './structural-print';
 
 // One submitted assessment on A4 (`?print=<id>`): the details and scores, the action list, every
 // answer, then the signatures of the assessor, the safety officer and the incident commander. It
@@ -166,6 +167,7 @@ export function RecordPrint({ record, back }: { record: AssessmentRecord; back: 
         <ScoresSection score={score} />
         <UnsafeSection score={score} sections={template.sections} />
         <SectionScores score={score} sections={template.sections} />
+        {record.structural && <StructuralPrint input={record.structural} />}
       </Sheet>
 
       <Sheet title={title} running={running} generated={generated} last>
