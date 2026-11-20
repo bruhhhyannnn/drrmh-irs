@@ -1,14 +1,41 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { requireAdmin } from '@/lib/server-auth';
+import type { ActionRefusal } from '@/lib/utils';
 
 const statusKey = (name: string) => name.toLowerCase();
 
+/** A date from the browser, or `fallback` when it isn't one. */
+const validDate = (value: unknown, fallback: Date) =>
+  value instanceof Date && Number.isFinite(value.getTime()) ? value : fallback;
+
 /**
- * Everything the dashboard shows, for one campus or all of them. The month window comes from
- * the browser so "this month" follows the admin's time zone, not the server's.
+ * Everything the dashboard shows, for the campus the caller's verified scope covers (#102): an
+ * Administrator's own, a Super Admin's pick or all. The month window comes from the browser so
+ * "this month" follows the admin's time zone, not the server's.
  */
-export async function getDashboard(campusId: string | undefined, monthStart: Date, monthEnd: Date) {
+export async function getDashboard(
+  token: string | null,
+  requestedCampusId: string | undefined,
+  requestedMonthStart: Date,
+  requestedMonthEnd: Date
+) {
+  const caller = await requireAdmin(token, requestedCampusId || null);
+  if (!caller.ok) {
+    return {
+      ok: false,
+      error: 'Sign in as an administrator to see the dashboard.',
+      retry: false,
+    } satisfies ActionRefusal;
+  }
+  const campusId = caller.scope.campusId ?? undefined;
+  const now0 = new Date();
+  const monthStart = validDate(
+    requestedMonthStart,
+    new Date(now0.getFullYear(), now0.getMonth(), 1)
+  );
+  const monthEnd = validDate(requestedMonthEnd, now0);
   const campus = campusId ? { campus_id: campusId } : {};
   const reportScope = campusId ? { cluster: { campus_id: campusId } } : {};
 
@@ -160,6 +187,7 @@ export async function getDashboard(campusId: string | undefined, monthStart: Dat
     }));
 
   return {
+    ok: true as const,
     counts: {
       events: events.length,
       reports: reportCount,

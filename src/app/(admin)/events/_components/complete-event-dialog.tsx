@@ -5,7 +5,6 @@ import {
   useEventSummarySource,
   useSiblingOngoingEvents,
 } from '@/components/hooks/use-events';
-import { useAuthStore } from '@/store';
 import { format } from 'date-fns';
 import { Check } from 'lucide-react';
 import { useState } from 'react';
@@ -38,7 +37,6 @@ export function CompleteEventDialog({
   title: string;
   eventName: string;
 }) {
-  const userId = useAuthStore((s) => s.userProfile?.id ?? null);
   const { data: source } = useEventSummarySource(eventId);
   const summary = useSummary(source);
   const isSuperAdmin = useIsSuperAdmin();
@@ -56,7 +54,7 @@ export function CompleteEventDialog({
 
   const confirm = () =>
     completeEvents.mutate(
-      { ids, userId },
+      { ids },
       {
         onSuccess: () => {
           toast.success(ids.length > 1 ? `${ids.length} events completed` : 'Event completed');

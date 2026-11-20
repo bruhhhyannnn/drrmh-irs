@@ -9,6 +9,15 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-047 Caller checks on the older actions: 2026-11-20 (branch `fix/DRRM-047-legacy-action-caller-checks`)
+
+Plan: [[plan/fix/DRRM-047-legacy-action-caller-checks]] · [[events]] · [[bystander-reports]] · [[campus-scoping]] · [[settings-lookups]] · [[dashboard]] · GitHub #102, #103
+
+- Events, bystander reports, campuses, headcount fields, the dashboard and Settings check who is asking on the server, and only show or change what the admin's campus covers.
+- Their payloads are strict allowlists, so nothing can ride along into other tables, and who created or completed an event comes from the signed-in admin.
+- Deleting a bystander report also deletes its photos.
+- Positions, casualty and damage conditions and campuses are changed by Super Admins only; Administrators see those lists read-only.
+
 ## DRRM-046 Field report rules on the server: 2026-11-20 (branch `fix/DRRM-046-field-report-rules`)
 
 Plan: [[plan/fix/DRRM-046-field-report-rules]] · [[field-reports]] · [[events]] · GitHub #87, #101, #108, #111

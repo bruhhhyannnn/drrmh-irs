@@ -108,3 +108,17 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 export function isUuid(value: unknown): value is string {
   return typeof value === 'string' && UUID_PATTERN.test(value);
 }
+
+/** A server action's refusal, returned instead of thrown because production hides thrown text. */
+export type ActionRefusal = { ok: false; error: string; retry?: boolean };
+
+/**
+ * The `{ ok: true, ... }` answer of a server action; a refusal is thrown here in the browser,
+ * where its message reaches the toast or the query error.
+ */
+export function okOrThrow<T extends { ok: true } | ActionRefusal>(
+  result: T
+): Exclude<T, ActionRefusal> {
+  if (!result.ok) throw new Error((result as ActionRefusal).error);
+  return result as Exclude<T, ActionRefusal>;
+}

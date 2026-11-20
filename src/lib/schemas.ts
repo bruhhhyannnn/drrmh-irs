@@ -202,6 +202,22 @@ const typedText = (max: number) => z.string().trim().max(max).transform(withoutC
 /** The most people one field report lists, and headcount fields it carries (#101). */
 export const REPORT_LIST_MAX = 100;
 
+/**
+ * What Add / Edit event sends to the server (#102). Who made or completed it, and when it ended
+ * on completion, are set on the server from the verified caller, never taken from the request.
+ */
+export const eventWriteSchema = z
+  .object({
+    name: z.string().trim().min(1, 'Enter an event name.').max(200),
+    description: z.string().max(2000).nullish(),
+    quarter: z.string().max(50).nullish(),
+    started_at: z.coerce.date().nullish(),
+    ended_at: z.coerce.date().nullish(),
+    status_id: z.string().uuid('Pick a status.'),
+  })
+  .strict();
+export type EventWriteInput = z.input<typeof eventWriteSchema>;
+
 export const missingPersonSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(200).transform(withoutControlChars),
   // Null when unknown, so it shows as unknown rather than "0 yrs".

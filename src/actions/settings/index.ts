@@ -3,17 +3,28 @@
 import { toSettingsPath } from '@/lib';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
+import {
+  buildingSchema,
+  campusSchema,
+  casualtyConditionSchema,
+  clusterSchema,
+  damageConditionSchema,
+  positionSchema,
+  unitSchema,
+  withoutControlChars,
+} from '@/lib/schemas';
 import { requireAdmin } from '@/lib/server-auth';
+import {
+  canWriteSetting,
+  isGlobalSettingsTable,
+  isSettingsTable,
+  type SettingsTable,
+} from '@/lib/settings-access';
+import { isUuid, type ActionRefusal } from '@/lib/utils';
 import { revalidatePath } from 'next/cache';
+import type { z } from 'zod';
 
-export type SettingsTable =
-  | 'clusters'
-  | 'units'
-  | 'positions'
-  | 'casualty_conditions'
-  | 'campus'
-  | 'damage_conditions'
-  | 'buildings';
+export type { SettingsTable };
 
 const MODEL_MAP = {
   clusters: 'cluster',
@@ -33,6 +44,20 @@ const TITLE_MAP: Record<SettingsTable, string> = {
   campus: 'Campus',
   damage_conditions: 'Damage Conditions',
   buildings: 'Buildings',
+};
+
+/**
+ * What each table's Add / Edit may send (#103): strict allowlists, so a relation key such as
+ * `users` or `reports` is refused and no nested write reaches Prisma.
+ */
+const WRITE_SCHEMAS: Record<SettingsTable, z.AnyZodObject> = {
+  clusters: clusterSchema.strict(),
+  units: unitSchema.strict(),
+  buildings: buildingSchema.strict(),
+  positions: positionSchema.strict(),
+  casualty_conditions: casualtyConditionSchema.strict(),
+  damage_conditions: damageConditionSchema.strict(),
+  campus: campusSchema.strict(),
 };
 
 // What each table's rows carry besides their own columns: the parent shown in the table, and
@@ -66,23 +91,37 @@ function revalidateTable(table: SettingsTable) {
   revalidatePath(toSettingsPath(TITLE_MAP[table]));
 }
 
+/** The campus filter for a table's rows; undefined for the lists every campus shares. */
+function campusWhere(table: SettingsTable, campusId: string) {
+  if (table === 'clusters') return { campus_id: campusId };
+  if (table === 'units') return { cluster: { campus_id: campusId } };
+  if (table === 'buildings') return { unit: { cluster: { campus_id: campusId } } };
+  return undefined;
+}
+
 /**
  * Every row of a lookup table, with what the settings list shows (campus, cluster, linked
- * record counts). `filterId` narrows clusters to one campus and units to one cluster.
+ * record counts). Admins only (#103), and an Administrator gets only their own campus's
+ * clusters, units and buildings. `filterId` narrows clusters to one campus and units to one
+ * cluster.
  */
-export async function getSettingsItems(table: SettingsTable, filterId?: string) {
+export async function getSettingsItems(
+  token: string | null,
+  table: SettingsTable,
+  filterId?: string
+) {
+  const caller = await requireAdmin(token);
+  if (!caller.ok || !isSettingsTable(table)) return [];
+  if (filterId !== undefined && !isUuid(filterId)) return [];
   const model = MODEL_MAP[table];
+  const scopeCampus = caller.scope.campusId;
   // Off-campus buildings come from assessments, not this table (DRRM-025).
-  const where =
-    table === 'buildings'
-      ? { unit_id: { not: null } }
-      : !filterId
-        ? undefined
-        : table === 'clusters'
-          ? { campus_id: filterId }
-          : table === 'units'
-            ? { cluster_id: filterId }
-            : undefined;
+  const where = {
+    ...(table === 'buildings' && { unit_id: { not: null } }),
+    ...(filterId && table === 'clusters' && { campus_id: filterId }),
+    ...(filterId && table === 'units' && { cluster_id: filterId }),
+    ...(scopeCampus && campusWhere(table, scopeCampus)),
+  };
   // @ts-expect-error dynamic model access
   return prisma[model].findMany({ where, include: INCLUDE_MAP[table], orderBy: { name: 'asc' } });
 }
@@ -91,33 +130,126 @@ function singularLabel(table: SettingsTable) {
   return TITLE_MAP[table].replace(/s$/, '').toLowerCase();
 }
 
-/**
- * Settings writes need an admin (security review of DRRM-025/026: these took any caller before).
- * Off-campus buildings come from assessments and are Super Admin only, so they aren't edited here.
- */
-async function settingsWriter(token: string | null, table: SettingsTable, id?: string) {
-  const caller = await requireAdmin(token);
-  if (!caller.ok) throw new Error('Sign in as an administrator to change settings.');
-  if (table === 'buildings' && id) {
-    const building = await prisma.building.findUnique({ where: { id }, select: { unit_id: true } });
-    if (!building?.unit_id) throw new Error('Off-campus buildings are not edited in Settings.');
+const refuse = (error: string): ActionRefusal => ({ ok: false, error, retry: false });
+const ADMIN_ONLY = refuse('Sign in as an administrator to change settings.');
+
+/** The campus a cluster, unit or building belongs to, by its id; undefined when it's gone. */
+async function campusOfRow(table: SettingsTable, id: string): Promise<string | null | undefined> {
+  if (table === 'clusters') {
+    const row = await prisma.cluster.findUnique({ where: { id }, select: { campus_id: true } });
+    return row ? row.campus_id : undefined;
   }
+  if (table === 'units') {
+    const row = await prisma.unit.findUnique({
+      where: { id },
+      select: { cluster: { select: { campus_id: true } } },
+    });
+    return row ? row.cluster.campus_id : undefined;
+  }
+  if (table === 'buildings') {
+    const row = await prisma.building.findUnique({
+      where: { id },
+      select: { unit: { select: { cluster: { select: { campus_id: true } } } } },
+    });
+    return row ? (row.unit?.cluster.campus_id ?? null) : undefined;
+  }
+  return null;
 }
+
+/** The campus of the parent a row is given: a cluster's campus, a unit's cluster, a building's unit. */
+async function campusOfParent(
+  table: SettingsTable,
+  data: Record<string, unknown>
+): Promise<string | null | undefined> {
+  if (table === 'clusters' && typeof data.campus_id === 'string') return data.campus_id;
+  if (table === 'units' && typeof data.cluster_id === 'string') {
+    return campusOfRow('clusters', data.cluster_id);
+  }
+  if (table === 'buildings' && typeof data.unit_id === 'string') {
+    return campusOfRow('units', data.unit_id);
+  }
+  return null;
+}
+
+type Writer = { ok: true; data: Record<string, unknown> } | ActionRefusal;
+
+/**
+ * Checks a Settings write on the server (#103): an admin; for the lists every campus shares, a
+ * Super Admin; for clusters, units and buildings, both the row as saved and the parent it is
+ * given must be on a campus the caller's scope covers. `data` is parsed with the table's strict
+ * schema (all optional on edit). Off-campus buildings come from assessments and are never
+ * edited here.
+ */
+async function settingsWriter(
+  token: string | null,
+  table: SettingsTable,
+  id: string | null,
+  data: unknown
+): Promise<Writer> {
+  const caller = await requireAdmin(token);
+  if (!caller.ok) return ADMIN_ONLY;
+  if (!isSettingsTable(table)) return refuse('That list does not exist.');
+  if (id !== null && !isUuid(id)) return refuse(`This ${singularLabel(table)} no longer exists.`);
+
+  let fields: Record<string, unknown> = {};
+  if (data !== undefined) {
+    const schema = WRITE_SCHEMAS[table];
+    let input = data as Record<string, unknown>;
+    // An Administrator's new cluster is on their own campus (the form has no Campus field).
+    if (table === 'clusters' && id === null && caller.scope.role === 'administrator') {
+      input = { ...input, campus_id: input?.campus_id ?? caller.scope.campusId };
+    }
+    const parsed = (id === null ? schema : schema.partial()).safeParse(input);
+    if (!parsed.success) {
+      return refuse(parsed.error.issues[0]?.message ?? `Check the ${singularLabel(table)}.`);
+    }
+    fields = parsed.data;
+    // A control character in a name would break the NSED export (#111).
+    if (typeof fields.name === 'string') fields.name = withoutControlChars(fields.name);
+  }
+
+  const campuses: (string | null | undefined)[] = [];
+  if (id !== null) {
+    const saved = await campusOfRow(table, id);
+    // Null for the lists every campus shares; undefined when the row is gone.
+    if (saved === undefined) return refuse(`This ${singularLabel(table)} no longer exists.`);
+    if (table === 'buildings' && saved === null) {
+      return refuse('Off-campus buildings are not edited in Settings.');
+    }
+    if (saved !== null) campuses.push(saved);
+  }
+  const parent = await campusOfParent(table, fields);
+  if (parent !== null) campuses.push(parent);
+  if (table === 'buildings' && id === null && !fields.unit_id) {
+    return refuse('Pick a unit for the building.');
+  }
+  if (!canWriteSetting(caller.scope, table, campuses)) {
+    return refuse(
+      isGlobalSettingsTable(table)
+        ? `Only super admins can change ${TITLE_MAP[table].toLowerCase()}, since every campus uses them.`
+        : `You can't change ${TITLE_MAP[table].toLowerCase()} of another campus.`
+    );
+  }
+  return { ok: true, data: fields };
+}
+
+type SettingsWriteResult = { ok: true; item: { id: string } } | ActionRefusal;
 
 export async function createSettingsItem(
   token: string | null,
   table: SettingsTable,
   data: Record<string, unknown>
-) {
-  await settingsWriter(token, table);
+): Promise<SettingsWriteResult> {
+  const writer = await settingsWriter(token, table, null, data ?? {});
+  if (!writer.ok) return writer;
   const model = MODEL_MAP[table];
   try {
     // @ts-expect-error dynamic model access
-    const result = await prisma[model].create({ data });
+    const item = await prisma[model].create({ data: writer.data, select: { id: true } });
     revalidateTable(table);
-    return result;
+    return { ok: true, item };
   } catch (err) {
-    throw toFriendlyError(err, singularLabel(table));
+    return refuse(toFriendlyError(err, singularLabel(table)).message);
   }
 }
 
@@ -126,28 +258,39 @@ export async function updateSettingsItem(
   table: SettingsTable,
   id: string,
   data: Record<string, unknown>
-) {
-  await settingsWriter(token, table, id);
+): Promise<SettingsWriteResult> {
+  const writer = await settingsWriter(token, table, id, data ?? {});
+  if (!writer.ok) return writer;
   const model = MODEL_MAP[table];
   try {
     // @ts-expect-error dynamic model access
-    const result = await prisma[model].update({ where: { id }, data });
+    const item = await prisma[model].update({
+      where: { id },
+      data: writer.data,
+      select: { id: true },
+    });
     revalidateTable(table);
-    return result;
+    return { ok: true, item };
   } catch (err) {
-    throw toFriendlyError(err, singularLabel(table));
+    return refuse(toFriendlyError(err, singularLabel(table)).message);
   }
 }
 
-export async function deleteSettingsItem(token: string | null, table: SettingsTable, id: string) {
-  await settingsWriter(token, table, id);
+export async function deleteSettingsItem(
+  token: string | null,
+  table: SettingsTable,
+  id: string
+): Promise<{ ok: true } | ActionRefusal> {
+  const writer = await settingsWriter(token, table, id, undefined);
+  if (!writer.ok) return writer;
   const model = MODEL_MAP[table];
   try {
     // @ts-expect-error dynamic model access
     await prisma[model].delete({ where: { id } });
     revalidateTable(table);
+    return { ok: true };
   } catch (err) {
-    throw toFriendlyError(err, singularLabel(table));
+    return refuse(toFriendlyError(err, singularLabel(table)).message);
   }
 }
 

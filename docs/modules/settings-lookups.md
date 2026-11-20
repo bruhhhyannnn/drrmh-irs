@@ -1,7 +1,7 @@
 ---
 type: module
 module: settings-lookups
-updated: 2026-11-12
+updated: 2026-11-20
 verified: true
 paths:
   - src/actions/settings/index.ts
@@ -53,11 +53,11 @@ Read this before adding or changing a lookup table or the Settings page.
 
 ## Server actions
 
-`src/actions/settings/index.ts` (no auth or role checks):
+`src/actions/settings/index.ts`. The table reads and writes check the caller on the server (DRRM-047, #103); the small getters below stay public for the forms.
 
 - `SettingsTable` type: `clusters`, `units`, `positions`, `casualty_conditions`, `campus`, `damage_conditions`, `buildings`. `MODEL_MAP` maps each to a Prisma model.
-- `getSettingsItems(table, filterId?)`: all rows with `INCLUDE_MAP` extras (parent names, linked record `_count`s; units count `users`, `reports` and `buildings` since DRRM-040). `filterId` narrows clusters by campus or units by cluster.
-- `createSettingsItem(table, data)`, `updateSettingsItem(table, id, data)`, `deleteSettingsItem(table, id)`: dynamic `prisma[model]` calls; errors go through `toFriendlyError`; revalidate `/settings` and the tab path from `toSettingsPath`.
+- `getSettingsItems(token, table, filterId?)`: admins only; an Administrator gets only their own campus's clusters, units and buildings. All rows with `INCLUDE_MAP` extras (parent names, linked record `_count`s; units count `users`, `reports` and `buildings` since DRRM-040). `filterId` narrows clusters by campus or units by cluster.
+- `createSettingsItem(token, table, data)`, `updateSettingsItem(token, table, id, data)`, `deleteSettingsItem(token, table, id)`: `data` is parsed with the table's strict schema (`WRITE_SCHEMAS`; all optional on edit), so relation keys are refused, and names lose control characters (#111). Who may write is `canWriteSetting` (`src/lib/settings-access.ts`): a Super Admin anything; an Administrator only clusters, units and buildings, and only when both the row as saved and the parent it is given are on their campus (an Administrator's new cluster defaults to their campus). Positions, casualty and damage conditions and campuses are Super Admin only (`GLOBAL_SETTINGS_TABLES`), and off-campus buildings are never edited here. Dynamic `prisma[model]` calls; they return `{ ok: true, item } | { ok: false, error }` (errors through `toFriendlyError`); revalidate `/settings` and the tab path from `toSettingsPath`.
 - Getters: `getUnits(clusterId?)`, `getUserTypes()`, `getPositions()`, `getEventStatuses()`, `getDamageConditions()`, `getClusters()`, `getCampus()`, `getCasualtyConditions()`.
 
 Population field actions are listed in [[field-reports]].
@@ -85,7 +85,7 @@ Population field actions are listed in [[field-reports]].
 - Casualty and damage condition names drive severity colours in the event summary (`(admin)/_lib/summary.ts` regexes). Rename with care.
 - Inactive rows stay in old reports and are still shown when an existing record already uses them.
 - Building area profiles are not edited here; area types are on the checklist editor ([[checklist-editor]]).
-- Server actions accept any `data` object and do not check role or campus. Scope is enforced in the UI only.
+- Role and campus are checked on the server (`canWriteSetting`). On the shared lists an Administrator sees no Add button, row actions or Active switch, since the server would refuse them.
 
 ## Decisions
 
