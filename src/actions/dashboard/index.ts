@@ -45,8 +45,14 @@ export async function getDashboard(
   };
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
+  const statusIs = (name: string) => ({
+    status: { name: { equals: name, mode: 'insensitive' as const } },
+  });
+
   const [
     events,
+    statusGroups,
+    statuses,
     reportCount,
     userCount,
     pendingBystander,
@@ -57,8 +63,17 @@ export async function getDashboard(
     buildings,
     campusesWithoutFields,
   ] = await Promise.all([
+    // Only the events the cards show (#109): ongoing, upcoming and this month's. The counts per
+    // status come from a groupBy instead of loading every event ever held.
     prisma.event.findMany({
-      where: campus,
+      where: {
+        ...campus,
+        OR: [
+          statusIs('ongoing'),
+          statusIs('upcoming'),
+          { started_at: { gte: monthStart, lte: monthEnd } },
+        ],
+      },
       select: {
         id: true,
         name: true,
@@ -71,6 +86,8 @@ export async function getDashboard(
       },
       orderBy: [{ started_at: { sort: 'asc', nulls: 'last' } }, { created_at: 'asc' }],
     }),
+    prisma.event.groupBy({ by: ['status_id'], where: campus, _count: { _all: true } }),
+    prisma.eventStatus.findMany({ select: { id: true, name: true } }),
     prisma.report.count({ where: reportScope }),
     prisma.user.count({ where: campus }),
     prisma.bystander_reports.count({ where: pendingWhere }),
@@ -170,9 +187,12 @@ export async function getDashboard(
     : null;
 
   const statusCounts = { ongoing: 0, upcoming: 0, completed: 0 };
-  for (const e of events) {
-    const key = statusKey(e.status.name) as keyof typeof statusCounts;
-    if (key in statusCounts) statusCounts[key]++;
+  const statusName = new Map(statuses.map((st) => [st.id, statusKey(st.name)]));
+  let eventCount = 0;
+  for (const g of statusGroups) {
+    eventCount += g._count._all;
+    const key = statusName.get(g.status_id) as keyof typeof statusCounts | undefined;
+    if (key && key in statusCounts) statusCounts[key] += g._count._all;
   }
 
   const month = events
@@ -189,7 +209,7 @@ export async function getDashboard(
   return {
     ok: true as const,
     counts: {
-      events: events.length,
+      events: eventCount,
       reports: reportCount,
       users: userCount,
       pendingBystander,

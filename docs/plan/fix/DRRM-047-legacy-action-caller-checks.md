@@ -67,6 +67,8 @@ Administrator's own, a Super Admin's pick or all); single-row actions load the r
       for this action); a reorder must name links of one campus in scope (at most 100). Reads stay
       public.
 - [x] `src/actions/dashboard`: `getDashboard(token, …)`, campus from the scope; returns `ok: true`.
+      It loads only ongoing, upcoming and this month's events and counts statuses with a `groupBy`
+      (#109 item 4, here because it is the same function).
 - [x] `src/actions/settings`: `getSettingsItems` for admins, scoped to the Administrator's campus
       for clusters, units and buildings. Writes parse the table's strict schema and go through
       `canWriteSetting` (`src/lib/settings-access.ts`): positions, conditions and campuses are
