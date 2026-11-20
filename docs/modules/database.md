@@ -1,7 +1,7 @@
 ---
 type: module
 module: database
-updated: 2026-11-12
+updated: 2026-11-20
 verified: true
 paths:
   - prisma/schema.prisma
@@ -118,6 +118,7 @@ None live here. Every module's `src/actions/<domain>/index.ts` imports `prisma` 
 - The generated client goes to the default `@prisma/client` (no `output` in the generator) and code imports from `@prisma/client`; `postinstall` runs `prisma generate`.
 - `prisma/seed.ts` connects with `SHADOW_DATABASE_URL`, not `DATABASE_URL`. It writes every cluster and event to the fixed campus id `f5b2b08d-d24a-4fbc-af3a-defe18b8f03d`. Lookups use `createMany` with `skipDuplicates`, but events are `create`d, so re-running adds duplicate NSED events.
 - `supabase-admin.ts` holds the service-role key. Import it only from server code.
+- `rate_limits` (`RateLimit`, `prisma/manual/DRRM-049-rate-limits.sql`) holds the public bystander form's per-network counter, keyed by a salted hash of the client IP; `src/lib/rate-limit.ts` reads and writes it with raw SQL and falls back to a per-copy count when the table is missing. Set `RATE_LIMIT_SALT` in the environment to choose the salt (it falls back to the service-role key).
 - `Report` still has the fixed headcount columns (`faculty_members` … `guests`, listed in `HEADCOUNT_FIELDS`) beside the per-campus `ReportPopulationCount` rows.
 
 ## Decisions

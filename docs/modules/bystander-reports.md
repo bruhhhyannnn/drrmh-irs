@@ -1,6 +1,6 @@
 ---
 type: module
-updated: 2026-11-12
+updated: 2026-11-20
 module: bystander-reports
 paths:
   - src/actions/emergency-reports/index.ts
@@ -46,7 +46,7 @@ Anyone on campus can report an emergency without signing in, usually by scanning
 
 `src/actions/emergency-reports/index.ts`:
 
-- `createBystanderReport(data, photos?)`: validates with `bystanderReportSchema`; sets status `pending`; keeps only counts > 0 for fields active at the cluster's campus; uploads photos first, then creates the row; removes the uploads if the row fails. Anonymous, no auth.
+- `createBystanderReport(data, photos?)`: first a per-network limit (DRRM-049, #104): 30 reports per 10 minutes per client IP (`withinRateLimit` in `src/lib/rate-limit.ts`, a salted hash of `x-real-ip` in `public.rate_limits`, or per server copy until `prisma/manual/DRRM-049-rate-limits.sql` runs). Over it, the answer is `{ ok: false, error, retry: true }` and the form keeps the report in the offline queue, which sends it again later. Otherwise it returns `{ ok: true, id, submittedAt, photoCount }`. Validates with `bystanderReportSchema`; sets status `pending`; keeps only counts > 0 for fields active at the cluster's campus; uploads photos first, then creates the row; removes the uploads if the row fails. Anonymous, no auth.
 - `getBystanderReports(campusId?)`: everything the list and drawer need, newest first. Campus via `clusters.campus_id`. Each row has `unopened` (no admin has opened it: `seen_at` is null), read with its own query so it is false for all before `prisma/manual/DRRM-042-bystander-seen.sql` runs (DRRM-042).
 - `markBystanderReportSeen(token, id)`: admins only; sets `seen_at` the first time any admin opens the report.
 - `updateBystanderReportStatus(id, statusName)`: `reviewed`, `verified` or `dismissed`.

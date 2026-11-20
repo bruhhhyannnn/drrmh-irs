@@ -24,6 +24,7 @@ export type CallerCheck =
   | { ok: false; reason: 'inactive'; profileId: string };
 
 const PROFILE_TTL_MS = 15_000;
+const PROFILE_CACHE_MAX = 100;
 const profileCache = new Map<string, { expires: number; promise: Promise<CallerCheck> }>();
 
 async function verifyCaller(token: string): Promise<CallerCheck> {
@@ -46,9 +47,16 @@ export async function requireProfile(token: string | null | undefined): Promise<
   const hit = profileCache.get(token);
   if (hit && hit.expires > now) return hit.promise;
 
-  if (profileCache.size >= 100) {
+  if (profileCache.size >= PROFILE_CACHE_MAX) {
     for (const [k, v] of profileCache) {
       if (v.expires <= now) profileCache.delete(k);
+    }
+    // Still full (many distinct tokens within the TTL): drop the oldest, so the map stays
+    // bounded (#104). A Map iterates in insertion order.
+    while (profileCache.size >= PROFILE_CACHE_MAX) {
+      const oldest = profileCache.keys().next().value;
+      if (oldest === undefined) break;
+      profileCache.delete(oldest);
     }
   }
 

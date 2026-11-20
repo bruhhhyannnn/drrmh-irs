@@ -9,6 +9,15 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-049 Hardening: inactive accounts, rate limit, headers, dependencies: 2026-11-20 (branch `fix/DRRM-049-hardening`)
+
+Plan: [[plan/fix/DRRM-049-hardening]] · [[auth]] · [[users]] · [[bystander-reports]] · [[offline-pwa]] · GitHub #104
+
+- A turned-off account can't keep using the app from a saved profile: the pages show "Account turned off", and its sign-in is banned until an admin turns it back on. Role and campus changes reach the user without signing out.
+- The public bystander form takes at most 30 reports per network per 10 minutes; a report over the limit stays on the phone and sends later. Needs `prisma/manual/DRRM-049-rate-limits.sql` to count across server copies.
+- Every response carries security headers, plus a report-only content security policy.
+- Next.js 16.4.6, Prisma 7.10.1 and patched transitive packages (`npm audit` 27 → 8 findings).
+
 ## DRRM-046 Field report rules on the server: 2026-11-20 (branch `fix/DRRM-046-field-report-rules`)
 
 Plan: [[plan/fix/DRRM-046-field-report-rules]] · [[field-reports]] · [[events]] · GitHub #87, #101, #108, #111
