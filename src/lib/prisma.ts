@@ -6,10 +6,19 @@ const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 /** A database that won't answer should fail the request, not leave it waiting forever. */
 const CONNECTION_TIMEOUT_MS = 8_000;
 
+/**
+ * Connections one running copy of the app may hold (#109). pg's default is 10, and several
+ * serverless copies at once can use up the Supabase pooler's limit. Idle ones close after 10 s.
+ */
+const POOL_MAX = 5;
+const POOL_IDLE_MS = 10_000;
+
 function createPrismaClient() {
   const adapter = new PrismaPg({
     connectionString: process.env.DATABASE_URL!,
     connectionTimeoutMillis: CONNECTION_TIMEOUT_MS,
+    max: POOL_MAX,
+    idleTimeoutMillis: POOL_IDLE_MS,
   });
   // campus.logo_path (DRRM-036), users.avatar_url / show_avatar (DRRM-039) and
   // bystander_reports.seen_at (DRRM-042) are read only where they're asked for, so a deploy that

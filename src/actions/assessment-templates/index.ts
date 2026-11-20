@@ -25,8 +25,42 @@ import {
   type SectionWordingFormData,
 } from '@/lib/schemas';
 import { requireAdmin } from '@/lib/server-auth';
+import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+
+/**
+ * Writes many rows' `sort_order` in one statement instead of one round trip per row inside the
+ * transaction (#109). Only rows whose place changed are passed in.
+ */
+async function setSortOrders(
+  tx: Prisma.TransactionClient,
+  table: 'assessment_sections' | 'assessment_items',
+  rows: { id: string; sort_order: number }[]
+) {
+  if (!rows.length) return;
+  const values = Prisma.join(rows.map((r) => Prisma.sql`(${r.id}::uuid, ${r.sort_order}::int)`));
+  await tx.$executeRaw`
+    UPDATE ${Prisma.raw(`public.${table}`)} AS t
+    SET sort_order = v.sort_order, updated_at = now()
+    FROM (VALUES ${values}) AS v(id, sort_order)
+    WHERE t.id = v.id`;
+}
+
+/** Locks a row so places in its list are handed out one at a time (#108). */
+const lockVersion = (tx: Prisma.TransactionClient, id: string) =>
+  tx.$queryRaw`SELECT id FROM assessment_template_versions WHERE id = ${id}::uuid FOR UPDATE`;
+const lockSection = (tx: Prisma.TransactionClient, id: string) =>
+  tx.$queryRaw`SELECT id FROM assessment_sections WHERE id = ${id}::uuid FOR UPDATE`;
+
+/** Items whose place changed when `ordered` was worked out from `before`. */
+const movedItems = (
+  before: { id: string; sort_order: number }[],
+  ordered: { id: string; sort_order: number }[]
+) => {
+  const prev = new Map(before.map((i) => [i.id, i.sort_order]));
+  return ordered.filter((row) => prev.get(row.id) !== row.sort_order);
+};
 
 // Super Admin checklist editor (DRRM-015 Phase 3). Wording fixes (titles, prompts, notes,
 // references) apply in place on any version so typos are fixed on old and new assessments alike.
@@ -356,7 +390,7 @@ export async function upsertSection(
 
   const version = await prisma.assessmentTemplateVersion.findUnique({
     where: { id: input.version_id },
-    select: { status: true, _count: { select: { sections: true } } },
+    select: { status: true },
   });
   if (!version) return fail('This checklist version could not be found.');
   if (version.status !== 'draft') return fail(DRAFT_ONLY);
@@ -383,16 +417,20 @@ export async function upsertSection(
       return { ok: true, id: input.id };
     }
 
-    const created = await prisma.assessmentSection.create({
-      data: {
-        version_id: input.version_id,
-        code: parsed.data.code,
-        title_en: parsed.data.title_en,
-        title_fil: parsed.data.title_fil,
-        area_type_id: parsed.data.area_type_id ?? null,
-        sort_order: version._count.sections,
-      },
-      select: { id: true },
+    const created = await prisma.$transaction(async (tx) => {
+      await lockVersion(tx, input.version_id);
+      const count = await tx.assessmentSection.count({ where: { version_id: input.version_id } });
+      return tx.assessmentSection.create({
+        data: {
+          version_id: input.version_id,
+          code: parsed.data.code,
+          title_en: parsed.data.title_en,
+          title_fil: parsed.data.title_fil,
+          area_type_id: parsed.data.area_type_id ?? null,
+          sort_order: count,
+        },
+        select: { id: true },
+      });
     });
     revalidateChecklist();
     return { ok: true, id: created.id };
@@ -417,15 +455,21 @@ export async function deleteSection(
 
   try {
     await prisma.$transaction(async (tx) => {
+      await lockVersion(tx, section.version_id);
       await tx.assessmentSection.delete({ where: { id: sectionId } });
       const remaining = await tx.assessmentSection.findMany({
         where: { version_id: section.version_id },
         orderBy: { sort_order: 'asc' },
-        select: { id: true },
+        select: { id: true, sort_order: true },
       });
-      for (const [k, row] of remaining.entries()) {
-        await tx.assessmentSection.update({ where: { id: row.id }, data: { sort_order: k } });
-      }
+      await setSortOrders(
+        tx,
+        'assessment_sections',
+        movedItems(
+          remaining,
+          remaining.map((row, k) => ({ id: row.id, sort_order: k }))
+        )
+      );
     });
   } catch (err) {
     return fail(toFriendlyError(err, 'section').message);
@@ -530,6 +574,7 @@ export async function upsertItem(
   try {
     const savedId = await prisma.$transaction(
       async (tx) => {
+        await lockSection(tx, section.id);
         let itemId = input.id;
         if (itemId) {
           const current = section.items.find((i) => i.id === itemId);
@@ -543,12 +588,9 @@ export async function upsertItem(
           }
           await tx.assessmentItem.update({ where: { id: itemId }, data: fields });
         } else {
+          const count = await tx.assessmentItem.count({ where: { section_id: section.id } });
           const created = await tx.assessmentItem.create({
-            data: {
-              section_id: section.id,
-              ...fields,
-              sort_order: section.items.length,
-            },
+            data: { section_id: section.id, ...fields, sort_order: count },
             select: { id: true },
           });
           itemId = created.id;
@@ -559,16 +601,11 @@ export async function upsertItem(
           orderBy: { sort_order: 'asc' },
           select: { id: true, parent_id: true, sort_order: true },
         });
-        const prevOrder = new Map(allItems.map((i) => [i.id, i.sort_order]));
-        const ordered = orderSectionItems(allItems);
-        for (const row of ordered) {
-          if (prevOrder.get(row.id) !== row.sort_order) {
-            await tx.assessmentItem.update({
-              where: { id: row.id },
-              data: { sort_order: row.sort_order },
-            });
-          }
-        }
+        await setSortOrders(
+          tx,
+          'assessment_items',
+          movedItems(allItems, orderSectionItems(allItems))
+        );
         return itemId!;
       },
       { timeout: 15_000 }
@@ -601,21 +638,18 @@ export async function deleteItem(
   try {
     await prisma.$transaction(
       async (tx) => {
+        await lockSection(tx, item.section_id);
         await tx.assessmentItem.delete({ where: { id: itemId } });
         const remaining = await tx.assessmentItem.findMany({
           where: { section_id: item.section_id },
           orderBy: { sort_order: 'asc' },
           select: { id: true, parent_id: true, sort_order: true },
         });
-        const prevOrder = new Map(remaining.map((i) => [i.id, i.sort_order]));
-        for (const row of orderSectionItems(remaining)) {
-          if (prevOrder.get(row.id) !== row.sort_order) {
-            await tx.assessmentItem.update({
-              where: { id: row.id },
-              data: { sort_order: row.sort_order },
-            });
-          }
-        }
+        await setSortOrders(
+          tx,
+          'assessment_items',
+          movedItems(remaining, orderSectionItems(remaining))
+        );
       },
       { timeout: 15_000 }
     );
@@ -694,16 +728,20 @@ export async function upsertAreaType(
       return { ok: true, id: input.id };
     }
 
-    const count = await prisma.buildingAreaType.count();
-    const created = await prisma.buildingAreaType.create({
-      data: {
-        code: data.code,
-        name_en: data.name_en,
-        name_fil: data.name_fil,
-        is_active: data.is_active,
-        sort_order: count,
-      },
-      select: { id: true },
+    // Area types have no parent row to lock, so one transaction-scoped lock hands out places.
+    const created = await prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('building_area_types.sort_order'))`;
+      const count = await tx.buildingAreaType.count();
+      return tx.buildingAreaType.create({
+        data: {
+          code: data.code,
+          name_en: data.name_en,
+          name_fil: data.name_fil,
+          is_active: data.is_active,
+          sort_order: count,
+        },
+        select: { id: true },
+      });
     });
     revalidateChecklist();
     return { ok: true, id: created.id };
