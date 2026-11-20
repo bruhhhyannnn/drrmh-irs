@@ -35,32 +35,53 @@ export async function clusterIdForName(campusId: string, name: string) {
   }
 }
 
+const isUniqueViolation = (err: unknown) =>
+  err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';
+
+/**
+ * The id `find` returns, or the one `create` makes. When someone added the same name a moment
+ * ago, the insert hits the unique index (#108: case-insensitive since DRRM-048), and theirs is
+ * reused instead of failing the save.
+ */
+async function findOrCreate(
+  find: () => Promise<{ id: string } | null>,
+  create: () => Promise<{ id: string }>
+) {
+  const existing = await find();
+  if (existing) return existing.id;
+  try {
+    return (await create()).id;
+  } catch (err) {
+    if (!isUniqueViolation(err)) throw err;
+    const theirs = await find();
+    if (theirs) return theirs.id;
+    throw err;
+  }
+}
+
 /** The unit called `name` in the cluster, added when the cluster has none by that name. */
 export async function unitIdForName(clusterId: string, name: string) {
   const unitName = tidy(name);
-  const existing = await prisma.unit.findFirst({
-    where: { cluster_id: clusterId, name: { equals: unitName, mode: 'insensitive' } },
-    select: { id: true },
-  });
-  if (existing) return existing.id;
-  const unit = await prisma.unit.create({
-    data: { cluster_id: clusterId, name: unitName },
-    select: { id: true },
-  });
-  return unit.id;
+  return findOrCreate(
+    () =>
+      prisma.unit.findFirst({
+        where: { cluster_id: clusterId, name: { equals: unitName, mode: 'insensitive' } },
+        select: { id: true },
+      }),
+    () =>
+      prisma.unit.create({ data: { cluster_id: clusterId, name: unitName }, select: { id: true } })
+  );
 }
 
 /** The position called `name`, added when there's none by that name. */
 export async function positionIdForName(name: string) {
   const positionName = tidy(name);
-  const existing = await prisma.position.findFirst({
-    where: { name: { equals: positionName, mode: 'insensitive' } },
-    select: { id: true },
-  });
-  if (existing) return existing.id;
-  const position = await prisma.position.create({
-    data: { name: positionName },
-    select: { id: true },
-  });
-  return position.id;
+  return findOrCreate(
+    () =>
+      prisma.position.findFirst({
+        where: { name: { equals: positionName, mode: 'insensitive' } },
+        select: { id: true },
+      }),
+    () => prisma.position.create({ data: { name: positionName }, select: { id: true } })
+  );
 }

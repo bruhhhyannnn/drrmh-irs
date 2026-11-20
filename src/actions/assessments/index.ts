@@ -354,6 +354,14 @@ export async function createAssessment(
     });
 
     const id = await prisma.$transaction(async (tx) => {
+      // Assessments of one building are written one at a time (#108): two submitted at once
+      // would otherwise interleave the building's area rows and fail on building_areas_pkey.
+      await tx.$queryRaw`SELECT id FROM buildings WHERE id = ${buildingId}::uuid FOR UPDATE`;
+      const latest = await tx.assessment.findFirst({
+        where: { building_id: buildingId },
+        orderBy: { ended_at: 'desc' },
+        select: { ended_at: true },
+      });
       const created = await tx.assessment.create({
         data: {
           client_ref: data.client_ref,
@@ -405,15 +413,20 @@ export async function createAssessment(
         },
         select: { id: true },
       });
-      // The building's profile is what this assessment found, for pre-filling the next one.
-      await tx.buildingArea.deleteMany({ where: { building_id: buildingId } });
-      await tx.buildingArea.createMany({
-        data: areaTypeIds.map((area_type_id) => ({ building_id: buildingId, area_type_id })),
-      });
-      await tx.building.update({
-        where: { id: buildingId },
-        data: { floor_count: data.floor_count },
-      });
+      // The building's profile is what its newest assessment found, for pre-filling the next
+      // one. An older assessment synced late from a phone's offline queue keeps its own answers
+      // but doesn't overwrite a newer profile (#108).
+      if (!latest || new Date(data.ended_at) >= latest.ended_at) {
+        await tx.buildingArea.deleteMany({ where: { building_id: buildingId } });
+        await tx.buildingArea.createMany({
+          data: areaTypeIds.map((area_type_id) => ({ building_id: buildingId, area_type_id })),
+          skipDuplicates: true,
+        });
+        await tx.building.update({
+          where: { id: buildingId },
+          data: { floor_count: data.floor_count },
+        });
+      }
       return created.id;
     });
 

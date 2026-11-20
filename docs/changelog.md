@@ -9,6 +9,16 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-048 Database: RLS, indexes, races: 2026-11-20 (branch `fix/DRRM-048-db-concurrency-performance`)
+
+Plan: [[plan/fix/DRRM-048-db-concurrency-performance]] · [[database]] · [[assessments]] · [[checklist-editor]] · GitHub #108, #109
+
+- Needs `prisma/manual/DRRM-048-rls-indexes-lookups.sql`: every table is closed to the browser's key on the REST API, the lists get their indexes, and unit and position names become unique regardless of case.
+- Two assessments of one building submitted at once no longer fail, and a late offline one doesn't overwrite the building's newer profile.
+- Typing the same new unit or position at the same moment no longer fails a save.
+- Checklist sections, questions and area types get distinct places when added at once, and re-numbering is one statement.
+- Each running copy of the app holds at most 5 database connections.
+
 ## DRRM-046 Field report rules on the server: 2026-11-20 (branch `fix/DRRM-046-field-report-rules`)
 
 Plan: [[plan/fix/DRRM-046-field-report-rules]] · [[field-reports]] · [[events]] · GitHub #87, #101, #108, #111
