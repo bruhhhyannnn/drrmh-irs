@@ -1,7 +1,53 @@
 import withPWA from '@ducanh2912/next-pwa';
 import type { NextConfig } from 'next';
 
+/** The Supabase project (auth, Storage photos and logos), for the content security policy. */
+const SUPABASE_ORIGIN = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').origin;
+  } catch {
+    return '';
+  }
+})();
+
+/**
+ * Where the app may load things from (#104). Sent as Report-Only for now: the browser console
+ * lists anything it would block, and nothing breaks. Check the admin pages, the ERT form, the QR
+ * form and the maps, then switch to enforcing. Next's inline hydration scripts need
+ * 'unsafe-inline' until the app sends a per-request nonce.
+ */
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
+  "style-src 'self' 'unsafe-inline'",
+  `img-src 'self' data: blob: ${SUPABASE_ORIGIN} https://*.cartocdn.com https://*.googleusercontent.com`,
+  "font-src 'self' data:",
+  `connect-src 'self' ${SUPABASE_ORIGIN} ${SUPABASE_ORIGIN.replace(/^https:/, 'wss:')} https://*.cartocdn.com https://nominatim.openstreetmap.org`,
+  "worker-src 'self' blob:",
+  "manifest-src 'self'",
+  "frame-ancestors 'none'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+]
+  .join('; ')
+  .replace(/\s+/g, ' ');
+
+/** Sent with every response (#104). */
+const SECURITY_HEADERS = [
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  { key: 'X-Frame-Options', value: 'DENY' },
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  // The report forms take photos and the location; nothing uses the microphone.
+  { key: 'Permissions-Policy', value: 'camera=(self), geolocation=(self), microphone=()' },
+  { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
+  { key: 'Content-Security-Policy-Report-Only', value: CONTENT_SECURITY_POLICY },
+];
+
 const nextConfig: NextConfig = {
+  async headers() {
+    return [{ source: '/:path*', headers: SECURITY_HEADERS }];
+  },
   turbopack: {},
   allowedDevOrigins: ['10.10.4.89'],
   experimental: {

@@ -342,10 +342,21 @@ export async function setUserActive(token: string | null, id: string, isActive: 
       where: { id },
       data: { is_active: isActive === true },
     });
+    // Turning an account off also stops its sign-in (#104): Supabase refuses new sign-ins and
+    // token refreshes for a banned user, so open sessions end within the hour. Turning it on
+    // lifts the ban. The profile change stands even if this fails; requireProfile refuses an
+    // inactive account either way.
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(user.auth_id, {
+      ban_duration: isActive === true ? 'none' : SIGN_IN_BAN,
+    });
+    if (error) console.error('Could not update the sign-in ban:', error.message);
     revalidatePath('/users');
     return user;
   });
 }
+
+/** How long a turned-off account's sign-in stays banned: until it is turned back on. */
+const SIGN_IN_BAN = '876000h';
 
 /**
  * Profile setup's save, for the signed-in person's own campus account, once (#101): an account

@@ -269,6 +269,11 @@ export function BystanderReportForm() {
       // No point trying the network if the browser already knows it's offline.
       if (!navigator.onLine) return await saveOffline();
       const saved = await createBystanderReport(payload, toBystanderPhotoFormData(blobs));
+      if (!saved.ok) {
+        // Too many from this network just now (#104): keep it and send it again shortly.
+        toast(saved.error, { duration: 8000 });
+        return await saveOffline();
+      }
       queryClient.invalidateQueries({ queryKey: ['bystander-reports'] });
       useRateAppStore.getState().reportSent();
       setResult({ kind: 'sent', at: saved.submittedAt, photosSaved: saved.photoCount, ...summary });
