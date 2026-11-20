@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { checkReportCaller, reportSaveFailure } from './report-caller';
+import {
+  checkNewReport,
+  checkReportCaller,
+  isOngoing,
+  reportSaveFailure,
+  type NewReportTarget,
+} from './report-caller';
 import type { CallerCheck, VerifiedProfile } from './server-auth';
 
 // Who may write to a field report (review 3.1.1): its owner or an in-scope admin. Anything that
@@ -92,4 +98,93 @@ test('an off-campus account is refused for good, with the message (DRRM-026)', (
     error: 'Not available for off-campus accounts',
     retry: false,
   });
+});
+
+/* ─── Event lock and where a new report may go (#101, #108) ─── */
+
+test('the owner can no longer change a report once its event has ended', () => {
+  const closed = { ...report, event_open: false };
+  const verdict = checkReportCaller(signedIn(profile(OWNER, 'ERT Member')), closed);
+  assert.equal(verdict.ok, false);
+  assert.equal(!verdict.ok && verdict.retry, false);
+  // An admin in scope still can.
+  assert.equal(checkReportCaller(signedIn(profile(OTHER, 'Administrator')), closed).ok, true);
+  assert.equal(checkReportCaller(signedIn(profile(OWNER, 'Super Admin', null)), closed).ok, true);
+});
+
+const ended = new Date('2026-03-12T08:00:00Z');
+const target = (over: Partial<NewReportTarget> = {}): NewReportTarget => ({
+  event: { campus_id: 'campus-1', status: 'Ongoing', ended_at: null },
+  cluster: { campus_id: 'campus-1' },
+  unit: undefined,
+  clusterId: 'cluster-1',
+  hasReport: false,
+  ...over,
+});
+const member = profile(OWNER, 'ERT Member');
+const reason = (v: ReturnType<typeof checkNewReport>) => (v.ok ? 'ok' : v.error);
+
+test('a member files on an ongoing event of their own campus', () => {
+  assert.deepEqual(checkNewReport(member, target()), { ok: true, admin: false });
+  assert.deepEqual(checkNewReport(member, target({ unit: { cluster_id: 'cluster-1' } })), {
+    ok: true,
+    admin: false,
+  });
+});
+
+test("a member can't file on another campus's event or a missing one", () => {
+  assert.match(
+    reason(
+      checkNewReport(member, target({ event: { ...target().event!, campus_id: 'campus-2' } }))
+    ),
+    /another campus/
+  );
+  assert.match(reason(checkNewReport(member, target({ event: null }))), /no longer exists/);
+});
+
+test("a member can't file on an upcoming or completed event, unless it was sent before it ended", () => {
+  const completed = { campus_id: 'campus-1', status: 'Completed', ended_at: ended };
+  assert.match(reason(checkNewReport(member, target({ event: completed }))), /not ongoing/);
+  assert.match(
+    reason(checkNewReport(member, target({ event: { ...completed, status: 'Upcoming' } }))),
+    /not ongoing/
+  );
+  // Queued offline while the event was still on.
+  const before = new Date(ended.getTime() - 60_000);
+  assert.equal(checkNewReport(member, target({ event: completed, sentAt: before })).ok, true);
+  const after = new Date(ended.getTime() + 60_000);
+  assert.equal(checkNewReport(member, target({ event: completed, sentAt: after })).ok, false);
+});
+
+test('the cluster must be on the event campus and the unit in the cluster', () => {
+  assert.match(
+    reason(checkNewReport(member, target({ cluster: { campus_id: 'campus-2' } }))),
+    /cluster/
+  );
+  assert.match(reason(checkNewReport(member, target({ cluster: null }))), /cluster/);
+  assert.match(
+    reason(checkNewReport(member, target({ unit: { cluster_id: 'cluster-2' } }))),
+    /unit/
+  );
+  assert.match(reason(checkNewReport(member, target({ unit: null }))), /unit/);
+});
+
+test('one report per member per event; admins in scope may add more, on any event', () => {
+  assert.match(reason(checkNewReport(member, target({ hasReport: true }))), /already sent/);
+  const admin = profile(OTHER, 'Administrator');
+  const completed = { campus_id: 'campus-1', status: 'Completed', ended_at: ended };
+  assert.deepEqual(checkNewReport(admin, target({ hasReport: true, event: completed })), {
+    ok: true,
+    admin: true,
+  });
+  // An Administrator of another campus is refused.
+  const otherAdmin = profile(OTHER, 'Administrator', 'campus-2');
+  assert.match(reason(checkNewReport(otherAdmin, target())), /another campus/);
+});
+
+test('ongoing is read from the status name', () => {
+  assert.equal(isOngoing('Ongoing'), true);
+  assert.equal(isOngoing(' ongoing '), true);
+  assert.equal(isOngoing('Completed'), false);
+  assert.equal(isOngoing(null), false);
 });

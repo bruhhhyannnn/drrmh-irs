@@ -1,3 +1,4 @@
+import { withoutControlChars } from '@/lib/schemas';
 import Docxtemplater from 'docxtemplater';
 import PizZip from 'pizzip';
 import {
@@ -32,8 +33,17 @@ const DOCX_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingm
 const TEXT_WIDTH = 9630;
 const BORDER = 'w:val="single" w:sz="4" w:space="0" w:color="000000"';
 
-const escapeXml = (s: string) =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+/**
+ * Text for the raw XML parts (tables, chart). Control characters are dropped first (#111): XML
+ * can't hold them, and Word refuses a .docx that does, so one stray character in a name or a
+ * field label would break the whole export.
+ */
+export const escapeXml = (s: string) =>
+  withoutControlChars(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 
 /* ─── Breakdown tables ───────────────────────────────────────────────────────────────── */
 
@@ -435,6 +445,8 @@ export function fillNsedTemplate(template: ArrayBuffer | Uint8Array, data: NsedR
   const doc = new Docxtemplater(new PizZip(template), {
     paragraphLoop: true,
     linebreaks: true,
+    // A control character in report text is dropped instead of failing the export (#111).
+    stripInvalidXMLChars: true,
     // A tag the office adds to the template without a value shows as nothing, not "undefined".
     nullGetter: () => '',
   });
@@ -462,6 +474,7 @@ export function fillNsedDilimanTemplate(template: ArrayBuffer | Uint8Array, data
   const doc = new Docxtemplater(new PizZip(template), {
     paragraphLoop: true,
     linebreaks: true,
+    stripInvalidXMLChars: true,
     nullGetter: () => '',
   });
   doc.render({ ...data, clusterTable: clusterTableXml(data.table) });

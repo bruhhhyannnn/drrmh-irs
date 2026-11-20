@@ -27,7 +27,7 @@ export function useReports(
 ) {
   return useQuery({
     queryKey: ['reports', page, query, campusId, filters.eventId, filters.clusterId],
-    queryFn: () => getReports(page, query, campusId, filters),
+    queryFn: async () => getReports(await getAccessToken(), page, query, campusId, filters),
     placeholderData: keepPreviousData,
   });
 }
@@ -111,10 +111,11 @@ export function useDeleteReport() {
   });
 }
 
+/** The signed-in member's report on an ongoing event. `userId` keeps each account's cache apart. */
 export function useMyReport(userId?: string) {
   return useQuery({
     queryKey: ['my-report', userId],
-    queryFn: () => getMyReportForOngoingEvent(userId!),
+    queryFn: async () => getMyReportForOngoingEvent(await getAccessToken()),
     enabled: !!userId,
   });
 }
@@ -122,7 +123,7 @@ export function useMyReport(userId?: string) {
 export function useMyLatestReport(userId?: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['my-latest-report', userId],
-    queryFn: () => getMyLatestReport(userId!),
+    queryFn: async () => getMyLatestReport(await getAccessToken()),
     enabled: !!userId && (options?.enabled ?? true),
   });
 }
@@ -181,7 +182,11 @@ export function useDeleteReportCasualty() {
 export function useReportMissingPersons(reportId?: string) {
   return useQuery({
     queryKey: ['report-missing-persons', reportId],
-    queryFn: () => getReportMissingPersons(reportId!),
+    queryFn: async () => {
+      const result = await getReportMissingPersons(await getAccessToken(), reportId!);
+      if (!result.ok) throw new Error(result.error);
+      return result.missingPersons;
+    },
     enabled: !!reportId,
     staleTime: Infinity,
   });
