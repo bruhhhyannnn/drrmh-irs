@@ -6,6 +6,7 @@ import {
   MissingPersonFormData,
   missingPersonSchema,
   REPORT_PHOTO_FIELD,
+  reportCreateSchema,
   ReportFormData,
   reportSchema,
 } from '@/lib';
@@ -13,7 +14,13 @@ import { inScope } from '@/lib/admin-scope';
 import { unitIdForName } from '@/lib/lookup-names';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
-import { checkReportCaller, reportSaveFailure, type ReportRefusal } from '@/lib/report-caller';
+import {
+  checkNewReport,
+  checkReportCaller,
+  isOngoing,
+  reportSaveFailure,
+  type ReportRefusal,
+} from '@/lib/report-caller';
 import { mergePhotoPaths, newPhotoRoom } from '@/lib/report-photo-edits';
 import {
   removeReportPhotos,
@@ -25,6 +32,7 @@ import {
 import { requireAdmin, requireProfile } from '@/lib/server-auth';
 import {
   groupReportPhotos,
+  isUuid,
   mapPopulationCountsToLegacyColumns,
   totalPopulationCount,
 } from '@/lib/utils';
@@ -34,6 +42,12 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 const PER_PAGE = 10;
+
+const REPORT_NOT_FOUND: ReportRefusal = {
+  ok: false,
+  error: 'This report could not be found.',
+  retry: false,
+};
 
 function serializeReport<T extends { latitude: unknown; longitude: unknown }>(r: T) {
   return {
@@ -45,23 +59,41 @@ function serializeReport<T extends { latitude: unknown; longitude: unknown }>(r:
 
 export type ReportListFilters = { eventId?: string; clusterId?: string };
 
+const NO_REPORTS = { data: [], total: 0, perPage: PER_PAGE };
+
+/**
+ * The Reports list, for admins (#87, #102): an Administrator's own campus whatever is asked, a
+ * Super Admin's pick (or all). Empty for anyone else.
+ */
 export async function getReports(
+  token: string | null,
   page: number = 1,
   query?: string,
   campusId?: string,
   filters: ReportListFilters = {}
 ) {
+  const caller = await requireAdmin(token, campusId || null);
+  if (!caller.ok) return NO_REPORTS;
+  if (
+    (filters.eventId && !isUuid(filters.eventId)) ||
+    (filters.clusterId && !isUuid(filters.clusterId))
+  ) {
+    return NO_REPORTS;
+  }
+  const scopeCampus = caller.scope.campusId;
+  const safePage = Number.isInteger(page) && page > 0 ? page : 1;
+  const search = typeof query === 'string' ? query.slice(0, 200) : undefined;
   const where: Prisma.ReportWhereInput = {
-    ...(query && {
+    ...(search && {
       OR: [
-        { user: { first_name: { contains: query, mode: 'insensitive' } } },
-        { user: { last_name: { contains: query, mode: 'insensitive' } } },
-        { cluster: { name: { contains: query, mode: 'insensitive' } } },
-        { unit: { name: { contains: query, mode: 'insensitive' } } },
-        { event: { name: { contains: query, mode: 'insensitive' } } },
+        { user: { first_name: { contains: search, mode: 'insensitive' } } },
+        { user: { last_name: { contains: search, mode: 'insensitive' } } },
+        { cluster: { name: { contains: search, mode: 'insensitive' } } },
+        { unit: { name: { contains: search, mode: 'insensitive' } } },
+        { event: { name: { contains: search, mode: 'insensitive' } } },
       ],
     }),
-    ...(campusId && { cluster: { campus_id: campusId } }),
+    ...(scopeCampus && { cluster: { campus_id: scopeCampus } }),
     ...(filters.eventId && { event_id: filters.eventId }),
     ...(filters.clusterId && { cluster_id: filters.clusterId }),
   };
@@ -84,7 +116,7 @@ export async function getReports(
         _count: { select: { casualties: true, missing_persons: true } },
       },
       orderBy: { submitted_at: 'desc' },
-      skip: (page - 1) * PER_PAGE,
+      skip: (safePage - 1) * PER_PAGE,
       take: PER_PAGE,
     }),
     prisma.report.count({ where }),
@@ -96,6 +128,7 @@ export async function getReports(
 /** A report with its people, headcount and damage. Only its owner or an in-scope admin may. */
 export async function getReport(token: string | null, id: string) {
   const caller = await requireProfile(token);
+  if (!isUuid(id)) return REPORT_NOT_FOUND;
   const report = await prisma.report.findUnique({
     where: { id },
     include: {
@@ -187,29 +220,40 @@ async function saveNewReport(
   data: ReportFormData & { id?: string; user_id?: string; sent_at?: number },
   photos?: FormData
 ): Promise<CreateReportResult> {
-  const {
-    id: clientId,
-    report_missing_persons,
-    report_casualties = [],
-    population_counts,
-    user_id,
-    unit_name,
-    sent_at,
-    ...reportData
-  } = data;
-
+  const raw = (data ?? {}) as { id?: unknown; user_id?: unknown };
   const verified = await requireProfile(token);
   const caller = checkReportCaller(verified, {
-    user_id: user_id ?? (verified.ok ? verified.profile.id : null),
+    user_id: isUuid(raw.user_id) ? raw.user_id : verified.ok ? verified.profile.id : null,
     campus_id: null,
   });
   if (!caller.ok) return caller;
-  if (clientId !== undefined && !z.string().uuid().safeParse(clientId).success) {
+  if (raw.id !== undefined && !isUuid(raw.id)) {
     return { ok: false, error: 'This report has an invalid id.', retry: false };
   }
+  // Parsed before anything else runs (#101): only the report's own fields reach Prisma, nested
+  // people keep only theirs, and the lists are capped before photos are sorted by casualty.
+  const parsed = reportCreateSchema.safeParse(data);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? 'This report is incomplete.',
+      retry: false,
+    };
+  }
+  const {
+    id: clientId,
+    report_missing_persons,
+    report_casualties,
+    population_counts,
+    user_id: _owner,
+    unit_name,
+    sent_at,
+    ...reportData
+  } = parsed.data;
 
   const id = clientId ?? randomUUID();
   const profileId = caller.profile.id;
+  const submittedAt = sentAt(sent_at);
   // A report already saved under this id: the caller's own is a replay and counts as saved;
   // anyone else's is refused without saying anything about it. Null when there is none.
   const replayOf = async (): Promise<CreateReportResult | null> => {
@@ -230,6 +274,33 @@ async function saveNewReport(
     const already = await replayOf();
     if (already) return already;
 
+    // Where the report goes is checked on the server (#101, #108): the event, the cluster on
+    // its campus, the unit in that cluster, and one report per member per event.
+    const unitId = unit_name ? null : (reportData.unit_id ?? null);
+    const [event, cluster, unit, mine] = await Promise.all([
+      prisma.event.findUnique({
+        where: { id: reportData.event_id },
+        select: { campus_id: true, ended_at: true, status: { select: { name: true } } },
+      }),
+      prisma.cluster.findUnique({
+        where: { id: reportData.cluster_id },
+        select: { campus_id: true },
+      }),
+      unitId
+        ? prisma.unit.findUnique({ where: { id: unitId }, select: { cluster_id: true } })
+        : undefined,
+      prisma.report.count({ where: { event_id: reportData.event_id, user_id: profileId } }),
+    ]);
+    const target = checkNewReport(caller.profile, {
+      event: event && { ...event, status: event.status.name },
+      cluster,
+      unit,
+      clusterId: reportData.cluster_id,
+      sentAt: submittedAt,
+      hasReport: mine > 0,
+    });
+    if (!target.ok) return target;
+
     const grouped = groupReportPhotos(photoFiles(photos), report_casualties.length);
     const [damagePhotoPaths, ...casualtyPhotoPaths] = await Promise.all(
       [grouped.damage, ...grouped.casualties].map(async (files) => {
@@ -238,34 +309,51 @@ async function saveNewReport(
         return paths;
       })
     );
+    const savedUnitId = await reportUnitId(reportData.cluster_id, unitId, unit_name);
 
-    await prisma.report.create({
-      data: {
-        ...reportData,
-        id,
-        ...mapPopulationCountsToLegacyColumns(population_counts),
-        submitted_at: sentAt(sent_at),
-        user_id: caller.profile.id,
-        unit_id: await reportUnitId(reportData.cluster_id, reportData.unit_id, unit_name),
-        latitude: reportData.latitude ?? null,
-        longitude: reportData.longitude ?? null,
-        location_name: reportData.location_name ?? null,
-        damage_condition_id: reportData.damage_condition_id || null,
-        damage_photo_paths: damagePhotoPaths,
-        missing_persons: {
-          create: report_missing_persons ?? [],
+    await prisma.$transaction(async (tx) => {
+      // One member's reports for an event are written one at a time, so two sent at once can't
+      // both pass the one-report check above.
+      await tx.$queryRaw`SELECT id FROM users WHERE id = ${profileId}::uuid FOR UPDATE`;
+      if (!target.admin) {
+        const again = await tx.report.count({
+          where: { event_id: reportData.event_id, user_id: profileId },
+        });
+        if (again > 0) throw new DuplicateReport();
+      }
+      await tx.report.create({
+        data: {
+          id,
+          event_id: reportData.event_id,
+          cluster_id: reportData.cluster_id,
+          unit_id: savedUnitId,
+          ...mapPopulationCountsToLegacyColumns(population_counts),
+          submitted_at: submittedAt,
+          user_id: profileId,
+          latitude: reportData.latitude ?? null,
+          longitude: reportData.longitude ?? null,
+          location_name: reportData.location_name ?? null,
+          damage_condition_id: reportData.damage_condition_id || null,
+          damage_photo_paths: damagePhotoPaths,
+          missing_persons: {
+            create: report_missing_persons.map(({ name, age, sex }) => ({ name, age, sex })),
+          },
+          casualties: {
+            create: report_casualties.map(({ condition_id, name, age, sex, diagnosis }, i) => ({
+              condition_id,
+              name,
+              age,
+              sex,
+              diagnosis: diagnosis ?? null,
+              photo_paths: casualtyPhotoPaths[i],
+            })),
+          },
+          population_counts: {
+            create: population_counts.map(({ category_id, count }) => ({ category_id, count })),
+          },
         },
-        casualties: {
-          create: report_casualties.map((casualty, i) => ({
-            ...casualty,
-            photo_paths: casualtyPhotoPaths[i],
-          })),
-        },
-        population_counts: {
-          create: population_counts.map(({ category_id, count }) => ({ category_id, count })),
-        },
-      },
-      select: { id: true },
+        select: { id: true },
+      });
     });
     created = true;
 
@@ -274,6 +362,13 @@ async function saveNewReport(
   } catch (err) {
     // The saved row points at these photos; only a report that wasn't created gives them up.
     if (!created) await removeReportPhotos(uploaded);
+    if (err instanceof DuplicateReport) {
+      return {
+        ok: false,
+        error: 'You already sent a report for this event. Open it to make changes.',
+        retry: false,
+      };
+    }
     // A replay of the same report that landed in between: it's already saved.
     if (!created && isUniqueViolation(err)) {
       const existing = await replayOf();
@@ -282,6 +377,9 @@ async function saveNewReport(
     throw toFriendlyError(err, 'report');
   }
 }
+
+/** A second report by the same member for the same event, found under the lock. */
+class DuplicateReport extends Error {}
 
 /** Saved photo paths a place keeps; unset keeps them all. Checked against the database. */
 const keepPhotoPaths = z.array(z.string()).max(20).optional();
@@ -335,7 +433,8 @@ export async function saveReportEdits(
   data: ReportEditData,
   photos?: FormData
 ) {
-  const caller = checkReportCaller(await requireProfile(token), await reportOwner(id));
+  const owner = await reportOwner(id);
+  const caller = checkReportCaller(await requireProfile(token), owner);
   if (!caller.ok) return caller;
   const parsed = reportEditSchema.safeParse(data);
   if (!parsed.success) {
@@ -353,6 +452,29 @@ export async function saveReportEdits(
     damage_photo_paths: keepDamage,
     ...fields
   } = parsed.data;
+  // The cluster stays on the event's campus and the unit in the cluster (#101).
+  const typedUnit = fields.unit_name?.trim();
+  const pickedUnit = typedUnit ? null : fields.unit_id || null;
+  const [cluster, unit] = await Promise.all([
+    prisma.cluster.findUnique({ where: { id: fields.cluster_id }, select: { campus_id: true } }),
+    pickedUnit
+      ? prisma.unit.findUnique({ where: { id: pickedUnit }, select: { cluster_id: true } })
+      : undefined,
+  ]);
+  if (!cluster || cluster.campus_id !== owner!.event_campus_id) {
+    return {
+      ok: false as const,
+      error: "That cluster isn't on this event's campus. Pick the cluster again.",
+      retry: false,
+    };
+  }
+  if (unit === null || (unit && unit.cluster_id !== fields.cluster_id)) {
+    return {
+      ok: false as const,
+      error: "That unit isn't in this cluster. Pick the unit again.",
+      retry: false,
+    };
+  }
   const removed = { report_id: id, id: { in: removed_casualty_ids } };
   // A casualty sent with an id that isn't on this report is updated nowhere, so it takes no
   // photos (they would belong to nothing).
@@ -377,7 +499,7 @@ export async function saveReportEdits(
         return upload(grouped.casualties[i], saved ? newPhotoRoom(saved, c.photo_paths) : 0);
       }),
     ]);
-    const unitId = await reportUnitId(fields.cluster_id, fields.unit_id, fields.unit_name);
+    const unitId = await reportUnitId(fields.cluster_id, pickedUnit, typedUnit);
     const { report, photoPaths, photoCount } = await prisma.$transaction(async (tx) => {
       await lockReport(tx, id);
       const gone = await tx.reportCasualty.findMany({
@@ -495,6 +617,9 @@ export async function getReportPhotoUrls(
     const caller = await requireAdmin(token);
     // Signed out covers an expiring token too: asking again may well work.
     if (!caller.ok) return { ok: false, error: 'Only admins can see report photos.', retry: true };
+    if (!isUuid(reportId)) {
+      return { ok: false, error: 'This report could not be found.', retry: false };
+    }
 
     const report = await prisma.report.findUnique({
       where: { id: reportId },
@@ -542,7 +667,11 @@ export async function getReportPhotoUrls(
   }
 }
 
-export async function getMyReportForOngoingEvent(userId: string) {
+/** The signed-in member's report on an ongoing event, or null (#87: never another user's). */
+export async function getMyReportForOngoingEvent(token: string | null) {
+  const caller = await requireProfile(token);
+  if (!caller.ok) return null;
+  const userId = caller.profile.id;
   const statusRow = await prisma.eventStatus.findFirst({
     where: { name: { equals: 'Ongoing', mode: 'insensitive' } },
     select: { id: true },
@@ -567,8 +696,11 @@ export async function getMyReportForOngoingEvent(userId: string) {
   return serializeReport(report);
 }
 
-/** The member's most recent report on any event — shown when no event is ongoing. */
-export async function getMyLatestReport(userId: string) {
+/** The signed-in member's most recent report on any event — shown when no event is ongoing. */
+export async function getMyLatestReport(token: string | null) {
+  const caller = await requireProfile(token);
+  if (!caller.ok) return null;
+  const userId = caller.profile.id;
   const report = await prisma.report.findFirst({
     where: { user_id: userId },
     orderBy: { submitted_at: 'desc' },
@@ -591,7 +723,11 @@ export async function getMyLatestReport(userId: string) {
 // Report Casualties
 /** A report's casualties. Only the report's owner or an in-scope admin may see them. */
 export async function getReportCasualties(token: string | null, reportId: string) {
-  const caller = checkReportCaller(await requireProfile(token), await reportOwner(reportId));
+  const owner = await reportOwner(reportId);
+  const caller = checkReportCaller(
+    await requireProfile(token),
+    owner && { ...owner, event_open: true }
+  );
   if (!caller.ok) return caller;
   const casualties = await prisma.reportCasualty.findMany({
     where: { report_id: reportId },
@@ -601,13 +737,28 @@ export async function getReportCasualties(token: string | null, reportId: string
   return { ok: true as const, casualties };
 }
 
-/** The report's owner and campus, for `checkReportCaller`; null when it is gone. */
-async function reportOwner(reportId: string) {
+/**
+ * The report's owner, campus and whether its event is still ongoing, for `checkReportCaller`;
+ * null when it is gone (or the id isn't one).
+ */
+async function reportOwner(reportId: unknown) {
+  if (!isUuid(reportId)) return null;
   const report = await prisma.report.findUnique({
     where: { id: reportId },
-    select: { user_id: true, cluster: { select: { campus_id: true } } },
+    select: {
+      user_id: true,
+      cluster: { select: { campus_id: true } },
+      event: { select: { campus_id: true, status: { select: { name: true } } } },
+    },
   });
-  return report && { user_id: report.user_id, campus_id: report.cluster.campus_id };
+  return (
+    report && {
+      user_id: report.user_id,
+      campus_id: report.cluster.campus_id,
+      event_campus_id: report.event.campus_id,
+      event_open: isOngoing(report.event.status.name),
+    }
+  );
 }
 
 export type CreateReportCasualtyResult =
@@ -652,6 +803,7 @@ export async function deleteReportCasualty(
   token: string | null,
   id: string
 ): Promise<{ ok: true } | ReportRefusal> {
+  if (!isUuid(id)) return REPORT_NOT_FOUND;
   const casualty = await prisma.reportCasualty.findUnique({
     where: { id },
     select: { report_id: true },
@@ -670,11 +822,20 @@ export async function deleteReportCasualty(
 }
 
 // Report Missing Persons
-export async function getReportMissingPersons(reportId: string) {
-  return prisma.reportMissingPerson.findMany({
+/** A report's missing persons. Only the report's owner or an in-scope admin may see them. */
+export async function getReportMissingPersons(token: string | null, reportId: string) {
+  const owner = await reportOwner(reportId);
+  // Reading isn't changing: the owner may still see them after the event ends.
+  const caller = checkReportCaller(
+    await requireProfile(token),
+    owner && { ...owner, event_open: true }
+  );
+  if (!caller.ok) return caller;
+  const missingPersons = await prisma.reportMissingPerson.findMany({
     where: { report_id: reportId },
     orderBy: { created_at: 'asc' },
   });
+  return { ok: true as const, missingPersons };
 }
 
 /** Adds a missing person to a report. Only the report's owner or an in-scope admin may. */
@@ -705,6 +866,7 @@ export async function deleteReportMissingPerson(
   token: string | null,
   id: string
 ): Promise<{ ok: true } | ReportRefusal> {
+  if (!isUuid(id)) return REPORT_NOT_FOUND;
   const person = await prisma.reportMissingPerson.findUnique({
     where: { id },
     select: { report_id: true },

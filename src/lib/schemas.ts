@@ -187,43 +187,70 @@ export const eventSchema = z
     }
   );
 
+const CONTROL_CHARACTERS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g;
+
+/**
+ * The text without the control characters no form can type (#111). Word refuses a .docx that
+ * holds one, so a single name with one used to break the NSED export of the whole event. Tab,
+ * line feed and carriage return stay.
+ */
+export const withoutControlChars = (value: string) => value.replace(CONTROL_CHARACTERS, '');
+
+/** Free text people type, trimmed, capped and without control characters. */
+const typedText = (max: number) => z.string().trim().max(max).transform(withoutControlChars);
+
+/** The most people one field report lists, and headcount fields it carries (#101). */
+export const REPORT_LIST_MAX = 100;
+
 export const missingPersonSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
+  name: z.string().trim().min(1, 'Name is required').max(200).transform(withoutControlChars),
   // Null when unknown, so it shows as unknown rather than "0 yrs".
-  age: z.coerce.number().min(0).nullable(),
+  age: z.coerce.number().min(0).max(150).nullable(),
   sex: z.enum(['male', 'female', 'unknown']),
 });
 
 export const casualtySchema = z.object({
   condition_id: z.string().uuid('Condition is required'),
-  name: z.string().min(1, 'Name is required'),
-  age: z.coerce.number().min(0).nullable(),
+  name: z.string().trim().min(1, 'Name is required').max(200).transform(withoutControlChars),
+  age: z.coerce.number().min(0).max(150).nullable(),
   sex: z.enum(['male', 'female', 'unknown']),
-  diagnosis: z.string().optional().nullable(),
+  diagnosis: typedText(2000).optional().nullable(),
 });
 
 const populationCountEntrySchema = z.object({
   category_id: z.string().uuid(),
-  code: z.string(),
-  count: z.coerce.number().int().min(0).default(0),
+  code: z.string().max(100),
+  count: z.coerce.number().int().min(0).max(1_000_000).default(0),
 });
 
 export const reportSchema = z.object({
   event_id: z.string().uuid('Event is required'),
   cluster_id: z.string().uuid('Cluster is required'),
-  unit_id: z.string().optional().nullable(),
+  unit_id: z.preprocess((v) => (v === '' ? null : v), z.string().uuid().optional().nullable()),
   /** "Other (please specify)": a unit not listed yet, added to the cluster when the report saves. */
-  unit_name: z.string().trim().max(120).optional().nullable(),
-  latitude: z.number().optional().nullable(),
-  longitude: z.number().optional().nullable(),
-  location_name: z.string().optional().nullable(),
-  population_counts: z.array(populationCountEntrySchema).default([]),
+  unit_name: typedText(120).optional().nullable(),
+  latitude: z.number().min(-90).max(90).optional().nullable(),
+  longitude: z.number().min(-180).max(180).optional().nullable(),
+  location_name: typedText(1000).optional().nullable(),
+  population_counts: z.array(populationCountEntrySchema).max(REPORT_LIST_MAX).default([]),
   damage_condition_id: z.preprocess(
     (v) => (v === '' ? null : v),
     z.string().uuid().optional().nullable()
   ),
-  report_missing_persons: z.array(missingPersonSchema).default([]),
-  report_casualties: z.array(casualtySchema).default([]),
+  report_missing_persons: z.array(missingPersonSchema).max(REPORT_LIST_MAX).default([]),
+  report_casualties: z.array(casualtySchema).max(REPORT_LIST_MAX).default([]),
+});
+
+/**
+ * What `createReport` accepts (#101): the report, plus the offline queue's `id`, `user_id` (whose
+ * report it is on a shared phone) and `sent_at`. Unknown keys are dropped, not refused, so a
+ * report queued by an older version of the app still sends; nested people keep only their own
+ * fields, so nothing can point a row at another report.
+ */
+export const reportCreateSchema = reportSchema.extend({
+  id: z.string().uuid().optional(),
+  user_id: z.string().uuid().optional().nullable(),
+  sent_at: z.number().finite().optional(),
 });
 
 /* ─── Bystander report ─── */
@@ -249,7 +276,7 @@ const emptyToNull = (value: unknown) => (value === '' ? null : value);
 // Bystanders often can't know a name or an exact age, so both are optional here — unlike the
 // ERT schemas above. A blank name is shown as "Unknown person".
 export const bystanderMissingPersonSchema = z.object({
-  name: z.string().trim().max(120).default(''),
+  name: typedText(120).default(''),
   age: z.preprocess(
     (value) => (value === '' || value === undefined ? null : value),
     z.coerce.number().int().min(0).max(130).nullable()
@@ -259,7 +286,7 @@ export const bystanderMissingPersonSchema = z.object({
 
 export const bystanderCasualtySchema = bystanderMissingPersonSchema.extend({
   condition_id: z.string().uuid('Pick a condition'),
-  diagnosis: z.string().trim().max(500).optional().nullable(),
+  diagnosis: typedText(500).optional().nullable(),
 });
 
 /** What `createBystanderReport` accepts — also the payload stored in the offline queue. */
@@ -269,8 +296,8 @@ export const bystanderReportSchema = z.object({
   unit_id: z.preprocess(emptyToNull, z.string().uuid().nullable().optional()),
   latitude: z.number({ required_error: 'Please capture your location' }).min(-90).max(90),
   longitude: z.number({ required_error: 'Please capture your location' }).min(-180).max(180),
-  description: z.string().trim().max(2000).optional(),
-  location_description: z.string().trim().max(500).optional(),
+  description: typedText(2000).optional(),
+  location_description: typedText(500).optional(),
   damage_condition_id: z.preprocess(emptyToNull, z.string().uuid().nullable().optional()),
   contact_number: z.preprocess(
     (value) =>

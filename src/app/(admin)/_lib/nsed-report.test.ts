@@ -7,6 +7,7 @@ import {
   breakdownLayout,
   breakdownTableXml,
   categoryChartXml,
+  escapeXml,
   fillNsedTemplate,
 } from './nsed-docx';
 import {
@@ -462,4 +463,25 @@ test('an event with no reports fills without a chart', () => {
   assert.doesNotMatch(text, /[{}]/);
   assert.match(text, /No reports were received\./);
   assert.equal(zip.file('word/charts/chart1.xml'), null);
+});
+
+test('escapeXml drops control characters XML cannot hold (#111)', () => {
+  assert.equal(escapeXml('A\u0001B\u000bC & <D>'), 'ABC &amp; &lt;D&gt;');
+  assert.equal(escapeXml('tab\tline\nok'), 'tab\tline\nok');
+});
+
+test('a control character in report text no longer breaks the export (#111)', () => {
+  const template = readFileSync('public/templates/nsed-report.docx');
+  const data = buildNsedReport(
+    source([
+      report('pg', 'Odd\u0001 Unit', at(15, 39), [4, 30], {
+        missing_persons: [person('JUAN\u000b DELA CRUZ')],
+        casualties: [{ ...casualty('Minor injuries'), name: 'Ana\u0002' }],
+      }),
+    ])
+  );
+  const zip = new PizZip(fillNsedTemplate(template, data));
+  const xml = zip.file('word/document.xml')!.asText();
+  assert.doesNotMatch(xml, /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/);
+  assert.match(xml.replace(/<[^>]+>/g, ''), /Juan Dela Cruz was reported missing at the Odd Unit/);
 });

@@ -9,6 +9,15 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-046 Field report rules on the server: 2026-11-20 (branch `fix/DRRM-046-field-report-rules`)
+
+Plan: [[plan/fix/DRRM-046-field-report-rules]] · [[field-reports]] · [[events]] · GitHub #87, #101, #108, #111
+
+- A field report is checked on the server: only its own fields are saved, the event must be ongoing and on your campus, the cluster on that campus and the unit in that cluster, and one report per member per event. A report queued offline before the event ended still sends.
+- Members can't change a report once its event has ended; admins still can.
+- The Reports list and the "My report" reads check who is asking; the list follows the admin's campus.
+- A stray control character in a name or unit no longer breaks the NSED export.
+
 ## DRRM-045 Sign-in and account hardening: 2026-11-20 (branch `fix/DRRM-045-auth-accounts-hardening`)
 
 Plan: [[plan/fix/DRRM-045-auth-accounts-hardening]] · [[auth]] · [[users]] · GitHub #100, #101, #86, #110, #85
