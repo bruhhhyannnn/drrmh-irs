@@ -23,6 +23,12 @@ function invalidateNamedLookups(
   if (data.custom_position_name) queryClient.invalidateQueries({ queryKey: ['positions'] });
 }
 
+/** The saved user, or the server's refusal thrown here in the browser, where its message shows. */
+function savedUser<T>(result: { ok: true; user: T } | { ok: false; error: string }): T {
+  if (!result.ok) throw new Error(result.error);
+  return result.user;
+}
+
 /* ─── Users ──────────────────────────────────────────────── */
 export function useUsers(query?: string, campusId?: string) {
   return useQuery({
@@ -42,7 +48,8 @@ export function useUser(id?: string) {
 export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: CreateUserInput) => createUser(data, await getAccessToken()),
+    mutationFn: async (data: CreateUserInput) =>
+      savedUser(await createUser(data, await getAccessToken())),
     onSuccess: (_user, data) => {
       invalidateNamedLookups(queryClient, data);
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -56,7 +63,7 @@ export function useUpdateUser() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateUserInput }) =>
-      updateUser(await getAccessToken(), id, data),
+      savedUser(await updateUser(await getAccessToken(), id, data)),
     onSuccess: (_user, { id, data }) => {
       invalidateNamedLookups(queryClient, data);
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -69,7 +76,7 @@ export function useSetUserActive() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) =>
-      setUserActive(await getAccessToken(), id, isActive),
+      savedUser(await setUserActive(await getAccessToken(), id, isActive)),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] }),
   });
 }

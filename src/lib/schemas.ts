@@ -110,6 +110,60 @@ export const offCampusProfileSchema = z.object({
   }),
 });
 
+/* ─── What the user actions accept on the server (#101) ─── */
+// Form types are erased at runtime, so the server parses each payload with a `.strict()`
+// allowlist: an unknown key (`user_type_id` in profile setup, `auth_id`, a relation such as
+// `reports`) is refused, and only these columns can reach Prisma.
+
+const idOrNone = z.string().uuid().nullish();
+const optionalText = (max: number) => z.string().trim().max(max).nullish();
+/** "Other (please specify)": a cluster, unit or position name the server adds when it's new. */
+const typedName = z.string().trim().max(120, 'Keep it under 120 characters').nullish();
+
+/** Profile setup's save (`completeUserProfile`): campus, cluster, unit and position only. */
+export const completeProfileSchema = z
+  .object({
+    campus_id: z.string().uuid('Choose your campus.'),
+    cluster_id: idOrNone,
+    custom_cluster_name: typedName,
+    unit_id: idOrNone,
+    custom_unit_name: typedName,
+    position_id: idOrNone,
+    custom_position_name: typedName,
+  })
+  .strict();
+
+const userWriteFields = {
+  first_name: z.string().trim().min(1, 'First name is required').max(100),
+  middle_name: optionalText(100),
+  last_name: z.string().trim().min(1, 'Last name is required').max(100),
+  suffix: optionalText(50),
+  email: z.string().trim().email('Invalid email address').max(254),
+  username: z.string().trim().min(3, 'Username must be at least 3 characters').max(100),
+  /** null for an off-campus account. */
+  campus_id: idOrNone,
+  cluster_id: idOrNone,
+  unit_id: idOrNone,
+  position_id: idOrNone,
+  custom_unit_name: typedName,
+  custom_position_name: typedName,
+  user_type_id: z.string().uuid('User type is required'),
+  is_active: z.boolean().optional(),
+  is_off_campus: z.boolean().optional(),
+  address: optionalText(400),
+  organization: optionalText(200),
+  organization_address: optionalText(400),
+  position_title: optionalText(200),
+};
+
+/** Users page → Add user (`createUser`). */
+export const userCreateInputSchema = z
+  .object({ ...userWriteFields, password: passwordSchema })
+  .strict();
+
+/** Users page → Edit user (`updateUser`): any of the same fields, never the password. */
+export const userUpdateInputSchema = z.object(userWriteFields).partial().strict();
+
 /* ─── Main Tables ─── */
 /** Add / Edit event. Add can tick several campuses: one event is created per campus. */
 export const eventSchema = z
@@ -520,6 +574,9 @@ export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 export type UpdatePasswordFormData = z.infer<typeof updatePasswordSchema>;
 export type UserCreateFormData = z.infer<typeof userCreateSchema>;
 export type OffCampusProfileFormData = z.infer<typeof offCampusProfileSchema>;
+export type CompleteProfileInput = z.input<typeof completeProfileSchema>;
+export type UserCreateInput = z.input<typeof userCreateInputSchema>;
+export type UserUpdateInput = z.input<typeof userUpdateInputSchema>;
 export type CampusFormData = z.infer<typeof campusSchema>;
 export type PopulationCategoryFormData = z.infer<typeof populationCategorySchema>;
 export type EventFormData = z.infer<typeof eventSchema>;

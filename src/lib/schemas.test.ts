@@ -3,10 +3,13 @@ import { test } from 'node:test';
 import {
   assessmentDetailsSchema,
   assessmentPayloadSchema,
+  completeProfileSchema,
   itemSchema,
   offCampusProfileSchema,
+  userCreateInputSchema,
   userCreateSchema,
   userEditSchema,
+  userUpdateInputSchema,
 } from './schemas';
 
 const U = '7a0c3b9e-3f5b-4d2a-9c1e-2b8f6d4a1e00';
@@ -204,4 +207,71 @@ test('the off-campus profile needs every field and the consent', () => {
   assert.deepEqual(issues({ ...offCampusProfile, organization: '  ' }), ['organization']);
   assert.deepEqual(issues({ ...offCampusProfile, consent: false }), ['consent']);
   assert.deepEqual(issues({ ...offCampusProfile, address: 'x'.repeat(401) }), ['address']);
+});
+
+/* ─── Server-side allowlists (#101) ─── */
+
+test('profile setup accepts only the campus, cluster, unit and position', () => {
+  const setup = { campus_id: U, cluster_id: U, position_id: U };
+  assert.equal(completeProfileSchema.safeParse(setup).success, true);
+  for (const extra of [
+    { user_type_id: U },
+    { auth_id: U },
+    { is_active: true },
+    { is_off_campus: false },
+    { is_profile_complete: true },
+    { first_name: 'Juan' },
+  ]) {
+    const result = completeProfileSchema.safeParse({ ...setup, ...extra });
+    assert.equal(result.success, false, JSON.stringify(extra));
+  }
+});
+
+test('profile setup refuses ids that are not uuids and over-long typed names', () => {
+  assert.equal(completeProfileSchema.safeParse({ campus_id: { not: U } }).success, false);
+  assert.equal(
+    completeProfileSchema.safeParse({ campus_id: U, custom_unit_name: 'x'.repeat(121) }).success,
+    false
+  );
+});
+
+const userWrite = {
+  first_name: 'Jomar',
+  last_name: 'Lazaro',
+  email: 'jmlazaro@up.edu.ph',
+  username: 'jmlazaro',
+  user_type_id: U,
+  campus_id: U,
+  cluster_id: null,
+  unit_id: null,
+  position_id: null,
+  custom_unit_name: null,
+  custom_position_name: null,
+  is_active: true,
+  is_off_campus: false,
+};
+
+test('Add user and Edit user accept what the Users drawer sends', () => {
+  assert.equal(
+    userCreateInputSchema.safeParse({ ...userWrite, password: 'Test1234!' }).success,
+    true
+  );
+  assert.equal(userUpdateInputSchema.safeParse(userWrite).success, true);
+  assert.equal(userUpdateInputSchema.safeParse({ first_name: 'Jo' }).success, true);
+});
+
+test('Add user and Edit user refuse columns and relations the drawer never sends', () => {
+  for (const extra of [
+    { auth_id: U },
+    { is_profile_complete: true },
+    { reports: { connect: [{ id: U }] } },
+    { user_type: { connect: { id: U } } },
+  ]) {
+    assert.equal(userUpdateInputSchema.safeParse({ ...userWrite, ...extra }).success, false);
+    assert.equal(
+      userCreateInputSchema.safeParse({ ...userWrite, password: 'Test1234!', ...extra }).success,
+      false
+    );
+  }
+  assert.equal(userUpdateInputSchema.safeParse({ password: 'Test1234!' }).success, false);
 });

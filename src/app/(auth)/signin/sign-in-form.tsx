@@ -32,6 +32,11 @@ const PARAM_BANNERS: Record<string, Banner> = {
       'Only UP (up.edu.ph) accounts are allowed. Please sign in with your UP Google account.',
   },
   setup: { tone: 'error', message: 'Failed to set up your account. Please contact support.' },
+  taken: {
+    tone: 'error',
+    message:
+      'An account with this email is already linked to another sign-in. Please contact your administrator.',
+  },
 };
 
 /**

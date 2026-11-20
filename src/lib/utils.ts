@@ -97,3 +97,14 @@ export function groupReportPhotos(files: File[], casualtyCount: number) {
   }
   return { damage, casualties };
 }
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Whether a value from a server action's arguments is a uuid string. Types are erased at runtime,
+ * so an id could arrive as an object such as `{ not: '…' }`, which Prisma would read as a filter
+ * that matches every row (#102). Check ids with this before they reach a `where`.
+ */
+export function isUuid(value: unknown): value is string {
+  return typeof value === 'string' && UUID_PATTERN.test(value);
+}

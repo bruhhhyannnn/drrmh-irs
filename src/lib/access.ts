@@ -28,15 +28,29 @@ export function homePathFor(userTypeName?: string | null): '/dashboard' | '/home
   return isAdminUserType(userTypeName) ? '/dashboard' : '/home';
 }
 
+/** Stands in for the app's origin when resolving `from`; never navigated to. */
+const APP_ORIGIN = 'https://app.invalid';
+
 /**
  * Where sign-in sends someone. `from` is the admin page they were turned away from, so only an
  * admin goes back to it, and only if it is a path inside the app other than sign-in itself.
+ * `from` is resolved the way the browser will resolve it (#110): the URL parser drops tabs and
+ * newlines, so `/<tab>/evil.example` would become `//evil.example`, another site. Anything with a
+ * control character or a backslash is refused, and only a path that stays on this origin is kept,
+ * rebuilt from its parts.
  */
 export function signInDestination(userTypeName?: string | null, from?: string | null): string {
   const home = homePathFor(userTypeName);
   if (home !== '/dashboard' || !from) return home;
-  const inApp = /^\/(?![/\\])/.test(from) && !/^\/signin(?:[/?#]|$)/.test(from);
-  return inApp ? from : home;
+  if (!from.startsWith('/') || /[\u0000-\u001f\u007f\\]/.test(from)) return home;
+  let url: URL;
+  try {
+    url = new URL(from, APP_ORIGIN);
+  } catch {
+    return home;
+  }
+  if (url.origin !== APP_ORIGIN || /^\/signin(?:\/|$)/.test(url.pathname)) return home;
+  return `${url.pathname}${url.search}${url.hash}`;
 }
 
 type GuardInput = {
