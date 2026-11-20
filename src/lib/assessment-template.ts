@@ -7,6 +7,7 @@
 import type { Tally } from './assessment-score';
 import type { BuildingPlace } from './building-place';
 import type { BuildingLocation } from './psgc';
+import type { StructuralInput } from './structural-integrity';
 
 /** Kinds of area a building can have, in pre-screen order. */
 export const AREA_CODES = [
@@ -179,6 +180,8 @@ export interface AssessmentRecord {
   answers: Record<string, { answer: AnswerValue | null; remarks: string | null }>;
   /** By section id. */
   comments: Record<string, string>;
+  /** The structural integrity checks (DRRM-044); null on an assessment from before them. */
+  structural: StructuralInput | null;
   /** The version it was answered with. */
   template: AssessmentTemplate;
 }

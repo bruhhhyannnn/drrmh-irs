@@ -1,5 +1,10 @@
 import { z } from 'zod';
 import { PILLAR_CODES } from './assessment-template';
+import {
+  CRITICAL_ELEMENT_CODES,
+  STRUCTURAL_DEFECT_CODES,
+  STRUCTURAL_ELEMENT_CODES,
+} from './structural-integrity';
 
 /* ─── Auth ─── */
 export const signInSchema = z.object({
@@ -315,6 +320,10 @@ export const populationCategorySchema = z.object({
 /* ─── Building assessment ─── */
 const uuid = z.string().uuid();
 
+const assessmentAnswer = z.enum(['yes', 'no', 'na']);
+/** A grade on the structural tool's four-step scales (how bad, how widespread). */
+const structuralLevel = z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]);
+
 // One submitted assessment, as the form sends it and the offline queue replays it. The server
 // re-checks it against the template (prepareAssessmentWrite) and takes the evaluator from the
 // caller's token, not from `evaluator_id`.
@@ -353,6 +362,26 @@ export const assessmentPayloadSchema = z.object({
   comments: z
     .array(z.object({ section_id: uuid, comment: z.string().trim().min(1).max(2000) }))
     .max(100),
+  // Missing from assessments queued before DRRM-044, which are still accepted without it.
+  structural: z
+    .object({
+      findings: z
+        .array(
+          z.object({
+            element: z.enum(STRUCTURAL_ELEMENT_CODES),
+            defect: z.string().refine((code) => STRUCTURAL_DEFECT_CODES.includes(code)),
+            answer: assessmentAnswer,
+            severity: structuralLevel.nullable(),
+            extent: structuralLevel.nullable(),
+            remarks: z.string().max(2000).nullable(),
+          })
+        )
+        .max(STRUCTURAL_ELEMENT_CODES.length * STRUCTURAL_DEFECT_CODES.length),
+      critical: z
+        .array(z.object({ element: z.enum(CRITICAL_ELEMENT_CODES), answer: assessmentAnswer }))
+        .max(CRITICAL_ELEMENT_CODES.length),
+    })
+    .optional(),
 });
 
 // The Details step: where the building is and who is in charge.

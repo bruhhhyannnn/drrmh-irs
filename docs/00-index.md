@@ -41,6 +41,7 @@ Each module note lists its paths, data, server actions, client pieces, rules and
 - [[0008-hand-built-charts]]
 - [[0009-table-driven-settings]]
 - [[0010-off-campus-buildings]]
+- [[0011-structural-tool-in-code]]
 
 New decision: copy [[decisions/TEMPLATE]].
 
@@ -52,6 +53,7 @@ Statuses are taken from each plan's frontmatter as of 2026-11-09. Keep this list
 
 | Plan                                                                                                         | Status      | Branch                                          |
 | ------------------------------------------------------------------------------------------------------------ | ----------- | ----------------------------------------------- |
+| [[plan/feature/DRRM-044-structural-integrity\|DRRM-044 Structural integrity in the assessment]]              | in-progress | `feat/DRRM-044-structural-integrity`            |
 | [[plan/fix/DRRM-043-campus-backdrop-clipping\|DRRM-043 Campus backdrop clipping]]                            | done        | `fix/DRRM-043-campus-backdrop-clipping`         |
 | [[plan/feature/DRRM-042-bystander-assessments-polish\|DRRM-042 Bystander and Assessments polish]]            | done        | `feat/DRRM-042-bystander-assessments-polish`    |
 | [[plan/feature/DRRM-041-favicon-app-icons\|DRRM-041 Favicon and app icons]]                                  | done        | `feat/DRRM-041-favicon-app-icons`               |

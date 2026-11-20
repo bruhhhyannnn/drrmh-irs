@@ -6,23 +6,21 @@ import { useDebounced } from '@/components/hooks/use-debounced';
 import { cn } from '@/lib';
 import {
   activeSectionItem,
+  activeStructuralItem,
   answerFilterOf,
   searchQuestions,
   sectionProgress,
+  structuralElementOf,
   type AnswerFilter,
   type AssessmentDraft,
   type DraftStep,
   type QuestionMatch,
 } from '@/lib/assessment-draft';
-import {
-  itemLabel,
-  type AnswerValue,
-  type AssessmentTemplate,
-  type TemplateItem,
-} from '@/lib/assessment-template';
-import { Check, Search, X } from 'lucide-react';
+import { itemLabel, type AnswerValue, type AssessmentTemplate } from '@/lib/assessment-template';
+import { elementInfo, structuralItemDone, structuralProgress } from '@/lib/structural-integrity';
+import { Check, ChevronRight, Search, X } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { Dot, Mono, Pill } from '../../_components/chrome';
+import { Mono, Pill } from '../../_components/chrome';
 
 /** How long typing has to pause before the questions are searched. */
 const SEARCH_DEBOUNCE_MS = 250;
@@ -61,6 +59,7 @@ export function SectionIndex({
   const input = useRef<HTMLInputElement>(null);
   const debounced = useDebounced(query, SEARCH_DEBOUNCE_MS);
   const progress = sectionProgress(template, draft);
+  const structural = structuralProgress(draft.structural);
   const sections = new Map(template.sections.map((s) => [s.id, s]));
 
   // Clearing the box brings the steps back at once; only the search itself waits.
@@ -161,21 +160,66 @@ export function SectionIndex({
         )
       ) : (
         <nav aria-label="Assessment steps">
-          <ol className="flex flex-col gap-1">
+          <ol className="flex flex-col gap-1.5">
             {steps.map((step) => {
               const isCurrent = step === current;
               let content: React.ReactNode;
               let activeQuestions: ReturnType<typeof activeSectionItem> = null;
+              // The current step's questions as numbered chips: a section's or an element's.
+              let chips: { id: string; done: boolean; active: boolean }[] | null = null;
               if (step === 'details') content = <span className="flex-1">Details</span>;
               else if (step === 'building')
                 content = <span className="flex-1">About the building</span>;
               else if (step === 'review') content = <span className="flex-1">Review</span>;
-              else {
+              else if (structuralElementOf(step)) {
+                const element = elementInfo(structuralElementOf(step)!);
+                const p = structural[element.code];
+                const done = p.answered === p.total;
+                if (isCurrent) {
+                  const at = activeStructuralItem(draft, element.code);
+                  chips = at.ids.map((id, i) => ({
+                    id,
+                    done: structuralItemDone(draft.structural, id),
+                    active: i === at.index,
+                  }));
+                }
+                content = (
+                  <>
+                    <span className="flex min-w-0 flex-1 gap-2">
+                      <Mono className="w-9 shrink-0 font-semibold text-gray-500">SI</Mono>
+                      <Bilingual
+                        en={`Structural integrity: ${element.title.en}`}
+                        fil={element.title.fil}
+                        className="min-w-0 flex-1"
+                      />
+                    </span>
+                    <span
+                      className={cn(
+                        'flex shrink-0 items-center gap-1 text-[13px]',
+                        done ? 'text-success-700' : 'text-gray-500'
+                      )}
+                    >
+                      {done && <Check size={14} strokeWidth={3} aria-label="Complete" />}
+                      <Mono>
+                        {p.answered}/{p.total}
+                      </Mono>
+                    </span>
+                  </>
+                );
+              } else {
                 const sectionId = step.slice('section:'.length);
                 const section = sections.get(sectionId);
                 const p = progress[sectionId] ?? { answered: 0, total: 0 };
                 const done = p.total > 0 && p.answered === p.total;
                 if (isCurrent) activeQuestions = activeSectionItem(template, draft, sectionId);
+                if (activeQuestions) {
+                  const at = activeQuestions;
+                  chips = at.items.map((q) => ({
+                    id: q.id,
+                    done: Boolean(draft.answers[q.id]?.answer),
+                    active: q.id === at.item.id,
+                  }));
+                }
                 content = (
                   <>
                     <span className="flex min-w-0 flex-1 gap-2">
@@ -212,18 +256,25 @@ export function SectionIndex({
                     aria-current={isCurrent ? 'step' : undefined}
                     onClick={() => onOpen(step)}
                     className={cn(
-                      'flex min-h-11 w-full items-start gap-2 rounded-xl px-3 py-2.5 text-left text-[15px] leading-[1.35]',
-                      isCurrent ? 'bg-brand-25 font-bold text-gray-900' : 'hover:bg-hover',
+                      'flex min-h-11 w-full items-start gap-2 rounded-xl border px-3 py-2.5 text-left text-[15px] leading-[1.35]',
+                      isCurrent
+                        ? 'border-brand-200 bg-brand-25 font-bold text-gray-900'
+                        : 'border-line bg-surface hover:bg-hover',
                       FOCUS_RING
                     )}
                   >
                     {content}
+                    <ChevronRight
+                      size={18}
+                      aria-hidden
+                      className={cn('shrink-0', isCurrent ? 'text-brand-500' : 'text-gray-400')}
+                    />
                   </button>
-                  {activeQuestions && (
+                  {chips && (
                     <div className="flex flex-wrap gap-1.5 px-3 pb-2">
-                      {activeQuestions.items.map((q, idx) => {
-                        const isActiveItem = q.id === activeQuestions.item.id;
-                        const isAnswered = Boolean(draft.answers[q.id]?.answer);
+                      {chips.map((q, idx) => {
+                        const isActiveItem = q.active;
+                        const isAnswered = q.done;
                         return (
                           <button
                             key={q.id}
@@ -292,7 +343,7 @@ function QuestionList({
               )}
               <Bilingual en={item.prompt_en} fil={item.prompt_fil} />
             </span>
-            <AnswerBadge item={item} answer={draft.answers[item.id]?.answer} />
+            <AnswerBadge answer={draft.answers[item.id]?.answer} />
           </button>
         </li>
       ))}
@@ -302,8 +353,11 @@ function QuestionList({
 
 const ANSWER_TEXT: Record<AnswerValue, string> = { yes: 'Yes', no: 'No', na: 'N/A' };
 
-/** The answer so far, coloured by what it means: safe, a hazard, not applicable, or not yet. */
-function AnswerBadge({ item, answer }: { item: TemplateItem; answer?: AnswerValue | null }) {
+/**
+ * The answer so far, or "Not yet". Every answer looks the same here: while the form is being
+ * filled in, nothing hints at which answer is the safe one (that shows on the results).
+ */
+function AnswerBadge({ answer }: { answer?: AnswerValue | null }) {
   if (!answer) {
     return (
       <span className="flex h-6.5 shrink-0 items-center rounded-full border border-dashed border-gray-300 px-2.5 text-[13px] font-semibold whitespace-nowrap text-gray-500">
@@ -311,16 +365,8 @@ function AnswerBadge({ item, answer }: { item: TemplateItem; answer?: AnswerValu
       </span>
     );
   }
-  if (answer === 'na') return <Pill tone="neutral">N/A</Pill>;
-  if (answer !== item.safe_answer) {
-    return (
-      <Pill tone="error" icon={<Dot className="bg-error-500" />}>
-        {ANSWER_TEXT[answer]}
-      </Pill>
-    );
-  }
   return (
-    <Pill tone="success" icon={<Check size={12} strokeWidth={3} aria-hidden />}>
+    <Pill tone="neutral" icon={<Check size={12} strokeWidth={3} aria-hidden />}>
       {ANSWER_TEXT[answer]}
     </Pill>
   );

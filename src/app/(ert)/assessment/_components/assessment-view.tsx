@@ -29,6 +29,7 @@ import {
 import { formatDate, formatDateTime } from '../../_lib/format';
 import { AssessmentLink, goToAssessment } from '../_lib/nav';
 import { ScoreSummary } from './score-summary';
+import { StructuralAnswers, StructuralSummary } from './structural-summary';
 
 /** One submitted assessment, read-only: details, scores, then every answer by section. */
 export function AssessmentView({ id }: { id: string }) {
@@ -151,6 +152,13 @@ export function AssessmentRecordBody({ record }: { record: AssessmentRecord }) {
       <h2 className="pt-2 text-[22px] font-extrabold">Scores</h2>
       <ScoreSummary score={score} template={template} />
 
+      {record.structural && (
+        <>
+          <h2 className="pt-2 text-[22px] font-extrabold">Structural integrity</h2>
+          <StructuralSummary input={record.structural} />
+        </>
+      )}
+
       <h2 className="pt-2 text-[22px] font-extrabold">Answers</h2>
       {notTicked.length > 0 && (
         <p className="text-[15px] text-gray-600">Not applicable (no {notTicked.join(', ')})</p>
@@ -163,6 +171,7 @@ export function AssessmentRecordBody({ record }: { record: AssessmentRecord }) {
           record={record}
         />
       ))}
+      {record.structural && <StructuralAnswers input={record.structural} />}
     </>
   );
 }
@@ -273,6 +282,9 @@ function ItemAnswer({
             <Pill tone="success">{ANSWER_TEXT[value]}</Pill>
           ))}
       </div>
+      {item.is_scored && item.safe_answer === 'no' && (
+        <p className="ml-17 text-[13px] font-semibold text-gray-500">Yes here means a hazard</p>
+      )}
       {answer?.remarks && (
         <p className="ml-17 text-[14px] text-gray-600">
           <span className="font-semibold">Remarks:</span> {answer.remarks}

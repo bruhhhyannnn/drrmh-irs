@@ -9,12 +9,44 @@ import {
 } from './assessment-template';
 import type { BuildingCategory } from './building-place';
 import type { AssessmentDetailsFormData, AssessmentPayload } from './schemas';
+import {
+  STRUCTURAL_ELEMENT_CODES,
+  structuralDraftFromInput,
+  structuralInputFromDraft,
+  structuralItemDone,
+  structuralItemIds,
+  type StructuralDraft,
+  type StructuralElement,
+} from './structural-integrity';
 
 // The assessment being filled in, kept on the phone (IndexedDB) until it's submitted. Answers stay
 // in the draft when a floor count or area change makes them stop applying ("set aside"), so ticking
 // the area again brings them back; only toPayload leaves them out.
 
-export type DraftStep = 'details' | 'building' | `section:${string}` | 'review';
+export type DraftStep =
+  'details' | 'building' | `section:${string}` | `structural:${StructuralElement}` | 'review';
+
+/**
+ * The structural check a step opens on: the one in `item_id` when it belongs to this element,
+ * else the first one not yet done (or the first, when all are done).
+ */
+export function activeStructuralItem(
+  draft: Pick<AssessmentDraft, 'structural' | 'item_id'>,
+  element: StructuralElement
+): { ids: string[]; index: number; id: string } {
+  const ids = structuralItemIds(element);
+  const current = draft.item_id ? ids.indexOf(draft.item_id) : -1;
+  const open = ids.findIndex((id) => !structuralItemDone(draft.structural, id));
+  const index = current >= 0 ? current : Math.max(open, 0);
+  return { ids, index, id: ids[index] };
+}
+
+/** The element of a structural integrity step, or null for any other step. */
+export function structuralElementOf(step: DraftStep): StructuralElement | null {
+  if (!step.startsWith('structural:')) return null;
+  const code = step.slice('structural:'.length);
+  return STRUCTURAL_ELEMENT_CODES.find((e) => e === code) ?? null;
+}
 
 export interface DraftAnswer {
   answer?: AnswerValue;
@@ -59,6 +91,8 @@ export interface AssessmentDraft {
   answers: Record<string, DraftAnswer>;
   /** By section id. */
   comments: Record<string, string>;
+  /** The structural integrity checks (DRRM-044). Missing from drafts saved before them. */
+  structural?: StructuralDraft;
   step: DraftStep;
   /** Current scored item id within a section step (used by the mobile flashcard view). */
   item_id?: string;
@@ -188,7 +222,10 @@ export function setAsideCount(
 const applicable = (template: AssessmentTemplate, draft: AssessmentDraft): TemplateItem[] =>
   applicableItems(template, draft.floor_count, draft.area_type_ids);
 
-/** Details, building, one step per section with something to ask (by section id), review. */
+/**
+ * Details, building, one step per section with something to ask (by section id), one step per
+ * structural element, review.
+ */
 export function draftSteps(template: AssessmentTemplate, draft: AssessmentDraft): DraftStep[] {
   const sectionIds = new Set(applicable(template, draft).map((i) => i.section_id));
   return [
@@ -197,6 +234,7 @@ export function draftSteps(template: AssessmentTemplate, draft: AssessmentDraft)
     ...template.sections
       .filter((s) => sectionIds.has(s.id))
       .map((s): DraftStep => `section:${s.id}`),
+    ...STRUCTURAL_ELEMENT_CODES.map((e): DraftStep => `structural:${e}`),
     'review',
   ];
 }
@@ -217,23 +255,59 @@ export function sectionScoredItems(
   );
 }
 
-/** The active scored item in a section (defaults to the first item when `draft.item_id` is unset). */
+/**
+ * Where the flashcard can stop in a section, in order: each scored question, with a group's
+ * shared prompt shown on its own first (`intro`, the parent's id) so moving from one group
+ * ("…fire extinguishers…") to the next ("…smoke detectors…") can't read as the same question
+ * for another area.
+ */
+export function sectionStops(
+  template: AssessmentTemplate,
+  draft: AssessmentDraft,
+  sectionId: string
+): { item_id: string; intro: boolean }[] {
+  const stops: { item_id: string; intro: boolean }[] = [];
+  let group: string | null = null;
+  for (const item of sectionScoredItems(template, draft, sectionId)) {
+    if (item.parent_id && item.parent_id !== group) {
+      stops.push({ item_id: item.parent_id, intro: true });
+    }
+    group = item.parent_id;
+    stops.push({ item_id: item.id, intro: false });
+  }
+  return stops;
+}
+
+/**
+ * The active scored item in a section (defaults to the first item when `draft.item_id` is unset).
+ * When `draft.item_id` is a group's parent, the flashcard is on that group's intro: `intro` is the
+ * parent and `item` its first question.
+ */
 export function activeSectionItem(
   template: AssessmentTemplate,
   draft: AssessmentDraft,
   sectionId: string
-): { items: TemplateItem[]; index: number; item: TemplateItem } | null {
+): { items: TemplateItem[]; index: number; item: TemplateItem; intro?: TemplateItem } | null {
   const items = sectionScoredItems(template, draft, sectionId);
   if (items.length === 0) return null;
   const found = draft.item_id ? items.findIndex((i) => i.id === draft.item_id) : -1;
+  if (found < 0 && draft.item_id) {
+    const first = items.findIndex((i) => i.parent_id === draft.item_id);
+    if (first >= 0) {
+      const section = template.sections.find((s) => s.id === sectionId);
+      const intro = section?.items.find((i) => i.id === draft.item_id);
+      return { items, index: first, item: items[first], intro };
+    }
+  }
   const index = found >= 0 ? found : 0;
   return { items, index, item: items[index] };
 }
 
 /**
  * Step one question backward or forward across the form (for the mobile flashcard view).
- * Crossing a section boundary lands on the first question of the next section when moving
- * forward, or the last question of the previous section when moving backward.
+ * A group's intro is a stop of its own (`sectionStops`). Crossing a section boundary lands on the
+ * first stop of the next section when moving forward, or the last question of the previous
+ * section when moving backward.
  */
 export function stepQuestion(
   template: AssessmentTemplate,
@@ -246,23 +320,34 @@ export function stepQuestion(
 
   if (current.startsWith('section:')) {
     const sectionId = current.slice('section:'.length);
-    const active = activeSectionItem(template, draft, sectionId);
-    if (active) {
-      if (direction === 'next' && active.index < active.items.length - 1) {
-        return { step: current, item_id: active.items[active.index + 1].id };
-      }
-      if (direction === 'prev' && active.index > 0) {
-        return { step: current, item_id: active.items[active.index - 1].id };
-      }
+    const stops = sectionStops(template, draft, sectionId);
+    if (stops.length > 0) {
+      const found = stops.findIndex((s) => s.item_id === draft.item_id);
+      const at = found >= 0 ? found : stops.findIndex((s) => !s.intro);
+      const target = stops[at + (direction === 'next' ? 1 : -1)];
+      if (target) return { step: current, item_id: target.item_id };
     }
+  }
+
+  const element = structuralElementOf(current);
+  if (element) {
+    const ids = structuralItemIds(element);
+    const found = draft.item_id ? ids.indexOf(draft.item_id) : -1;
+    const target = ids[(found >= 0 ? found : 0) + (direction === 'next' ? 1 : -1)];
+    if (target) return { step: current, item_id: target };
   }
 
   const target = steps[stepIdx + (direction === 'next' ? 1 : -1)];
   if (!target) return null;
   if (target.startsWith('section:')) {
-    const items = sectionScoredItems(template, draft, target.slice('section:'.length));
-    const item_id = direction === 'next' ? items[0]?.id : items[items.length - 1]?.id;
+    const stops = sectionStops(template, draft, target.slice('section:'.length));
+    const item_id = direction === 'next' ? stops[0]?.item_id : stops[stops.length - 1]?.item_id;
     return { step: target, item_id };
+  }
+  const targetElement = structuralElementOf(target);
+  if (targetElement) {
+    const ids = structuralItemIds(targetElement);
+    return { step: target, item_id: direction === 'next' ? ids[0] : ids[ids.length - 1] };
   }
   return { step: target, item_id: undefined };
 }
@@ -368,6 +453,10 @@ export function toPayload(
     if (comment && sectionIds.has(section.id)) comments.push({ section_id: section.id, comment });
   }
 
+  // Left out when nothing was answered, so a draft from before DRRM-044 sends what it always did.
+  const structural = structuralInputFromDraft(draft.structural);
+  const hasStructural = structural.findings.length > 0 || structural.critical.length > 0;
+
   return {
     client_ref: draft.client_ref,
     evaluator_id: draft.evaluator_id,
@@ -393,6 +482,7 @@ export function toPayload(
     ended_at: endedAt.toISOString(),
     answers,
     comments,
+    ...(hasStructural ? { structural } : {}),
   };
 }
 
@@ -456,6 +546,7 @@ export function draftFromPayload(
       ])
     ),
     comments: Object.fromEntries(payload.comments.map((c) => [c.section_id, c.comment])),
+    ...(payload.structural ? { structural: structuralDraftFromInput(payload.structural) } : {}),
     step: 'review',
   };
 }

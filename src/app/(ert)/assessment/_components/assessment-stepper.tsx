@@ -9,14 +9,18 @@ import {
 import { Loader } from '@/components/ui/loader';
 import { cn } from '@/lib';
 import {
+  activeStructuralItem,
   draftSteps,
   sectionScoredItems,
+  sectionStops,
   stepQuestion,
+  structuralElementOf,
   type AssessmentDraft,
   type DraftStep,
 } from '@/lib/assessment-draft';
 import type { AnswerValue, AssessmentSetup, AssessmentTemplate } from '@/lib/assessment-template';
 import { getAssessmentDraft, saveAssessmentDraft } from '@/lib/offline-queue';
+import { structuralItemIds } from '@/lib/structural-integrity';
 import { useQueryClient } from '@tanstack/react-query';
 import { CloudOff, FileQuestion, ListChecks } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -29,9 +33,13 @@ import { DetailsStep } from './details-step';
 import { ReviewStep } from './review-step';
 import { SectionIndex } from './section-index';
 import { SectionStep } from './section-step';
+import { StructuralStep } from './structural-step';
 
 /** How long after the last change the draft is written to the phone. */
 const AUTOSAVE_MS = 500;
+
+/** How long a tapped answer shows its check before the next question comes in (phones). */
+const ADVANCE_DELAY_MS = 180;
 
 /** The step-by-step form for one draft on this phone. */
 export function AssessmentStepper({
@@ -216,12 +224,46 @@ function DraftForm({
     });
   };
 
+  /* ─── Moving on after an answer (phones) ─── */
+  // The tapped answer stays on screen a moment with its check before the next card comes in, so
+  // it's clear what was recorded. Any other move (Back, Next, Questions) cancels a pending one.
+  const advanceTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(advanceTimer.current), []);
+
+  /** On to the next question after ADVANCE_DELAY_MS, unless the card changed meanwhile. With
+   * `toNextStep`, past the rest of a structural element to the next step. */
+  const moveOnSoon = (at: { step: DraftStep; item_id?: string }, toNextStep = false) => {
+    clearTimeout(advanceTimer.current);
+    advanceTimer.current = setTimeout(() => {
+      let nextStepAfter: DraftStep | undefined;
+      update((d) => {
+        if (d.step !== at.step || d.item_id !== at.item_id) return d;
+        const element = structuralElementOf(d.step);
+        const from =
+          toNextStep && element
+            ? { ...d, item_id: activeStructuralItem(d, element).ids.at(-1) }
+            : d;
+        const target = stepQuestion(template, from, 'next');
+        if (!target) return d;
+        nextStepAfter = target.step;
+        return { ...d, step: target.step, item_id: target.item_id };
+      });
+      if (nextStepAfter) clearGrown(nextStepAfter);
+      window.scrollTo({ top: 0 });
+    }, ADVANCE_DELAY_MS);
+  };
+
   const go = (step: DraftStep, itemId?: string) => {
+    clearTimeout(advanceTimer.current);
     update((d) => {
       let resolvedItemId = itemId;
       if (!resolvedItemId && step.startsWith('section:')) {
         const items = sectionScoredItems(template, d, step.slice('section:'.length));
         resolvedItemId = items.find((i) => !d.answers[i.id]?.answer)?.id ?? items[0]?.id;
+      }
+      const element = structuralElementOf(step);
+      if (!resolvedItemId && element) {
+        resolvedItemId = activeStructuralItem({ ...d, item_id: undefined }, element).id;
       }
       return { ...d, step, item_id: resolvedItemId };
     });
@@ -231,20 +273,49 @@ function DraftForm({
   };
 
   const answerAndAdvance = (itemId: string, answer: AnswerValue) => {
-    let nextStepAfter: DraftStep | undefined;
-    update((d) => {
-      const withAnswer: AssessmentDraft = {
-        ...d,
-        answers: { ...d.answers, [itemId]: { ...d.answers[itemId], answer } },
-      };
-      const target = stepQuestion(template, withAnswer, 'next');
-      if (!target) return withAnswer;
-      nextStepAfter = target.step;
-      return { ...withAnswer, step: target.step, item_id: target.item_id };
-    });
-    if (nextStepAfter) clearGrown(nextStepAfter);
-    window.scrollTo({ top: 0 });
+    update((d) => ({
+      ...d,
+      answers: { ...d.answers, [itemId]: { ...d.answers[itemId], answer } },
+    }));
+    moveOnSoon({ step: current, item_id: draft.item_id });
   };
+
+  /**
+   * A structural check changed on the phone's one-at-a-time view, then on to the next check, or
+   * with `toNextStep` straight to the next step (after "Mark the rest").
+   */
+  const changeAndAdvance = (fn: (d: AssessmentDraft) => AssessmentDraft, toNextStep = false) => {
+    update(fn);
+    moveOnSoon({ step: current, item_id: draft.item_id }, toNextStep);
+  };
+
+  /* ─── Which way the card moved (phones) ─── */
+  /** Where a step and question sit in the form, to tell forward from back. */
+  const positionOf = (step: DraftStep, itemId: string | undefined) => {
+    let within = 0;
+    if (itemId && step.startsWith('section:')) {
+      within = sectionStops(template, draft, step.slice('section:'.length)).findIndex(
+        (s) => s.item_id === itemId
+      );
+    }
+    const element = structuralElementOf(step);
+    if (itemId && element) within = structuralItemIds(element).indexOf(itemId);
+    return steps.indexOf(step) * 1000 + Math.max(within, 0);
+  };
+  const cardKey = `${current}|${draft.item_id ?? ''}`;
+  const cardPosition = positionOf(current, draft.item_id);
+  const [cardMotion, setCardMotion] = useState({
+    key: cardKey,
+    position: cardPosition,
+    back: false,
+  });
+  if (cardMotion.key !== cardKey) {
+    setCardMotion({
+      key: cardKey,
+      position: cardPosition,
+      back: cardPosition < cardMotion.position,
+    });
+  }
 
   /* ─── Jump from the review to an unanswered question ─── */
   const [focusItem, setFocusItem] = useState<string | null>(null);
@@ -288,6 +359,7 @@ function DraftForm({
   };
 
   const stepProps = { template, draft, update };
+  const structuralElement = structuralElementOf(current);
   let content: React.ReactNode;
   if (current === 'details') {
     content = (
@@ -308,6 +380,17 @@ function DraftForm({
         error={submitError}
       />
     );
+  } else if (structuralElement) {
+    content = (
+      <StructuralStep
+        key={structuralElement}
+        draft={draft}
+        update={update}
+        element={structuralElement}
+        onOpenIndex={() => setIndexOpen(true)}
+        onChangeAndAdvance={changeAndAdvance}
+      />
+    );
   } else {
     const section = template.sections.find((s) => `section:${s.id}` === current);
     if (section) {
@@ -318,6 +401,7 @@ function DraftForm({
           section={section}
           onOpenIndex={() => setIndexOpen(true)}
           onAnswerAndAdvance={answerAndAdvance}
+          onContinue={nextTarget ? () => go(nextTarget.step, nextTarget.item_id) : undefined}
         />
       );
     }
@@ -338,7 +422,8 @@ function DraftForm({
     />
   );
   const title = draft.building_name || draft.new_building_name.trim() || 'New assessment';
-  const isSectionStep = current.startsWith('section:');
+  // Checklist sections and structural steps are one question at a time below `lg`.
+  const isSectionStep = current.startsWith('section:') || structuralElement !== null;
 
   return (
     <>
@@ -352,7 +437,24 @@ function DraftForm({
           isSectionStep ? 'flex flex-1 flex-col py-4 lg:py-8' : 'flex flex-1 flex-col py-6 md:py-8'
         )}
       >
-        <main className="flex min-w-0 flex-1 flex-col gap-5">{content}</main>
+        <main className="flex min-w-0 flex-1 flex-col gap-5">
+          {isSectionStep && !isDesktop ? (
+            // A new card per question, sliding in from the side it comes from.
+            <div
+              key={cardKey}
+              className={cn(
+                'flex flex-1 flex-col motion-reduce:animate-card-fade',
+                cardMotion.back
+                  ? 'motion-safe:animate-card-in-prev'
+                  : 'motion-safe:animate-card-in-next'
+              )}
+            >
+              {content}
+            </div>
+          ) : (
+            content
+          )}
+        </main>
       </div>
 
       <div

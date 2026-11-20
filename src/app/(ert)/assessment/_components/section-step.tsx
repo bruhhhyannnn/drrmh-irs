@@ -1,7 +1,7 @@
 'use client';
 
 import { Bilingual } from '@/components/assessment/bilingual';
-import { FieldLabel, FOCUS_RING, SegmentedControl, TextArea } from '@/components/ds';
+import { Button, FieldLabel, FOCUS_RING, SegmentedControl, TextArea } from '@/components/ds';
 import { cn } from '@/lib';
 import { activeSectionItem, sectionProgress, type DraftAnswer } from '@/lib/assessment-draft';
 import { applicableItems } from '@/lib/assessment-score';
@@ -13,7 +13,7 @@ import {
 } from '@/lib/assessment-template';
 import { Check, ChevronDown } from 'lucide-react';
 import { useId, useState } from 'react';
-import { Card, Mono, Pill } from '../../_components/chrome';
+import { Card, Mono } from '../../_components/chrome';
 import type { StepProps } from './details-step';
 
 const ANSWER_OPTIONS: { value: AnswerValue; label: string }[] = [
@@ -26,7 +26,8 @@ const ANSWER_OPTIONS: { value: AnswerValue; label: string }[] = [
  * One checklist section:
  * - Below `lg` (mobile / tablet): a 1-question-at-a-time flashcard with a tappable section
  *   header at the top, the question in the middle, and large YES | N/A | NO buttons at the
- *   bottom that auto-advance to the next question.
+ *   bottom that auto-advance to the next question. A group's shared prompt gets a card of its
+ *   own first, so the next group never reads as the same question for another area.
  * - From `lg` (desktop): every question in the section listed in paper-form order.
  */
 export function SectionStep({
@@ -36,10 +37,13 @@ export function SectionStep({
   section,
   onOpenIndex,
   onAnswerAndAdvance,
+  onContinue,
 }: StepProps & {
   section: TemplateSection;
   onOpenIndex?: () => void;
   onAnswerAndAdvance?: (itemId: string, answer: AnswerValue) => void;
+  /** Leaves a group's intro card for its first area. */
+  onContinue?: () => void;
 }) {
   const commentId = useId();
   const applies = new Set(
@@ -65,31 +69,44 @@ export function SectionStep({
 
   return (
     <>
-      {active && (
+      {active?.intro ? (
         <div className="flex flex-1 flex-col lg:hidden">
-          <FlashcardCard
+          <GroupIntroCard
             section={section}
-            item={active.item}
-            parent={
-              active.item.parent_id
-                ? section.items.find((p) => p.id === active.item.parent_id)
-                : undefined
-            }
-            index={active.index}
-            total={active.items.length}
-            value={draft.answers[active.item.id]}
-            sectionComment={draft.comments[section.id] ?? ''}
-            onChange={(patch) => setAnswer(active.item.id, patch)}
-            onSelectAnswer={(answer) => {
-              if (onAnswerAndAdvance) onAnswerAndAdvance(active.item.id, answer);
-              else setAnswer(active.item.id, { answer });
-            }}
-            onChangeSectionComment={(comment) =>
-              update((d) => ({ ...d, comments: { ...d.comments, [section.id]: comment } }))
-            }
+            group={active.intro}
+            areas={active.items.filter((i) => i.parent_id === active.intro?.id)}
+            onContinue={onContinue}
             onOpenIndex={onOpenIndex}
           />
         </div>
+      ) : (
+        active && (
+          <div className="flex flex-1 flex-col lg:hidden">
+            <FlashcardCard
+              section={section}
+              item={active.item}
+              parent={
+                active.item.parent_id
+                  ? section.items.find((p) => p.id === active.item.parent_id)
+                  : undefined
+              }
+              area={areaOf(active.items, active.item)}
+              index={active.index}
+              total={active.items.length}
+              value={draft.answers[active.item.id]}
+              sectionComment={draft.comments[section.id] ?? ''}
+              onChange={(patch) => setAnswer(active.item.id, patch)}
+              onSelectAnswer={(answer) => {
+                if (onAnswerAndAdvance) onAnswerAndAdvance(active.item.id, answer);
+                else setAnswer(active.item.id, { answer });
+              }}
+              onChangeSectionComment={(comment) =>
+                update((d) => ({ ...d, comments: { ...d.comments, [section.id]: comment } }))
+              }
+              onOpenIndex={onOpenIndex}
+            />
+          </div>
+        )
       )}
 
       <div className="hidden lg:flex lg:flex-col lg:gap-4">
@@ -153,6 +170,7 @@ function FlashcardCard({
   section,
   item,
   parent,
+  area,
   index,
   total,
   value,
@@ -165,6 +183,8 @@ function FlashcardCard({
   section: TemplateSection;
   item: TemplateItem;
   parent?: TemplateItem;
+  /** Which of its group's areas this question is. */
+  area?: { index: number; total: number };
   index: number;
   total: number;
   value?: DraftAnswer;
@@ -189,20 +209,7 @@ function FlashcardCard({
     >
       {/* Top: tappable section dropdown + Question k / n */}
       <div className="flex flex-col items-center gap-2 text-center">
-        <button
-          type="button"
-          onClick={onOpenIndex}
-          className={cn(
-            'inline-flex max-w-full items-center gap-2 rounded-2xl border border-line bg-gray-50 px-3.5 py-2 text-left transition-colors hover:bg-gray-100',
-            FOCUS_RING
-          )}
-        >
-          <Mono className="bg-brand-25 text-brand-500 grid h-6 min-w-6 shrink-0 place-items-center rounded-full px-1.5 text-[12px] font-bold">
-            {section.code}
-          </Mono>
-          <span className=" truncate text-[14px] font-bold text-gray-900">{section.title_en}</span>
-          <ChevronDown size={16} aria-hidden className="shrink-0 text-gray-500" />
-        </button>
+        <SectionButton section={section} onOpenIndex={onOpenIndex} />
 
         <div className="flex items-center gap-2 text-[14px] font-semibold text-gray-600">
           <span>
@@ -227,7 +234,14 @@ function FlashcardCard({
       <div className="my-auto flex flex-col items-center gap-4 py-4 text-center">
         {parent && (
           <div className="w-full rounded-2xl border border-line bg-gray-50 px-4 py-3 text-left">
-            <Mono className="text-[12px] font-semibold text-gray-500">{parentLabel}</Mono>
+            <span className="flex items-center justify-between gap-2 text-[12px] font-semibold text-gray-500">
+              <Mono>{parentLabel}</Mono>
+              {area && (
+                <span>
+                  Area <Mono>{area.index + 1}</Mono> of <Mono>{area.total}</Mono>
+                </span>
+              )}
+            </span>
             <Bilingual
               as="p"
               en={parent.prompt_en}
@@ -244,8 +258,6 @@ function FlashcardCard({
           fil={item.prompt_fil}
           className="max-w-xl text-[20px] leading-[1.35] font-extrabold text-balance text-gray-900 sm:text-[22px]"
         />
-
-        {item.safe_answer === 'no' && <Pill tone="warning">Yes here means a hazard</Pill>}
 
         {reference && (
           <details className="w-full max-w-md rounded-xl border border-line bg-gray-50 px-3.5 py-2 text-left text-[13px] text-gray-600">
@@ -296,6 +308,105 @@ function FlashcardCard({
   );
 }
 
+/** Which of its group's areas a question is (none for a question outside a group). */
+function areaOf(items: TemplateItem[], item: TemplateItem) {
+  if (!item.parent_id) return undefined;
+  const areas = items.filter((i) => i.parent_id === item.parent_id);
+  return { index: areas.indexOf(item), total: areas.length };
+}
+
+/** The section's code and title; opens the Questions list. */
+function SectionButton({
+  section,
+  onOpenIndex,
+}: {
+  section: TemplateSection;
+  onOpenIndex?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onOpenIndex}
+      className={cn(
+        'inline-flex max-w-full items-center gap-2 rounded-2xl border border-line bg-gray-50 px-3.5 py-2 text-left transition-colors hover:bg-gray-100',
+        FOCUS_RING
+      )}
+    >
+      <Mono className="bg-brand-25 text-brand-500 grid h-6 min-w-6 shrink-0 place-items-center rounded-full px-1.5 text-[12px] font-bold">
+        {section.code}
+      </Mono>
+      <span className="truncate text-[14px] font-bold text-gray-900">{section.title_en}</span>
+      <ChevronDown size={16} aria-hidden className="shrink-0 text-gray-500" />
+    </button>
+  );
+}
+
+/**
+ * A group's shared prompt on its own, before its first area, with the areas it will be asked
+ * for. Marks where one group's areas end and a different question starts.
+ */
+function GroupIntroCard({
+  section,
+  group,
+  areas,
+  onContinue,
+  onOpenIndex,
+}: {
+  section: TemplateSection;
+  group: TemplateItem;
+  areas: TemplateItem[];
+  onContinue?: () => void;
+  onOpenIndex?: () => void;
+}) {
+  return (
+    <Card
+      id={`flashcard-${group.id}`}
+      className="flex flex-1 flex-col justify-between gap-5 p-5 sm:p-6"
+    >
+      <div className="flex flex-col items-center gap-2 text-center">
+        <SectionButton section={section} onOpenIndex={onOpenIndex} />
+        <span className="text-[14px] font-semibold text-gray-600">
+          New question ·{' '}
+          <Mono className="text-[13px] text-gray-500">{itemLabel(section, group)}</Mono>
+        </span>
+      </div>
+
+      <div className="my-auto flex flex-col items-center gap-5 py-4 text-center">
+        <Bilingual
+          as="h2"
+          en={group.prompt_en}
+          fil={group.prompt_fil}
+          className="max-w-xl text-[20px] leading-[1.35] font-extrabold text-balance text-gray-900 sm:text-[22px]"
+        />
+        <div className="w-full max-w-md rounded-2xl border border-line bg-gray-50 px-4 py-3 text-left">
+          <p className="text-[13px] font-semibold text-gray-600">
+            Answer it for {areas.length === 1 ? 'this area' : `each of these ${areas.length} areas`}
+            :
+          </p>
+          <ol className="mt-1.5 flex flex-col gap-1 text-[15px] text-gray-900">
+            {areas.map((area, i) => (
+              <li key={area.id} className="flex gap-2">
+                <Mono className="w-4 shrink-0 text-gray-500">{i + 1}</Mono>
+                <Bilingual en={area.prompt_en} fil={area.prompt_fil} className="min-w-0 flex-1" />
+              </li>
+            ))}
+          </ol>
+        </div>
+        {group.reference && (
+          <details className="w-full max-w-md rounded-xl border border-line bg-gray-50 px-3.5 py-2 text-left text-[13px] text-gray-600">
+            <summary className="cursor-pointer font-semibold text-gray-700">Reference</summary>
+            <p className="mt-1.5 leading-[1.45]">{group.reference}</p>
+          </details>
+        )}
+      </div>
+
+      <Button fullWidth onClick={onContinue} disabled={!onContinue}>
+        Start
+      </Button>
+    </Card>
+  );
+}
+
 type RowProps = {
   item: TemplateItem;
   label: string;
@@ -325,9 +436,6 @@ function ItemRow({ item, label, value, onChange, compact }: RowProps & { compact
         value={value?.answer ?? ''}
         onChange={(answer) => onChange({ answer: answer as AnswerValue })}
       />
-      {item.safe_answer === 'no' && (
-        <p className="text-[13px] font-semibold text-warning-700">Yes here means a hazard</p>
-      )}
       {item.reference && (
         <details className="text-[14px] text-gray-600">
           <summary className="cursor-pointer font-semibold text-gray-700">Reference</summary>
@@ -375,7 +483,8 @@ function GroupCard({ parent, items }: { parent: RowProps; items: RowProps[] }) {
   );
 }
 
-function Remarks({
+/** A collapsed "Add remarks" link that opens a text box. Shared with the structural steps. */
+export function Remarks({
   label = 'Remarks',
   buttonLabel = 'Add remarks',
   value,
