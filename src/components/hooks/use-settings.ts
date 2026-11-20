@@ -14,6 +14,7 @@ import {
   updateSettingsItem,
 } from '@/actions/settings';
 import { getAccessToken } from '@/lib/supabase';
+import { okOrThrow } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 
 /** Other lists that show a table's rows: buildings also appear on the assessment pages. */
@@ -30,7 +31,7 @@ function invalidateTable(queryClient: QueryClient, table: SettingsTable) {
 export function useSettingsTable(table: SettingsTable, filterId?: string) {
   return useQuery({
     queryKey: [table, filterId],
-    queryFn: () => getSettingsItems(table, filterId),
+    queryFn: async () => getSettingsItems(await getAccessToken(), table, filterId),
   });
 }
 
@@ -38,7 +39,7 @@ export function useCreateSetting(table: SettingsTable) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: Record<string, unknown>) =>
-      createSettingsItem(await getAccessToken(), table, data),
+      okOrThrow(await createSettingsItem(await getAccessToken(), table, data)).item,
     onSuccess: () => invalidateTable(queryClient, table),
   });
 }
@@ -47,7 +48,7 @@ export function useUpdateSetting(table: SettingsTable) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Record<string, unknown> }) =>
-      updateSettingsItem(await getAccessToken(), table, id, data),
+      okOrThrow(await updateSettingsItem(await getAccessToken(), table, id, data)).item,
     onSuccess: () => invalidateTable(queryClient, table),
   });
 }
@@ -55,7 +56,8 @@ export function useUpdateSetting(table: SettingsTable) {
 export function useDeleteSetting(table: SettingsTable) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => deleteSettingsItem(await getAccessToken(), table, id),
+    mutationFn: async (id: string) =>
+      okOrThrow(await deleteSettingsItem(await getAccessToken(), table, id)),
     onSuccess: () => invalidateTable(queryClient, table),
   });
 }

@@ -15,7 +15,6 @@ import { useEventStatuses } from '@/components/hooks/use-settings';
 import { cn, eventSchema, type EventFormData } from '@/lib';
 import { useAuthStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { Prisma } from '@prisma/client';
 import { useEffect, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import toast from 'react-hot-toast';
@@ -183,27 +182,21 @@ function EventForm({
   const onSubmit = handleSubmit(async (data) => {
     const startedAt = data.started_at ? new Date(data.started_at) : null;
     const endedAt = data.ended_at ? new Date(data.ended_at) : null;
-    const completing = data.status_id === completedId;
     try {
       if (event) {
-        const wasCompleted = event.status_id === completedId;
-        const update: Prisma.EventUpdateInput = {
-          name: data.name.trim(),
-          description: data.description || null,
-          quarter: data.quarter || null,
-          campus: { connect: { id: data.campus_ids[0] } },
-          started_at: startedAt,
-          ended_at: completing && !wasCompleted && !endedAt ? new Date() : endedAt,
-          status: { connect: { id: data.status_id } },
-          // Who completed it is kept while it stays completed, set when it becomes completed,
-          // and cleared when it is reopened.
-          ...(completing && !wasCompleted && userProfile?.id
-            ? { completer: { connect: { id: userProfile.id } } }
-            : !completing && wasCompleted
-              ? { completer: { disconnect: true } }
-              : {}),
-        };
-        await updateEvent.mutateAsync({ id: event.id, data: update });
+        // Who completed it, and the end time on completion, are set on the server.
+        await updateEvent.mutateAsync({
+          id: event.id,
+          data: {
+            name: data.name.trim(),
+            description: data.description || null,
+            quarter: data.quarter || null,
+            campus_id: data.campus_ids[0],
+            started_at: startedAt,
+            ended_at: endedAt,
+            status_id: data.status_id,
+          },
+        });
         toast.success('Event updated');
       } else {
         const created = await createEvents.mutateAsync({
@@ -213,10 +206,8 @@ function EventForm({
             description: data.description || null,
             quarter: data.quarter || null,
             started_at: startedAt,
-            ended_at: completing && !endedAt ? new Date() : endedAt,
+            ended_at: endedAt,
             status_id: data.status_id,
-            user_id: userProfile?.id ?? null,
-            completed_by: completing ? (userProfile?.id ?? null) : null,
           },
         });
         toast.success(created.length > 1 ? `${created.length} events created` : 'Event created');

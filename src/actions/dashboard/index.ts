@@ -1,14 +1,41 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { requireAdmin } from '@/lib/server-auth';
+import type { ActionRefusal } from '@/lib/utils';
 
 const statusKey = (name: string) => name.toLowerCase();
 
+/** A date from the browser, or `fallback` when it isn't one. */
+const validDate = (value: unknown, fallback: Date) =>
+  value instanceof Date && Number.isFinite(value.getTime()) ? value : fallback;
+
 /**
- * Everything the dashboard shows, for one campus or all of them. The month window comes from
- * the browser so "this month" follows the admin's time zone, not the server's.
+ * Everything the dashboard shows, for the campus the caller's verified scope covers (#102): an
+ * Administrator's own, a Super Admin's pick or all. The month window comes from the browser so
+ * "this month" follows the admin's time zone, not the server's.
  */
-export async function getDashboard(campusId: string | undefined, monthStart: Date, monthEnd: Date) {
+export async function getDashboard(
+  token: string | null,
+  requestedCampusId: string | undefined,
+  requestedMonthStart: Date,
+  requestedMonthEnd: Date
+) {
+  const caller = await requireAdmin(token, requestedCampusId || null);
+  if (!caller.ok) {
+    return {
+      ok: false,
+      error: 'Sign in as an administrator to see the dashboard.',
+      retry: false,
+    } satisfies ActionRefusal;
+  }
+  const campusId = caller.scope.campusId ?? undefined;
+  const now0 = new Date();
+  const monthStart = validDate(
+    requestedMonthStart,
+    new Date(now0.getFullYear(), now0.getMonth(), 1)
+  );
+  const monthEnd = validDate(requestedMonthEnd, now0);
   const campus = campusId ? { campus_id: campusId } : {};
   const reportScope = campusId ? { cluster: { campus_id: campusId } } : {};
 
@@ -18,8 +45,14 @@ export async function getDashboard(campusId: string | undefined, monthStart: Dat
   };
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
+  const statusIs = (name: string) => ({
+    status: { name: { equals: name, mode: 'insensitive' as const } },
+  });
+
   const [
     events,
+    statusGroups,
+    statuses,
     reportCount,
     userCount,
     pendingBystander,
@@ -30,8 +63,17 @@ export async function getDashboard(campusId: string | undefined, monthStart: Dat
     buildings,
     campusesWithoutFields,
   ] = await Promise.all([
+    // Only the events the cards show (#109): ongoing, upcoming and this month's. The counts per
+    // status come from a groupBy instead of loading every event ever held.
     prisma.event.findMany({
-      where: campus,
+      where: {
+        ...campus,
+        OR: [
+          statusIs('ongoing'),
+          statusIs('upcoming'),
+          { started_at: { gte: monthStart, lte: monthEnd } },
+        ],
+      },
       select: {
         id: true,
         name: true,
@@ -44,6 +86,8 @@ export async function getDashboard(campusId: string | undefined, monthStart: Dat
       },
       orderBy: [{ started_at: { sort: 'asc', nulls: 'last' } }, { created_at: 'asc' }],
     }),
+    prisma.event.groupBy({ by: ['status_id'], where: campus, _count: { _all: true } }),
+    prisma.eventStatus.findMany({ select: { id: true, name: true } }),
     prisma.report.count({ where: reportScope }),
     prisma.user.count({ where: campus }),
     prisma.bystander_reports.count({ where: pendingWhere }),
@@ -143,9 +187,12 @@ export async function getDashboard(campusId: string | undefined, monthStart: Dat
     : null;
 
   const statusCounts = { ongoing: 0, upcoming: 0, completed: 0 };
-  for (const e of events) {
-    const key = statusKey(e.status.name) as keyof typeof statusCounts;
-    if (key in statusCounts) statusCounts[key]++;
+  const statusName = new Map(statuses.map((st) => [st.id, statusKey(st.name)]));
+  let eventCount = 0;
+  for (const g of statusGroups) {
+    eventCount += g._count._all;
+    const key = statusName.get(g.status_id) as keyof typeof statusCounts | undefined;
+    if (key && key in statusCounts) statusCounts[key] += g._count._all;
   }
 
   const month = events
@@ -160,8 +207,9 @@ export async function getDashboard(campusId: string | undefined, monthStart: Dat
     }));
 
   return {
+    ok: true as const,
     counts: {
-      events: events.length,
+      events: eventCount,
       reports: reportCount,
       users: userCount,
       pendingBystander,
