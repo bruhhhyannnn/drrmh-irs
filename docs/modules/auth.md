@@ -1,7 +1,7 @@
 ---
 type: module
 module: auth
-updated: 2026-11-12
+updated: 2026-11-20
 verified: true
 paths:
   - src/actions/auth
@@ -25,10 +25,10 @@ Sign-in, the signed-in user's profile, and the role checks that decide where a u
 
 Read this before touching sign-in, the profile, role checks or the setup gate.
 
-- **Identity:** Supabase Auth is the identity provider. Google OAuth is restricted to `@up.edu.ph` emails: the button passes `hd: 'up.edu.ph'`, and `provisionGoogleUser` refuses other domains. Email + password sign-in also exists (`signInWithPassword` in `src/app/(auth)/signin/sign-in-form.tsx`).
+- **Identity:** Supabase Auth is the identity provider. Google OAuth is restricted to `@up.edu.ph` emails: the button passes `hd: 'up.edu.ph'` (only a hint to Google's picker), and `provisionGoogleUser` refuses anything but a confirmed `@up.edu.ph` Google identity, read from the verified token (DRRM-045). Email + password sign-in also exists (`signInWithPassword` in `src/app/(auth)/signin/sign-in-form.tsx`).
 - **Profile:** the `users` table (Prisma) holds the app profile, linked to the Supabase user by `auth_id`.
 - **Loading the profile:** `AuthProvider` (`src/components/auth/auth-provider.tsx`) listens to `supabase.auth.onAuthStateChange`, then loads the profile through the `getMyProfile(token)` server action, which finds it from the verified token, into `useAuthStore` (Zustand).
-- **First Google sign-in:** `provisionGoogleUser` (`src/actions/auth`) adds the user to `users` with the "ERT Member" user type.
+- **First Google sign-in:** `provisionGoogleUser(token)` (`src/actions/auth`) adds the user to `users` with the "ERT Member" user type. Who they are comes only from the verified token (#100).
 - **Roles:** `ProtectedRoute` gates admin pages by role. Admin vs. non-admin is decided by `isAdminUserType()` (`src/lib/constants.ts`). "Administrator" and "Super Admin" land on `/dashboard`, everyone else on `/home` ([[routes]]).
 - **Off-campus accounts (DRRM-026):** a Super Admin makes them on the Users page with an email and password; Google stays `@up.edu.ph` only. `users.is_off_campus` accounts have no campus, cluster, unit or position (`chk_users_off_campus`). `ProfileSetup` shows `OffCampusSetup` for them, in three steps with Back and Next (About you; Your home address; Where you work, with the data privacy consent). Addresses are picked from the PSGC lists, as in the assessment (`LocationFields` in `src/components/common`), and saved as one readable line (`composeAddress`, `src/lib/off-campus-setup.ts`), saved by the token-verified `completeOffCampusProfile`. `canUseReport` (`src/lib/access.ts`) is false for them.
 - **Profile setup:** non-admin profiles start with `is_profile_complete = false`. `ProfileSetupGate` / `ProfileSetup` (`src/components/auth/profile-setup.tsx`) show a full-page setup in place of the app until the user sets campus, cluster, position and (optionally) unit through `completeUserProfile` (`src/actions/users`). New field reports then auto-fill cluster and unit from that profile ([[field-reports]]).
@@ -65,7 +65,7 @@ Read this before touching sign-in, the profile, role checks or the setup gate.
 
 `src/actions/auth/index.ts`:
 
-- `provisionGoogleUser(authId, email, fullName)`: throws `DOMAIN_NOT_ALLOWED` unless the email ends in `@up.edu.ph`. Returns the existing profile by `auth_id`; else links a profile with the same email (sets `auth_id`); else creates an `ERT Member` with `username` = email local part + first 6 hex of the auth id. A `P2002` race falls back to linking by email. Returns `{ userTypeName }`.
+- `provisionGoogleUser(token)`: verifies the token with `supabaseAdmin.auth.getUser` and takes the auth id, email and name from that user only (`googleIdentity` in `src/lib/google-provision.ts`: Google provider, confirmed email, `@up.edu.ph`). Returns the existing profile by `auth_id`; else links a profile with the same email, but only when the sign-in it points at no longer exists in Supabase Auth (else `taken`, so nobody can re-bind an existing account); else creates an `ERT Member` with `username` = email local part + first 6 hex of the auth id. A `P2002` race falls back to the same linking rule. Returns `{ ok: true, userTypeName } | { ok: false, reason: 'signed_out' | 'domain' | 'taken' | 'setup' }`, never throws.
 
 Profile actions used by this module live in `src/actions/users` (see [[users]]): `getMyProfile(token)` (which also refreshes the Google profile photo from the verified session, DRRM-039) and `completeUserProfile(token, data)`. Both work only on the account behind the verified token (since the DRRM-025/026 security review).
 
@@ -76,14 +76,15 @@ Token-verified helpers in `src/lib/server-auth.ts` (used by assessment, checklis
 
 ## Client side
 
-- Routes: `/signin` (reads `?from=` and `?error=domain|setup|timeout`), `/forgot-password`, `/update-password`, `/auth/callback`.
+- Routes: `/signin` (reads `?from=` and `?error=domain|taken|setup|timeout`), `/forgot-password`, `/update-password`, `/auth/callback`.
 - Google: `GoogleSignInButton` calls `signInWithOAuth` with `hd: 'up.edu.ph'`, `prompt: 'select_account'`, redirect to `${NEXT_PUBLIC_SITE_URL ?? origin}/auth/callback`.
-- Callback: waits for the session (`getSession` plus `SIGNED_IN`), calls `provisionGoogleUser`, then goes to `homePathFor(userTypeName)`. A 20 s timeout, which covers provisioning too → `/signin?error=timeout`; a session that did land is then picked up by `SignInForm`.
-- `SignInForm`: once signed in it shows "Signing you in…", waits for the profile and replaces to `signInDestination(type, from)`: non-admins always `/home`, admins `?from=` when it's a path inside the app, else `/dashboard`. If the profile fails it goes to `/home`, which shows `AccountLoadFailed`.
+- Callback: waits for the session (`getSession` plus `SIGNED_IN`), calls `provisionGoogleUser(session.access_token)`, then goes to `homePathFor(userTypeName)`; an `ok: false` signs out and goes to `/signin?error=<reason>`. A 20 s timeout, which covers provisioning too → `/signin?error=timeout`; a session that did land is then picked up by `SignInForm`.
+- `SignInForm`: once signed in it shows "Signing you in…", waits for the profile and replaces to `signInDestination(type, from)`: non-admins always `/home`, admins `?from=` when it resolves to a path on this origin (with `new URL`, so a tab or newline can't turn `/` into `//other.site`, #110), else `/dashboard`. If the profile fails it goes to `/home`, which shows `AccountLoadFailed`.
 - `AuthProvider` (mounted in `src/components/providers.tsx`): `getSession` then `onAuthStateChange` (ignores `PASSWORD_RECOVERY`), and loads the profile with `getMyProfile(await getAccessToken())` into `useAuthStore`. One fetch per user at a time, an answer for a superseded user is ignored, and after 20 s it sets `profileError` (a fixed message, because production hides thrown ones).
 - `useAuthStore`: `user`, `session`, `userProfile`, `profileError`, `loading`, `reset()`. Persisted in localStorage as `irs-auth`, only `userProfile`.
 - `ProtectedRoute`: `adminGuard` decides during render, and only `allow` mounts the children. No user → `/signin?from=<path>`; any non-admin → `/home`; `profileError` shows `AccountLoadFailed`.
 - `ProfileSetupGate` wraps the `(admin)` layout; ERT pages get `{ status: 'setup' }` from `useErtAccess` and render `ProfileSetup`. `useErtAccess` (`ertGuard`) sends signed-out users to `/signin`, admins to `/dashboard`, and (with `requireAssessment`) users failing `canUseAssessment` to `/home`. `{ status: 'error' }` means the profile failed to load, and the page shows `AccountLoadFailed`.
+- `completeUserProfile` works once, for a campus account whose profile isn't complete; admins and off-campus accounts are refused (DRRM-045).
 - `ProfileSetup` asks for campus, cluster (or Other (please specify), which opens Specify cluster), building / unit (optional, since some clusters have none: No unit first, Other (please specify) last, which opens Specify unit; a typed cluster lists only those two) and position (or a custom one), then calls `completeUserProfile`. It stores the returned profile, or shows the `ok: false` message (a typed cluster name another campus has) in the page banner.
 
 ## Rules and gotchas

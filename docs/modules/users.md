@@ -1,6 +1,6 @@
 ---
 type: module
-updated: 2026-11-12
+updated: 2026-11-20
 module: users
 paths:
   - src/actions/users
@@ -17,14 +17,14 @@ The admin Users page: list, search, add, edit, deactivate and delete user accoun
 
 ## Where it lives
 
-| Path                                                | What it holds                                                         |
-| --------------------------------------------------- | --------------------------------------------------------------------- |
-| `src/actions/users/index.ts`                        | All user server actions, `CreateUserInput`, `UpdateUserInput`         |
-| `src/lib/lookup-names.ts`                           | `unitIdForName`, `positionIdForName` (server only)                    |
-| `src/components/hooks/use-users.ts`                 | TanStack Query hooks around those actions                             |
-| `src/app/(admin)/users/page.tsx`                    | `/users` list: search, type and status filters, Active switch, delete |
-| `src/app/(admin)/users/_components/user-drawer.tsx` | `UserDrawer`: Add user / Edit user form                               |
-| `src/lib/schemas.ts`                                | `userCreateSchema`, `userEditSchema`, `passwordSchema`                |
+| Path                                                | What it holds                                                                                                                               |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/actions/users/index.ts`                        | All user server actions, `CreateUserInput`, `UpdateUserInput`                                                                               |
+| `src/lib/lookup-names.ts`                           | `unitIdForName`, `positionIdForName` (server only)                                                                                          |
+| `src/components/hooks/use-users.ts`                 | TanStack Query hooks around those actions                                                                                                   |
+| `src/app/(admin)/users/page.tsx`                    | `/users` list: search, type and status filters, Active switch, delete                                                                       |
+| `src/app/(admin)/users/_components/user-drawer.tsx` | `UserDrawer`: Add user / Edit user form                                                                                                     |
+| `src/lib/schemas.ts`                                | `userCreateSchema`, `userEditSchema` (forms); `userCreateInputSchema`, `userUpdateInputSchema`, `completeProfileSchema` (server allowlists) |
 
 ## Data
 
@@ -36,20 +36,21 @@ The admin Users page: list, search, add, edit, deactivate and delete user accoun
 
 ## Server actions
 
-`src/actions/users/index.ts`. None of these verify the caller or the campus; the page decides what is shown.
+`src/actions/users/index.ts`. Every action checks its caller on the server, and the writes parse their payload with a strict allowlist first (DRRM-045, #101).
 
 - `getUsers(token, query?, campusId?)`: users matching name, email or username (case-insensitive), newest first, in the caller's scope: an Administrator's own campus, or for a Super Admin the campus asked for (or all). `[]` when the caller isn't an admin.
 - `getUser(token, id)`: one user with relations; `null` outside the caller's scope.
 - `getMyProfile(token)`: the signed-in person's own profile, found from the verified token (inactive accounts included); used by `AuthProvider`. It also saves their Google profile photo from that verified session (`googlePhoto` in `src/lib/google-photo.ts`: `user_metadata.avatar_url`, else `picture`, Google accounts only and only `https://*.googleusercontent.com`; email-and-password accounts get none) and returns `avatar: { url, show }` (DRRM-039).
 - `getAvatars(token, userIds)`: admins only (`requireAdmin`); the photos to show by user id, leaving out users who turned theirs off. `setShowMyGooglePhoto(token, show)`: My profile's switch, for the caller's own account.
 - `users.avatar_url` and `show_avatar` (prisma/manual/DRRM-039-avatar-url.sql) are left out of default reads (`omit` in `src/lib/prisma.ts`); `src/lib/avatars.ts` reads and writes them with its own queries, which do nothing before the SQL runs. The photos are never copied into Storage.
-- `createUser(data, token)`: checks the caller (an Administrator only on their own campus, never a Super Admin; off campus only by a Super Admin), then resolves `custom_unit_name` / `custom_position_name` to ids (`withNamedAssignment`), then creates the Supabase Auth user (`email_confirm: true`) with the password, then the `users` row. `is_profile_complete` is `true` only for admin user types. If the row insert fails, the Auth user is deleted. Revalidates `/users`.
-- `updateUser(token, id, data)`: resolves the typed names the same way, then updates the `users` row only. Revalidates `/users`.
-- `setUserActive(token, id, isActive)`: the Active switch and its Undo. Revalidates `/users`.
-- `completeUserProfile(token, data)`: the signed-in person's own profile only; requires `campus_id`; resolves `custom_cluster_name` first (so a typed unit lands in it), then `custom_unit_name` / `custom_position_name`; sets `is_profile_complete = true`. Returns `{ ok: true, user }`, or `{ ok: false, error }` when the typed cluster name belongs to another campus. Revalidates `/`.
-- `deleteUser(token, id)`: returns `DeleteUserResult`. `{ ok: false, error }` when the user is gone or evaluated building assessments (each keeps its evaluator, so Active should be turned off instead). Otherwise nulls `reports.user_id` and `events.user_id` and deletes the row in one transaction, then deletes the Supabase Auth user. Revalidates `/users`.
+- `createUser(data, token)`: parses `userCreateInputSchema` (strict: profile columns and the password, never `auth_id`, `is_profile_complete` or relations), checks the caller (an Administrator only on their own campus, never a Super Admin; off campus only by a Super Admin), checks the cluster is on the campus and the unit in the cluster (`checkAssignment`), then resolves `custom_unit_name` / `custom_position_name` to ids (`withNamedAssignment`), then creates the Supabase Auth user (`email_confirm: true`) with the password, then the `users` row. `is_profile_complete` is `true` only for admin user types. If the row insert fails, the Auth user is deleted. Revalidates `/users`.
+- `updateUser(token, id, data)`: parses `userUpdateInputSchema` (the same allowlist, all optional, no password), checks and resolves the assignment the same way (a field left out is checked against the saved one), then updates the `users` row only. Revalidates `/users`.
+- `setUserActive(token, id, isActive)`: the Active switch and its Undo; an admin can't turn off their own account. Revalidates `/users`.
+- `createUser`, `updateUser` and `setUserActive` return `{ ok: true, user } | { ok: false, error }` (production hides thrown messages); the hooks throw `error` in the browser so the toasts show it.
+- `completeUserProfile(token, data)`: the signed-in person's own campus profile, once: refused when the profile is already complete, for admins and for off-campus accounts (so nobody moves themselves to another campus through it). Parses `completeProfileSchema` (strict: campus, cluster, unit, position and the typed names); the campus must be active and the cluster on it; resolves `custom_cluster_name` first (so a typed unit lands in it), then `custom_unit_name` / `custom_position_name`; sets `is_profile_complete = true`. Returns `{ ok: true, user }`, or `{ ok: false, error }` when the typed cluster name belongs to another campus. Revalidates `/`.
+- `deleteUser(token, id)`: returns `DeleteUserResult`. `{ ok: false, error }` for the caller's own account, when the user is gone or evaluated building assessments (each keeps its evaluator, so Active should be turned off instead). Otherwise nulls `reports.user_id` and `events.user_id` and deletes the row in one transaction, then deletes the Supabase Auth user. Revalidates `/users`.
 
-Errors from Prisma go through `toFriendlyError(err, 'user')` (see [[database]]).
+Errors from Prisma go through `toFriendlyError(err, 'user')` (see [[database]]). Ids from the client are checked with `isUuid` (`src/lib/utils.ts`) before they reach a `where`.
 
 ## Client side
 

@@ -53,6 +53,7 @@ Statuses are taken from each plan's frontmatter as of 2026-11-09. Keep this list
 
 | Plan                                                                                                         | Status      | Branch                                          |
 | ------------------------------------------------------------------------------------------------------------ | ----------- | ----------------------------------------------- |
+| [[plan/fix/DRRM-045-auth-accounts-hardening\|DRRM-045 Sign-in and account hardening]]                        | done        | `fix/DRRM-045-auth-accounts-hardening`          |
 | [[plan/feature/DRRM-044-structural-integrity\|DRRM-044 Structural integrity in the assessment]]              | in-progress | `feat/DRRM-044-structural-integrity`            |
 | [[plan/fix/DRRM-043-campus-backdrop-clipping\|DRRM-043 Campus backdrop clipping]]                            | done        | `fix/DRRM-043-campus-backdrop-clipping`         |
 | [[plan/feature/DRRM-042-bystander-assessments-polish\|DRRM-042 Bystander and Assessments polish]]            | done        | `feat/DRRM-042-bystander-assessments-polish`    |

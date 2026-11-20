@@ -9,6 +9,15 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-045 Sign-in and account hardening: 2026-11-20 (branch `fix/DRRM-045-auth-accounts-hardening`)
+
+Plan: [[plan/fix/DRRM-045-auth-accounts-hardening]] · [[auth]] · [[users]] · GitHub #100, #101, #86, #110, #85
+
+- Google sign-in reads who you are from your verified session only. An existing account can no longer be taken over by re-linking it, and a non-UP Google account can't get a profile.
+- Profile setup, Add user and Edit user accept only their own fields, check that the cluster is on the campus and the unit in the cluster, and profile setup works once, for campus ERT accounts only.
+- Admins can't turn off or delete their own account, and the Users page shows the server's reason when a save is refused.
+- `?from=` after sign-in can't be bent into a link to another site with a tab or newline.
+
 ## DRRM-043 Campus backdrop cut off on wide screens: 2026-11-12 (branch `fix/DRRM-043-campus-backdrop-clipping`)
 
 Plan: [[plan/fix/DRRM-043-campus-backdrop-clipping]] · [[events]] · [[campus-scoping]]

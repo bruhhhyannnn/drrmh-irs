@@ -43,9 +43,40 @@ test('after sign-in an admin goes back to ?from=, or to the dashboard', () => {
 });
 
 test('after sign-in ?from= never leaves the app or returns to sign-in', () => {
-  for (const from of ['https://evil.test', '//evil.test', '/\\evil.test', 'events', '/signin']) {
+  for (const from of [
+    'https://evil.test',
+    '//evil.test',
+    '/\\evil.test',
+    'events',
+    '/signin',
+    '/signin?from=/x',
+    '/signin/',
+    'javascript:alert(1)',
+  ]) {
     assert.equal(signInDestination('Administrator', from), '/dashboard', from);
   }
+});
+
+test('a tab, newline or carriage return in ?from= cannot reach another site (#110)', () => {
+  for (const from of [
+    '/\t/evil.example/login',
+    '/\n/evil.example',
+    '/\r/evil.example',
+    '/\u0000/evil.example',
+    '/%09/evil.example',
+  ]) {
+    const to = signInDestination('Super Admin', from);
+    // Where the browser would go from this app: always this app.
+    assert.equal(new URL(to, 'https://irs.test').origin, 'https://irs.test', JSON.stringify(from));
+  }
+  assert.equal(signInDestination('Super Admin', '/\t/evil.example/login'), '/dashboard');
+});
+
+test('an in-app ?from= keeps its query and hash', () => {
+  assert.equal(
+    signInDestination('Administrator', '/events/details?id=abc&tab=2#reports'),
+    '/events/details?id=abc&tab=2#reports'
+  );
 });
 
 test('the admin guard never lets a non-admin through, so admin pages do not mount for them', () => {

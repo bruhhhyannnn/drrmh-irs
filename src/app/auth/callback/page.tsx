@@ -41,28 +41,25 @@ export default function AuthCallbackPage() {
       router.replace('/signin?error=timeout');
     }, 20_000);
 
-    async function handleSession(
-      userId: string,
-      email: string,
-      userMetadata: Record<string, unknown>
-    ) {
+    // Who signed in is read on the server from the session's access token (#100); the browser
+    // sends nothing else about the user.
+    async function handleSession(accessToken: string) {
       if (handled || timedOut) return;
       handled = true;
       try {
-        const fullName: string | null =
-          (userMetadata?.full_name as string) ?? (userMetadata?.name as string) ?? null;
-        const { userTypeName } = await provisionGoogleUser(userId, email, fullName);
+        const result = await provisionGoogleUser(accessToken);
         if (timedOut) return;
         clearTimeout(timeout);
-        router.replace(homePathFor(userTypeName));
+        if (result.ok) {
+          router.replace(homePathFor(result.userTypeName));
+          return;
+        }
+        await supabase.auth.signOut();
+        const error = result.reason === 'signed_out' ? 'timeout' : result.reason;
+        router.replace(`/signin?error=${error}`);
       } catch (err) {
         if (timedOut) return;
         clearTimeout(timeout);
-        if (err instanceof Error && err.message === 'DOMAIN_NOT_ALLOWED') {
-          await supabase.auth.signOut();
-          router.replace('/signin?error=domain');
-          return;
-        }
         console.error('Provisioning error:', err);
         await supabase.auth.signOut();
         router.replace('/signin?error=setup');
@@ -73,17 +70,13 @@ export default function AuthCallbackPage() {
     // (race condition: supabase-js exchanges the PKCE code on init, before React mounts).
     // getSession() catches the already-established session in that case.
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        handleSession(session.user.id, session.user.email!, session.user.user_metadata);
-      }
+      if (session?.access_token) handleSession(session.access_token);
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        handleSession(session.user.id, session.user.email!, session.user.user_metadata);
-      }
+      if (event === 'SIGNED_IN' && session?.access_token) handleSession(session.access_token);
     });
 
     return () => {
