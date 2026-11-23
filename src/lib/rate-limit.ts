@@ -56,36 +56,56 @@ function hashKey(key: string) {
 }
 
 /**
+ * The shared counter's one statement: count a hit for the key, starting a new window once
+ * `$2` seconds have passed since it began. Bound parameters: $1 the hashed key, $2 the window in
+ * seconds. Exported so the test can run this exact text against a real Postgres.
+ */
+export const COUNT_HIT_SQL = `
+  INSERT INTO public.rate_limits (key, window_start, hits)
+  VALUES ($1, now(), 1)
+  ON CONFLICT (key) DO UPDATE SET
+    hits = CASE
+      WHEN rate_limits.window_start <= now() - make_interval(secs => $2::float8) THEN 1
+      ELSE rate_limits.hits + 1 END,
+    window_start = CASE
+      WHEN rate_limits.window_start <= now() - make_interval(secs => $2::float8)
+      THEN now() ELSE rate_limits.window_start END
+  RETURNING hits`;
+
+/** Counts a hit for an already-hashed key in the shared table; resolves to the window's hits. */
+export type CountHit = (hashedKey: string, windowMs: number) => Promise<number>;
+
+/** The production counter: COUNT_HIT_SQL through Prisma. */
+export const countHitInDatabase: CountHit = async (hashedKey, windowMs) => {
+  // Loaded here, so the pure helpers above can be tested without a database client.
+  const { prisma } = await import('./prisma');
+  const rows = await prisma.$queryRawUnsafe<{ hits: number }[]>(
+    COUNT_HIT_SQL,
+    hashedKey,
+    windowMs / 1000
+  );
+  // Now and then, forget clients not seen for a day.
+  if (Math.random() < 0.01) {
+    await prisma.$executeRaw`
+      DELETE FROM public.rate_limits WHERE window_start < now() - interval '1 day'`;
+  }
+  return Number(rows[0]?.hits ?? 1);
+};
+
+/**
  * Counts one hit for `key` and says whether it is still within `limit` per `windowMs`. Never
- * throws: if the database can't be reached the hit is counted in this server copy only.
+ * throws: if the database can't be reached (or `countHit` throws) the hit is counted in this
+ * server copy only. `countHit` defaults to the shared table; tests pass their own.
  */
 export async function withinRateLimit(
   key: string,
   limit: number,
-  windowMs: number
+  windowMs: number,
+  countHit: CountHit = countHitInDatabase
 ): Promise<boolean> {
   const hashed = hashKey(key);
-  const seconds = windowMs / 1000;
   try {
-    // Loaded here, so the pure helpers above can be tested without a database client.
-    const { prisma } = await import('./prisma');
-    const rows = await prisma.$queryRaw<{ hits: number }[]>`
-      INSERT INTO public.rate_limits (key, window_start, hits)
-      VALUES (${hashed}, now(), 1)
-      ON CONFLICT (key) DO UPDATE SET
-        hits = CASE
-          WHEN rate_limits.window_start <= now() - make_interval(secs => ${seconds}::float8) THEN 1
-          ELSE rate_limits.hits + 1 END,
-        window_start = CASE
-          WHEN rate_limits.window_start <= now() - make_interval(secs => ${seconds}::float8)
-          THEN now() ELSE rate_limits.window_start END
-      RETURNING hits`;
-    // Now and then, forget clients not seen for a day.
-    if (Math.random() < 0.01) {
-      await prisma.$executeRaw`
-        DELETE FROM public.rate_limits WHERE window_start < now() - interval '1 day'`;
-    }
-    return Number(rows[0]?.hits ?? 1) <= limit;
+    return (await countHit(hashed, windowMs)) <= limit;
   } catch {
     return memoryHit(hashed, windowMs) <= limit;
   }
