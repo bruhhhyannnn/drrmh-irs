@@ -202,6 +202,22 @@ const typedText = (max: number) => z.string().trim().max(max).transform(withoutC
 /** The most people one field report lists, and headcount fields it carries (#101). */
 export const REPORT_LIST_MAX = 100;
 
+/**
+ * What Add / Edit event sends to the server (#102). Who made or completed it, and when it ended
+ * on completion, are set on the server from the verified caller, never taken from the request.
+ */
+export const eventWriteSchema = z
+  .object({
+    name: z.string().trim().min(1, 'Enter an event name.').max(200),
+    description: z.string().max(2000).nullish(),
+    quarter: z.string().max(50).nullish(),
+    started_at: z.coerce.date().nullish(),
+    ended_at: z.coerce.date().nullish(),
+    status_id: z.string().uuid('Pick a status.'),
+  })
+  .strict();
+export type EventWriteInput = z.input<typeof eventWriteSchema>;
+
 export const missingPersonSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(200).transform(withoutControlChars),
   // Null when unknown, so it shows as unknown rather than "0 yrs".
@@ -388,6 +404,20 @@ export const damageConditionSchema = z.object({
   is_active: z.boolean().default(true),
 });
 
+/**
+ * What each Settings table's Add / Edit may send (#103): strict allowlists, so a relation key
+ * such as `users` or `reports` is refused and no nested write reaches Prisma.
+ */
+export const settingsWriteSchemas = {
+  clusters: clusterSchema.strict(),
+  units: unitSchema.strict(),
+  buildings: buildingSchema.strict(),
+  positions: positionSchema.strict(),
+  casualty_conditions: casualtyConditionSchema.strict(),
+  damage_conditions: damageConditionSchema.strict(),
+  campus: campusSchema.strict(),
+} as const;
+
 export const populationCategorySchema = z.object({
   code: z
     .string()
@@ -397,6 +427,28 @@ export const populationCategorySchema = z.object({
   description: z.string().optional(),
   is_active: z.boolean().default(true),
 });
+
+/** A new headcount field (#102). Strict, so no relation key rides along; names lose control chars (#111). */
+export const populationCategoryCreateSchema = populationCategorySchema
+  .strict()
+  .transform((d) => ({ ...d, name: withoutControlChars(d.name) }));
+
+/** The code is fixed once made: reports and the legacy headcount columns use it. */
+export const populationCategoryUpdateSchema = populationCategorySchema
+  .omit({ code: true })
+  .partial()
+  .strict()
+  .transform((d) => (d.name === undefined ? d : { ...d, name: withoutControlChars(d.name) }));
+
+/** A campus's link to a field: its required, active and order columns only. */
+export const campusPopulationLinkUpdateSchema = z
+  .object({
+    is_required: z.boolean(),
+    is_active: z.boolean(),
+    sort_order: z.number().int().min(0).max(1000),
+  })
+  .partial()
+  .strict();
 
 /* ─── Building assessment ─── */
 const uuid = z.string().uuid();

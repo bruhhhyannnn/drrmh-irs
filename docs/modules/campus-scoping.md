@@ -1,6 +1,6 @@
 ---
 type: module
-updated: 2026-11-12
+updated: 2026-11-20
 module: campus-scoping
 paths:
   - src/actions/campus-table
@@ -42,19 +42,19 @@ How the admin dashboard limits what it shows to one campus, and the Campus pages
 
 ## Server actions
 
-`src/actions/campus-table/index.ts` (no caller check; the UI hides the pages from Administrators):
+`src/actions/campus-table/index.ts`. Names, logos and a campus's clusters stay public (sign-in, profile setup and the QR form list them); the rest checks the caller (DRRM-047, #102):
 
 - `getCampuses()`: all campuses by name. Used by the switcher and many pickers.
-- `getCampusesOverview()`: campuses with counts of events, users, clusters and active population categories, and `latestEvent` (an ongoing event, else the latest that started, else the newest; with its report count and `people`, the sum of its reports' population counts). Also feeds the dashboard's campus cards (DRRM-038).
-- `getCampusOverview(id)`: one campus with the same counts plus `units`.
+- `getCampusesOverview(token)`: admins only; an Administrator gets their own campus. Campuses with counts of events, users, clusters and active population categories, and `latestEvent` (an ongoing event, else the latest that started, else the newest; with its report count and `people`, the sum of its reports' population counts). Also feeds the dashboard's campus cards (DRRM-038).
+- `getCampusOverview(token, id)`: a campus in scope with the same counts plus `units`; null otherwise.
 - `getCampusLogos()`: uploaded logos as public URLs `{ byId, byName }`. Reads `logo_path` with its own query and returns none if the column isn't there yet (before `prisma/manual/DRRM-036-campus-logo.sql`).
 - `setCampusLogo(token, campusId, form | null)`: Super Admins only (`requireAdmin`, role `super_admin`). `logo` in the form (PNG or WebP, up to 1 MB; `logoProblem`) is uploaded to the public `campus-logos` bucket under `<campusId>/<uuid>.<ext>` (`src/lib/campus-logo-storage.ts`), then `logo_path` is set; no file removes it. The old file is deleted after the update; if the update fails, the new upload is. Returns `{ ok, url }` or `{ ok: false, error, retry }`.
-- `createCampus(data)`, `updateCampus(id, data)`, `deleteCampus(id)`: errors through `toFriendlyError(err, 'campus')`; revalidate `/campus` (update also `/campus/details`).
+- `createCampus(token, data)`, `updateCampus(token, id, data)`, `deleteCampus(token, id)`: Super Admins only; `data` is `campusSchema` strict (name, Active), so no nested write rides along. They return `{ ok: true, campus } | { ok: false, error }`; errors through `toFriendlyError(err, 'campus')`; revalidate `/campus` (update also `/campus/details`).
 - `getCampusClusters(campusId)`: `id`, `name`, `is_active` of the campus's clusters.
 
-Scoped reads in other modules take the campus as an argument, for example `getUsers(query, campusId)`, `getEvents(query, campusId)`, `getOngoingEvents(campusId)`, `getBystanderReports(campusId)`, `getDashboard(campusId, …)`. They filter by `campus_id` or by `cluster: { campus_id }` and trust the value sent.
+Scoped reads in other modules take the token and the switcher's campus, for example `getUsers(token, query, campusId)`, `getEvents(token, query, campusId)`, `getReports(token, …)`, `getBystanderReports(token, campusId)`, `getDashboard(token, campusId, …)`. The campus is a request: `requireAdmin` decides it (DRRM-045 to DRRM-047).
 
-Server-checked scope: `requireAdmin(token, campusId)` in `src/lib/server-auth.ts` calls `adminScope`. A Super Admin gets the campus asked for (`''` or none → `null`, meaning all). An Administrator always gets their own `campus_id`, whatever was asked; without one they are refused. Everyone else is refused. Used by `src/actions/assessment-admin`, `src/actions/assessment-templates` and `src/actions/building-safety`.
+Server-checked scope: `requireAdmin(token, campusId)` in `src/lib/server-auth.ts` calls `adminScope`. A Super Admin gets the campus asked for (`''` or none → `null`, meaning all). An Administrator always gets their own `campus_id`, whatever was asked; without one they are refused. Everyone else is refused. Used by every admin action: users, reports, events, bystander reports, campuses, population fields, settings, the dashboard, and the assessment and building-safety actions.
 
 ## Client side
 

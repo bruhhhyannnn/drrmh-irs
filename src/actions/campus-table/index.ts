@@ -1,12 +1,31 @@
 'use server';
 
+import { inScope } from '@/lib/admin-scope';
 import { campusLogoUrl } from '@/lib/campus-logo';
 import { logoProblem, removeCampusLogos, uploadCampusLogo } from '@/lib/campus-logo-storage';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
+import { campusSchema } from '@/lib/schemas';
 import { requireAdmin } from '@/lib/server-auth';
+import { isUuid, type ActionRefusal } from '@/lib/utils';
 import type { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
+
+// The campus names and logos stay public (sign-in, profile setup and the QR form list them).
+// The overviews are for admins, in their scope; adding, renaming and deleting a campus is for
+// Super Admins, with a strict allowlist so no nested write rides along (#102).
+
+const SUPER_ADMIN_ONLY: ActionRefusal = {
+  ok: false,
+  error: 'Only super admins can change campuses.',
+  retry: false,
+};
+const campusWrite = campusSchema.strict();
+
+async function superAdmin(token: string | null) {
+  const caller = await requireAdmin(token);
+  return caller.ok && caller.scope.role === 'super_admin' ? caller : null;
+}
 
 /** Events, users, clusters and active population fields per campus. */
 const CAMPUS_COUNTS = {
@@ -58,8 +77,12 @@ function latestEvent(events: RecentEvent[], now = Date.now()) {
  * The Campus page (and the dashboard's campus cards): every campus with what is linked to it
  * and its latest event, with that event's reports and people counted.
  */
-export async function getCampusesOverview() {
+export async function getCampusesOverview(token: string | null) {
+  const caller = await requireAdmin(token);
+  if (!caller.ok) return [];
+  const scopeCampus = caller.scope.campusId;
   const campuses = await prisma.campus.findMany({
+    where: scopeCampus ? { id: scopeCampus } : undefined,
     include: { ...CAMPUS_COUNTS, ...RECENT_EVENTS },
     orderBy: { name: 'asc' },
   });
@@ -82,7 +105,9 @@ export async function getCampusesOverview() {
 export type CampusOverview = Awaited<ReturnType<typeof getCampusesOverview>>[number];
 
 /** The campus page: its counts, units included. */
-export async function getCampusOverview(id: string) {
+export async function getCampusOverview(token: string | null, id: string) {
+  const caller = await requireAdmin(token);
+  if (!caller.ok || !isUuid(id) || !inScope(caller.scope, id)) return null;
   const [campus, units] = await Promise.all([
     prisma.campus.findUnique({ where: { id }, include: CAMPUS_COUNTS }),
     prisma.unit.count({ where: { cluster: { campus_id: id } } }),
@@ -160,33 +185,77 @@ export async function setCampusLogo(
   return { ok: true, url: path && campusLogoUrl(path) };
 }
 
-export async function createCampus(data: Prisma.campusCreateInput) {
+type CampusResult = { ok: true; campus: { id: string; name: string } } | ActionRefusal;
+
+/** Add campus: a name and Active only. Super admins only. */
+export async function createCampus(
+  token: string | null,
+  data: { name: string; is_active?: boolean }
+): Promise<CampusResult> {
+  if (!(await superAdmin(token))) return SUPER_ADMIN_ONLY;
+  const parsed = campusWrite.safeParse(data);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? 'Check the campus.',
+      retry: false,
+    };
+  }
   try {
-    const campus = await prisma.campus.create({ data });
+    const campus = await prisma.campus.create({
+      data: parsed.data,
+      select: { id: true, name: true },
+    });
     revalidatePath('/campus');
-    return campus;
+    return { ok: true, campus };
   } catch (err) {
-    throw toFriendlyError(err, 'campus');
+    return { ok: false, error: toFriendlyError(err, 'campus').message, retry: false };
   }
 }
 
-export async function updateCampus(id: string, data: Prisma.campusUpdateInput) {
+/** Edit campus: a name and Active only. Super admins only. */
+export async function updateCampus(
+  token: string | null,
+  id: string,
+  data: { name?: string; is_active?: boolean }
+): Promise<CampusResult> {
+  if (!(await superAdmin(token))) return SUPER_ADMIN_ONLY;
+  if (!isUuid(id)) return { ok: false, error: 'This campus no longer exists.', retry: false };
+  const parsed = campusWrite.partial().safeParse(data);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? 'Check the campus.',
+      retry: false,
+    };
+  }
   try {
-    const campus = await prisma.campus.update({ where: { id }, data });
+    const campus = await prisma.campus.update({
+      where: { id },
+      data: parsed.data,
+      select: { id: true, name: true },
+    });
     revalidatePath('/campus');
     revalidatePath('/campus/details');
-    return campus;
+    return { ok: true, campus };
   } catch (err) {
-    throw toFriendlyError(err, 'campus');
+    return { ok: false, error: toFriendlyError(err, 'campus').message, retry: false };
   }
 }
 
-export async function deleteCampus(id: string) {
+/** Delete campus. Super admins only. */
+export async function deleteCampus(
+  token: string | null,
+  id: string
+): Promise<{ ok: true } | ActionRefusal> {
+  if (!(await superAdmin(token))) return SUPER_ADMIN_ONLY;
+  if (!isUuid(id)) return { ok: false, error: 'This campus no longer exists.', retry: false };
   try {
     await prisma.campus.delete({ where: { id } });
     revalidatePath('/campus');
+    return { ok: true };
   } catch (err) {
-    throw toFriendlyError(err, 'campus');
+    return { ok: false, error: toFriendlyError(err, 'campus').message, retry: false };
   }
 }
 

@@ -3,10 +3,12 @@
 import type { SettingsTable } from '@/actions/settings';
 import { Button, FOCUS_RING } from '@/components/ds';
 import { cn } from '@/lib';
+import { isGlobalSettingsTable } from '@/lib/settings-access';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense, useState } from 'react';
 import { PageHeader } from '../../_components/page-header';
+import { useIsSuperAdmin } from '../../_components/shell/campus-switcher';
 import { Skeleton } from '../../_components/ui';
 import { LookupTable } from './lookup-table';
 import { PopulationFields } from './population-fields';
@@ -55,6 +57,9 @@ const TABS: { key: SettingsTab; label: string }[] = [
 export function SettingsPage({ tab }: { tab: SettingsTab }) {
   const [adding, setAdding] = useState(false);
   const lookup = tab === 'population-fields' ? null : LOOKUPS[tab];
+  // Lists every campus shares are added to by Super Admins only (#103).
+  const isSuperAdmin = useIsSuperAdmin();
+  const canAdd = !!lookup && (isSuperAdmin || !isGlobalSettingsTable(lookup.table));
 
   return (
     <>
@@ -62,7 +67,8 @@ export function SettingsPage({ tab }: { tab: SettingsTab }) {
         title="Settings"
         subtitle="Lists used in report, event, user and assessment forms."
         actions={
-          lookup && (
+          lookup &&
+          canAdd && (
             <Button size="sm" onClick={() => setAdding(true)}>
               <Plus size={16} aria-hidden />
               Add {lookup.singular}

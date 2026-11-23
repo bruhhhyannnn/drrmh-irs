@@ -1,4 +1,6 @@
 import { getDashboard } from '@/actions/dashboard';
+import { getAccessToken } from '@/lib/supabase';
+import { okOrThrow } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { endOfMonth, format, startOfMonth } from 'date-fns';
 
@@ -8,7 +10,10 @@ export function useDashboard(campusId?: string) {
   const monthKey = format(now, 'yyyy-MM');
   return useQuery({
     queryKey: ['dashboard', campusId, monthKey],
-    queryFn: () => getDashboard(campusId, startOfMonth(now), endOfMonth(now)),
+    queryFn: async () =>
+      okOrThrow(
+        await getDashboard(await getAccessToken(), campusId, startOfMonth(now), endOfMonth(now))
+      ),
     refetchInterval: 1000 * 60,
   });
 }

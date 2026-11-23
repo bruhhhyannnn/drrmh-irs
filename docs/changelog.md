@@ -19,6 +19,16 @@ Plan: [[plan/fix/DRRM-048-db-concurrency-performance]] · [[database]] · [[asse
 - Checklist sections, questions and area types get distinct places when added at once, and re-numbering is one statement. Editing or reordering a checklist that a publish has just made read-only is refused instead of going through.
 - Each running copy of the app holds at most 5 database connections.
 - Covered by unit tests: the lookup-name retry, the newest-assessment rule and the reorder rule (`npm run test`).
+## DRRM-047 Caller checks on the older actions: 2026-11-20 (branch `fix/DRRM-047-legacy-action-caller-checks`)
+
+Plan: [[plan/fix/DRRM-047-legacy-action-caller-checks]] · [[events]] · [[bystander-reports]] · [[campus-scoping]] · [[settings-lookups]] · [[dashboard]] · GitHub #102, #103
+
+- Events, bystander reports, campuses, headcount fields, the dashboard and Settings check who is asking on the server, and only show or change what the admin's campus covers.
+- Their payloads are strict allowlists, so nothing can ride along into other tables, and who created or completed an event comes from the signed-in admin.
+- Deleting a bystander report also deletes its photos.
+- Campuses are changed by Super Admins only. Administrators still add, edit and delete positions, casualty and damage conditions.
+- A headcount field is renamed by an Administrator only while no other campus uses it, and no other campus's report carries a headcount for it; otherwise a Super Admin does it.
+- The Bystander reports list shows the newest 500 and says so when there are more.
 
 ## DRRM-046 Field report rules on the server: 2026-11-20 (branch `fix/DRRM-046-field-report-rules`)
 

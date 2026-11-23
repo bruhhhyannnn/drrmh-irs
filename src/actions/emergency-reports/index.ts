@@ -1,6 +1,7 @@
 'use server';
 
 import { BYSTANDER_PHOTO_FIELD, bystanderReportSchema, type BystanderReportFormData } from '@/lib';
+import { inScope } from '@/lib/admin-scope';
 import {
   removeBystanderPhotos,
   signBystanderPhotos,
@@ -9,8 +10,40 @@ import {
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
 import { requireAdmin } from '@/lib/server-auth';
+import { isUuid, type ActionRefusal } from '@/lib/utils';
 import { randomUUID } from 'crypto';
 import { revalidatePath } from 'next/cache';
+
+// The QR form's submit and incident types stay public. Everything else is for admins, and only
+// for reports on a campus their verified scope covers (#102): these hold reporters' phone
+// numbers, casualties' diagnoses and private photos.
+
+const ADMIN_ONLY: ActionRefusal = {
+  ok: false,
+  error: 'Sign in as an administrator to manage bystander reports.',
+  retry: false,
+};
+const NOT_FOUND: ActionRefusal = {
+  ok: false,
+  error: 'This report could not be found. It may have been removed.',
+  retry: false,
+};
+
+/** The most reports the Bystander reports page loads at once, newest first (#109). */
+const BYSTANDER_LIST_LIMIT = 500;
+
+/** The statuses an admin may set. */
+const SETTABLE_STATUSES = ['reviewed', 'verified', 'dismissed'] as const;
+
+/** The report if it is on a campus this admin may see; null otherwise. */
+async function reportInScope(scope: Parameters<typeof inScope>[0], id: unknown) {
+  if (!isUuid(id)) return null;
+  const report = await prisma.bystander_reports.findUnique({
+    where: { id },
+    select: { id: true, photo_paths: true, clusters: { select: { campus_id: true } } },
+  });
+  return report && inScope(scope, report.clusters?.campus_id ?? null) ? report : null;
+}
 
 /**
  * Creates an anonymous bystander report. `photos` carries up to 3 JPEGs under the `photos`
@@ -77,9 +110,18 @@ export async function createBystanderReport(data: BystanderReportFormData, photo
   }
 }
 
-export async function getBystanderReports(campusId?: string) {
-  const reports = await prisma.bystander_reports.findMany({
-    where: campusId ? { clusters: { campus_id: campusId } } : undefined,
+/**
+ * The Bystander reports page: the caller's scope only, newest first; empty for non-admins.
+ * `truncated` says the scope holds more than `limit`, so the page can say it shows the newest ones.
+ */
+export async function getBystanderReports(token: string | null, campusId?: string) {
+  const caller = await requireAdmin(token, campusId || null);
+  if (!caller.ok) return { reports: [], truncated: false, limit: BYSTANDER_LIST_LIMIT };
+  const scopeCampus = caller.scope.campusId;
+  // One extra row tells whether the list was cut short.
+  const fetched = await prisma.bystander_reports.findMany({
+    where: scopeCampus ? { clusters: { campus_id: scopeCampus } } : undefined,
+    take: BYSTANDER_LIST_LIMIT + 1,
     include: {
       clusters: { include: { campus: { select: { name: true } } } },
       units: true,
@@ -98,14 +140,20 @@ export async function getBystanderReports(campusId?: string) {
     },
   });
 
+  const truncated = fetched.length > BYSTANDER_LIST_LIMIT;
+  const reports = fetched.slice(0, BYSTANDER_LIST_LIMIT);
   const unseen = await unseenBystanderIds(reports.map((r) => r.id));
-  return reports.map((r) => ({
-    ...r,
-    latitude: r.latitude.toNumber(),
-    longitude: r.longitude.toNumber(),
-    /** No admin has opened it yet (DRRM-042). */
-    unopened: unseen.has(r.id),
-  }));
+  return {
+    reports: reports.map((r) => ({
+      ...r,
+      latitude: r.latitude.toNumber(),
+      longitude: r.longitude.toNumber(),
+      /** No admin has opened it yet (DRRM-042). */
+      unopened: unseen.has(r.id),
+    })),
+    truncated,
+    limit: BYSTANDER_LIST_LIMIT,
+  };
 }
 
 /**
@@ -127,7 +175,7 @@ async function unseenBystanderIds(ids: string[]): Promise<Set<string>> {
 /** An admin opened the report: it stops showing as unopened. Admins only; never throws. */
 export async function markBystanderReportSeen(token: string | null, id: string) {
   const caller = await requireAdmin(token);
-  if (!caller.ok) return { ok: false as const };
+  if (!caller.ok || !(await reportInScope(caller.scope, id))) return { ok: false as const };
   try {
     await prisma.$executeRaw`
       UPDATE public.bystander_reports SET seen_at = now()
@@ -139,55 +187,72 @@ export async function markBystanderReportSeen(token: string | null, id: string) 
 }
 
 export async function updateBystanderReportStatus(
+  token: string | null,
   id: string,
-  statusName: 'reviewed' | 'verified' | 'dismissed'
-) {
+  statusName: (typeof SETTABLE_STATUSES)[number]
+): Promise<{ ok: true } | ActionRefusal> {
+  const caller = await requireAdmin(token);
+  if (!caller.ok) return ADMIN_ONLY;
+  if (!SETTABLE_STATUSES.includes(statusName)) {
+    return { ok: false, error: 'That status is not one an admin can set.', retry: false };
+  }
+  if (!(await reportInScope(caller.scope, id))) return NOT_FOUND;
   const status = await prisma.bystander_report_statuses.findFirst({
     where: { name: statusName },
+    select: { id: true },
   });
+  if (!status) return { ok: false, error: `The ${statusName} status is missing.`, retry: false };
 
   try {
-    const report = await prisma.bystander_reports.update({
-      where: { id },
-      data: { status_id: status?.id },
-    });
-
+    await prisma.bystander_reports.update({ where: { id }, data: { status_id: status.id } });
     revalidatePath('/emergency-reports');
-    return {
-      ...report,
-      latitude: report.latitude.toNumber(),
-      longitude: report.longitude.toNumber(),
-    };
+    return { ok: true };
   } catch (err) {
-    throw toFriendlyError(err, 'bystander report');
+    return { ok: false, error: toFriendlyError(err, 'bystander report').message, retry: false };
   }
 }
 
 /** The sidebar badge and dashboard tile: reports nobody has looked at yet. */
-export async function getPendingBystanderCount(campusId?: string) {
+export async function getPendingBystanderCount(token: string | null, campusId?: string) {
+  const caller = await requireAdmin(token, campusId || null);
+  if (!caller.ok) return 0;
+  const scopeCampus = caller.scope.campusId;
   return prisma.bystander_reports.count({
     where: {
-      ...(campusId && { clusters: { campus_id: campusId } }),
+      ...(scopeCampus && { clusters: { campus_id: scopeCampus } }),
       OR: [{ status_id: null }, { bystander_report_statuses: { name: 'pending' } }],
     },
   });
 }
 
-export async function deleteBystanderReport(id: string) {
+/** Deletes the report (its people and headcount cascade), then its photos in Storage. */
+export async function deleteBystanderReport(
+  token: string | null,
+  id: string
+): Promise<{ ok: true } | ActionRefusal> {
+  const caller = await requireAdmin(token);
+  if (!caller.ok) return ADMIN_ONLY;
+  const report = await reportInScope(caller.scope, id);
+  if (!report) return NOT_FOUND;
   try {
-    await prisma.bystander_reports.delete({ where: { id } });
-    revalidatePath('/emergency-reports');
+    await prisma.bystander_reports.delete({ where: { id: report.id } });
   } catch (err) {
-    throw toFriendlyError(err, 'bystander report');
+    return { ok: false, error: toFriendlyError(err, 'bystander report').message, retry: false };
   }
+  // Only once the row is gone, so a failed delete keeps its photos.
+  await removeBystanderPhotos(report.photo_paths);
+  revalidatePath('/emergency-reports');
+  return { ok: true };
 }
 
-/** Short-lived signed URLs for a report's photos, fetched when an admin opens the report. */
-export async function getBystanderPhotoUrls(id: string) {
-  const report = await prisma.bystander_reports.findUnique({
-    where: { id },
-    select: { photo_paths: true },
-  });
+/**
+ * Short-lived signed URLs for a report's photos, fetched when an admin opens the report. Admins
+ * only, for a report in their scope; none otherwise.
+ */
+export async function getBystanderPhotoUrls(token: string | null, id: string) {
+  const caller = await requireAdmin(token);
+  if (!caller.ok) return [];
+  const report = await reportInScope(caller.scope, id);
   return signBystanderPhotos(report?.photo_paths ?? []);
 }
 
