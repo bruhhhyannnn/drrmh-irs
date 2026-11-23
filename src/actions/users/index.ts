@@ -204,10 +204,15 @@ export async function getUser(token: string | null, id: string) {
  * The signed-in user's profile, found from the verified token. Also refreshes their Google
  * profile photo from that verified session (DRRM-039): email-and-password accounts get none.
  * `avatar` is the photo and their Show my Google photo choice.
+ *
+ * A turned-off account is banned (setUserActive), and Auth refuses a banned user's token even
+ * before it expires, so `getUser` fails for it. That case returns `{ turnedOff: true }` with no
+ * profile data, so the app can say the account is off; any other unverifiable token gives null.
  */
 export async function getMyProfile(token: string | null) {
   if (!token) return null;
   const { data, error } = await supabaseAdmin.auth.getUser(token);
+  if (error?.code === 'user_banned') return { turnedOff: true as const };
   if (error || !data.user) return null;
   const [profile] = await Promise.all([
     prisma.user.findUnique({

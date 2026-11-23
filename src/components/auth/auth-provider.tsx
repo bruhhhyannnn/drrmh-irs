@@ -75,9 +75,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         getAccessToken().then((token) => getMyProfile(token)),
         PROFILE_TIMEOUT_MS
       );
-      if (user && user.auth_id !== userId) return;
+      if (user && !('turnedOff' in user) && user.auth_id !== userId) return;
       if (fetchingForRef.current !== userId) return;
-      if (!user) {
+      if (user && 'turnedOff' in user) {
+        // Banned: the server refused the token and sent no profile, so nothing is kept.
+        setUserProfile(null);
+        setProfileError(ACCOUNT_INACTIVE_MESSAGE);
+      } else if (!user) {
         setUserProfile(null);
         setProfileError('Your user account could not be found. Please contact an administrator.');
       } else if (user.is_active === false) {
