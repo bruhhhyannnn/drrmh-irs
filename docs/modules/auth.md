@@ -1,7 +1,7 @@
 ---
 type: module
 module: auth
-updated: 2026-11-20
+updated: 2026-11-23
 verified: true
 paths:
   - src/actions/auth
@@ -67,7 +67,7 @@ Read this before touching sign-in, the profile, role checks or the setup gate.
 
 - `provisionGoogleUser(token)`: verifies the token with `supabaseAdmin.auth.getUser` and takes the auth id, email and name from that user only (`googleIdentity` in `src/lib/google-provision.ts`: Google provider, confirmed email, `@up.edu.ph`). Returns the existing profile by `auth_id`; else links a profile with the same email, but only when the sign-in it points at no longer exists in Supabase Auth (else `taken`, so nobody can re-bind an existing account); else creates an `ERT Member` with `username` = email local part + first 6 hex of the auth id. A `P2002` race falls back to the same linking rule. Returns `{ ok: true, userTypeName } | { ok: false, reason: 'signed_out' | 'domain' | 'taken' | 'setup' }`, never throws.
 
-Profile actions used by this module live in `src/actions/users` (see [[users]]): `getMyProfile(token)` (which also refreshes the Google profile photo from the verified session, DRRM-039) and `completeUserProfile(token, data)`. Both work only on the account behind the verified token (since the DRRM-025/026 security review).
+Profile actions used by this module live in `src/actions/users` (see [[users]]): `getMyProfile(token)` (which also refreshes the Google profile photo from the verified session, DRRM-039; a banned token returns `{ turnedOff: true }`, which `AuthProvider` shows as "Account turned off") and `completeUserProfile(token, data)`. Both work only on the account behind the verified token (since the DRRM-025/026 security review).
 
 Token-verified helpers in `src/lib/server-auth.ts` (used by assessment, checklist and building-safety actions):
 
@@ -93,7 +93,7 @@ Token-verified helpers in `src/lib/server-auth.ts` (used by assessment, checklis
 - A guard must decide during render, not in an effect: a child's effects run before its parent's, so children returned for even one render start their queries.
 - Assessment access is decided only by `canUseAssessment()` (today: user type is `ERT Member`). The `/home` card, the top-bar switch, the page guard and `checkAssessmentCaller` all call it.
 - `AuthProvider` shows a persisted `userProfile` at once when its `auth_id` matches the session user, and fetches it again in the background (DRRM-049, #104), so a role or campus change, or a turned-off account, takes effect on the next load or token refresh without signing out. Offline, the kept profile stays.
-- A turned-off account (`is_active = false`) is stopped everywhere: `adminGuard` and `ertGuard` return `error` for it, `AuthProvider` sets `ACCOUNT_INACTIVE_MESSAGE` (`src/lib/access.ts`), and `AccountLoadFailed` shows "Account turned off" with Sign Out only. `setUserActive` also bans the Supabase sign-in, so new sign-ins and token refreshes fail, and `requireProfile` refuses it on the server (DRRM-049).
+- A turned-off account (`is_active = false`) is stopped everywhere: `adminGuard` and `ertGuard` return `error` for it, `AuthProvider` sets `ACCOUNT_INACTIVE_MESSAGE` (`src/lib/access.ts`), and `AccountLoadFailed` shows "Account turned off" with Sign Out only. `setUserActive` also bans the Supabase sign-in, so new sign-ins and token refreshes fail, and a token it bans is refused by `getUser` even before it expires (GoTrue's `authenticateBearerToken`), which `getMyProfile` reports as turned off, and `requireProfile` refuses it on the server (DRRM-049).
 - Everything in `src/actions/users` now checks its caller (DRRM-025/026 security review). New actions should take `getAccessToken()` and call `requireProfile` / `requireAdmin`.
 - The callback must stay a client page: supabase-js keeps the PKCE verifier in localStorage, which a route handler cannot read.
 - Accounts made by an admin in [[users]] start with `is_profile_complete = true` only for admin user types; ERT members still see `ProfileSetup`.

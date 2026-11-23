@@ -87,3 +87,10 @@ migration that the remaining zod advisory needs.
 - [ ] Bystander form sends normally; the browser console on the admin pages, the ERT form, the QR
       form and the maps shows no CSP reports (then switch the CSP to enforcing).
 - [ ] Apply `DRRM-049-rate-limits.sql` on staging and production.
+
+## 4. Review fixes (PR #130 review)
+
+- **Sign-in ban failures reach the admin.** `setUserActive` returns `signInWarning` when the ban could not be set or lifted; the Users page shows it as an error toast. The profile change still stands. Covered by `signInBanWarning` in `src/lib/user-access.test.ts`.
+- **A banned token shows "Account turned off".** Auth refuses a banned user's token in `getUser` before it expires (GoTrue `authenticateBearerToken`, checked in the source; not reproduced against a live project). `getMyProfile` returns `{ turnedOff: true }`, with no profile data, and `AuthProvider` shows the turned-off screen instead of "could not be found".
+- **The shared counter is testable.** `withinRateLimit` takes the counter as a parameter; `COUNT_HIT_SQL` is the one statement run in Postgres. Tests use a stand-in table with the same rules and the fallback path. The SQL itself is not executed in tests (no Postgres in CI); its CASE expressions were checked against `nextWindow` by reading them.
+- **Old phones and the rate-limit reply (not changed).** An offline queue built before this change deletes an entry when the action returns `{ ok: false }`. This is only reachable when an old bundle calls the new server. Vercel Skew Protection, if it is on for production, keeps an old bundle on its own deployment; that is a dashboard setting, not in this repo, and it is not verified here. A code guard would need a thrown error, which production hides from the new client, so it is not cheap. Follow-up: confirm skew protection.

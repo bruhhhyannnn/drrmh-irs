@@ -17,6 +17,7 @@ Plan: [[plan/fix/DRRM-049-hardening]] · [[auth]] · [[users]] · [[bystander-re
 - The public bystander form takes at most 30 reports per network per 10 minutes; a report over the limit stays on the phone and sends later. Needs `prisma/manual/DRRM-049-rate-limits.sql` to count across server copies.
 - Every response carries security headers, plus a report-only content security policy.
 - Next.js 16.4.6, Prisma 7.10.1 and patched transitive packages (`npm audit` 27 → 8 findings).
+- Review fixes: the Users page shows when the sign-in ban could not be set or lifted; a banned account's token shows "Account turned off" instead of "could not be found"; the rate limit's counter is injectable and covered by tests.
 ## DRRM-047 Caller checks on the older actions: 2026-11-20 (branch `fix/DRRM-047-legacy-action-caller-checks`)
 
 Plan: [[plan/fix/DRRM-047-legacy-action-caller-checks]] · [[events]] · [[bystander-reports]] · [[campus-scoping]] · [[settings-lookups]] · [[dashboard]] · GitHub #102, #103
