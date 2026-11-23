@@ -1,6 +1,6 @@
 ---
 type: module
-updated: 2026-11-12
+updated: 2026-11-20
 module: dashboard
 paths:
   - src/actions/dashboard/index.ts
@@ -46,7 +46,7 @@ Read only. No writes.
   - `clusters`: top 8 clusters by report count, across all events.
   - `month`: events whose `started_at` falls in the month window.
 
-No auth or role check. The campus filter is whatever the client passes: events and users by `campus_id`, reports and bystander reports through their cluster's `campus_id`.
+`getDashboard(token, campusId, monthStart, monthEnd)` is admins only (DRRM-047, #102). It loads only the ongoing, upcoming and this month's events; the per-status counts and the event total come from a `groupBy` on `status_id` (#109) and returns `{ ok: true, … }` (the hook unwraps it with `okOrThrow`). The campus is the verified scope's (an Administrator's own, a Super Admin's pick or all), not what the client passes: events and users by `campus_id`, reports and bystander reports through their cluster's `campus_id`.
 
 ## Client side
 
