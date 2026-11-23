@@ -16,8 +16,9 @@ Plan: [[plan/fix/DRRM-048-db-concurrency-performance]] · [[database]] · [[asse
 - Needs `prisma/manual/DRRM-048-rls-indexes-lookups.sql`: every table is closed to the browser's key on the REST API, the lists get their indexes, and unit and position names become unique regardless of case.
 - Two assessments of one building submitted at once no longer fail, and a late offline one doesn't overwrite the building's newer profile.
 - Typing the same new unit or position at the same moment no longer fails a save.
-- Checklist sections, questions and area types get distinct places when added at once, and re-numbering is one statement.
+- Checklist sections, questions and area types get distinct places when added at once, and re-numbering is one statement. Editing or reordering a checklist that a publish has just made read-only is refused instead of going through.
 - Each running copy of the app holds at most 5 database connections.
+- Covered by unit tests: the lookup-name retry, the newest-assessment rule and the reorder rule (`npm run test`).
 
 ## DRRM-046 Field report rules on the server: 2026-11-20 (branch `fix/DRRM-046-field-report-rules`)
 

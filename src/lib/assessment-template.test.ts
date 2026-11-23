@@ -4,6 +4,7 @@ import { MATATAG_2025_07_25 } from '../../prisma/data/matatag-2025-07-25';
 import {
   canPublishTemplate,
   moveItemInSection,
+  movedItems,
   orderSectionItems,
   pillarItemCounts,
   templateFromData,
@@ -86,4 +87,30 @@ test('canPublishTemplate requires at least one scored question and a pillar on e
       error: 'I.2 needs a DRRM pillar before this version can be published.',
     }
   );
+});
+
+test('movedItems returns only the rows whose sort_order changed', () => {
+  const before = [
+    { id: 'a', sort_order: 0 },
+    { id: 'b', sort_order: 1 },
+    { id: 'c', sort_order: 2 },
+    { id: 'd', sort_order: 3 },
+  ];
+  // Swapping b and c moves just those two; a and d keep their place.
+  const swapped = [
+    { id: 'a', sort_order: 0 },
+    { id: 'c', sort_order: 1 },
+    { id: 'b', sort_order: 2 },
+    { id: 'd', sort_order: 3 },
+  ];
+  assert.deepEqual(movedItems(before, swapped), [
+    { id: 'c', sort_order: 1 },
+    { id: 'b', sort_order: 2 },
+  ]);
+  // Nothing moved: nothing to write.
+  assert.deepEqual(movedItems(before, before), []);
+  // Compared by value: a row that moves from 5 to 0 is included.
+  assert.deepEqual(movedItems([{ id: 'x', sort_order: 5 }], [{ id: 'x', sort_order: 0 }]), [
+    { id: 'x', sort_order: 0 },
+  ]);
 });

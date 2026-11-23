@@ -18,6 +18,7 @@ import {
   offCampusPool,
   toBuildingPlace,
 } from '@/lib/building-place';
+import { isNewestAssessment } from '@/lib/building-profile';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
 import type { PsgcTree } from '@/lib/psgc';
@@ -353,82 +354,87 @@ export async function createAssessment(
       };
     });
 
-    const id = await prisma.$transaction(async (tx) => {
-      // Assessments of one building are written one at a time (#108): two submitted at once
-      // would otherwise interleave the building's area rows and fail on building_areas_pkey.
-      await tx.$queryRaw`SELECT id FROM buildings WHERE id = ${buildingId}::uuid FOR UPDATE`;
-      const latest = await tx.assessment.findFirst({
-        where: { building_id: buildingId },
-        orderBy: { ended_at: 'desc' },
-        select: { ended_at: true },
-      });
-      const created = await tx.assessment.create({
-        data: {
-          client_ref: data.client_ref,
-          template_version_id: version.template.version_id,
-          building_id: buildingId,
-          event_id: event?.id ?? null,
-          evaluator_id: profile.id,
-          incident_commander: data.incident_commander,
-          floor_count: data.floor_count,
-          started_at: new Date(data.started_at),
-          ended_at: new Date(data.ended_at),
-          needs_follow_up:
-            prepared.needsFollowUp ||
-            (structural !== null && structural.rating.recommendation !== 'none'),
-          areas: { createMany: { data: areaTypeIds.map((area_type_id) => ({ area_type_id })) } },
-          answers: { createMany: { data: prepared.answers } },
-          comments: { createMany: { data: prepared.comments } },
-          pillar_scores: { createMany: { data: pillarScores } },
-          ...(structural
-            ? {
-                structural_summary: {
-                  create: {
-                    tool_version: STRUCTURAL_TOOL_VERSION,
-                    lcr_columns: structural.rating.elements.columns.lcr,
-                    lcr_beams: structural.rating.elements.beams.lcr,
-                    lcr_slabs: structural.rating.elements.slabs.lcr,
-                    lcr_walls: structural.rating.elements.walls.lcr,
-                    gcr: structural.rating.gcr,
-                    critical_columns: structural.rating.elements.columns.critical,
-                    critical_beams: structural.rating.elements.beams.critical,
-                    critical_walls: structural.rating.elements.walls.critical,
-                    recommendation: structural.rating.recommendation,
-                  },
-                },
-                structural_findings: {
-                  createMany: {
-                    data: structural.findings.map((f) => ({
-                      element: f.element,
-                      defect_code: f.defect,
-                      answer: f.answer,
-                      severity: f.severity,
-                      extent: f.extent,
-                      remarks: f.remarks,
-                    })),
-                  },
-                },
-              }
-            : {}),
-        },
-        select: { id: true },
-      });
-      // The building's profile is what its newest assessment found, for pre-filling the next
-      // one. An older assessment synced late from a phone's offline queue keeps its own answers
-      // but doesn't overwrite a newer profile (#108).
-      if (!latest || new Date(data.ended_at) >= latest.ended_at) {
-        await tx.buildingArea.deleteMany({ where: { building_id: buildingId } });
-        await tx.buildingArea.createMany({
-          data: areaTypeIds.map((area_type_id) => ({ building_id: buildingId, area_type_id })),
-          skipDuplicates: true,
+    const id = await prisma.$transaction(
+      async (tx) => {
+        // Assessments of one building are written one at a time (#108): two submitted at once
+        // would otherwise interleave the building's area rows and fail on building_areas_pkey.
+        await tx.$queryRaw`SELECT id FROM buildings WHERE id = ${buildingId}::uuid FOR UPDATE`;
+        const latest = await tx.assessment.findFirst({
+          where: { building_id: buildingId },
+          orderBy: { ended_at: 'desc' },
+          select: { ended_at: true },
         });
-        await tx.building.update({
-          where: { id: buildingId },
-          data: { floor_count: data.floor_count },
+        const created = await tx.assessment.create({
+          data: {
+            client_ref: data.client_ref,
+            template_version_id: version.template.version_id,
+            building_id: buildingId,
+            event_id: event?.id ?? null,
+            evaluator_id: profile.id,
+            incident_commander: data.incident_commander,
+            floor_count: data.floor_count,
+            started_at: new Date(data.started_at),
+            ended_at: new Date(data.ended_at),
+            needs_follow_up:
+              prepared.needsFollowUp ||
+              (structural !== null && structural.rating.recommendation !== 'none'),
+            areas: { createMany: { data: areaTypeIds.map((area_type_id) => ({ area_type_id })) } },
+            answers: { createMany: { data: prepared.answers } },
+            comments: { createMany: { data: prepared.comments } },
+            pillar_scores: { createMany: { data: pillarScores } },
+            ...(structural
+              ? {
+                  structural_summary: {
+                    create: {
+                      tool_version: STRUCTURAL_TOOL_VERSION,
+                      lcr_columns: structural.rating.elements.columns.lcr,
+                      lcr_beams: structural.rating.elements.beams.lcr,
+                      lcr_slabs: structural.rating.elements.slabs.lcr,
+                      lcr_walls: structural.rating.elements.walls.lcr,
+                      gcr: structural.rating.gcr,
+                      critical_columns: structural.rating.elements.columns.critical,
+                      critical_beams: structural.rating.elements.beams.critical,
+                      critical_walls: structural.rating.elements.walls.critical,
+                      recommendation: structural.rating.recommendation,
+                    },
+                  },
+                  structural_findings: {
+                    createMany: {
+                      data: structural.findings.map((f) => ({
+                        element: f.element,
+                        defect_code: f.defect,
+                        answer: f.answer,
+                        severity: f.severity,
+                        extent: f.extent,
+                        remarks: f.remarks,
+                      })),
+                    },
+                  },
+                }
+              : {}),
+          },
+          select: { id: true },
         });
-      }
-      return created.id;
-    });
+        // The building's profile is what its newest assessment found, for pre-filling the next
+        // one. An older assessment synced late from a phone's offline queue keeps its own answers
+        // but doesn't overwrite a newer profile (#108).
+        if (isNewestAssessment(data.ended_at, latest?.ended_at ?? null)) {
+          await tx.buildingArea.deleteMany({ where: { building_id: buildingId } });
+          await tx.buildingArea.createMany({
+            data: areaTypeIds.map((area_type_id) => ({ building_id: buildingId, area_type_id })),
+            skipDuplicates: true,
+          });
+          await tx.building.update({
+            where: { id: buildingId },
+            data: { floor_count: data.floor_count },
+          });
+        }
+        return created.id;
+      },
+      // Submits for one building queue on its row lock above, inside this transaction, so the
+      // default 5 s timeout would fail the later ones (P2028) under a burst.
+      { maxWait: 5_000, timeout: 15_000 }
+    );
 
     revalidatePath('/assessments');
     return { ok: true, id };

@@ -45,13 +45,21 @@ the bystander list cap (#108 item 3 and #109 item 4, DRRM-047).
 
 - [x] `src/actions/assessments`: inside the transaction, lock the building row
       (`SELECT … FOR UPDATE`), then rewrite `building_areas` and `floor_count` only when this
-      assessment's `ended_at` is at least the newest one's.
-- [x] `src/lib/lookup-names.ts`: `findOrCreate` reuses the row someone added a moment ago on a
-      `P2002`, for units and positions as it already did for clusters.
+      assessment's `ended_at` is at least the newest one's (`isNewestAssessment` in
+      `src/lib/building-profile.ts`). The transaction sets an explicit `{ maxWait: 5 s, timeout: 15 s }`,
+      because the submits for one building queue on that row lock and the 5 s default would fail the
+      later ones (P2028).
+- [x] `src/lib/lookup-names.ts`: `findOrCreate` (now in `src/lib/find-or-create.ts`, so it can be
+      tested without a database) reuses the row someone added a moment ago on a `P2002`, for units
+      and positions as it already did for clusters.
 - [x] `src/actions/assessment-templates`: a new section locks its version row, a new or deleted
       question its section row, a deleted section its version row; a new area type takes
       `pg_advisory_xact_lock`. `setSortOrders` writes the changed places in one
-      `UPDATE … FROM (VALUES …)`.
+      `UPDATE … FROM (VALUES …)`. Structural edits re-read the version (or the question's section)
+      status after taking the lock and refuse with the usual "draft only" message if a publish got
+      there first. `reorderSection` and `reorderItem` take the same lock and write through
+      `setSortOrders` with `movedItems` (now in `src/lib/assessment-template.ts`), so re-numbering
+      is the same everywhere in the file.
 - [x] `src/lib/prisma.ts`: `max: 5`, `idleTimeoutMillis: 10_000`.
 
 ### 2.2 Database / Prisma
@@ -74,9 +82,19 @@ step is what closes the REST API.
 
 ## 3. Verification
 
+- Unit tests (`npm run test`): `src/lib/find-or-create.test.ts` (returns the existing row, creates one,
+  re-finds on `P2002`, rethrows when the re-find is empty and on any other error),
+  `src/lib/building-profile.test.ts` (no earlier assessment, newer, equal, older) and `movedItems`
+  in `src/lib/assessment-template.test.ts` (returns only the rows whose place changed).
 - [x] `npm run lint`, `npm run type-check`, `npm run test`, `npm run build`, `prisma validate`
 - [ ] Apply the SQL on staging; the "AFTER" query in the file shows RLS on every table, and
       `/rest/v1/reports?select=*` with the publishable key returns nothing.
 - [ ] Submit two assessments of one building at once (both land); sync an older offline one after
       a newer one (the building keeps the newer floors and areas).
 - [ ] Checklist editor: add, delete and reorder sections and questions; add an area type.
+
+## 4. Follow-up (not in this PR)
+
+- Drop the single-column indexes now covered by the new composite ones: `Report @@index([event_id])`,
+  `Report @@index([cluster_id])` and `bystander_reports @@index([status_id])` in
+  `prisma/schema.prisma` (each one only adds write cost now).

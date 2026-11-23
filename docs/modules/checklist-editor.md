@@ -1,7 +1,7 @@
 ---
 type: module
 module: checklist-editor
-updated: 2026-11-20
+updated: 2026-11-23
 verified: true
 paths:
   - src/actions/assessment-templates
@@ -43,7 +43,7 @@ Read this before changing the checklist editor, or the checklist itself.
 - `AssessmentSection` (`assessment_sections`): `code` (unique per version), `title_en`, `title_fil`, `sort_order`, `area_type_id` (section needs that area).
 - `AssessmentItem` (`assessment_items`): `parent_id`, `code`, `prompt_en/fil`, `note_en/fil`, `reference`, `is_scored`, `safe_answer`, `area_type_id`, `min_floors`, `flag_label`, `pillar_id`, `sort_order`. CHECK `chk_assessment_items_pillar`: scored items have a pillar, group parents don't.
 - `BuildingAreaType` (`building_area_types`): `code`, `name_en`, `name_fil`, `sort_order`, `is_active`. Shared across versions.
-- Places (`sort_order`) are handed out under a lock (DRRM-048, #108): a new section locks its version row, a new or deleted question its section row, and a new area type takes a transaction-scoped advisory lock, so two added at once never share a place. Re-numbering after a change is one `UPDATE … FROM (VALUES …)` (`setSortOrders`) instead of one update per row (#109).
+- Places (`sort_order`) are handed out under a lock (DRRM-048, #108): a new section locks its version row, a new or deleted question its section row, and a new area type takes a transaction-scoped advisory lock, so two added at once never share a place. After each lock the version (or the question's section) is re-read as a draft, so a publish that committed first refuses the edit. Re-numbering after a change, reorders included, is one `UPDATE … FROM (VALUES …)` (`setSortOrders`) over the rows `movedItems` reports as moved, instead of one update per row (#109).
 - `DrrmPillar` (`drrm_pillars`): looked up by `code` when an item's pillar is set.
 
 ## Server actions

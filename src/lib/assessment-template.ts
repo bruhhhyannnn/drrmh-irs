@@ -302,6 +302,18 @@ export function moveItemInSection<
   );
 }
 
+/**
+ * The rows whose place changed when `ordered` was worked out from `before`. Only these are
+ * written back (#109), so a reorder touches one or two rows, not the whole list.
+ */
+export function movedItems<T extends { id: string; sort_order: number }>(
+  before: readonly T[],
+  ordered: readonly T[]
+): T[] {
+  const prev = new Map(before.map((i) => [i.id, i.sort_order]));
+  return ordered.filter((row) => prev.get(row.id) !== row.sort_order);
+}
+
 /** Checks that a draft version has at least one scored question and every scored question has a pillar. */
 export function canPublishTemplate(
   sections: readonly {

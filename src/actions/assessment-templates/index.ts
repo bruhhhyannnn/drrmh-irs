@@ -4,6 +4,7 @@ import { clearVersionCache, loadVersion } from '@/lib/assessment-records';
 import {
   canPublishTemplate,
   moveItemInSection,
+  movedItems,
   orderSectionItems,
   type ChecklistEditorData,
   type TemplateActionResult,
@@ -53,15 +54,6 @@ const lockVersion = (tx: Prisma.TransactionClient, id: string) =>
 const lockSection = (tx: Prisma.TransactionClient, id: string) =>
   tx.$queryRaw`SELECT id FROM assessment_sections WHERE id = ${id}::uuid FOR UPDATE`;
 
-/** Items whose place changed when `ordered` was worked out from `before`. */
-const movedItems = (
-  before: { id: string; sort_order: number }[],
-  ordered: { id: string; sort_order: number }[]
-) => {
-  const prev = new Map(before.map((i) => [i.id, i.sort_order]));
-  return ordered.filter((row) => prev.get(row.id) !== row.sort_order);
-};
-
 // Super Admin checklist editor (DRRM-015 Phase 3). Wording fixes (titles, prompts, notes,
 // references) apply in place on any version so typos are fixed on old and new assessments alike.
 // Structural edits (adding, removing, reordering, gating, pillars) are allowed only on a `draft`
@@ -73,6 +65,24 @@ const fail = (error: string): TemplateActionResult => ({ ok: false, error });
 
 const DRAFT_ONLY =
   'Only a draft version can be changed structurally. Create a draft version first.';
+
+// Re-checked after the lock is taken: the status read before it can be stale, so a publish that
+// committed in between must not let the edit through (DRRM-048).
+async function assertDraftVersion(tx: Prisma.TransactionClient, versionId: string) {
+  const version = await tx.assessmentTemplateVersion.findUnique({
+    where: { id: versionId },
+    select: { status: true },
+  });
+  if (version?.status !== 'draft') throw new Error(DRAFT_ONLY);
+}
+
+async function assertDraftSection(tx: Prisma.TransactionClient, sectionId: string) {
+  const section = await tx.assessmentSection.findUnique({
+    where: { id: sectionId },
+    select: { version: { select: { status: true } } },
+  });
+  if (section?.version.status !== 'draft') throw new Error(DRAFT_ONLY);
+}
 
 async function requireSuperAdmin(token: string | null) {
   const caller = await requireAdmin(token);
@@ -397,28 +407,34 @@ export async function upsertSection(
 
   try {
     if (input.id) {
-      const existing = await prisma.assessmentSection.findUnique({
-        where: { id: input.id },
-        select: { version_id: true },
+      const sectionId = input.id;
+      const saved = await prisma.$transaction(async (tx) => {
+        await lockVersion(tx, input.version_id);
+        await assertDraftVersion(tx, input.version_id);
+        const existing = await tx.assessmentSection.findUnique({
+          where: { id: sectionId },
+          select: { version_id: true },
+        });
+        if (!existing || existing.version_id !== input.version_id) return false;
+        await tx.assessmentSection.update({
+          where: { id: sectionId },
+          data: {
+            code: parsed.data.code,
+            title_en: parsed.data.title_en,
+            title_fil: parsed.data.title_fil,
+            area_type_id: parsed.data.area_type_id ?? null,
+          },
+        });
+        return true;
       });
-      if (!existing || existing.version_id !== input.version_id) {
-        return fail('This section could not be found.');
-      }
-      await prisma.assessmentSection.update({
-        where: { id: input.id },
-        data: {
-          code: parsed.data.code,
-          title_en: parsed.data.title_en,
-          title_fil: parsed.data.title_fil,
-          area_type_id: parsed.data.area_type_id ?? null,
-        },
-      });
+      if (!saved) return fail('This section could not be found.');
       revalidateChecklist();
-      return { ok: true, id: input.id };
+      return { ok: true, id: sectionId };
     }
 
     const created = await prisma.$transaction(async (tx) => {
       await lockVersion(tx, input.version_id);
+      await assertDraftVersion(tx, input.version_id);
       const count = await tx.assessmentSection.count({ where: { version_id: input.version_id } });
       return tx.assessmentSection.create({
         data: {
@@ -456,6 +472,7 @@ export async function deleteSection(
   try {
     await prisma.$transaction(async (tx) => {
       await lockVersion(tx, section.version_id);
+      await assertDraftVersion(tx, section.version_id);
       await tx.assessmentSection.delete({ where: { id: sectionId } });
       const remaining = await tx.assessmentSection.findMany({
         where: { version_id: section.version_id },
@@ -493,21 +510,33 @@ export async function reorderSection(
   if (!section) return fail('This section could not be found.');
   if (section.version.status !== 'draft') return fail(DRAFT_ONLY);
 
-  const list = await prisma.assessmentSection.findMany({
-    where: { version_id: section.version_id },
-    orderBy: { sort_order: 'asc' },
-    select: { id: true },
-  });
-  const idx = list.findIndex((s) => s.id === sectionId);
-  const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-  if (idx < 0 || swapIdx < 0 || swapIdx >= list.length) return { ok: true };
+  try {
+    await prisma.$transaction(async (tx) => {
+      await lockVersion(tx, section.version_id);
+      await assertDraftVersion(tx, section.version_id);
+      const before = await tx.assessmentSection.findMany({
+        where: { version_id: section.version_id },
+        orderBy: { sort_order: 'asc' },
+        select: { id: true, sort_order: true },
+      });
+      const idx = before.findIndex((s) => s.id === sectionId);
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (idx < 0 || swapIdx < 0 || swapIdx >= before.length) return;
 
-  [list[idx], list[swapIdx]] = [list[swapIdx], list[idx]];
-  await prisma.$transaction(
-    list.map((s, k) =>
-      prisma.assessmentSection.update({ where: { id: s.id }, data: { sort_order: k } })
-    )
-  );
+      const ordered = [...before];
+      [ordered[idx], ordered[swapIdx]] = [ordered[swapIdx], ordered[idx]];
+      await setSortOrders(
+        tx,
+        'assessment_sections',
+        movedItems(
+          before,
+          ordered.map((row, k) => ({ id: row.id, sort_order: k }))
+        )
+      );
+    });
+  } catch (err) {
+    return fail(toFriendlyError(err, 'section').message);
+  }
   revalidateChecklist();
   return { ok: true };
 }
@@ -575,6 +604,7 @@ export async function upsertItem(
     const savedId = await prisma.$transaction(
       async (tx) => {
         await lockSection(tx, section.id);
+        await assertDraftSection(tx, section.id);
         let itemId = input.id;
         if (itemId) {
           const current = section.items.find((i) => i.id === itemId);
@@ -639,6 +669,7 @@ export async function deleteItem(
     await prisma.$transaction(
       async (tx) => {
         await lockSection(tx, item.section_id);
+        await assertDraftSection(tx, item.section_id);
         await tx.assessmentItem.delete({ where: { id: itemId } });
         const remaining = await tx.assessmentItem.findMany({
           where: { section_id: item.section_id },
@@ -671,29 +702,28 @@ export async function reorderItem(
   const item = await prisma.assessmentItem.findUnique({
     where: { id: itemId },
     select: {
-      section: {
-        select: {
-          version: { select: { status: true } },
-          items: {
-            orderBy: { sort_order: 'asc' },
-            select: { id: true, parent_id: true, sort_order: true },
-          },
-        },
-      },
+      section_id: true,
+      section: { select: { version: { select: { status: true } } } },
     },
   });
   if (!item) return fail('This question could not be found.');
   if (item.section.version.status !== 'draft') return fail(DRAFT_ONLY);
 
-  const ordered = moveItemInSection(item.section.items, itemId, direction);
-  await prisma.$transaction(
-    ordered.map((row) =>
-      prisma.assessmentItem.update({
-        where: { id: row.id },
-        data: { sort_order: row.sort_order },
-      })
-    )
-  );
+  try {
+    await prisma.$transaction(async (tx) => {
+      await lockSection(tx, item.section_id);
+      await assertDraftSection(tx, item.section_id);
+      const before = await tx.assessmentItem.findMany({
+        where: { section_id: item.section_id },
+        orderBy: { sort_order: 'asc' },
+        select: { id: true, parent_id: true, sort_order: true },
+      });
+      const ordered = moveItemInSection(before, itemId, direction);
+      await setSortOrders(tx, 'assessment_items', movedItems(before, ordered));
+    });
+  } catch (err) {
+    return fail(toFriendlyError(err, 'question').message);
+  }
   revalidateChecklist();
   return { ok: true };
 }

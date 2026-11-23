@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { findOrCreate } from './find-or-create';
 import { prisma } from './prisma';
 
 // "Other (please specify)" in the cluster, unit and position selects: the typed name becomes an
@@ -32,30 +33,6 @@ export async function clusterIdForName(campusId: string, name: string) {
     if (!(err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002')) throw err;
     // Someone added it a moment ago: theirs is reused when it's on this campus.
     return (await sameName()).find((c) => c.campus_id === campusId)?.id ?? null;
-  }
-}
-
-const isUniqueViolation = (err: unknown) =>
-  err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';
-
-/**
- * The id `find` returns, or the one `create` makes. When someone added the same name a moment
- * ago, the insert hits the unique index (#108: case-insensitive since DRRM-048), and theirs is
- * reused instead of failing the save.
- */
-async function findOrCreate(
-  find: () => Promise<{ id: string } | null>,
-  create: () => Promise<{ id: string }>
-) {
-  const existing = await find();
-  if (existing) return existing.id;
-  try {
-    return (await create()).id;
-  } catch (err) {
-    if (!isUniqueViolation(err)) throw err;
-    const theirs = await find();
-    if (theirs) return theirs.id;
-    throw err;
   }
 }
 
