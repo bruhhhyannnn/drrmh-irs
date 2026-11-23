@@ -7,7 +7,12 @@ type AccessProfile = {
   user_type?: { name: string } | null;
   position?: { name: string } | null;
   is_off_campus?: boolean | null;
+  is_active?: boolean | null;
 };
+
+/** Shown in place of the app when an admin has turned the account off (#104). */
+export const ACCOUNT_INACTIVE_MESSAGE =
+  'Your account has been turned off. Ask an administrator to turn it back on, then sign in again.';
 
 /** Shown wherever the Report tool would be, for an off-campus account (DRRM-026). */
 export const REPORT_OFF_CAMPUS_MESSAGE = 'Not available for off-campus accounts';
@@ -72,6 +77,8 @@ export function adminGuard({ loading, hasUser, profile, profileError }: GuardInp
   if (loading) return { status: 'checking' };
   if (!hasUser) return { status: 'signin' };
   if (!profile) return { status: 'checking' };
+  // A turned-off account never reaches a page, even from a profile kept in the browser (#104).
+  if (profile.is_active === false) return { status: 'error' };
   const home = homePathFor(profile.user_type?.name);
   return home === '/dashboard' ? { status: 'allow' } : { status: 'redirect', to: home };
 }
@@ -88,6 +95,7 @@ export function ertGuard(
   if (loading) return { status: 'checking' };
   if (!hasUser) return { status: 'redirect', to: '/signin' };
   if (!profile) return { status: 'checking' };
+  if (profile.is_active === false) return { status: 'error' };
   if (isAdminUserType(profile.user_type?.name)) return { status: 'redirect', to: '/dashboard' };
   if (requireAssessment && !canUseAssessment(profile)) return { status: 'redirect', to: '/home' };
   return profile.is_profile_complete ? { status: 'ready' } : { status: 'setup' };

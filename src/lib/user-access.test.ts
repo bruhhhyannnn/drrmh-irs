@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { AdminScope } from './admin-scope';
-import { canAssignUserType, canManageUser } from './user-access';
+import { canAssignUserType, canManageUser, signInBanWarning } from './user-access';
 
 // Who may read and change which accounts on the Users page. Before, the actions trusted the
 // client; now the server decides from the verified caller (security review of DRRM-025/026).
@@ -49,4 +49,11 @@ test('only a super admin may give the Super Admin type', () => {
 test('an unknown user type is never assignable', () => {
   assert.equal(canAssignUserType(superAdmin, undefined), false);
   assert.equal(canAssignUserType(admin, 'Bystander'), false);
+});
+
+test('the Active switch warns when the sign-in ban could not be changed', () => {
+  assert.equal(signInBanWarning(true, false), null);
+  assert.equal(signInBanWarning(false, false), null);
+  assert.match(signInBanWarning(true, true) ?? '', /could not be lifted/);
+  assert.match(signInBanWarning(false, true) ?? '', /could not be set/);
 });

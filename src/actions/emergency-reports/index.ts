@@ -9,10 +9,33 @@ import {
 } from '@/lib/bystander-photos';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
+import { clientIp, withinRateLimit } from '@/lib/rate-limit';
 import { requireAdmin } from '@/lib/server-auth';
 import { isUuid, type ActionRefusal } from '@/lib/utils';
 import { randomUUID } from 'crypto';
 import { revalidatePath } from 'next/cache';
+import { headers } from 'next/headers';
+
+/**
+ * Reports one network may send through the public form per window (#104). Generous on purpose:
+ * people on one campus Wi-Fi share an IP during an emergency, and a report over the limit is
+ * kept on the phone and sent again a little later, never lost.
+ */
+const BYSTANDER_LIMIT = 30;
+const BYSTANDER_WINDOW_MS = 10 * 60_000;
+const RATE_LIMITED =
+  'Many reports were sent from this network just now. Yours is saved on this phone and sends again in a few minutes. If anyone needs help now, call 911.';
+
+/** Whether this client has sent too many reports in the window. Never throws. */
+async function bystanderRateLimited() {
+  try {
+    const ip = clientIp(await headers());
+    if (!ip) return false;
+    return !(await withinRateLimit(`bystander:${ip}`, BYSTANDER_LIMIT, BYSTANDER_WINDOW_MS));
+  } catch {
+    return false;
+  }
+}
 
 // The QR form's submit and incident types stay public. Everything else is for admins, and only
 // for reports on a campus their verified scope covers (#102): these hold reporters' phone
@@ -50,7 +73,15 @@ async function reportInScope(scope: Parameters<typeof inScope>[0], id: unknown) 
  * field (see `toBystanderPhotoFormData`). Photos are uploaded first so the report row can
  * hold their paths; if the row then fails to save, the uploads are removed again.
  */
-export async function createBystanderReport(data: BystanderReportFormData, photos?: FormData) {
+export async function createBystanderReport(
+  data: BystanderReportFormData,
+  photos?: FormData
+): Promise<
+  | { ok: true; id: string; submittedAt: string; photoCount: number }
+  | { ok: false; error: string; retry: true }
+> {
+  // Before anything is parsed or uploaded, so a flood costs nothing but this check.
+  if (await bystanderRateLimited()) return { ok: false, error: RATE_LIMITED, retry: true };
   const parsed = bystanderReportSchema.safeParse(data);
   if (!parsed.success) {
     throw new Error(parsed.error.issues[0]?.message ?? 'This report is incomplete.');
@@ -100,6 +131,7 @@ export async function createBystanderReport(data: BystanderReportFormData, photo
     });
 
     return {
+      ok: true,
       id: report.id,
       submittedAt: report.submitted_at.toISOString(),
       photoCount: photoPaths.length,
