@@ -54,6 +54,7 @@ Statuses are taken from each plan's frontmatter as of 2026-11-09. Keep this list
 | Plan                                                                                                         | Status      | Branch                                          |
 | ------------------------------------------------------------------------------------------------------------ | ----------- | ----------------------------------------------- |
 | [[plan/fix/DRRM-049-hardening\|DRRM-049 Hardening: inactive accounts, rate limit, headers]]                  | in-review   | `fix/DRRM-049-hardening`                        |
+| [[plan/fix/DRRM-048-db-concurrency-performance\|DRRM-048 Database: RLS, indexes, races]]                     | in-review   | `fix/DRRM-048-db-concurrency-performance`       |
 | [[plan/fix/DRRM-047-legacy-action-caller-checks\|DRRM-047 Caller checks on the older actions]]               | in-review   | `fix/DRRM-047-legacy-action-caller-checks`      |
 | [[plan/fix/DRRM-046-field-report-rules\|DRRM-046 Field report rules on the server]]                          | done        | `fix/DRRM-046-field-report-rules`               |
 | [[plan/fix/DRRM-045-auth-accounts-hardening\|DRRM-045 Sign-in and account hardening]]                        | done        | `fix/DRRM-045-auth-accounts-hardening`          |

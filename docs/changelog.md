@@ -18,6 +18,17 @@ Plan: [[plan/fix/DRRM-049-hardening]] · [[auth]] · [[users]] · [[bystander-re
 - Every response carries security headers, plus a report-only content security policy.
 - Next.js 16.4.6, Prisma 7.10.1 and patched transitive packages (`npm audit` 27 → 8 findings).
 - Review fixes: the Users page shows when the sign-in ban could not be set or lifted; a banned account's token shows "Account turned off" instead of "could not be found"; the rate limit's counter is injectable and covered by tests.
+
+## DRRM-048 Database: RLS, indexes, races: 2026-11-20 (branch `fix/DRRM-048-db-concurrency-performance`)
+
+Plan: [[plan/fix/DRRM-048-db-concurrency-performance]] · [[database]] · [[assessments]] · [[checklist-editor]] · GitHub #108, #109
+
+- Needs `prisma/manual/DRRM-048-rls-indexes-lookups.sql`: every table is closed to the browser's key on the REST API, the lists get their indexes, and unit and position names become unique regardless of case.
+- Two assessments of one building submitted at once no longer fail, and a late offline one doesn't overwrite the building's newer profile.
+- Typing the same new unit or position at the same moment no longer fails a save.
+- Checklist sections, questions and area types get distinct places when added at once, and re-numbering is one statement. Editing or reordering a checklist that a publish has just made read-only is refused instead of going through.
+- Each running copy of the app holds at most 5 database connections.
+- Covered by unit tests: the lookup-name retry, the newest-assessment rule and the reorder rule (`npm run test`).
 ## DRRM-047 Caller checks on the older actions: 2026-11-20 (branch `fix/DRRM-047-legacy-action-caller-checks`)
 
 Plan: [[plan/fix/DRRM-047-legacy-action-caller-checks]] · [[events]] · [[bystander-reports]] · [[campus-scoping]] · [[settings-lookups]] · [[dashboard]] · GitHub #102, #103

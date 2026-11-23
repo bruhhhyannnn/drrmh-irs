@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { findOrCreate } from './find-or-create';
 import { prisma } from './prisma';
 
 // "Other (please specify)" in the cluster, unit and position selects: the typed name becomes an
@@ -38,29 +39,26 @@ export async function clusterIdForName(campusId: string, name: string) {
 /** The unit called `name` in the cluster, added when the cluster has none by that name. */
 export async function unitIdForName(clusterId: string, name: string) {
   const unitName = tidy(name);
-  const existing = await prisma.unit.findFirst({
-    where: { cluster_id: clusterId, name: { equals: unitName, mode: 'insensitive' } },
-    select: { id: true },
-  });
-  if (existing) return existing.id;
-  const unit = await prisma.unit.create({
-    data: { cluster_id: clusterId, name: unitName },
-    select: { id: true },
-  });
-  return unit.id;
+  return findOrCreate(
+    () =>
+      prisma.unit.findFirst({
+        where: { cluster_id: clusterId, name: { equals: unitName, mode: 'insensitive' } },
+        select: { id: true },
+      }),
+    () =>
+      prisma.unit.create({ data: { cluster_id: clusterId, name: unitName }, select: { id: true } })
+  );
 }
 
 /** The position called `name`, added when there's none by that name. */
 export async function positionIdForName(name: string) {
   const positionName = tidy(name);
-  const existing = await prisma.position.findFirst({
-    where: { name: { equals: positionName, mode: 'insensitive' } },
-    select: { id: true },
-  });
-  if (existing) return existing.id;
-  const position = await prisma.position.create({
-    data: { name: positionName },
-    select: { id: true },
-  });
-  return position.id;
+  return findOrCreate(
+    () =>
+      prisma.position.findFirst({
+        where: { name: { equals: positionName, mode: 'insensitive' } },
+        select: { id: true },
+      }),
+    () => prisma.position.create({ data: { name: positionName }, select: { id: true } })
+  );
 }
