@@ -1,9 +1,14 @@
 'use server';
 
 import { inScope } from '@/lib/admin-scope';
+import { canEditPopulationField } from '@/lib/population-field-access';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
-import { populationCategorySchema, withoutControlChars } from '@/lib/schemas';
+import {
+  campusPopulationLinkUpdateSchema,
+  populationCategoryCreateSchema,
+  populationCategoryUpdateSchema,
+} from '@/lib/schemas';
 import { requireAdmin } from '@/lib/server-auth';
 import { isUuid, type ActionRefusal } from '@/lib/utils';
 import { revalidatePath } from 'next/cache';
@@ -26,25 +31,6 @@ const NOT_FOUND: ActionRefusal = {
 const refuse = (error: string): ActionRefusal => ({ ok: false, error, retry: false });
 const firstIssue = (error: z.ZodError) => error.issues[0]?.message ?? 'Check the field.';
 
-// Field names are labels in the NSED export, so control characters are dropped (#111).
-const categoryCreate = populationCategorySchema
-  .strict()
-  .transform((d) => ({ ...d, name: withoutControlChars(d.name) }));
-/** The code is fixed once made: reports and the legacy headcount columns use it. */
-const categoryUpdate = populationCategorySchema
-  .omit({ code: true })
-  .partial()
-  .strict()
-  .transform((d) => (d.name === undefined ? d : { ...d, name: withoutControlChars(d.name) }));
-const linkUpdate = z
-  .object({
-    is_required: z.boolean(),
-    is_active: z.boolean(),
-    sort_order: z.number().int().min(0).max(1000),
-  })
-  .partial()
-  .strict();
-
 /** A campus's field link, if this admin's scope covers its campus. */
 async function linkInScope(scope: Parameters<typeof inScope>[0], id: unknown) {
   if (!isUuid(id)) return null;
@@ -53,6 +39,28 @@ async function linkInScope(scope: Parameters<typeof inScope>[0], id: unknown) {
     select: { id: true, campus_id: true },
   });
   return link && inScope(scope, link.campus_id) ? link : null;
+}
+
+/**
+ * How much other campuses use a field: their links to it, and their reports' and bystander
+ * reports' headcounts for it (scoped by the report's campus; the caller's own is left out).
+ */
+async function fieldUseElsewhere(categoryId: string, campusId: string) {
+  const [linkedElsewhere, reportedElsewhere, bystanderElsewhere] = await Promise.all([
+    prisma.campusPopulationCategory.count({
+      where: { category_id: categoryId, campus_id: { not: campusId } },
+    }),
+    prisma.reportPopulationCount.count({
+      where: { category_id: categoryId, report: { event: { campus_id: { not: campusId } } } },
+    }),
+    prisma.bystanderReportPopulationCount.count({
+      where: {
+        category_id: categoryId,
+        bystander_report: { clusters: { campus_id: { not: campusId } } },
+      },
+    }),
+  ]);
+  return { linkedElsewhere, reportedElsewhere: reportedElsewhere + bystanderElsewhere };
 }
 
 function revalidatePopulationFields() {
@@ -76,7 +84,7 @@ export async function createPopulationCategory(
 ): Promise<CategoryResult> {
   const caller = await requireAdmin(token);
   if (!caller.ok) return ADMIN_ONLY;
-  const parsed = categoryCreate.safeParse(data);
+  const parsed = populationCategoryCreateSchema.safeParse(data);
   if (!parsed.success) return refuse(firstIssue(parsed.error));
   try {
     const category = await prisma.populationCategory.create({ data: parsed.data });
@@ -88,8 +96,9 @@ export async function createPopulationCategory(
 }
 
 /**
- * Edit field. It is shared by every campus that uses it, so an Administrator may edit only a
- * field no other campus uses; a Super Admin, any.
+ * Edit field. It is shared by every campus that uses it, so an Administrator may edit one only
+ * while no other campus links to it or has reported a headcount for it (owner decision on #102);
+ * a Super Admin, any.
  */
 export async function updatePopulationCategory(
   token: string | null,
@@ -99,17 +108,19 @@ export async function updatePopulationCategory(
   const caller = await requireAdmin(token);
   if (!caller.ok) return ADMIN_ONLY;
   if (!isUuid(id)) return NOT_FOUND;
-  const parsed = categoryUpdate.safeParse(data);
+  const parsed = populationCategoryUpdateSchema.safeParse(data);
   if (!parsed.success) return refuse(firstIssue(parsed.error));
-  if (caller.scope.role !== 'super_admin') {
-    const others = await prisma.campusPopulationCategory.count({
-      where: { category_id: id, campus_id: { not: caller.scope.campusId ?? undefined } },
-    });
-    if (others > 0) {
-      return refuse('Other campuses use this field too. Ask a super admin to change it.');
-    }
-  }
   try {
+    if (caller.scope.role !== 'super_admin') {
+      const campusId = caller.scope.campusId;
+      if (!campusId) return ADMIN_ONLY;
+      const use = await fieldUseElsewhere(id, campusId);
+      if (!canEditPopulationField(caller.scope, use)) {
+        return refuse(
+          'Another campus uses this field, or has reports with it. Ask a super admin to change it.'
+        );
+      }
+    }
     const category = await prisma.populationCategory.update({ where: { id }, data: parsed.data });
     revalidatePopulationFields();
     return { ok: true, category };
@@ -197,12 +208,16 @@ export async function updateCampusPopulationCategory(
 ): Promise<{ ok: true } | ActionRefusal> {
   const caller = await requireAdmin(token);
   if (!caller.ok) return ADMIN_ONLY;
-  const parsed = linkUpdate.safeParse(data);
+  const parsed = campusPopulationLinkUpdateSchema.safeParse(data);
   if (!parsed.success) return refuse(firstIssue(parsed.error));
   if (!(await linkInScope(caller.scope, id))) return NOT_FOUND;
-  await prisma.campusPopulationCategory.update({ where: { id }, data: parsed.data });
-  revalidatePopulationFields();
-  return { ok: true };
+  try {
+    await prisma.campusPopulationCategory.update({ where: { id }, data: parsed.data });
+    revalidatePopulationFields();
+    return { ok: true };
+  } catch (err) {
+    return refuse(toFriendlyError(err, 'population category').message);
+  }
 }
 
 // Hard delete of the assignment row itself, for correcting mis-seeded campus data.
@@ -214,9 +229,13 @@ export async function deleteCampusPopulationCategory(
   const caller = await requireAdmin(token);
   if (!caller.ok) return ADMIN_ONLY;
   if (!(await linkInScope(caller.scope, id))) return NOT_FOUND;
-  await prisma.campusPopulationCategory.delete({ where: { id } });
-  revalidatePopulationFields();
-  return { ok: true };
+  try {
+    await prisma.campusPopulationCategory.delete({ where: { id } });
+    revalidatePopulationFields();
+    return { ok: true };
+  } catch (err) {
+    return refuse(toFriendlyError(err, 'population category').message);
+  }
 }
 
 /** The most fields one reorder may carry. */
@@ -238,11 +257,15 @@ export async function reorderCampusPopulationCategories(
   const campuses = new Set(links.map((l) => l.campus_id));
   if (links.length !== ids.data.length || campuses.size !== 1) return NOT_FOUND;
   if (!inScope(caller.scope, [...campuses][0])) return NOT_FOUND;
-  await prisma.$transaction(
-    ids.data.map((id, index) =>
-      prisma.campusPopulationCategory.update({ where: { id }, data: { sort_order: index } })
-    )
-  );
-  revalidatePopulationFields();
-  return { ok: true };
+  try {
+    await prisma.$transaction(
+      ids.data.map((id, index) =>
+        prisma.campusPopulationCategory.update({ where: { id }, data: { sort_order: index } })
+      )
+    );
+    revalidatePopulationFields();
+    return { ok: true };
+  } catch (err) {
+    return refuse(toFriendlyError(err, 'population category').message);
+  }
 }

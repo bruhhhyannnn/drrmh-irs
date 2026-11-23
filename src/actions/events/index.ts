@@ -93,11 +93,6 @@ export async function getEvent(token: string | null, id: string) {
   return event && inScope(caller.scope, event.campus_id) ? event : null;
 }
 
-/** Completed and when, decided on the server from the status the event is given. */
-async function completedStatusId() {
-  return statusId('completed');
-}
-
 /**
  * Add event with several campuses ticked: the same event once per campus, all or nothing. Every
  * campus must be in the caller's scope. The payload is a strict allowlist (#102): the creator is
@@ -117,7 +112,7 @@ export async function createEvents(
   if (!campuses.data.every((id) => inScope(caller.scope, id))) {
     return refuse("You can't add events for that campus.");
   }
-  const completing = parsed.data.status_id === (await completedStatusId());
+  const completing = parsed.data.status_id === (await statusId('completed'));
   const fields = {
     ...parsed.data,
     ended_at: completing && !parsed.data.ended_at ? new Date() : (parsed.data.ended_at ?? null),
@@ -159,7 +154,7 @@ export async function updateEvent(
   const [current] = (await eventsInScope(caller.scope, [id])) ?? [];
   if (!current) return NOT_FOUND;
 
-  const completedId = await completedStatusId();
+  const completedId = await statusId('completed');
   const completing = parsed.data.status_id === completedId;
   const wasCompleted = current.status_id === completedId;
   const endedAt = parsed.data.ended_at ?? null;
@@ -198,7 +193,7 @@ export async function completeEvents(
   if (!parsed.success) return NOT_FOUND;
   // Every event must be one this admin may complete; one outside their scope refuses them all.
   if (!(await eventsInScope(caller.scope, parsed.data))) return NOT_FOUND;
-  const completedId = await completedStatusId();
+  const completedId = await statusId('completed');
   if (!completedId) return refuse('The Completed event status is missing from Settings.');
   try {
     const endedAt = new Date();

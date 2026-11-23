@@ -3,16 +3,7 @@
 import { toSettingsPath } from '@/lib';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
-import {
-  buildingSchema,
-  campusSchema,
-  casualtyConditionSchema,
-  clusterSchema,
-  damageConditionSchema,
-  positionSchema,
-  unitSchema,
-  withoutControlChars,
-} from '@/lib/schemas';
+import { settingsWriteSchemas, withoutControlChars } from '@/lib/schemas';
 import { requireAdmin } from '@/lib/server-auth';
 import {
   canWriteSetting,
@@ -46,19 +37,8 @@ const TITLE_MAP: Record<SettingsTable, string> = {
   buildings: 'Buildings',
 };
 
-/**
- * What each table's Add / Edit may send (#103): strict allowlists, so a relation key such as
- * `users` or `reports` is refused and no nested write reaches Prisma.
- */
-const WRITE_SCHEMAS: Record<SettingsTable, z.AnyZodObject> = {
-  clusters: clusterSchema.strict(),
-  units: unitSchema.strict(),
-  buildings: buildingSchema.strict(),
-  positions: positionSchema.strict(),
-  casualty_conditions: casualtyConditionSchema.strict(),
-  damage_conditions: damageConditionSchema.strict(),
-  campus: campusSchema.strict(),
-};
+/** What each table's Add / Edit may send (#103); see `settingsWriteSchemas` in `@/lib/schemas`. */
+const WRITE_SCHEMAS: Record<SettingsTable, z.AnyZodObject> = settingsWriteSchemas;
 
 // What each table's rows carry besides their own columns: the parent shown in the table, and
 // counts of linked records for the Units column and the delete confirmation.

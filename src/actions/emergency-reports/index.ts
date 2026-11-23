@@ -110,14 +110,18 @@ export async function createBystanderReport(data: BystanderReportFormData, photo
   }
 }
 
-/** The Bystander reports page: the caller's scope only, newest first; empty for non-admins. */
+/**
+ * The Bystander reports page: the caller's scope only, newest first; empty for non-admins.
+ * `truncated` says the scope holds more than `limit`, so the page can say it shows the newest ones.
+ */
 export async function getBystanderReports(token: string | null, campusId?: string) {
   const caller = await requireAdmin(token, campusId || null);
-  if (!caller.ok) return [];
+  if (!caller.ok) return { reports: [], truncated: false, limit: BYSTANDER_LIST_LIMIT };
   const scopeCampus = caller.scope.campusId;
-  const reports = await prisma.bystander_reports.findMany({
+  // One extra row tells whether the list was cut short.
+  const fetched = await prisma.bystander_reports.findMany({
     where: scopeCampus ? { clusters: { campus_id: scopeCampus } } : undefined,
-    take: BYSTANDER_LIST_LIMIT,
+    take: BYSTANDER_LIST_LIMIT + 1,
     include: {
       clusters: { include: { campus: { select: { name: true } } } },
       units: true,
@@ -136,14 +140,20 @@ export async function getBystanderReports(token: string | null, campusId?: strin
     },
   });
 
+  const truncated = fetched.length > BYSTANDER_LIST_LIMIT;
+  const reports = fetched.slice(0, BYSTANDER_LIST_LIMIT);
   const unseen = await unseenBystanderIds(reports.map((r) => r.id));
-  return reports.map((r) => ({
-    ...r,
-    latitude: r.latitude.toNumber(),
-    longitude: r.longitude.toNumber(),
-    /** No admin has opened it yet (DRRM-042). */
-    unopened: unseen.has(r.id),
-  }));
+  return {
+    reports: reports.map((r) => ({
+      ...r,
+      latitude: r.latitude.toNumber(),
+      longitude: r.longitude.toNumber(),
+      /** No admin has opened it yet (DRRM-042). */
+      unopened: unseen.has(r.id),
+    })),
+    truncated,
+    limit: BYSTANDER_LIST_LIMIT,
+  };
 }
 
 /**

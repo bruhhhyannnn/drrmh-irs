@@ -404,6 +404,20 @@ export const damageConditionSchema = z.object({
   is_active: z.boolean().default(true),
 });
 
+/**
+ * What each Settings table's Add / Edit may send (#103): strict allowlists, so a relation key
+ * such as `users` or `reports` is refused and no nested write reaches Prisma.
+ */
+export const settingsWriteSchemas = {
+  clusters: clusterSchema.strict(),
+  units: unitSchema.strict(),
+  buildings: buildingSchema.strict(),
+  positions: positionSchema.strict(),
+  casualty_conditions: casualtyConditionSchema.strict(),
+  damage_conditions: damageConditionSchema.strict(),
+  campus: campusSchema.strict(),
+} as const;
+
 export const populationCategorySchema = z.object({
   code: z
     .string()
@@ -413,6 +427,28 @@ export const populationCategorySchema = z.object({
   description: z.string().optional(),
   is_active: z.boolean().default(true),
 });
+
+/** A new headcount field (#102). Strict, so no relation key rides along; names lose control chars (#111). */
+export const populationCategoryCreateSchema = populationCategorySchema
+  .strict()
+  .transform((d) => ({ ...d, name: withoutControlChars(d.name) }));
+
+/** The code is fixed once made: reports and the legacy headcount columns use it. */
+export const populationCategoryUpdateSchema = populationCategorySchema
+  .omit({ code: true })
+  .partial()
+  .strict()
+  .transform((d) => (d.name === undefined ? d : { ...d, name: withoutControlChars(d.name) }));
+
+/** A campus's link to a field: its required, active and order columns only. */
+export const campusPopulationLinkUpdateSchema = z
+  .object({
+    is_required: z.boolean(),
+    is_active: z.boolean(),
+    sort_order: z.number().int().min(0).max(1000),
+  })
+  .partial()
+  .strict();
 
 /* ─── Building assessment ─── */
 const uuid = z.string().uuid();
