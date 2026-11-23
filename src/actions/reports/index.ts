@@ -11,7 +11,7 @@ import {
   reportSchema,
 } from '@/lib';
 import { inScope } from '@/lib/admin-scope';
-import { unitIdForName } from '@/lib/lookup-names';
+import { unitIdForNameIn } from '@/lib/lookup-names';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
 import {
@@ -164,10 +164,19 @@ export async function getReport(token: string | null, id: string) {
   return { ok: true as const, report: serializeReport(report!) };
 }
 
-/** The unit a report is for: the one picked, or the one typed under "Other (please specify)". */
-async function reportUnitId(clusterId: string, unitId?: string | null, unitName?: string | null) {
+/**
+ * The unit a report is for: the one picked, or the one typed under "Other (please specify)".
+ * Called inside the report's transaction, so a typed unit is added only if the report is saved
+ * (#101).
+ */
+async function reportUnitIdIn(
+  tx: Prisma.TransactionClient,
+  clusterId: string,
+  unitId?: string | null,
+  unitName?: string | null
+) {
   const name = unitName?.trim();
-  return name ? unitIdForName(clusterId, name) : unitId || null;
+  return name ? unitIdForNameIn(tx, clusterId, name) : unitId || null;
 }
 
 /**
@@ -309,8 +318,6 @@ async function saveNewReport(
         return paths;
       })
     );
-    const savedUnitId = await reportUnitId(reportData.cluster_id, unitId, unit_name);
-
     await prisma.$transaction(async (tx) => {
       // One member's reports for an event are written one at a time, so two sent at once can't
       // both pass the one-report check above.
@@ -321,6 +328,8 @@ async function saveNewReport(
         });
         if (again > 0) throw new DuplicateReport();
       }
+      // Inside the transaction: a typed unit is rolled back if the report isn't saved.
+      const savedUnitId = await reportUnitIdIn(tx, reportData.cluster_id, unitId, unit_name);
       await tx.report.create({
         data: {
           id,
@@ -499,9 +508,10 @@ export async function saveReportEdits(
         return upload(grouped.casualties[i], saved ? newPhotoRoom(saved, c.photo_paths) : 0);
       }),
     ]);
-    const unitId = await reportUnitId(fields.cluster_id, pickedUnit, typedUnit);
     const { report, photoPaths, photoCount } = await prisma.$transaction(async (tx) => {
       await lockReport(tx, id);
+      // Inside the transaction: a typed unit is rolled back if the edit isn't saved (#101).
+      const unitId = await reportUnitIdIn(tx, fields.cluster_id, pickedUnit, typedUnit);
       const gone = await tx.reportCasualty.findMany({
         where: removed,
         select: { photo_paths: true },

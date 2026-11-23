@@ -6,6 +6,7 @@ import {
   completeProfileSchema,
   itemSchema,
   offCampusProfileSchema,
+  reportCreateSchema,
   userCreateInputSchema,
   userCreateSchema,
   userEditSchema,
@@ -256,8 +257,22 @@ test('Add user and Edit user accept what the Users drawer sends', () => {
     userCreateInputSchema.safeParse({ ...userWrite, password: 'Test1234!' }).success,
     true
   );
-  assert.equal(userUpdateInputSchema.safeParse(userWrite).success, true);
+  // Edit user sends everything but the email (the drawer shows it read-only).
+  const { email: _email, ...editWrite } = userWrite;
+  assert.equal(userUpdateInputSchema.safeParse(editWrite).success, true);
   assert.equal(userUpdateInputSchema.safeParse({ first_name: 'Jo' }).success, true);
+});
+
+test('Edit user refuses an email, which only Add user sets (#101)', () => {
+  assert.equal(userUpdateInputSchema.safeParse({ email: 'other@up.edu.ph' }).success, false);
+  assert.equal(
+    userUpdateInputSchema.safeParse({ ...userWrite, email: 'other@up.edu.ph' }).success,
+    false
+  );
+  assert.equal(
+    userCreateInputSchema.safeParse({ ...userWrite, password: 'Test1234!', email: 'a@b' }).success,
+    false
+  );
 });
 
 test('Add user and Edit user refuse columns and relations the drawer never sends', () => {
@@ -274,4 +289,86 @@ test('Add user and Edit user refuse columns and relations the drawer never sends
     );
   }
   assert.equal(userUpdateInputSchema.safeParse({ password: 'Test1234!' }).success, false);
+});
+
+/* ─── The report payload `createReport` writes (#101) ─── */
+
+const reportPayload = {
+  event_id: U,
+  cluster_id: U,
+  unit_id: null,
+  latitude: 14.6,
+  longitude: 121,
+  population_counts: [],
+  damage_condition_id: null,
+  report_missing_persons: [],
+  report_casualties: [],
+};
+const casualty = {
+  condition_id: U,
+  name: 'Ana',
+  age: 34,
+  sex: 'female',
+  diagnosis: null,
+};
+
+test('a report payload keeps only the report’s own fields', () => {
+  const parsed = reportCreateSchema.parse({ ...reportPayload, is_verified: true, reviewed: 1 });
+  assert.equal('is_verified' in parsed, false);
+  assert.equal('reviewed' in parsed, false);
+  assert.equal(reportCreateSchema.parse(reportPayload).cluster_id, U);
+});
+
+test('nested casualties and missing persons keep only their own fields', () => {
+  const parsed = reportCreateSchema.parse({
+    ...reportPayload,
+    report_casualties: [{ ...casualty, id: U, bystander_report_id: U, report_id: U }],
+    report_missing_persons: [{ name: 'Ben', age: 9, sex: 'male', id: U, report_id: U }],
+  });
+  assert.deepEqual(Object.keys(parsed.report_casualties[0]).sort(), [
+    'age',
+    'condition_id',
+    'diagnosis',
+    'name',
+    'sex',
+  ]);
+  assert.deepEqual(Object.keys(parsed.report_missing_persons[0]).sort(), ['age', 'name', 'sex']);
+});
+
+test('a report payload refuses a list that is not an array or runs past the cap', () => {
+  // The length bomb: an array-like object would make groupReportPhotos allocate billions of rows.
+  const bomb = { length: 4294967295 };
+  assert.equal(
+    reportCreateSchema.safeParse({ ...reportPayload, report_casualties: bomb }).success,
+    false
+  );
+  const tooMany = Array.from({ length: 101 }, () => casualty);
+  assert.equal(
+    reportCreateSchema.safeParse({ ...reportPayload, report_casualties: tooMany }).success,
+    false
+  );
+  const atCap = Array.from({ length: 100 }, () => casualty);
+  assert.equal(
+    reportCreateSchema.safeParse({ ...reportPayload, report_casualties: atCap }).success,
+    true
+  );
+});
+
+test('a typed unit name is trimmed and capped at 120 characters', () => {
+  const typed = reportCreateSchema.parse({ ...reportPayload, unit_name: '  Dispatch  ' });
+  assert.equal(typed.unit_name, 'Dispatch');
+  assert.equal(
+    reportCreateSchema.safeParse({ ...reportPayload, unit_name: 'x'.repeat(121) }).success,
+    false
+  );
+});
+
+test('a report payload refuses an event or cluster that is not a uuid', () => {
+  for (const field of ['event_id', 'cluster_id'] as const) {
+    assert.equal(
+      reportCreateSchema.safeParse({ ...reportPayload, [field]: 'not-a-uuid' }).success,
+      false,
+      field
+    );
+  }
 });

@@ -9,6 +9,14 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-050 Close out #101: mass assignment on user and report writes: 2026-11-23 (branch `fix/DRRM-050-mass-assignment-closeout`)
+
+Plan: [[plan/fix/DRRM-050-mass-assignment-closeout]] · [[users]] · [[field-reports]] · [[settings-lookups]] · GitHub #101
+
+- Edit user no longer takes an email: the email is set when the account is made, and Edit user shows it read-only. The server refuses it (`userUpdateInputSchema` is strict without it).
+- A unit typed under "Other (please specify)" on a report is added inside the report's transaction, so a report that isn't saved leaves no unit behind. A unit typed at the same moment as another member's report still saves.
+- Tests cover the report payload: nested casualties and missing persons keep only their own fields, a non-array or over-100 list is refused, a typed unit name is trimmed and capped.
+
 ## DRRM-049 Hardening: inactive accounts, rate limit, headers, dependencies: 2026-11-20 (branch `fix/DRRM-049-hardening`)
 
 Plan: [[plan/fix/DRRM-049-hardening]] · [[auth]] · [[users]] · [[bystander-reports]] · [[offline-pwa]] · GitHub #104
