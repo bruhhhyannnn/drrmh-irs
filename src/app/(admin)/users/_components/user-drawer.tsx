@@ -237,7 +237,9 @@ function UserForm({
     };
     try {
       if (user) {
-        await updateUser.mutateAsync({ id: user.id, data: profile });
+        // The email is the sign-in identity, set when the account is made: Edit user doesn't send it.
+        const { email: _sameEmail, ...editable } = profile;
+        await updateUser.mutateAsync({ id: user.id, data: editable });
         toast.success('User updated');
       } else {
         await createUser.mutateAsync({ ...profile, password: data.password });
@@ -321,12 +323,18 @@ function UserForm({
 
         <DrawerSection title="Account">
           <FormGrid>
-            <FormField id="user-email" label="Email" hint="Required" error={errors.email?.message}>
+            <FormField
+              id="user-email"
+              label="Email"
+              hint={user ? 'Set when the account is made' : 'Required'}
+              error={errors.email?.message}
+            >
               <TextInput
                 id="user-email"
                 type="email"
                 placeholder="e.g. jdelacruz@up.edu.ph"
                 autoComplete="off"
+                readOnly={!!user}
                 invalid={!!errors.email}
                 aria-describedby={describedBy('user-email', errors.email)}
                 {...register('email')}

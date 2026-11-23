@@ -133,12 +133,17 @@ export const completeProfileSchema = z
   })
   .strict();
 
+/**
+ * The sign-in email. Set when the account is made (`createUser`), never changed from Edit user:
+ * the email is the account's sign-in identity, and `updateUser` refuses it (#101).
+ */
+const emailField = z.string().trim().email('Invalid email address').max(254);
+
 const userWriteFields = {
   first_name: z.string().trim().min(1, 'First name is required').max(100),
   middle_name: optionalText(100),
   last_name: z.string().trim().min(1, 'Last name is required').max(100),
   suffix: optionalText(50),
-  email: z.string().trim().email('Invalid email address').max(254),
   username: z.string().trim().min(3, 'Username must be at least 3 characters').max(100),
   /** null for an off-campus account. */
   campus_id: idOrNone,
@@ -158,10 +163,10 @@ const userWriteFields = {
 
 /** Users page → Add user (`createUser`). */
 export const userCreateInputSchema = z
-  .object({ ...userWriteFields, password: passwordSchema })
+  .object({ ...userWriteFields, email: emailField, password: passwordSchema })
   .strict();
 
-/** Users page → Edit user (`updateUser`): any of the same fields, never the password. */
+/** Users page → Edit user (`updateUser`): the same fields without the email or the password. */
 export const userUpdateInputSchema = z.object(userWriteFields).partial().strict();
 
 /* ─── Main Tables ─── */

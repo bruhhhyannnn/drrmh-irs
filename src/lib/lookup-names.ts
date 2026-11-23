@@ -50,6 +50,36 @@ export async function unitIdForName(clusterId: string, name: string) {
   );
 }
 
+/**
+ * `unitIdForName` inside the caller's transaction (#101): a unit a report adds is rolled back
+ * with the report when the save fails. The insert is `ON CONFLICT DO NOTHING`, because a
+ * unique-violation error would abort the whole transaction; a unit another member added at the
+ * same moment is reused once their transaction commits, as `findOrCreate` does outside one.
+ */
+export async function unitIdForNameIn(
+  tx: Prisma.TransactionClient,
+  clusterId: string,
+  name: string
+) {
+  const unitName = tidy(name);
+  const find = () =>
+    tx.unit.findFirst({
+      where: { cluster_id: clusterId, name: { equals: unitName, mode: 'insensitive' } },
+      select: { id: true },
+    });
+  const existing = await find();
+  if (existing) return existing.id;
+  const [added] = await tx.$queryRaw<{ id: string }[]>`
+    INSERT INTO units (id, name, cluster_id)
+    VALUES (gen_random_uuid(), ${unitName}, ${clusterId}::uuid)
+    ON CONFLICT DO NOTHING
+    RETURNING id`;
+  if (added) return added.id;
+  const theirs = await find();
+  if (!theirs) throw new Error('The unit could not be added to this cluster.');
+  return theirs.id;
+}
+
 /** The position called `name`, added when there's none by that name. */
 export async function positionIdForName(name: string) {
   const positionName = tidy(name);
