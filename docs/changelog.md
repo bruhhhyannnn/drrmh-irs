@@ -17,6 +17,16 @@ Plan: [[plan/fix/DRRM-049-hardening]] · [[auth]] · [[users]] · [[bystander-re
 - The public bystander form takes at most 30 reports per network per 10 minutes; a report over the limit stays on the phone and sends later. Needs `prisma/manual/DRRM-049-rate-limits.sql` to count across server copies.
 - Every response carries security headers, plus a report-only content security policy.
 - Next.js 16.4.6, Prisma 7.10.1 and patched transitive packages (`npm audit` 27 → 8 findings).
+## DRRM-047 Caller checks on the older actions: 2026-11-20 (branch `fix/DRRM-047-legacy-action-caller-checks`)
+
+Plan: [[plan/fix/DRRM-047-legacy-action-caller-checks]] · [[events]] · [[bystander-reports]] · [[campus-scoping]] · [[settings-lookups]] · [[dashboard]] · GitHub #102, #103
+
+- Events, bystander reports, campuses, headcount fields, the dashboard and Settings check who is asking on the server, and only show or change what the admin's campus covers.
+- Their payloads are strict allowlists, so nothing can ride along into other tables, and who created or completed an event comes from the signed-in admin.
+- Deleting a bystander report also deletes its photos.
+- Campuses are changed by Super Admins only. Administrators still add, edit and delete positions, casualty and damage conditions.
+- A headcount field is renamed by an Administrator only while no other campus uses it, and no other campus's report carries a headcount for it; otherwise a Super Admin does it.
+- The Bystander reports list shows the newest 500 and says so when there are more.
 
 ## DRRM-046 Field report rules on the server: 2026-11-20 (branch `fix/DRRM-046-field-report-rules`)
 

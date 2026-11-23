@@ -96,7 +96,8 @@ function PeopleChips({ report }: { report: BystanderRow }) {
 
 export default function BystanderReportsPage() {
   const campusId = useScopedCampusId();
-  const { data: reports = [], isPending, error } = useBystanderReports(campusId || undefined);
+  const { data: list, isPending, error } = useBystanderReports(campusId || undefined);
+  const reports = list?.reports ?? [];
   const updateStatus = useUpdateBystanderReportStatus();
   const deleteReport = useDeleteBystanderReport();
   const [tab, setTab] = useState<Tab>('action');
@@ -301,6 +302,11 @@ export default function BystanderReportsPage() {
             />
             <ListCount loading={isPending}>{plural(rows.length, 'report', 'reports')}</ListCount>
           </ListToolbar>
+          {list?.truncated && (
+            <p role="status" className="border-line text-gray-500 border-b px-5 py-3 text-[15px]">
+              Showing the newest {list.limit} reports.
+            </p>
+          )}
           <DataTable
             label="Bystander reports"
             columns={columns}

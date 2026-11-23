@@ -26,6 +26,7 @@ import {
   positionSchema,
   unitSchema,
 } from '@/lib';
+import { isGlobalSettingsTable } from '@/lib/settings-access';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowDown, ArrowUp, ArrowUpDown, Info, Pencil, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -189,6 +190,8 @@ export function LookupTable({
   onAddingChange: (adding: boolean) => void;
 }) {
   const campusId = useScopedCampusId();
+  // Lists every campus shares are changed by Super Admins only (#103); others just read them.
+  const readOnly = !useIsSuperAdmin() && isGlobalSettingsTable(table);
   const { data, isPending, error } = useSettingsTable(table);
   const { data: clusters = [] } = useSettingsTable('clusters');
   const update = useUpdateSetting(table);
@@ -363,6 +366,7 @@ export function LookupTable({
           checked={r.is_active}
           label={`${r.name} active`}
           onChange={(v) => setActive(r, v)}
+          disabled={readOnly}
         />
       ),
     },
@@ -371,22 +375,23 @@ export function LookupTable({
       header: '',
       width: '72px',
       align: 'right',
-      cell: (r) => (
-        <RowActions>
-          <IconAction
-            label="Edit"
-            icon={<Pencil size={18} aria-hidden />}
-            onClick={() => setEditing(r)}
-          />
-          <IconAction
-            label="Delete"
-            icon={<Trash2 size={18} aria-hidden />}
-            onClick={() => setDeleting(r)}
-            // Red only when nothing points at it; in use, the dialog says what does.
-            tone={usage && usedTotal(table, r) === 0 ? 'danger' : undefined}
-          />
-        </RowActions>
-      ),
+      cell: (r) =>
+        readOnly ? null : (
+          <RowActions>
+            <IconAction
+              label="Edit"
+              icon={<Pencil size={18} aria-hidden />}
+              onClick={() => setEditing(r)}
+            />
+            <IconAction
+              label="Delete"
+              icon={<Trash2 size={18} aria-hidden />}
+              onClick={() => setDeleting(r)}
+              // Red only when nothing points at it; in use, the dialog says what does.
+              tone={usage && usedTotal(table, r) === 0 ? 'danger' : undefined}
+            />
+          </RowActions>
+        ),
     },
   ];
 
@@ -499,19 +504,23 @@ export function LookupTable({
                   tone: r.is_active ? ('green' as const) : ('grey' as const),
                 },
               ]}
-              actions={[
-                {
-                  label: 'Edit',
-                  icon: <Pencil size={16} aria-hidden />,
-                  onClick: () => setEditing(r),
-                },
-                {
-                  label: 'Delete',
-                  icon: <Trash2 size={16} aria-hidden />,
-                  onClick: () => setDeleting(r),
-                  variant: 'danger',
-                },
-              ]}
+              actions={
+                readOnly
+                  ? []
+                  : [
+                      {
+                        label: 'Edit',
+                        icon: <Pencil size={16} aria-hidden />,
+                        onClick: () => setEditing(r),
+                      },
+                      {
+                        label: 'Delete',
+                        icon: <Trash2 size={16} aria-hidden />,
+                        onClick: () => setDeleting(r),
+                        variant: 'danger' as const,
+                      },
+                    ]
+              }
             />
           )}
         />

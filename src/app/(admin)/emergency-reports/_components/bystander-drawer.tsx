@@ -18,7 +18,7 @@ import { Chip, Mono, Skeleton } from '../../_components/ui';
 import { plural } from '../../_lib/format';
 import { bystanderStatusKey, bystanderTone, capitalize } from '../../_lib/status';
 
-export type BystanderRow = Awaited<ReturnType<typeof getBystanderReports>>[number];
+export type BystanderRow = Awaited<ReturnType<typeof getBystanderReports>>['reports'][number];
 
 const toSex = (sex: string | null): PersonSex =>
   sex === 'male' || sex === 'female' ? sex : 'unknown';

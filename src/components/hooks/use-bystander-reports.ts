@@ -8,6 +8,7 @@ import {
   updateBystanderReportStatus,
 } from '@/actions/emergency-reports';
 import { getAccessToken } from '@/lib/supabase';
+import { okOrThrow } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 
 export type BystanderStatus = 'reviewed' | 'verified' | 'dismissed';
@@ -21,7 +22,7 @@ function invalidateBystanderViews(queryClient: QueryClient) {
 export function useBystanderReports(campusId?: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['bystander-reports', campusId],
-    queryFn: () => getBystanderReports(campusId),
+    queryFn: async () => getBystanderReports(await getAccessToken(), campusId),
     enabled: options?.enabled ?? true,
   });
 }
@@ -30,7 +31,7 @@ export function useBystanderReports(campusId?: string, options?: { enabled?: boo
 export function usePendingBystanderCount(campusId?: string) {
   return useQuery({
     queryKey: ['bystander-pending', campusId],
-    queryFn: () => getPendingBystanderCount(campusId),
+    queryFn: async () => getPendingBystanderCount(await getAccessToken(), campusId),
     refetchInterval: 1000 * 60,
   });
 }
@@ -38,8 +39,8 @@ export function usePendingBystanderCount(campusId?: string) {
 export function useUpdateBystanderReportStatus() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, status }: { id: string; status: BystanderStatus }) =>
-      updateBystanderReportStatus(id, status),
+    mutationFn: async ({ id, status }: { id: string; status: BystanderStatus }) =>
+      okOrThrow(await updateBystanderReportStatus(await getAccessToken(), id, status)),
     onSuccess: () => invalidateBystanderViews(queryClient),
   });
 }
@@ -47,7 +48,8 @@ export function useUpdateBystanderReportStatus() {
 export function useDeleteBystanderReport() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => deleteBystanderReport(id),
+    mutationFn: async (id: string) =>
+      okOrThrow(await deleteBystanderReport(await getAccessToken(), id)),
     onSuccess: () => invalidateBystanderViews(queryClient),
   });
 }
@@ -56,7 +58,7 @@ export function useDeleteBystanderReport() {
 export function useBystanderPhotoUrls(reportId: string | undefined, hasPhotos: boolean) {
   return useQuery({
     queryKey: ['bystander-photo-urls', reportId],
-    queryFn: () => getBystanderPhotoUrls(reportId!),
+    queryFn: async () => getBystanderPhotoUrls(await getAccessToken(), reportId!),
     enabled: !!reportId && hasPhotos,
     staleTime: 1000 * 60 * 50,
   });

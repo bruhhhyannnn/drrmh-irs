@@ -1,6 +1,6 @@
 ---
 type: module
-updated: 2026-11-20
+updated: 2026-11-23
 module: field-reports
 paths:
   - src/actions/reports/index.ts
@@ -67,7 +67,7 @@ A field report (status report) is one ERT team leader's headcount, casualties, m
 - `getReportCasualties(token, reportId)` returns `{ ok: true, casualties }`, `createReportMissingPerson(token, data)` `{ ok: true, missingPerson }` (it writes only the `missingPersonSchema` fields plus `report_id`; invalid data is `{ ok: false, retry: false }`), `deleteReportMissingPerson(token, id)` `{ ok: true }` (it looks up the row's report first). Single-row reads and edits used after submit, checked with `checkReportCaller`.
 - `getReportMissingPersons(token, reportId)`: `{ ok: true, missingPersons }` for the report's owner (also after the event ended) or an in-scope admin.
 
-`src/actions/population-categories/index.ts`: `getPopulationCategories`, `createPopulationCategory`, `updatePopulationCategory`, `getCampusPopulationCategories(campusId)` (active, ordered; used by the forms), `getCampusPopulationCategoryAssignments`, `getCampusPopulationCategoryCounts`, `addCampusPopulationCategory` (upsert, re-activates), `updateCampusPopulationCategory`, `deleteCampusPopulationCategory`, `reorderCampusPopulationCategories`. These revalidate `/settings/population-fields`.
+`src/actions/population-categories/index.ts`: `getPopulationCategories`, `createPopulationCategory`, `updatePopulationCategory`, `getCampusPopulationCategories(campusId)` (active, ordered; used by the forms), `getCampusPopulationCategoryAssignments`, `getCampusPopulationCategoryCounts`, `addCampusPopulationCategory` (upsert, re-activates; picks the next place under a `campus` row lock), `updateCampusPopulationCategory`, `deleteCampusPopulationCategory`, `reorderCampusPopulationCategories`. These revalidate `/settings/population-fields`. The reads stay public (the forms show a campus's fields); every write takes the token and returns `{ ok } | { ok: false, error }` (DRRM-047): an admin, for a campus in scope, with strict allowlists. A field's code is fixed once made. An Administrator may edit a field only while no other campus links to it and no other campus's report or bystander report has a headcount for it (`canEditPopulationField`, `src/lib/population-field-access.ts`); otherwise a Super Admin does. `updatePopulationCategory` checks this; the payloads are the strict `populationCategory*Schema` / `campusPopulationLinkUpdateSchema` in `src/lib/schemas.ts`. A reorder must name links of one campus in scope (at most 100).
 
 ## Client side
 

@@ -10,6 +10,8 @@ import {
   updateCampusPopulationCategory,
   updatePopulationCategory,
 } from '@/actions/population-categories';
+import { getAccessToken } from '@/lib/supabase';
+import { okOrThrow } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export function useCampusPopulationCategories(campusId?: string) {
@@ -31,7 +33,8 @@ export function usePopulationCategories() {
 export function useCreatePopulationCategory() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: createPopulationCategory,
+    mutationFn: async (data: { code: string; name: string; description?: string }) =>
+      okOrThrow(await createPopulationCategory(await getAccessToken(), data)).category,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['population-categories'] }),
   });
 }
@@ -39,13 +42,13 @@ export function useCreatePopulationCategory() {
 export function useUpdatePopulationCategory() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       id,
       data,
     }: {
       id: string;
-      data: Partial<{ code: string; name: string; description: string; is_active: boolean }>;
-    }) => updatePopulationCategory(id, data),
+      data: Partial<{ name: string; description: string; is_active: boolean }>;
+    }) => okOrThrow(await updatePopulationCategory(await getAccessToken(), id, data)).category,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['population-categories'] }),
   });
 }
@@ -68,7 +71,8 @@ export function useCampusPopulationCategoryCounts() {
 export function useAddCampusPopulationCategory(campusId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (categoryId: string) => addCampusPopulationCategory(campusId, categoryId),
+    mutationFn: async (categoryId: string) =>
+      okOrThrow(await addCampusPopulationCategory(await getAccessToken(), campusId, categoryId)),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['campus-population-category-assignments', campusId],
@@ -81,13 +85,13 @@ export function useAddCampusPopulationCategory(campusId: string) {
 export function useUpdateCampusPopulationCategory(campusId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       id,
       data,
     }: {
       id: string;
       data: Partial<{ is_required: boolean; is_active: boolean; sort_order: number }>;
-    }) => updateCampusPopulationCategory(id, data),
+    }) => okOrThrow(await updateCampusPopulationCategory(await getAccessToken(), id, data)),
     onSuccess: (_result, { data }) => {
       queryClient.invalidateQueries({
         queryKey: ['campus-population-category-assignments', campusId],
@@ -102,7 +106,8 @@ export function useUpdateCampusPopulationCategory(campusId: string) {
 export function useDeleteCampusPopulationCategory(campusId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: deleteCampusPopulationCategory,
+    mutationFn: async (id: string) =>
+      okOrThrow(await deleteCampusPopulationCategory(await getAccessToken(), id)),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['campus-population-category-assignments', campusId],
@@ -117,7 +122,8 @@ export function useReorderCampusPopulationCategories(campusId: string) {
   const queryClient = useQueryClient();
   const key = ['campus-population-category-assignments', campusId];
   return useMutation({
-    mutationFn: (orderedIds: string[]) => reorderCampusPopulationCategories(orderedIds),
+    mutationFn: async (orderedIds: string[]) =>
+      okOrThrow(await reorderCampusPopulationCategories(await getAccessToken(), orderedIds)),
     onMutate: async (orderedIds) => {
       await queryClient.cancelQueries({ queryKey: key });
       const previous = queryClient.getQueryData<{ id: string }[]>(key);

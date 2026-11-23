@@ -10,7 +10,7 @@ import {
   updateCampus,
 } from '@/actions/campus-table';
 import { getAccessToken } from '@/lib/supabase';
-import type { Prisma } from '@prisma/client';
+import { okOrThrow } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 
 function invalidateCampusViews(queryClient: QueryClient) {
@@ -35,7 +35,7 @@ export function useCampuses(query?: string) {
 export function useCampusesOverview({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ['campuses-overview'],
-    queryFn: () => getCampusesOverview(),
+    queryFn: async () => getCampusesOverview(await getAccessToken()),
     enabled,
   });
 }
@@ -43,7 +43,7 @@ export function useCampusesOverview({ enabled = true }: { enabled?: boolean } = 
 export function useCampusOverview(id?: string) {
   return useQuery({
     queryKey: ['campus-overview', id],
-    queryFn: () => getCampusOverview(id!),
+    queryFn: async () => getCampusOverview(await getAccessToken(), id!),
     enabled: !!id,
   });
 }
@@ -51,7 +51,8 @@ export function useCampusOverview(id?: string) {
 export function useCreateCampus() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: Prisma.campusCreateInput) => createCampus(data),
+    mutationFn: async (data: { name: string; is_active?: boolean }) =>
+      okOrThrow(await createCampus(await getAccessToken(), data)).campus,
     onSuccess: () => invalidateCampusViews(queryClient),
   });
 }
@@ -59,8 +60,13 @@ export function useCreateCampus() {
 export function useUpdateCampus() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Prisma.campusUpdateInput }) =>
-      updateCampus(id, data),
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: { name?: string; is_active?: boolean };
+    }) => okOrThrow(await updateCampus(await getAccessToken(), id, data)).campus,
     onSuccess: () => invalidateCampusViews(queryClient),
   });
 }
@@ -68,7 +74,7 @@ export function useUpdateCampus() {
 export function useDeleteCampus() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => deleteCampus(id),
+    mutationFn: async (id: string) => okOrThrow(await deleteCampus(await getAccessToken(), id)),
     onSuccess: () => invalidateCampusViews(queryClient),
   });
 }

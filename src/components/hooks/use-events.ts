@@ -11,7 +11,9 @@ import {
   getSiblingOngoingEvents,
   updateEvent,
 } from '@/actions/events';
-import type { Prisma } from '@prisma/client';
+import type { EventWriteInput } from '@/lib/schemas';
+import { getAccessToken } from '@/lib/supabase';
+import { okOrThrow } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 
 /** Everything that shows an event's name, status, dates or counts. */
@@ -33,14 +35,14 @@ function invalidateEventViews(queryClient: QueryClient) {
 export function useEvents(query?: string, campusId?: string) {
   return useQuery({
     queryKey: ['events', query, campusId],
-    queryFn: () => getEvents(query, campusId),
+    queryFn: async () => getEvents(await getAccessToken(), query, campusId),
   });
 }
 
 export function useEvent(id?: string) {
   return useQuery({
     queryKey: ['event', id],
-    queryFn: () => getEvent(id!),
+    queryFn: async () => getEvent(await getAccessToken(), id!),
     enabled: !!id,
   });
 }
@@ -48,13 +50,8 @@ export function useEvent(id?: string) {
 export function useCreateEvents() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      data,
-      campusIds,
-    }: {
-      data: Omit<Prisma.EventUncheckedCreateInput, 'campus_id'>;
-      campusIds: string[];
-    }) => createEvents(data, campusIds),
+    mutationFn: async ({ data, campusIds }: { data: EventWriteInput; campusIds: string[] }) =>
+      okOrThrow(await createEvents(await getAccessToken(), data, campusIds)).events,
     onSuccess: () => invalidateEventViews(queryClient),
   });
 }
@@ -62,8 +59,13 @@ export function useCreateEvents() {
 export function useUpdateEvent() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Prisma.EventUpdateInput }) =>
-      updateEvent(id, data),
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: EventWriteInput & { campus_id: string };
+    }) => okOrThrow(await updateEvent(await getAccessToken(), id, data)),
     onSuccess: () => invalidateEventViews(queryClient),
   });
 }
@@ -71,8 +73,8 @@ export function useUpdateEvent() {
 export function useCompleteEvents() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ ids, userId }: { ids: string[]; userId: string | null }) =>
-      completeEvents(ids, userId),
+    mutationFn: async ({ ids }: { ids: string[] }) =>
+      okOrThrow(await completeEvents(await getAccessToken(), ids)),
     onSuccess: () => invalidateEventViews(queryClient),
   });
 }
@@ -80,7 +82,7 @@ export function useCompleteEvents() {
 export function useDeleteEvent() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => deleteEvent(id),
+    mutationFn: async (id: string) => okOrThrow(await deleteEvent(await getAccessToken(), id)),
     onSuccess: () => invalidateEventViews(queryClient),
   });
 }
@@ -89,7 +91,7 @@ export function useDeleteEvent() {
 export function useOngoingEvents(campusId: string, options?: { refetchInterval?: number | false }) {
   return useQuery({
     queryKey: ['events', 'ongoing-all', campusId],
-    queryFn: () => getOngoingEvents(campusId),
+    queryFn: async () => getOngoingEvents(await getAccessToken(), campusId),
     enabled: !!campusId,
     staleTime: 1000 * 60 * 2,
     refetchInterval: options?.refetchInterval,
@@ -99,7 +101,7 @@ export function useOngoingEvents(campusId: string, options?: { refetchInterval?:
 export function useOngoingEventOptions(campusId?: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['events', 'ongoing-options', campusId],
-    queryFn: () => getOngoingEventOptions(campusId),
+    queryFn: async () => getOngoingEventOptions(await getAccessToken(), campusId),
     enabled: options?.enabled ?? true,
   });
 }
@@ -107,7 +109,7 @@ export function useOngoingEventOptions(campusId?: string, options?: { enabled?: 
 export function useSiblingOngoingEvents(eventId?: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['event-siblings', eventId],
-    queryFn: () => getSiblingOngoingEvents(eventId!),
+    queryFn: async () => getSiblingOngoingEvents(await getAccessToken(), eventId!),
     enabled: !!eventId && (options?.enabled ?? true),
   });
 }
@@ -115,7 +117,7 @@ export function useSiblingOngoingEvents(eventId?: string, options?: { enabled?: 
 export function useCampusEventOptions(campusId?: string) {
   return useQuery({
     queryKey: ['event-compare-options', campusId],
-    queryFn: () => getCampusEventOptions(campusId!),
+    queryFn: async () => getCampusEventOptions(await getAccessToken(), campusId!),
     enabled: !!campusId,
   });
 }
@@ -123,7 +125,7 @@ export function useCampusEventOptions(campusId?: string) {
 /** The summary source query, also fetched on demand (Export NSED report on an Events row). */
 export const eventSummarySourceQuery = (eventId: string) => ({
   queryKey: ['event-summary', eventId],
-  queryFn: () => getEventSummarySource(eventId),
+  queryFn: async () => getEventSummarySource(await getAccessToken(), eventId),
 });
 
 export function useEventSummarySource(eventId?: string) {

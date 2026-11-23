@@ -52,19 +52,19 @@ Events are the drills and real incidents that field reports are filed against. A
 
 ## Server actions
 
-`src/actions/events/index.ts` (no auth or campus check inside; callers pass the scope):
+`src/actions/events/index.ts`. Every action takes the access token first and checks the caller on the server (DRRM-047, #102): admins only, and only events of a campus their verified scope covers (an Administrator's own, a Super Admin's pick or all), whatever the request names. Writes return `{ ok: true, … } | { ok: false, error, retry }`; the hooks throw `error` in the browser (`okOrThrow`). Ids are checked with `isUuid`.
 
-- `getEvents(query?, campusId?)`: list with status, campus and report count; newest start first.
-- `getEvent(id)`: one event with status, campus, completer and report count.
-- `createEvents(data, campusIds)`: one event per ticked campus in a single `$transaction` (all or nothing).
-- `updateEvent(id, data)`: plain update.
-- `completeEvents(ids, userId)`: sets status Completed, `ended_at` now, `completed_by`. Throws if the Completed status is missing.
-- `deleteEvent(id)`: deletes the event; its reports go with it (cascade), and their photos are deleted from Storage after it ([[field-reports]]). One interactive transaction locks the event and its reports (`SELECT ... FOR UPDATE`), reads their photo paths and deletes the event, so a report or casualty added meanwhile waits instead of leaving photos behind. The photos are removed after commit, in chunks of 1000 paths.
-- `getOngoingEvents(campusId)`: ongoing events at one campus (ERT `/home` and `/report`).
-- `getOngoingEventOptions(campusId?)`: ongoing events for the admin Add report drawer.
-- `getSiblingOngoingEvents(eventId)`: same-name ongoing events at other campuses.
-- `getCampusEventOptions(campusId)`: all events at a campus, for "Compare with".
-- `getEventSummarySource(eventId)`: event, its reports (people, damage, headcount), active clusters with their active units, and active population fields.
+- `getEvents(token, query?, campusId?)`: list with status, campus and report count; newest start first; the scope's campus.
+- `getEvent(token, id)`: one event with status, campus, completer and report count; null outside the scope.
+- `createEvents(token, data, campusIds)`: parses `eventWriteSchema` (strict: name, description, quarter, start, end, status); every campus must be in scope (at most 50). One event per campus in a single `$transaction` (all or nothing). The creator is the caller; an event made Completed gets the caller as completer and ends now if it has no end.
+- `updateEvent(token, id, data)`: the same allowlist plus `campus_id`; the event and its new campus must be in scope. The completer is set to the caller when it becomes Completed (ending now if it has no end), kept while it stays Completed and cleared when reopened.
+- `completeEvents(token, ids)`: every event must be in scope (at most 50; one outside refuses all); sets status Completed, `ended_at` now and `completed_by` = the caller. `ok: false` if the Completed status is missing.
+- `deleteEvent(token, id)`: in scope only; deletes the event; its reports go with it (cascade), and their photos are deleted from Storage after it ([[field-reports]]). One interactive transaction locks the event and its reports (`SELECT ... FOR UPDATE`), reads their photo paths and deletes the event, so a report or casualty added meanwhile waits instead of leaving photos behind. The photos are removed after commit, in chunks of 1000 paths.
+- `getOngoingEvents(token, campusId)`: ongoing events at one campus (ERT `/home` and `/report`): a member's own campus whatever is asked, an admin's scope.
+- `getOngoingEventOptions(token, campusId?)`: ongoing events in scope for the admin Add report drawer.
+- `getSiblingOngoingEvents(token, eventId)`: same-name ongoing events at other campuses, for a Super Admin (an Administrator gets none).
+- `getCampusEventOptions(token, campusId)`: all events at a campus in scope, for "Compare with".
+- `getEventSummarySource(token, eventId)`: admins only, an event in scope (null otherwise, like a missing one); it holds casualties' names, ages and diagnoses. The event, its reports (people, damage, headcount), active clusters with their active units, and active population fields.
 
 Every mutation calls `revalidatePath` on `/events`, `/events/details` and `/dashboard`.
 
