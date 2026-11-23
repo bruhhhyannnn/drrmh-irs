@@ -2,6 +2,7 @@
 
 import { getMyProfile } from '@/actions/users';
 import { supabase } from '@/lib';
+import { ACCOUNT_INACTIVE_MESSAGE } from '@/lib/access';
 import { withTimeout } from '@/lib/offline-cache';
 import { getAccessToken } from '@/lib/supabase';
 import { useAuthStore } from '@/store';
@@ -52,18 +53,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function fetchProfile(userId: string) {
     const { userProfile } = useAuthStore.getState();
 
-    // If cached profile belongs to this exact user, reuse it and skip the fetch
-    if (userProfile && userProfile.auth_id === userId) {
-      fetchingForRef.current = null;
+    // A profile kept in the browser for this user shows the app at once, and is checked again in
+    // the background (#104), so a role change or a turned-off account takes effect without
+    // signing out. Offline, the kept profile stays.
+    const kept = !!userProfile && userProfile.auth_id === userId;
+    if (kept) {
       setProfileError(null);
       setLoading(false);
-      return;
     }
 
     if (fetchingForRef.current === userId) return;
     fetchingForRef.current = userId;
-    setLoading(true);
-    setProfileError(null);
+    if (!kept) {
+      setLoading(true);
+      setProfileError(null);
+    }
 
     try {
       // The server finds the profile from the verified token, not from an id the client sends.
@@ -71,11 +75,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         getAccessToken().then((token) => getMyProfile(token)),
         PROFILE_TIMEOUT_MS
       );
-      if (user && user.auth_id !== userId) return;
+      if (user && !('turnedOff' in user) && user.auth_id !== userId) return;
       if (fetchingForRef.current !== userId) return;
-      if (!user) {
+      if (user && 'turnedOff' in user) {
+        // Banned: the server refused the token and sent no profile, so nothing is kept.
+        setUserProfile(null);
+        setProfileError(ACCOUNT_INACTIVE_MESSAGE);
+      } else if (!user) {
         setUserProfile(null);
         setProfileError('Your user account could not be found. Please contact an administrator.');
+      } else if (user.is_active === false) {
+        setUserProfile(null);
+        setProfileError(ACCOUNT_INACTIVE_MESSAGE);
       } else {
         setUserProfile(user);
         setProfileError(null);
@@ -83,6 +94,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.error('Error fetching profile:', err);
       if (fetchingForRef.current !== userId) return;
+      // Offline or a server hiccup: a kept profile stays usable.
+      if (kept) return;
       setUserProfile(null);
       // Not err.message: production hides what a server action threw (React error #441).
       setProfileError("We couldn't load your account. Check your connection and try again.");

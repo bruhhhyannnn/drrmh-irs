@@ -706,3 +706,14 @@ model AssessmentStructuralFinding {
   @@unique([assessment_id, element, defect_code], map: "uq_structural_findings_check")
   @@map("assessment_structural_findings")
 }
+
+/// The public bystander form's per-network counter (DRRM-049, prisma/manual/DRRM-049-rate-limits.sql).
+/// `key` is a salted SHA-256 of the client's IP; read and written with raw SQL in src/lib/rate-limit.ts.
+model RateLimit {
+  key          String   @id
+  window_start DateTime @default(now()) @db.Timestamptz(6)
+  hits         Int      @default(0)
+
+  @@index([window_start], map: "idx_rate_limits_window_start")
+  @@map("rate_limits")
+}

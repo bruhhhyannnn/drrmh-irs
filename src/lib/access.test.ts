@@ -104,6 +104,18 @@ test('the admin guard sends the signed out to sign-in and reports a failed profi
   });
 });
 
+test('a turned-off account is stopped by both guards, even from a kept profile (#104)', () => {
+  assert.deepEqual(adminGuard({ ...settled, profile: { ...admin, is_active: false } }), {
+    status: 'error',
+  });
+  assert.deepEqual(ertGuard({ ...settled, profile: { ...ert, is_active: false } }), {
+    status: 'error',
+  });
+  assert.deepEqual(adminGuard({ ...settled, profile: { ...admin, is_active: true } }), {
+    status: 'allow',
+  });
+});
+
 test('the ERT guard reports a failed profile load instead of checking forever', () => {
   assert.deepEqual(ertGuard({ ...settled, profile: null, profileError: 'Failed' }), {
     status: 'error',

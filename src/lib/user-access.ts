@@ -29,3 +29,14 @@ export function canAssignUserType(scope: Scope, typeName: string | null | undefi
   if (!known) return false;
   return typeName !== USER_TYPES[3] || scope.role === 'super_admin';
 }
+
+/**
+ * What the Users page says when the sign-in ban could not be changed along with the Active switch
+ * (#104). The profile change stands either way; null when the ban was updated.
+ */
+export function signInBanWarning(isActive: boolean, banFailed: boolean): string | null {
+  if (!banFailed) return null;
+  return isActive
+    ? "The sign-in ban could not be lifted, so they still can't sign in. Turn the account on again to retry."
+    : 'The sign-in ban could not be set, so they can still sign in. The app refuses them while the account is off, but turn it off again to retry.';
+}

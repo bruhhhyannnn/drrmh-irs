@@ -75,7 +75,9 @@ export default function UsersPage() {
     setActive.mutate(
       { id: u.id, isActive },
       {
-        onSuccess: () => {
+        onSuccess: ({ signInWarning }) => {
+          // The switch is saved either way; the ban is the part that may not have changed (#104).
+          if (signInWarning) toast.error(`${fullName(u)}: ${signInWarning}`, { duration: 10000 });
           if (undo) return;
           toast(
             (t) => (

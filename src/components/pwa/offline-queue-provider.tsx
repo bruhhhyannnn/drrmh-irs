@@ -93,8 +93,15 @@ export function OfflineQueueProvider() {
 
     try {
       const [bystanderResult, fieldResult, assessmentResult] = await Promise.all([
-        flushOne(getQueuedReports, removeQueuedReport, markQueuedReportFailed, (payload, photos) =>
-          createBystanderReport(payload, toBystanderPhotoFormData(photos))
+        flushOne(
+          getQueuedReports,
+          removeQueuedReport,
+          markQueuedReportFailed,
+          async (payload, photos) => {
+            const result = await createBystanderReport(payload, toBystanderPhotoFormData(photos));
+            // Over the per-network limit (#104): keep it pending, like a dropped connection.
+            if (!result.ok) throw new TypeError(result.error);
+          }
         ),
         flushOne(
           getQueuedFieldReports,

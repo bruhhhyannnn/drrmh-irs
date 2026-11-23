@@ -19,7 +19,7 @@ import {
 } from '@/lib/schemas';
 import { requireAdmin, requireProfile } from '@/lib/server-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { canAssignUserType, canManageUser } from '@/lib/user-access';
+import { canAssignUserType, canManageUser, signInBanWarning } from '@/lib/user-access';
 import { withoutAssignment } from '@/lib/user-assignment';
 import { isUuid } from '@/lib/utils';
 import { revalidatePath } from 'next/cache';
@@ -201,17 +201,18 @@ export async function getUser(token: string | null, id: string) {
 }
 
 /**
- * The signed-in person's own profile, found from their verified token. Unlike requireProfile it
- * also returns an inactive account, so the app can say so instead of failing to load.
- */
-/**
  * The signed-in user's profile, found from the verified token. Also refreshes their Google
  * profile photo from that verified session (DRRM-039): email-and-password accounts get none.
  * `avatar` is the photo and their Show my Google photo choice.
+ *
+ * A turned-off account is banned (setUserActive), and Auth refuses a banned user's token even
+ * before it expires, so `getUser` fails for it. That case returns `{ turnedOff: true }` with no
+ * profile data, so the app can say the account is off; any other unverifiable token gives null.
  */
 export async function getMyProfile(token: string | null) {
   if (!token) return null;
   const { data, error } = await supabaseAdmin.auth.getUser(token);
+  if (error?.code === 'user_banned') return { turnedOff: true as const };
   if (error || !data.user) return null;
   const [profile] = await Promise.all([
     prisma.user.findUnique({
@@ -342,10 +343,22 @@ export async function setUserActive(token: string | null, id: string, isActive: 
       where: { id },
       data: { is_active: isActive === true },
     });
+    // Turning an account off also stops its sign-in (#104): Supabase refuses new sign-ins and
+    // token refreshes for a banned user, so open sessions end within the hour. Turning it on
+    // lifts the ban. The profile change stands even if this fails (requireProfile refuses an
+    // inactive account either way), so the admin is told through `signInWarning` rather than an
+    // error, which would wrongly say nothing changed.
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(user.auth_id, {
+      ban_duration: isActive === true ? 'none' : SIGN_IN_BAN,
+    });
+    if (error) console.error('Could not update the sign-in ban:', error.message);
     revalidatePath('/users');
-    return user;
+    return { user, signInWarning: signInBanWarning(isActive === true, !!error) };
   });
 }
+
+/** How long a turned-off account's sign-in stays banned: until it is turned back on. */
+const SIGN_IN_BAN = '876000h';
 
 /**
  * Profile setup's save, for the signed-in person's own campus account, once (#101): an account
