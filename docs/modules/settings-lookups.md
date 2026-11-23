@@ -1,7 +1,7 @@
 ---
 type: module
 module: settings-lookups
-updated: 2026-11-20
+updated: 2026-11-23
 verified: true
 paths:
   - src/actions/settings/index.ts
@@ -14,7 +14,7 @@ tags: [module]
 
 # Settings and lookup tables
 
-Settings holds the lists that the report, event, user and assessment forms pick from: clusters, units, buildings, positions, casualty conditions, damage conditions, and each campus's headcount (population) fields. Administrators edit them for their own campus; Super Admins edit them for the campus picked in the top-bar switcher, or all. All the simple lists share one generic table and one set of server actions.
+Settings holds the lists that the report, event, user and assessment forms pick from: clusters, units, buildings, positions, casualty conditions, damage conditions, and each campus's headcount (population) fields. Administrators edit clusters, units and buildings for their own campus, and positions and casualty and damage conditions (the shared lists, which every campus picks from) for any campus. Campuses are Super Admin only. Super Admins edit everything, for the campus picked in the top-bar switcher, or all. All the simple lists share one generic table and one set of server actions.
 
 **Related:** [[architecture]] · [[field-reports]] · [[events]] · [[users]] · [[campus-scoping]] · [[assessments]] · [[checklist-editor]] · [[design-system]] · [[database]]
 
@@ -57,7 +57,7 @@ Read this before adding or changing a lookup table or the Settings page.
 
 - `SettingsTable` type: `clusters`, `units`, `positions`, `casualty_conditions`, `campus`, `damage_conditions`, `buildings`. `MODEL_MAP` maps each to a Prisma model.
 - `getSettingsItems(token, table, filterId?)`: admins only; an Administrator gets only their own campus's clusters, units and buildings. All rows with `INCLUDE_MAP` extras (parent names, linked record `_count`s; units count `users`, `reports` and `buildings` since DRRM-040). `filterId` narrows clusters by campus or units by cluster.
-- `createSettingsItem(token, table, data)`, `updateSettingsItem(token, table, id, data)`, `deleteSettingsItem(token, table, id)`: `data` is parsed with the table's strict schema (`WRITE_SCHEMAS`; all optional on edit), so relation keys are refused, and names lose control characters (#111). Who may write is `canWriteSetting` (`src/lib/settings-access.ts`): a Super Admin anything; an Administrator only clusters, units and buildings, and only when both the row as saved and the parent it is given are on their campus (an Administrator's new cluster defaults to their campus). Positions, casualty and damage conditions and campuses are Super Admin only (`GLOBAL_SETTINGS_TABLES`), and off-campus buildings are never edited here. Dynamic `prisma[model]` calls; they return `{ ok: true, item } | { ok: false, error }` (errors through `toFriendlyError`); revalidate `/settings` and the tab path from `toSettingsPath`.
+- `createSettingsItem(token, table, data)`, `updateSettingsItem(token, table, id, data)`, `deleteSettingsItem(token, table, id)`: `data` is parsed with the table's strict schema (`WRITE_SCHEMAS`; all optional on edit), so relation keys are refused, and names lose control characters (#111). Who may write is `canWriteSetting` (`src/lib/settings-access.ts`): a Super Admin anything; an Administrator clusters, units and buildings only when both the row as saved and the parent it is given are on their campus (an Administrator's new cluster defaults to their campus), and positions, casualty and damage conditions (`SHARED_SETTINGS_TABLES`, no campus to check). Campuses are Super Admin only (`GLOBAL_SETTINGS_TABLES`), and off-campus buildings are never edited here. The strict schemas are `settingsWriteSchemas` in `src/lib/schemas.ts`, so the tests can check them. Dynamic `prisma[model]` calls; they return `{ ok: true, item } | { ok: false, error }` (errors through `toFriendlyError`); revalidate `/settings` and the tab path from `toSettingsPath`.
 - Getters: `getUnits(clusterId?)`, `getUserTypes()`, `getPositions()`, `getEventStatuses()`, `getDamageConditions()`, `getClusters()`, `getCampus()`, `getCasualtyConditions()`.
 
 Population field actions are listed in [[field-reports]].
@@ -69,7 +69,7 @@ Population field actions are listed in [[field-reports]].
 - Row actions: Edit (drawer), active switch (`is_active`), Delete (confirm dialog with `linkedWarning`).
 - Used by (DRRM-040), on Clusters (users, units, reports), Units (users, reports, buildings) and Positions (users) (`USED_BY`): the counts, or an outlined Unused chip when nothing points at the row. An All / In use / Unused segmented control with counts filters the table; the Used by header sorts most used first, then least, then by name again. When rows are unused, a note above the table says how many and that deleting them changes nothing else, with Show unused. Delete stays per row: red on an unused row, grey on one in use (whose dialog still says what points at it). The phone card shows Used by too.
 - `LookupFormBody` picks the zod schema from `SCHEMAS` (`clusterSchema`, `unitSchema`, `buildingSchema`, `positionSchema`, `casualtyConditionSchema`, `damageConditionSchema`). Clusters get a Campus field for Super Admins only; Administrators' clusters use their own campus. Units pick a cluster. Buildings pick a unit ("Unit · Cluster") and floors (1 to 200).
-- `PopulationFields`: Super Admins get a tab per active campus; Administrators see their own campus only. Order is saved on drop through `reorderCampusPopulationCategories`.
+- `PopulationFields`: Super Admins get a tab per active campus; Administrators see their own campus only. Order is saved on drop through `reorderCampusPopulationCategories`. Renaming a shared field: an Administrator only while no other campus links to it or has a report headcount for it (`canEditPopulationField`, `src/lib/population-field-access.ts`).
 - Query keys equal the table name (`['clusters', filterId]`). Building mutations also invalidate `building-summaries`, `admin-assessments`, `assessment-setup`, `building-safety` (`ALSO_SHOWN_IN`).
 - Other modules use the getter hooks directly: `useCasualtyConditions`, `useDamageConditions`, `useClusters`, `useUnits`, `usePositions`, `useUserTypes`, `useEventStatuses`, `useCampus`.
 
@@ -85,7 +85,7 @@ Population field actions are listed in [[field-reports]].
 - Casualty and damage condition names drive severity colours in the event summary (`(admin)/_lib/summary.ts` regexes). Rename with care.
 - Inactive rows stay in old reports and are still shown when an existing record already uses them.
 - Building area profiles are not edited here; area types are on the checklist editor ([[checklist-editor]]).
-- Role and campus are checked on the server (`canWriteSetting`). On the shared lists an Administrator sees no Add button, row actions or Active switch, since the server would refuse them.
+- Role and campus are checked on the server (`canWriteSetting`). The UI follows the same rule: `isGlobalSettingsTable` decides whether an Administrator sees Add, the row actions and the Active switch. Campuses have no Settings tab (they are on `/campus`), so every Settings tab an Administrator opens is editable for them, shared lists included.
 
 ## Decisions
 

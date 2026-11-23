@@ -16,7 +16,9 @@ Plan: [[plan/fix/DRRM-047-legacy-action-caller-checks]] · [[events]] · [[bysta
 - Events, bystander reports, campuses, headcount fields, the dashboard and Settings check who is asking on the server, and only show or change what the admin's campus covers.
 - Their payloads are strict allowlists, so nothing can ride along into other tables, and who created or completed an event comes from the signed-in admin.
 - Deleting a bystander report also deletes its photos.
-- Positions, casualty and damage conditions and campuses are changed by Super Admins only; Administrators see those lists read-only.
+- Campuses are changed by Super Admins only. Administrators still add, edit and delete positions, casualty and damage conditions.
+- A headcount field is renamed by an Administrator only while no other campus uses it, and no other campus's report carries a headcount for it; otherwise a Super Admin does it.
+- The Bystander reports list shows the newest 500 and says so when there are more.
 
 ## DRRM-046 Field report rules on the server: 2026-11-20 (branch `fix/DRRM-046-field-report-rules`)
 
