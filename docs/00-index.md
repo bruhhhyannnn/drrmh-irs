@@ -1,6 +1,6 @@
 ---
 type: index
-updated: 2026-11-09
+updated: 2026-11-25
 verified: true
 tags: [index]
 ---
@@ -47,47 +47,50 @@ New decision: copy [[decisions/TEMPLATE]].
 
 ## Plans
 
-Statuses are taken from each plan's frontmatter as of 2026-11-09. Keep this list in step when a status changes.
+Statuses are taken from each plan's frontmatter as of 2026-11-25. Keep this list in step when a status changes.
 
 ### Active
 
-| Plan                                                                                                         | Status      | Branch                                          |
-| ------------------------------------------------------------------------------------------------------------ | ----------- | ----------------------------------------------- |
-| [[plan/fix/DRRM-049-hardening\|DRRM-049 Hardening: inactive accounts, rate limit, headers]]                  | in-review   | `fix/DRRM-049-hardening`                        |
-| [[plan/fix/DRRM-048-db-concurrency-performance\|DRRM-048 Database: RLS, indexes, races]]                     | in-review   | `fix/DRRM-048-db-concurrency-performance`       |
-| [[plan/fix/DRRM-047-legacy-action-caller-checks\|DRRM-047 Caller checks on the older actions]]               | in-review   | `fix/DRRM-047-legacy-action-caller-checks`      |
-| [[plan/fix/DRRM-046-field-report-rules\|DRRM-046 Field report rules on the server]]                          | done        | `fix/DRRM-046-field-report-rules`               |
-| [[plan/fix/DRRM-045-auth-accounts-hardening\|DRRM-045 Sign-in and account hardening]]                        | done        | `fix/DRRM-045-auth-accounts-hardening`          |
-| [[plan/feature/DRRM-044-structural-integrity\|DRRM-044 Structural integrity in the assessment]]              | in-progress | `feat/DRRM-044-structural-integrity`            |
-| [[plan/fix/DRRM-043-campus-backdrop-clipping\|DRRM-043 Campus backdrop clipping]]                            | done        | `fix/DRRM-043-campus-backdrop-clipping`         |
-| [[plan/feature/DRRM-042-bystander-assessments-polish\|DRRM-042 Bystander and Assessments polish]]            | done        | `feat/DRRM-042-bystander-assessments-polish`    |
-| [[plan/feature/DRRM-041-favicon-app-icons\|DRRM-041 Favicon and app icons]]                                  | done        | `feat/DRRM-041-favicon-app-icons`               |
-| [[plan/feature/DRRM-040-settings-used-by\|DRRM-040 Settings: Used by]]                                       | done        | `feat/DRRM-040-settings-used-by`                |
-| [[plan/feature/DRRM-039-google-profile-photos\|DRRM-039 Google profile photos]]                              | done        | `feat/DRRM-039-google-profile-photos`           |
-| [[plan/feature/DRRM-038-dashboard-needs-attention\|DRRM-038 Dashboard: Needs attention]]                     | done        | `feat/DRRM-038-dashboard-needs-attention`       |
-| [[plan/feature/DRRM-037-campus-first-navigation\|DRRM-037 Campus-first navigation]]                          | done        | `feat/DRRM-037-campus-first-navigation`         |
-| [[plan/feature/DRRM-036-campus-page-hub-logo-upload\|DRRM-036 Campus page hub, logo upload]]                 | done        | `feat/DRRM-036-campus-page-hub-logo-upload`     |
-| [[plan/feature/DRRM-035-campus-logos-events-reports\|DRRM-035 Campus logos in Events and Reports]]           | done        | `feat/DRRM-035-campus-logos-events-reports`     |
-| [[plan/feature/DRRM-034-page-header-menu-completed-note\|DRRM-034 Completed note minimizes]]                 | done        | `feat/DRRM-034-page-header-menu-completed-note` |
-| [[plan/feature/DRRM-033-ui-polish-hover-checkbox\|DRRM-033 Visible hover, row click, Checkbox]]              | done        | `feat/DRRM-033-ui-polish-hover-checkbox`        |
-| [[plan/feature/DRRM-034-admin-report-photos\|DRRM-034 Photos in the admin report drawer]]                    | in-review   | `feat/DRRM-034-admin-report-photos`             |
-| [[plan/feature/DRRM-033-page-header-menu\|DRRM-033 PageHeader ⋯ menu]]                                       | in-review   | `feat/DRRM-033-page-header-menu`                |
-| [[plan/feature/DRRM-032-nsed-report-pgh-diliman\|DRRM-032 NSED report for PGH and UP Diliman]]               | in-review   | `feat/DRRM-032-nsed-report-pgh-diliman`         |
-| [[plan/feature/DRRM-031-headcount-by-unit-chart\|DRRM-031 Headcount by category chart on the event summary]] | in-review   | `feat/DRRM-031-headcount-by-unit-chart`         |
-| [[plan/feature/DRRM-030-event-report-timeline\|DRRM-030 Timeline of reports on the event summary]]           | in-review   | `feat/DRRM-030-event-report-timeline`           |
-| [[plan/feature/DRRM-028-nsed-report-v2\|DRRM-028 NSED report v2]]                                            | in-review   | `feat/DRRM-028-nsed-report-v2`                  |
-| [[plan/review/2026-09-08-dev-branch-audit\|Dev branch audit (2026-09-08)]]                                   | in-progress | `dev`                                           |
-| [[plan/fix/DRRM-002-emergency-reports-hardening\|DRRM-002 Emergency reports hardening]]                      | approved    | `fix/emergency-reports-hardening`               |
-| [[plan/fix/DRRM-003-report-form-atomicity\|DRRM-003 Report form atomicity]]                                  | approved    | `fix/report-form-atomicity`                     |
-| [[plan/fix/DRRM-004-events-dynamic-clusters\|DRRM-004 Events and dynamic clusters]]                          | approved    | `fix/events-dynamic-clusters`                   |
-| [[plan/fix/DRRM-005-settings-hooks-performance\|DRRM-005 Settings, hooks and dashboard performance]]         | approved    | `fix/settings-hooks-performance`                |
-| [[plan/fix/DRRM-006-schema-dual-write-sunset\|DRRM-006 Schema normalization and dual-write sunset]]          | approved    | `refactor/schema-dual-write-sunset`             |
-| [[plan/feature/2026-09-09-table-redesign\|Data tables redesign]]                                             | approved    | `feature/table-redesign`                        |
+| Plan                                                                                                 | Status      | Branch                                     |
+| ---------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------------ |
+| [[plan/fix/DRRM-051-post-hardening-follow-ups\|DRRM-051 Follow-ups after the security batch]]        | in-review   | `fix/DRRM-051-post-hardening-follow-ups`   |
+| [[plan/feature/DRRM-021-assessment-pre-test-polish\|DRRM-021 Assessment pre-test polish]]            | draft       | `feat/DRRM-021-assessment-pre-test-polish` |
+| [[plan/review/2026-09-08-dev-branch-audit\|Dev branch audit (2026-09-08)]]                           | in-progress | `dev`                                      |
+| [[plan/fix/DRRM-002-emergency-reports-hardening\|DRRM-002 Emergency reports hardening]]              | approved    | `fix/emergency-reports-hardening`          |
+| [[plan/fix/DRRM-003-report-form-atomicity\|DRRM-003 Report form atomicity]]                          | approved    | `fix/report-form-atomicity`                |
+| [[plan/fix/DRRM-004-events-dynamic-clusters\|DRRM-004 Events and dynamic clusters]]                  | approved    | `fix/events-dynamic-clusters`              |
+| [[plan/fix/DRRM-005-settings-hooks-performance\|DRRM-005 Settings, hooks and dashboard performance]] | approved    | `fix/settings-hooks-performance`           |
+| [[plan/fix/DRRM-006-schema-dual-write-sunset\|DRRM-006 Schema normalization and dual-write sunset]]  | approved    | `refactor/schema-dual-write-sunset`        |
+| [[plan/feature/2026-09-09-table-redesign\|Data tables redesign]]                                     | approved    | `feature/table-redesign`                   |
 
 DRRM-002 to DRRM-006 and the table redesign may be partly or fully done in code. Check before you rely on these statuses.
 
 ### Done
 
+- [[plan/fix/DRRM-050-mass-assignment-closeout|DRRM-050 Close out #101: mass assignment]] (PR #131)
+- [[plan/fix/DRRM-049-hardening|DRRM-049 Hardening: inactive accounts, rate limit, headers, dependencies]] (PR #130)
+- [[plan/fix/DRRM-048-db-concurrency-performance|DRRM-048 Database: RLS, indexes, races]] (PR #129)
+- [[plan/fix/DRRM-047-legacy-action-caller-checks|DRRM-047 Caller checks on the older actions]] (PR #128)
+- [[plan/fix/DRRM-046-field-report-rules|DRRM-046 Field report rules on the server]] (PR #127)
+- [[plan/fix/DRRM-045-auth-accounts-hardening|DRRM-045 Sign-in and account hardening]] (PR #126)
+- [[plan/feature/DRRM-044-structural-integrity|DRRM-044 Structural integrity in the assessment]] (PR #125)
+- [[plan/fix/DRRM-043-campus-backdrop-clipping|DRRM-043 Campus backdrop clipping]] (PR #124)
+- [[plan/feature/DRRM-042-bystander-assessments-polish|DRRM-042 Bystander and Assessments polish]] (PR #123)
+- [[plan/feature/DRRM-041-favicon-app-icons|DRRM-041 Favicon and app icons]] (PR #122)
+- [[plan/feature/DRRM-040-settings-used-by|DRRM-040 Settings: Used by]] (PR #121)
+- [[plan/feature/DRRM-039-google-profile-photos|DRRM-039 Google profile photos]] (PR #120)
+- [[plan/feature/DRRM-038-dashboard-needs-attention|DRRM-038 Dashboard: Needs attention]] (PR #119)
+- [[plan/feature/DRRM-037-campus-first-navigation|DRRM-037 Campus-first navigation]] (PR #118)
+- [[plan/feature/DRRM-036-campus-page-hub-logo-upload|DRRM-036 Campus page hub, logo upload]] (PR #117)
+- [[plan/feature/DRRM-035-campus-logos-events-reports|DRRM-035 Campus logos in Events and Reports]] (PR #116)
+- [[plan/feature/DRRM-034-page-header-menu-completed-note|DRRM-034 Completed note minimizes]] (PR #115)
+- [[plan/feature/DRRM-033-ui-polish-hover-checkbox|DRRM-033 Visible hover, row click, Checkbox]] (PR #114)
+- [[plan/feature/DRRM-034-admin-report-photos|DRRM-034 Photos in the admin report drawer]] (PR #113)
+- [[plan/feature/DRRM-033-page-header-menu|DRRM-033 PageHeader ⋯ menu]] (PR #112)
+- [[plan/feature/DRRM-032-nsed-report-pgh-diliman|DRRM-032 NSED report for PGH and UP Diliman]] (PR #107)
+- [[plan/feature/DRRM-031-headcount-by-unit-chart|DRRM-031 Headcount by category chart on the event summary]] (PR #105)
+- [[plan/feature/DRRM-030-event-report-timeline|DRRM-030 Timeline of reports on the event summary]] (PR #99)
+- [[plan/feature/DRRM-029-nsed-breakdown-width|DRRM-029 NSED breakdown width]] (PR #98)
 - [[plan/feature/DRRM-028-nsed-report-v2|DRRM-028 NSED report v2]] (PR #97)
 - [[plan/feature/DRRM-027-pillar-page-redesign|DRRM-027 Pillar page redesign]] (PR #96)
 - [[plan/feature/DRRM-026-off-campus-accounts|DRRM-026 Off-campus accounts]] (PR #95)

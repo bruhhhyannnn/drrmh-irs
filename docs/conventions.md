@@ -1,6 +1,6 @@
 ---
 type: reference
-updated: 2026-10-22
+updated: 2026-11-25
 verified: true
 tags: [conventions]
 ---
@@ -22,7 +22,9 @@ This note holds the detail behind the short Conventions list in `CLAUDE.md`. Rea
   - `prettier --write` on staged `*.{js,jsx,json,css,md}`, which includes these notes.
 - **Vendored map:** `src/components/ui/map.tsx` is vendored from mapcn and listed in the `ignores` of `eslint.config.mjs`. Don't "fix" lint issues there.
 - **Generated Prisma client:** never hand-edit it ([[database]]).
-- **Forms:** Zod schemas live in `src/lib/schemas.ts`, and forms use `react-hook-form` + `@hookform/resolvers` (`zodResolver`).
+- **Forms:** Zod 4 schemas live in `src/lib/schemas.ts`, and forms use `react-hook-form` + `@hookform/resolvers` 5 (`zodResolver`). A form whose schema has defaults, transforms or pre-processing takes both types, `useForm<XFormInput, unknown, XFormData>` (`z.input` / `z.infer`): the form holds the input, `handleSubmit` gets the parsed output (DRRM-051).
+- **Edit schemas:** build a server edit's allowlist with `partialEdit(schema)`, not `.partial()`. Zod 4 applies a `.default()` even inside `.optional()`, so `.partial()` of a schema with `is_active: z.boolean().default(true)` turns a rename into `is_active: true` (DRRM-051).
+- **Ids:** `z.string().guid()`, the loose 8-4-4-4-12 check zod 3's `uuid()` had. Zod 4's `uuid()` also checks the version and variant digits.
 - **Hooks:** one hook file per domain in `src/components/hooks/`. Mutations invalidate query keys on success (see `use-events.ts`).
 - **Lookup tables:** a new one extends `LOOKUPS` / `LookupTable`, not a new CRUD page ([[0009-table-driven-settings]]).
 - **Campus filters:** admin queries take the scoped campus id from `useScopedCampusId`. Don't add per-page campus filters ([[campus-scoping]]).

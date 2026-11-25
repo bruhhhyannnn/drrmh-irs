@@ -1,6 +1,6 @@
 ---
 type: reference
-updated: 2026-11-20
+updated: 2026-11-25
 verified: true
 tags: [architecture]
 ---
@@ -81,4 +81,4 @@ There are two Prisma/Postgres access paths and one Supabase path:
 
 ## Build and CI
 
-`npm run build` is `next build --webpack`, because next-pwa needs webpack. CI (`.github/workflows/ci.yml`) runs on PRs and pushes to `main`: `npm ci` → `prisma generate` → `npm audit --audit-level=critical` → lint → type-check → build. `npm run test` is commented out in CI, so it only runs locally.
+`npm run build` is `next build --webpack`, because next-pwa needs webpack. CI (`.github/workflows/ci.yml`) runs on PRs and pushes to `main`: `npm ci` → `prisma generate` → `npm audit --audit-level=critical` → lint → type-check → `npm run test` → build, on Node 22 (DRRM-051).

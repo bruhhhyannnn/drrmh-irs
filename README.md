@@ -68,7 +68,7 @@ The IRS is a centralized web platform consisting of:
 | **State Management**   | Zustand 5                                      |
 | **Data Fetching**      | TanStack Query v5 (React Query)                |
 | **Table**              | TanStack Table v8                              |
-| **Forms & Validation** | React Hook Form 7 + Zod 3                      |
+| **Forms & Validation** | React Hook Form 7 + Zod 4                      |
 | **Charts**             | Recharts 3                                     |
 | **Maps**               | MapLibre GL 5 + Nominatim                      |
 | **Date Utilities**     | date-fns 4                                     |
@@ -1153,7 +1153,7 @@ npm run test         # Unit tests for the pure logic (node:test via tsx)
 npx prisma generate  # Regenerate the Prisma client (also runs on npm install)
 ```
 
-`npm run test` runs `src/**/*.test.ts` and `prisma/**/*.test.ts`: the pure logic in `src/lib` (assessment scoring and drafts, the structural integrity rating, building safety, access, admin scope, the offline queue, schemas), the NSED report and the MATATAG checklist data. It doesn't cover UI or server actions, and CI doesn't run it yet. CI (`.github/workflows/ci.yml`) runs on pushes and pull requests to `main` and does the following: install, `prisma generate`, `npm audit`, lint, type-check, and build. A Husky pre-commit hook runs ESLint and Prettier on staged files.
+`npm run test` runs `src/**/*.test.ts` and `prisma/**/*.test.ts`: the pure logic in `src/lib` (assessment scoring and drafts, the structural integrity rating, building safety, access, admin scope, the offline queue, schemas), the NSED report and the MATATAG checklist data. It doesn't cover UI or server actions. CI (`.github/workflows/ci.yml`) runs on pushes and pull requests to `main`, on Node 22, and does the following: install, `prisma generate`, `npm audit`, lint, type-check, the unit tests, and build. A Husky pre-commit hook runs ESLint and Prettier on staged files.
 
 ---
 

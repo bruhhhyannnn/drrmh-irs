@@ -50,8 +50,8 @@ Schema changes ship as idempotent SQL in `prisma/manual/<ticket>.sql` plus the m
 
 ## Testing & verification
 
-- Verify changes with `npm run lint`, `npm run type-check`, `npm run test`, and `npm run build`. `npm run test` covers the pure logic in `src/lib` (assessment, building safety, access, admin scope, offline queue, schemas), the NSED report (`src/app/(admin)/_lib`) and the checklist data, not UI or server actions, and CI doesn't run it yet.
-- CI (`.github/workflows/ci.yml`) runs on PRs/pushes to `main`: `npm ci` → `prisma generate` → `npm audit --audit-level=critical` → lint → type-check → build. Pre-commit hook (Husky) runs `lint-staged` (eslint --fix + prettier on staged files).
+- Verify changes with `npm run lint`, `npm run type-check`, `npm run test`, and `npm run build`. `npm run test` covers the pure logic in `src/lib` (assessment, building safety, access, admin scope, offline queue, schemas), the NSED report (`src/app/(admin)/_lib`) and the checklist data, not UI or server actions.
+- CI (`.github/workflows/ci.yml`) runs on PRs/pushes to `main`: `npm ci` → `prisma generate` → `npm audit --audit-level=critical` → lint → type-check → test → build, on Node 22. Pre-commit hook (Husky) runs `lint-staged` (eslint --fix + prettier on staged files).
 - To sign in while testing in a browser, use the test accounts (ERT Member, Administrator, Super Admin) listed in `test-accounts.local.md` at the repo root. It is gitignored and lives only on the developer's machine, so a fresh worktree may not have it — ask the user then, and never copy its contents into committed files.
 
 ## Core rules
@@ -68,7 +68,7 @@ Schema changes ship as idempotent SQL in `prisma/manual/<ticket>.sql` plus the m
 ## Conventions
 
 - Path alias `@/*` → `src/*`. Prettier: single quotes, semicolons, 100 print width; Tailwind classes and imports are sorted by plugins — don't hand-order them.
-- Forms: Zod schemas in `src/lib/schemas.ts`, with `react-hook-form` + `@hookform/resolvers`.
+- Forms: Zod 4 schemas in `src/lib/schemas.ts`, with `react-hook-form` + `@hookform/resolvers` 5 (`useForm<Input, unknown, Output>`). An edit schema is `partialEdit(schema)`, never `.partial()`: zod 4 fills defaults inside optional fields.
 - Theme tokens, no `dark:` variants: `bg-canvas` pages, `bg-surface` (not `bg-white`) cards/bars/drawers/inputs, `border-line` hairlines, `bg-brand-solid` maroon fills with white text; `data-theme="light"` keeps a subtree light. Detail: `docs/conventions.md`.
 
 ## Documentation & Planning Workflow

@@ -9,6 +9,17 @@ What changed, newest first, grouped by ticket. Built from the git history up to 
 
 **Related:** [[00-index]] · [[conventions]]
 
+## DRRM-051 Follow-ups after the security batch: 2026-11-25 (branch `fix/DRRM-051-post-hardening-follow-ups`)
+
+Plan: [[plan/fix/DRRM-051-post-hardening-follow-ups]] · [[bystander-reports]] · [[settings-lookups]] · [[database]] · [[conventions]]
+
+- Zod 4.6.7 and @hookform/resolvers 5. A report with a huge list (the public bystander form takes 8 MB) is refused at its cap at once; zod 3 checked every entry first, which could use close to 1 GB of memory (GHSA-mrhx-c7xc-m3w5).
+- Renaming a turned-off Settings row, campus or headcount field leaves it off. With zod 4's defaults it would have come back on, so edits use `partialEdit`.
+- Ids are checked as loosely as before, and the forms keep their messages.
+- Needs `prisma/manual/DRRM-051-drop-covered-indexes.sql` (after DRRM-048's file): drops four single-column indexes that a wider index already covers, so report and bystander writes do a little less work.
+- CI runs the unit tests, on Node 22.
+- The plans index lists DRRM-029 to DRRM-050 as done.
+
 ## DRRM-050 Close out #101: mass assignment on user and report writes: 2026-11-23 (branch `fix/DRRM-050-mass-assignment-closeout`)
 
 Plan: [[plan/fix/DRRM-050-mass-assignment-closeout]] · [[users]] · [[field-reports]] · [[settings-lookups]] · GitHub #101
@@ -37,6 +48,7 @@ Plan: [[plan/fix/DRRM-048-db-concurrency-performance]] · [[database]] · [[asse
 - Checklist sections, questions and area types get distinct places when added at once, and re-numbering is one statement. Editing or reordering a checklist that a publish has just made read-only is refused instead of going through.
 - Each running copy of the app holds at most 5 database connections.
 - Covered by unit tests: the lookup-name retry, the newest-assessment rule and the reorder rule (`npm run test`).
+
 ## DRRM-047 Caller checks on the older actions: 2026-11-20 (branch `fix/DRRM-047-legacy-action-caller-checks`)
 
 Plan: [[plan/fix/DRRM-047-legacy-action-caller-checks]] · [[events]] · [[bystander-reports]] · [[campus-scoping]] · [[settings-lookups]] · [[dashboard]] · GitHub #102, #103
