@@ -155,9 +155,8 @@ model Report {
   unit                 Unit?                   @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   user                 User?                   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@index([event_id])
+  // (event_id) and (cluster_id) alone are covered by the composites below (DRRM-051).
   @@index([user_id])
-  @@index([cluster_id])
   @@index([event_id, submitted_at(sort: Desc)], map: "idx_reports_event_submitted")
   @@index([cluster_id, submitted_at(sort: Desc)], map: "idx_reports_cluster_submitted")
   @@index([event_id, user_id], map: "idx_reports_event_user")
@@ -308,8 +307,8 @@ model bystander_reports {
 
   @@index([incident_type_id])
   @@index([cluster_id, submitted_at(sort: Desc)], map: "idx_bystander_reports_cluster_submitted")
+  // Also serves status_id alone (DRRM-051).
   @@index([status_id, submitted_at(sort: Desc)], map: "idx_bystander_reports_status_submitted")
-  @@index([status_id])
 }
 
 /// Headcount on a bystander report — same shape as ReportPopulationCount. Has a count >= 0
@@ -384,8 +383,8 @@ model ReportPopulationCount {
   category    PopulationCategory @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   report      Report             @relation(fields: [report_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
+  // Also serves report_id alone (DRRM-051).
   @@unique([report_id, category_id])
-  @@index([report_id], map: "idx_report_pop_counts_report")
   @@map("report_population_counts")
 }
 
