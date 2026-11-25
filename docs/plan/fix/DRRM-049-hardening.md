@@ -1,7 +1,7 @@
 ---
 type: fix
 ticket: DRRM-049
-status: in-review
+status: done
 branch: fix/DRRM-049-hardening
 modules:
   - '[[auth]]'
@@ -14,7 +14,7 @@ tags: [plan, fix, security]
 
 # [DRRM-049] Fix Plan: Hardening: inactive accounts, rate limit, headers, dependencies
 
-- **Status:** `[In Review]`
+- **Status:** `[Done]`
 - **Related Bugs / Audits:** GitHub #104
 - **Target Branch / PR:** `fix/DRRM-049-hardening`
 - **Author:** Bryan Mangapit

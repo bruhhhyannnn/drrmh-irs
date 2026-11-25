@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-034
-status: in-review
+status: done
 branch: feat/DRRM-034-admin-report-photos
 modules:
   - '[[field-reports]]'
@@ -10,7 +10,7 @@ tags: [plan, feature]
 
 # [DRRM-034] Feature Plan: Photos in the admin Add / Edit report drawer
 
-- **Status:** `[In Review]`
+- **Status:** `[Done]`
 - **Target Branch / PR:** `feat/DRRM-034-admin-report-photos` → `dev`
 - **Owner / Author:** Bryan Mangapit
 

@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-033
-status: in-review
+status: done
 branch: feat/DRRM-033-page-header-menu
 modules:
   - '[[design-system]]'
@@ -11,7 +11,7 @@ tags: [plan, feature]
 
 # [DRRM-033] Feature Plan: PageHeader ⋯ menu (exports stay out, Edit and Delete go in)
 
-- **Status:** `[In Review]`
+- **Status:** `[Done]`
 - **Target Branch / PR:** `feat/DRRM-033-page-header-menu`
 - **Owner / Author:** Bryan Mangapit
 
