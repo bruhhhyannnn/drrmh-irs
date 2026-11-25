@@ -248,7 +248,7 @@ export async function reorderCampusPopulationCategories(
 ): Promise<{ ok: true } | ActionRefusal> {
   const caller = await requireAdmin(token);
   if (!caller.ok) return ADMIN_ONLY;
-  const ids = z.array(z.string().uuid()).min(1).max(MAX_FIELDS).safeParse(orderedIds);
+  const ids = z.array(z.string().guid()).min(1).max(MAX_FIELDS).safeParse(orderedIds);
   if (!ids.success || new Set(ids.data).size !== ids.data.length) return NOT_FOUND;
   const links = await prisma.campusPopulationCategory.findMany({
     where: { id: { in: ids.data } },

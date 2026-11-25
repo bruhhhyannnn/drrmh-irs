@@ -28,7 +28,7 @@ const refuse = (error: string): ActionRefusal => ({ ok: false, error, retry: fal
 
 /** At most this many campuses or events in one Add event or Complete event. */
 const MAX_BATCH = 50;
-const idList = z.array(z.string().uuid()).min(1).max(MAX_BATCH);
+const idList = z.array(z.string().guid()).min(1).max(MAX_BATCH);
 
 /** The events an admin may touch, by id; null when any is missing or outside their scope. */
 async function eventsInScope(

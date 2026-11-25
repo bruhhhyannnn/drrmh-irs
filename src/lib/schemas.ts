@@ -6,6 +6,26 @@ import {
   STRUCTURAL_ELEMENT_CODES,
 } from './structural-integrity';
 
+type WithoutDefault<T> = T extends z.ZodDefault<infer Inner> ? Inner : T;
+
+/**
+ * An edit's allowlist: every field optional, and no default filled in. Zod 4 applies a
+ * `.default()` even inside `.optional()`, so `.partial()` would turn an edit that leaves
+ * `is_active` out (a rename) into `is_active: true` and quietly turn a hidden row back on.
+ * The object's own setting (strict or not) is kept.
+ */
+export function partialEdit<Shape extends z.ZodRawShape, Config extends z.core.$ZodObjectConfig>(
+  schema: z.ZodObject<Shape, Config>
+) {
+  const shape = Object.fromEntries(
+    Object.entries(schema.shape).map(([key, field]) => [
+      key,
+      z.optional(field instanceof z.ZodDefault ? field.unwrap() : field),
+    ])
+  ) as { [K in keyof Shape]: z.ZodOptional<WithoutDefault<Shape[K]>> };
+  return schema.extend(shape);
+}
+
 /* ─── Auth ─── */
 export const signInSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -43,13 +63,13 @@ const userBaseSchema = z.object({
   last_name: z.string().min(1, 'Last name is required'),
   suffix: z.string().optional(),
   username: z.string().min(3, 'Username must be at least 3 characters'),
-  cluster_id: z.string().uuid().optional().nullable(),
-  unit_id: z.string().uuid().optional().nullable(),
-  position_id: z.string().uuid().optional().nullable(),
+  cluster_id: z.string().guid().optional().nullable(),
+  unit_id: z.string().guid().optional().nullable(),
+  position_id: z.string().guid().optional().nullable(),
   // "Other (please specify)": names the server adds to Settings when they're new.
   custom_unit_name: z.string().trim().max(120, 'Keep it under 120 characters').optional(),
   custom_position_name: z.string().trim().max(120, 'Keep it under 120 characters').optional(),
-  user_type_id: z.string().uuid('User type is required'),
+  user_type_id: z.string().guid('User type is required'),
   is_active: z.boolean().default(true),
   /** Checked by needsCampus: an off-campus account has none. */
   campus_id: z.string(),
@@ -63,9 +83,9 @@ const userBaseSchema = z.object({
 
 /** Every account but an off-campus one belongs to a campus. */
 const needsCampus = (data: { is_off_campus: boolean; campus_id: string }, ctx: z.RefinementCtx) => {
-  if (!data.is_off_campus && !z.string().uuid().safeParse(data.campus_id).success) {
+  if (!data.is_off_campus && !z.string().guid().safeParse(data.campus_id).success) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: 'custom',
       path: ['campus_id'],
       message: 'Campus is required',
     });
@@ -76,7 +96,7 @@ export const userCreateSchema = userBaseSchema.superRefine((data, ctx) => {
   needsCampus(data, ctx);
   if (data.password !== data.confirmPassword) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: 'custom',
       path: ['confirmPassword'],
       message: "Passwords don't match",
     });
@@ -105,9 +125,7 @@ export const offCampusProfileSchema = z.object({
     .min(1, "Enter your organization's address.")
     .max(400, 'Keep it under 400 characters'),
   position_title: required('position'),
-  consent: z.literal(true, {
-    errorMap: () => ({ message: 'Agree to the data privacy notice to continue.' }),
-  }),
+  consent: z.literal(true, { error: 'Agree to the data privacy notice to continue.' }),
 });
 
 /* ─── What the user actions accept on the server (#101) ─── */
@@ -115,7 +133,7 @@ export const offCampusProfileSchema = z.object({
 // allowlist: an unknown key (`user_type_id` in profile setup, `auth_id`, a relation such as
 // `reports`) is refused, and only these columns can reach Prisma.
 
-const idOrNone = z.string().uuid().nullish();
+const idOrNone = z.string().guid().nullish();
 const optionalText = (max: number) => z.string().trim().max(max).nullish();
 /** "Other (please specify)": a cluster, unit or position name the server adds when it's new. */
 const typedName = z.string().trim().max(120, 'Keep it under 120 characters').nullish();
@@ -123,7 +141,7 @@ const typedName = z.string().trim().max(120, 'Keep it under 120 characters').nul
 /** Profile setup's save (`completeUserProfile`): campus, cluster, unit and position only. */
 export const completeProfileSchema = z
   .object({
-    campus_id: z.string().uuid('Choose your campus.'),
+    campus_id: z.string().guid('Choose your campus.'),
     cluster_id: idOrNone,
     custom_cluster_name: typedName,
     unit_id: idOrNone,
@@ -152,7 +170,7 @@ const userWriteFields = {
   position_id: idOrNone,
   custom_unit_name: typedName,
   custom_position_name: typedName,
-  user_type_id: z.string().uuid('User type is required'),
+  user_type_id: z.string().guid('User type is required'),
   is_active: z.boolean().optional(),
   is_off_campus: z.boolean().optional(),
   address: optionalText(400),
@@ -167,7 +185,7 @@ export const userCreateInputSchema = z
   .strict();
 
 /** Users page → Edit user (`updateUser`): the same fields without the email or the password. */
-export const userUpdateInputSchema = z.object(userWriteFields).partial().strict();
+export const userUpdateInputSchema = partialEdit(z.object(userWriteFields)).strict();
 
 /* ─── Main Tables ─── */
 /** Add / Edit event. Add can tick several campuses: one event is created per campus. */
@@ -176,10 +194,10 @@ export const eventSchema = z
     name: z.string().trim().min(1, 'Enter an event name.'),
     description: z.string().optional(),
     quarter: z.string().optional(),
-    campus_ids: z.array(z.string().uuid()).min(1, 'Pick at least one campus.'),
+    campus_ids: z.array(z.string().guid()).min(1, 'Pick at least one campus.'),
     started_at: z.string().optional().nullable(),
     ended_at: z.string().optional().nullable(),
-    status_id: z.string().uuid('Pick a status.'),
+    status_id: z.string().guid('Pick a status.'),
   })
   .refine(
     (data) => {
@@ -218,7 +236,7 @@ export const eventWriteSchema = z
     quarter: z.string().max(50).nullish(),
     started_at: z.coerce.date().nullish(),
     ended_at: z.coerce.date().nullish(),
-    status_id: z.string().uuid('Pick a status.'),
+    status_id: z.string().guid('Pick a status.'),
   })
   .strict();
 export type EventWriteInput = z.input<typeof eventWriteSchema>;
@@ -231,7 +249,7 @@ export const missingPersonSchema = z.object({
 });
 
 export const casualtySchema = z.object({
-  condition_id: z.string().uuid('Condition is required'),
+  condition_id: z.string().guid('Condition is required'),
   name: z.string().trim().min(1, 'Name is required').max(200).transform(withoutControlChars),
   age: z.coerce.number().min(0).max(150).nullable(),
   sex: z.enum(['male', 'female', 'unknown']),
@@ -239,15 +257,15 @@ export const casualtySchema = z.object({
 });
 
 const populationCountEntrySchema = z.object({
-  category_id: z.string().uuid(),
+  category_id: z.string().guid(),
   code: z.string().max(100),
   count: z.coerce.number().int().min(0).max(1_000_000).default(0),
 });
 
 export const reportSchema = z.object({
-  event_id: z.string().uuid('Event is required'),
-  cluster_id: z.string().uuid('Cluster is required'),
-  unit_id: z.preprocess((v) => (v === '' ? null : v), z.string().uuid().optional().nullable()),
+  event_id: z.string().guid('Event is required'),
+  cluster_id: z.string().guid('Cluster is required'),
+  unit_id: z.preprocess((v) => (v === '' ? null : v), z.string().guid().optional().nullable()),
   /** "Other (please specify)": a unit not listed yet, added to the cluster when the report saves. */
   unit_name: typedText(120).optional().nullable(),
   latitude: z.number().min(-90).max(90).optional().nullable(),
@@ -256,7 +274,7 @@ export const reportSchema = z.object({
   population_counts: z.array(populationCountEntrySchema).max(REPORT_LIST_MAX).default([]),
   damage_condition_id: z.preprocess(
     (v) => (v === '' ? null : v),
-    z.string().uuid().optional().nullable()
+    z.string().guid().optional().nullable()
   ),
   report_missing_persons: z.array(missingPersonSchema).max(REPORT_LIST_MAX).default([]),
   report_casualties: z.array(casualtySchema).max(REPORT_LIST_MAX).default([]),
@@ -269,9 +287,10 @@ export const reportSchema = z.object({
  * fields, so nothing can point a row at another report.
  */
 export const reportCreateSchema = reportSchema.extend({
-  id: z.string().uuid().optional(),
-  user_id: z.string().uuid().optional().nullable(),
-  sent_at: z.number().finite().optional(),
+  id: z.string().guid().optional(),
+  user_id: z.string().guid().optional().nullable(),
+  // Zod 4 numbers are finite: Infinity and NaN are refused.
+  sent_at: z.number().optional(),
 });
 
 /* ─── Bystander report ─── */
@@ -294,6 +313,10 @@ export function toPhContactNumber(value: string): string | null {
 
 const emptyToNull = (value: unknown) => (value === '' ? null : value);
 
+/** A missing coordinate's message; anything else keeps zod's own. */
+const locationMissing = (issue: { input?: unknown }) =>
+  issue.input === undefined ? 'Please capture your location' : undefined;
+
 // Bystanders often can't know a name or an exact age, so both are optional here — unlike the
 // ERT schemas above. A blank name is shown as "Unknown person".
 export const bystanderMissingPersonSchema = z.object({
@@ -306,20 +329,20 @@ export const bystanderMissingPersonSchema = z.object({
 });
 
 export const bystanderCasualtySchema = bystanderMissingPersonSchema.extend({
-  condition_id: z.string().uuid('Pick a condition'),
+  condition_id: z.string().guid('Pick a condition'),
   diagnosis: typedText(500).optional().nullable(),
 });
 
 /** What `createBystanderReport` accepts — also the payload stored in the offline queue. */
 export const bystanderReportSchema = z.object({
-  incident_type_id: z.string().uuid('Please select an incident type'),
-  cluster_id: z.string().uuid('Please select a cluster'),
-  unit_id: z.preprocess(emptyToNull, z.string().uuid().nullable().optional()),
-  latitude: z.number({ required_error: 'Please capture your location' }).min(-90).max(90),
-  longitude: z.number({ required_error: 'Please capture your location' }).min(-180).max(180),
+  incident_type_id: z.string().guid('Please select an incident type'),
+  cluster_id: z.string().guid('Please select a cluster'),
+  unit_id: z.preprocess(emptyToNull, z.string().guid().nullable().optional()),
+  latitude: z.number({ error: locationMissing }).min(-90).max(90),
+  longitude: z.number({ error: locationMissing }).min(-180).max(180),
   description: typedText(2000).optional(),
   location_description: typedText(500).optional(),
-  damage_condition_id: z.preprocess(emptyToNull, z.string().uuid().nullable().optional()),
+  damage_condition_id: z.preprocess(emptyToNull, z.string().guid().nullable().optional()),
   contact_number: z.preprocess(
     (value) =>
       typeof value === 'string' && value.trim() ? (toPhContactNumber(value) ?? value) : null,
@@ -327,7 +350,7 @@ export const bystanderReportSchema = z.object({
   ),
   population_counts: z
     .array(
-      z.object({ category_id: z.string().uuid(), count: z.number().int().min(0).max(100_000) })
+      z.object({ category_id: z.string().guid(), count: z.number().int().min(0).max(100_000) })
     )
     .max(50)
     .default([]),
@@ -364,12 +387,12 @@ export const bystanderFormSchema = z.object({
 export const clusterSchema = z.object({
   name: z.string().trim().min(1, 'Enter a cluster name.'),
   is_active: z.boolean().default(true),
-  campus_id: z.string().uuid('Pick a campus.'),
+  campus_id: z.string().guid('Pick a campus.'),
 });
 
 export const unitSchema = z.object({
   name: z.string().trim().min(1, 'Enter a unit name.'),
-  cluster_id: z.string().uuid('Pick a cluster.'),
+  cluster_id: z.string().guid('Pick a cluster.'),
   is_active: z.boolean().default(true),
 });
 
@@ -380,9 +403,9 @@ export const buildingSchema = z.object({
     .trim()
     .min(1, 'Enter a building name.')
     .max(120, 'Keep it under 120 characters.'),
-  unit_id: z.string().uuid('Pick a unit.'),
+  unit_id: z.string().guid('Pick a unit.'),
   floor_count: z.coerce
-    .number({ invalid_type_error: 'Enter the number of floors.' })
+    .number({ error: 'Enter the number of floors.' })
     .int('Enter a whole number of floors.')
     .min(1, 'A building has at least 1 floor.')
     .max(200, 'Enter 200 floors or fewer.'),
@@ -423,6 +446,17 @@ export const settingsWriteSchemas = {
   campus: campusSchema.strict(),
 } as const;
 
+/** Each Settings table's Edit: the same allowlists, every field optional, no defaults. */
+export const settingsEditSchemas = {
+  clusters: partialEdit(settingsWriteSchemas.clusters),
+  units: partialEdit(settingsWriteSchemas.units),
+  buildings: partialEdit(settingsWriteSchemas.buildings),
+  positions: partialEdit(settingsWriteSchemas.positions),
+  casualty_conditions: partialEdit(settingsWriteSchemas.casualty_conditions),
+  damage_conditions: partialEdit(settingsWriteSchemas.damage_conditions),
+  campus: partialEdit(settingsWriteSchemas.campus),
+} as const;
+
 export const populationCategorySchema = z.object({
   code: z
     .string()
@@ -439,24 +473,23 @@ export const populationCategoryCreateSchema = populationCategorySchema
   .transform((d) => ({ ...d, name: withoutControlChars(d.name) }));
 
 /** The code is fixed once made: reports and the legacy headcount columns use it. */
-export const populationCategoryUpdateSchema = populationCategorySchema
-  .omit({ code: true })
-  .partial()
+export const populationCategoryUpdateSchema = partialEdit(
+  populationCategorySchema.omit({ code: true })
+)
   .strict()
   .transform((d) => (d.name === undefined ? d : { ...d, name: withoutControlChars(d.name) }));
 
 /** A campus's link to a field: its required, active and order columns only. */
-export const campusPopulationLinkUpdateSchema = z
-  .object({
+export const campusPopulationLinkUpdateSchema = partialEdit(
+  z.object({
     is_required: z.boolean(),
     is_active: z.boolean(),
     sort_order: z.number().int().min(0).max(1000),
   })
-  .partial()
-  .strict();
+).strict();
 
 /* ─── Building assessment ─── */
-const uuid = z.string().uuid();
+const uuid = z.string().guid();
 
 const assessmentAnswer = z.enum(['yes', 'no', 'na']);
 /** A grade on the structural tool's four-step scales (how bad, how widespread). */
@@ -540,7 +573,7 @@ export const assessmentDetailsSchema = z
   })
   .superRefine((d, ctx) => {
     const need = (field: keyof typeof d, message: string) => {
-      if (!d[field]) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [field], message });
+      if (!d[field]) ctx.addIssue({ code: 'custom', path: [field], message });
     };
     if (!d.location_kind) {
       need('location_kind', 'Choose on campus or off campus');
@@ -616,7 +649,7 @@ export const itemSchema = itemWordingSchema
     min_floors: z.preprocess(
       (v) => (v === '' || v === null || v === undefined ? null : v),
       z.coerce
-        .number({ invalid_type_error: 'Enter a whole number of floors.' })
+        .number({ error: 'Enter a whole number of floors.' })
         .int('Enter a whole number of floors.')
         .min(1, 'Minimum floors must be at least 1.')
         .max(200, 'Enter 200 floors or fewer.')
@@ -680,3 +713,13 @@ export type SectionFormData = z.infer<typeof sectionSchema>;
 export type ItemWordingFormData = z.infer<typeof itemWordingSchema>;
 export type ItemFormData = z.infer<typeof itemSchema>;
 export type AreaTypeFormData = z.infer<typeof areaTypeSchema>;
+
+// What a form holds before it is parsed: `useForm<Input, unknown, Output>` (resolvers 5). A field
+// with a default is optional here, and a pre-processed one is `unknown`.
+export type UserCreateFormInput = z.input<typeof userCreateSchema>;
+export type CampusFormInput = z.input<typeof campusSchema>;
+export type PopulationCategoryFormInput = z.input<typeof populationCategorySchema>;
+export type SectionWordingFormInput = z.input<typeof sectionWordingSchema>;
+export type SectionFormInput = z.input<typeof sectionSchema>;
+export type ItemWordingFormInput = z.input<typeof itemWordingSchema>;
+export type AreaTypeFormInput = z.input<typeof areaTypeSchema>;

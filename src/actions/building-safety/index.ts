@@ -40,7 +40,7 @@ import { z } from 'zod';
 // unit id from another campus finds nothing. The arithmetic is in src/lib/building-safety.ts.
 
 const uuidOrNull = (value: unknown) =>
-  z.string().uuid().safeParse(value).success ? (value as string) : null;
+  z.string().guid().safeParse(value).success ? (value as string) : null;
 
 /** One level of the drill-down: the pooled scores, its children, sections and most-failed items.
  * null when the caller isn't an admin or the cluster/unit isn't in their campus. */

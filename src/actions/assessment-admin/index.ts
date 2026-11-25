@@ -23,7 +23,7 @@ import { z } from 'zod';
 // access token and gets its campus from requireAdmin: an Administrator only ever sees their own
 // campus, whatever `campusId` says; a Super Admin sees the one asked for, or all (null).
 
-const isUuid = (value: unknown): value is string => z.string().uuid().safeParse(value).success;
+const isUuid = (value: unknown): value is string => z.string().guid().safeParse(value).success;
 
 /** How many submissions the Assessments tab loads; it filters and pages on the client. */
 const LIST_LIMIT = 1000;

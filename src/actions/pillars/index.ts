@@ -26,7 +26,7 @@ import { z } from 'zod';
 // off-campus buildings its ERT members assessed.
 
 const uuidOrNull = (value: unknown) =>
-  z.string().uuid().safeParse(value).success ? (value as string) : null;
+  z.string().guid().safeParse(value).success ? (value as string) : null;
 
 const NO_LOCATION = { regionCode: null, provinceCode: null, cityCode: null, barangayCode: null };
 

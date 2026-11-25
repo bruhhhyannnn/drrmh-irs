@@ -21,7 +21,12 @@ import {
   useUpdateCampusPopulationCategory,
   useUpdatePopulationCategory,
 } from '@/components/hooks/use-population-categories';
-import { cn, populationCategorySchema, type PopulationCategoryFormData } from '@/lib';
+import {
+  cn,
+  populationCategorySchema,
+  type PopulationCategoryFormData,
+  type PopulationCategoryFormInput,
+} from '@/lib';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { GripVertical, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
@@ -526,7 +531,7 @@ function FieldForm({
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<PopulationCategoryFormData>({
+  } = useForm<PopulationCategoryFormInput, unknown, PopulationCategoryFormData>({
     resolver: zodResolver(populationCategorySchema),
     defaultValues: {
       code: category.code,
@@ -579,7 +584,7 @@ function FieldForm({
                   id="field-active"
                   label="Active"
                   description="Turn off to hide it without deleting it."
-                  checked={field.value}
+                  checked={field.value ?? true}
                   onChange={field.onChange}
                 />
               )}

@@ -34,7 +34,7 @@ export const offCampusSetupSchema = z
   .superRefine((d, ctx) => {
     if (d.work_same_as_home) return;
     const need = (path: keyof typeof d, message: string) => {
-      if (!d[path]) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message });
+      if (!d[path]) ctx.addIssue({ code: 'custom', path: [path], message });
     };
     need('work_region_code', 'Choose a region.');
     need('work_city_code', 'Choose a city or municipality.');

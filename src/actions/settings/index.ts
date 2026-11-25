@@ -3,7 +3,7 @@
 import { toSettingsPath } from '@/lib';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
-import { settingsWriteSchemas, withoutControlChars } from '@/lib/schemas';
+import { settingsEditSchemas, settingsWriteSchemas, withoutControlChars } from '@/lib/schemas';
 import { requireAdmin } from '@/lib/server-auth';
 import {
   canWriteSetting,
@@ -37,8 +37,9 @@ const TITLE_MAP: Record<SettingsTable, string> = {
   buildings: 'Buildings',
 };
 
-/** What each table's Add / Edit may send (#103); see `settingsWriteSchemas` in `@/lib/schemas`. */
-const WRITE_SCHEMAS: Record<SettingsTable, z.AnyZodObject> = settingsWriteSchemas;
+/** What each table's Add and Edit may send (#103); see `settingsWriteSchemas` in `@/lib/schemas`. */
+const WRITE_SCHEMAS: Record<SettingsTable, z.ZodObject> = settingsWriteSchemas;
+const EDIT_SCHEMAS: Record<SettingsTable, z.ZodObject> = settingsEditSchemas;
 
 // What each table's rows carry besides their own columns: the parent shown in the table, and
 // counts of linked records for the Units column and the delete confirmation.
@@ -173,13 +174,13 @@ async function settingsWriter(
 
   let fields: Record<string, unknown> = {};
   if (data !== undefined) {
-    const schema = WRITE_SCHEMAS[table];
+    const schema = id === null ? WRITE_SCHEMAS[table] : EDIT_SCHEMAS[table];
     let input = data as Record<string, unknown>;
     // An Administrator's new cluster is on their own campus (the form has no Campus field).
     if (table === 'clusters' && id === null && caller.scope.role === 'administrator') {
       input = { ...input, campus_id: input?.campus_id ?? caller.scope.campusId };
     }
-    const parsed = (id === null ? schema : schema.partial()).safeParse(input);
+    const parsed = schema.safeParse(input);
     if (!parsed.success) {
       return refuse(parsed.error.issues[0]?.message ?? `Check the ${singularLabel(table)}.`);
     }
