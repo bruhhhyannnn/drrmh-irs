@@ -1,7 +1,7 @@
 ---
 type: fix
 ticket: DRRM-047
-status: in-review
+status: done
 branch: fix/DRRM-047-legacy-action-caller-checks
 modules:
   - '[[events]]'
@@ -15,7 +15,7 @@ tags: [plan, fix, security]
 
 # [DRRM-047] Fix Plan: Caller checks on the older actions
 
-- **Status:** `[In Review]`
+- **Status:** `[Done]`
 - **Related Bugs / Audits:** GitHub #102, #103
 - **Target Branch / PR:** `fix/DRRM-047-legacy-action-caller-checks`
 - **Author:** Bryan Mangapit

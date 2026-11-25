@@ -59,7 +59,7 @@ const lockSection = (tx: Prisma.TransactionClient, id: string) =>
 // Structural edits (adding, removing, reordering, gating, pillars) are allowed only on a `draft`
 // version, which is then published to replace the active one.
 
-const isUuid = (value: unknown): value is string => z.string().uuid().safeParse(value).success;
+const isUuid = (value: unknown): value is string => z.string().guid().safeParse(value).success;
 
 const fail = (error: string): TemplateActionResult => ({ ok: false, error });
 

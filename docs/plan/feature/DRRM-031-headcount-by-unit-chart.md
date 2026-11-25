@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-031
-status: in-review
+status: done
 branch: feat/DRRM-031-headcount-by-unit-chart
 modules:
   - '[[events]]'
@@ -10,7 +10,7 @@ tags: [plan, feature]
 
 # [DRRM-031] Feature Plan: Headcount by category chart on the event summary
 
-- **Status:** `[In Review]`
+- **Status:** `[Done]`
 - **Target Branch / PR:** `feat/DRRM-031-headcount-by-unit-chart`
 - **Owner / Author:** Bryan Mangapit
 

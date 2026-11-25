@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-030
-status: in-review
+status: done
 branch: feat/DRRM-030-event-report-timeline
 modules:
   - '[[events]]'
@@ -10,7 +10,7 @@ tags: [plan, feature]
 
 # [DRRM-030] Feature Plan: Timeline of reports on the event summary
 
-- **Status:** `[In Review]`
+- **Status:** `[Done]`
 - **Target Branch / PR:** `feat/DRRM-030-event-report-timeline`
 - **Owner / Author:** Bryan Mangapit
 

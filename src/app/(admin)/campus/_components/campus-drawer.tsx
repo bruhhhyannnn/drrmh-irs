@@ -7,7 +7,7 @@ import {
   useSetCampusLogo,
   useUpdateCampus,
 } from '@/components/hooks/use-campus';
-import { campusSchema, type CampusFormData } from '@/lib';
+import { campusSchema, type CampusFormData, type CampusFormInput } from '@/lib';
 import { ownCampusLogo } from '@/lib/campus-logo';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
@@ -107,7 +107,7 @@ function CampusForm({
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<CampusFormData>({
+  } = useForm<CampusFormInput, unknown, CampusFormData>({
     resolver: zodResolver(campusSchema),
     defaultValues: { name: campus?.name ?? '', is_active: campus?.is_active ?? true },
   });
@@ -148,7 +148,7 @@ function CampusForm({
                   id="campus-active"
                   label="Active"
                   description="Shows in the campus switcher and campus pickers."
-                  checked={field.value}
+                  checked={field.value ?? true}
                   onChange={field.onChange}
                 />
               )}

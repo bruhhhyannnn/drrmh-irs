@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-032
-status: in-review
+status: done
 branch: feat/DRRM-032-nsed-report-pgh-diliman
 modules:
   - '[[events]]'
@@ -10,7 +10,7 @@ tags: [plan, feature]
 
 # [DRRM-032] Feature Plan: NSED report for PGH and UP Diliman
 
-- **Status:** `[In Review]`
+- **Status:** `[Done]`
 - **Target Branch / PR:** `feat/DRRM-032-nsed-report-pgh-diliman`
 - **Owner / Author:** Bryan Mangapit
 

@@ -398,14 +398,14 @@ const reportEditSchema = reportSchema.omit({ event_id: true }).extend({
   report_casualties: z
     .array(
       casualtySchema.extend({
-        id: z.string().uuid().optional(),
+        id: z.string().guid().optional(),
         photo_paths: keepPhotoPaths,
       })
     )
     .default([]),
   // The casualties the form loaded and took off. Only these go, so one added since the form
   // opened stays.
-  removed_casualty_ids: z.array(z.string().uuid()).default([]),
+  removed_casualty_ids: z.array(z.string().guid()).default([]),
   damage_photo_paths: keepPhotoPaths,
 });
 export type ReportEditData = z.input<typeof reportEditSchema>;

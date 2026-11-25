@@ -1,7 +1,7 @@
 ---
 type: fix
 ticket: DRRM-048
-status: in-review
+status: done
 branch: fix/DRRM-048-db-concurrency-performance
 modules:
   - '[[database]]'
@@ -12,7 +12,7 @@ tags: [plan, fix, database]
 
 # [DRRM-048] Fix Plan: Database: RLS, indexes, races
 
-- **Status:** `[In Review]`
+- **Status:** `[Done]`
 - **Related Bugs / Audits:** GitHub #108 (items 1 to 3), #109
 - **Target Branch / PR:** `fix/DRRM-048-db-concurrency-performance`
 - **Author:** Bryan Mangapit

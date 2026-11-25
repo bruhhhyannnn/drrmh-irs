@@ -1,7 +1,7 @@
 ---
 type: module
 module: settings-lookups
-updated: 2026-11-23
+updated: 2026-11-25
 verified: true
 paths:
   - src/actions/settings/index.ts
@@ -57,7 +57,7 @@ Read this before adding or changing a lookup table or the Settings page.
 
 - `SettingsTable` type: `clusters`, `units`, `positions`, `casualty_conditions`, `campus`, `damage_conditions`, `buildings`. `MODEL_MAP` maps each to a Prisma model.
 - `getSettingsItems(token, table, filterId?)`: admins only; an Administrator gets only their own campus's clusters, units and buildings. All rows with `INCLUDE_MAP` extras (parent names, linked record `_count`s; units count `users`, `reports` and `buildings` since DRRM-040). `filterId` narrows clusters by campus or units by cluster.
-- `createSettingsItem(token, table, data)`, `updateSettingsItem(token, table, id, data)`, `deleteSettingsItem(token, table, id)`: `data` is parsed with the table's strict schema (`WRITE_SCHEMAS`; all optional on edit), so relation keys are refused, and names lose control characters (#111). Who may write is `canWriteSetting` (`src/lib/settings-access.ts`): a Super Admin anything; an Administrator clusters, units and buildings only when both the row as saved and the parent it is given are on their campus (an Administrator's new cluster defaults to their campus), and positions, casualty and damage conditions (`SHARED_SETTINGS_TABLES`, no campus to check). Campuses are Super Admin only (`GLOBAL_SETTINGS_TABLES`), and off-campus buildings are never edited here. The strict schemas are `settingsWriteSchemas` in `src/lib/schemas.ts`, so the tests can check them. Dynamic `prisma[model]` calls; they return `{ ok: true, item } | { ok: false, error }` (errors through `toFriendlyError`); revalidate `/settings` and the tab path from `toSettingsPath`.
+- `createSettingsItem(token, table, data)`, `updateSettingsItem(token, table, id, data)`, `deleteSettingsItem(token, table, id)`: `data` is parsed with the table's strict schema (`WRITE_SCHEMAS` on Add, `EDIT_SCHEMAS` on Edit: every field optional and no default, so a rename leaves Active as it is, DRRM-051), so relation keys are refused, and names lose control characters (#111). Who may write is `canWriteSetting` (`src/lib/settings-access.ts`): a Super Admin anything; an Administrator clusters, units and buildings only when both the row as saved and the parent it is given are on their campus (an Administrator's new cluster defaults to their campus), and positions, casualty and damage conditions (`SHARED_SETTINGS_TABLES`, no campus to check). Campuses are Super Admin only (`GLOBAL_SETTINGS_TABLES`), and off-campus buildings are never edited here. The strict schemas are `settingsWriteSchemas` and `settingsEditSchemas` (`partialEdit`) in `src/lib/schemas.ts`, so the tests can check them. Dynamic `prisma[model]` calls; they return `{ ok: true, item } | { ok: false, error }` (errors through `toFriendlyError`); revalidate `/settings` and the tab path from `toSettingsPath`.
 - Getters: `getUnits(clusterId?)`, `getUserTypes()`, `getPositions()`, `getEventStatuses()`, `getDamageConditions()`, `getClusters()`, `getCampus()`, `getCasualtyConditions()`.
 
 Population field actions are listed in [[field-reports]].

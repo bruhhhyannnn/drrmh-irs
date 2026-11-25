@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-029
-status: in-review
+status: done
 branch: feat/DRRM-029-nsed-breakdown-width
 modules:
   - '[[events]]'
@@ -10,7 +10,7 @@ tags: [plan, feature]
 
 # [DRRM-029] Feature Plan: NSED breakdown tables with horizontal headers
 
-- **Status:** `[In Review]`
+- **Status:** `[Done]`
 - **Target Branch / PR:** `feat/DRRM-029-nsed-breakdown-width`
 - **Owner / Author:** Bryan Mangapit
 

@@ -3,8 +3,10 @@ import { test } from 'node:test';
 import {
   campusPopulationLinkUpdateSchema,
   eventWriteSchema,
+  partialEdit,
   populationCategoryCreateSchema,
   populationCategoryUpdateSchema,
+  settingsEditSchemas,
   settingsWriteSchemas,
 } from './schemas';
 
@@ -61,6 +63,38 @@ test('a Settings write keeps its own columns', () => {
   assert.equal(position.success, true);
   const unit = settingsWriteSchemas.units.safeParse({ name: 'Ops', cluster_id: U });
   assert.equal(unit.success, true);
+});
+
+test('every Settings edit schema refuses relation keys', () => {
+  for (const [table, schema] of Object.entries(settingsEditSchemas)) {
+    for (const extra of relationKeys) {
+      const result = schema.safeParse({ name: 'x', ...extra });
+      assert.equal(result.success, false, `${table} accepted ${JSON.stringify(extra)}`);
+    }
+  }
+});
+
+// Zod 4 applies a default even inside .optional(), so .partial() of a schema with
+// `is_active: .default(true)` turned a rename into `is_active: true` (DRRM-051).
+test('an edit that leaves Active out does not turn the row back on', () => {
+  for (const [table, schema] of Object.entries(settingsEditSchemas)) {
+    const parsed = schema.parse({ name: 'Renamed' });
+    assert.equal('is_active' in parsed, false, `${table} filled in is_active`);
+  }
+  assert.equal('is_active' in populationCategoryUpdateSchema.parse({ name: 'Injured' }), false);
+  assert.equal(settingsEditSchemas.campus.parse({ is_active: false }).is_active, false);
+});
+
+test('Add still turns a new row on', () => {
+  assert.equal(settingsWriteSchemas.positions.parse({ name: 'Nurse' }).is_active, true);
+  assert.equal(settingsWriteSchemas.campus.parse({ name: 'UP Manila' }).is_active, true);
+});
+
+test('partialEdit makes every field optional and keeps strictness', () => {
+  const edit = partialEdit(settingsWriteSchemas.units);
+  assert.deepEqual(edit.parse({}), {});
+  assert.equal(edit.safeParse({ cluster_id: 'not-a-uuid' }).success, false);
+  assert.equal(edit.safeParse({ reports: { deleteMany: {} } }).success, false);
 });
 
 test('a new headcount field refuses relation keys and keeps its own columns', () => {

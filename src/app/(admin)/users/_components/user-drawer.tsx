@@ -13,7 +13,13 @@ import {
 import { useCampusClusters } from '@/components/hooks/use-campus';
 import { useCampus, usePositions, useUnits, useUserTypes } from '@/components/hooks/use-settings';
 import { useCreateUser, useUpdateUser, useUser } from '@/components/hooks/use-users';
-import { cn, userCreateSchema, userEditSchema, type UserCreateFormData } from '@/lib';
+import {
+  cn,
+  userCreateSchema,
+  userEditSchema,
+  type UserCreateFormData,
+  type UserCreateFormInput,
+} from '@/lib';
 import { useAuthStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, Minus } from 'lucide-react';
@@ -47,7 +53,7 @@ const TYPE_LABELS: Record<string, string> = {
   'Super Admin': 'Super Admin',
 };
 
-type FormValues = UserCreateFormData;
+type FormValues = UserCreateFormInput;
 
 /** Add user / Edit user, grouped into Name, Account, Assignment and Access. */
 export function UserDrawer({
@@ -137,7 +143,7 @@ function UserForm({
     getValues,
     setError,
     formState: { errors },
-  } = useForm<FormValues>({
+  } = useForm<FormValues, unknown, UserCreateFormData>({
     resolver: zodResolver(user ? (userEditSchema as never) : userCreateSchema),
     defaultValues: {
       first_name: user?.first_name ?? '',
@@ -677,7 +683,7 @@ function UserForm({
                     id="user-active"
                     label="Active"
                     description="Can be changed later from the Users list."
-                    checked={field.value}
+                    checked={field.value ?? true}
                     onChange={field.onChange}
                   />
                 )}

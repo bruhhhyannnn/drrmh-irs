@@ -5,7 +5,7 @@ import { campusLogoUrl } from '@/lib/campus-logo';
 import { logoProblem, removeCampusLogos, uploadCampusLogo } from '@/lib/campus-logo-storage';
 import { prisma } from '@/lib/prisma';
 import { toFriendlyError } from '@/lib/prisma-error';
-import { campusSchema } from '@/lib/schemas';
+import { campusSchema, partialEdit } from '@/lib/schemas';
 import { requireAdmin } from '@/lib/server-auth';
 import { isUuid, type ActionRefusal } from '@/lib/utils';
 import type { Prisma } from '@prisma/client';
@@ -21,6 +21,8 @@ const SUPER_ADMIN_ONLY: ActionRefusal = {
   retry: false,
 };
 const campusWrite = campusSchema.strict();
+/** Edit campus: no default, so a rename leaves Active as it is. */
+const campusEdit = partialEdit(campusWrite);
 
 async function superAdmin(token: string | null) {
   const caller = await requireAdmin(token);
@@ -221,7 +223,7 @@ export async function updateCampus(
 ): Promise<CampusResult> {
   if (!(await superAdmin(token))) return SUPER_ADMIN_ONLY;
   if (!isUuid(id)) return { ok: false, error: 'This campus no longer exists.', retry: false };
-  const parsed = campusWrite.partial().safeParse(data);
+  const parsed = campusEdit.safeParse(data);
   if (!parsed.success) {
     return {
       ok: false,

@@ -35,7 +35,7 @@ import { z } from 'zod';
 // profile. Expected failures come back as { ok: false, error, retry } because a thrown message is
 // hidden in production, and the offline queue needs `retry` to know whether to keep the entry.
 
-const isUuid = (value: unknown): value is string => z.string().uuid().safeParse(value).success;
+const isUuid = (value: unknown): value is string => z.string().guid().safeParse(value).success;
 
 const isUniqueViolation = (err: unknown) =>
   err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';

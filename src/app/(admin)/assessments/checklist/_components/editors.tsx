@@ -24,11 +24,15 @@ import {
   sectionSchema,
   sectionWordingSchema,
   type AreaTypeFormData,
+  type AreaTypeFormInput,
   type DraftVersionFormData,
   type ItemFormData,
   type ItemWordingFormData,
+  type ItemWordingFormInput,
   type SectionFormData,
+  type SectionFormInput,
   type SectionWordingFormData,
+  type SectionWordingFormInput,
 } from '@/lib/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
@@ -186,7 +190,7 @@ function SectionWordingEditor({
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<SectionWordingFormData>({
+  } = useForm<SectionWordingFormInput, unknown, SectionWordingFormData>({
     resolver: zodResolver(sectionWordingSchema),
     defaultValues: {
       title_en: section.title_en,
@@ -268,7 +272,7 @@ function SectionFullEditor({
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<SectionFormData>({
+  } = useForm<SectionFormInput, unknown, SectionFormData>({
     resolver: zodResolver(sectionSchema),
     defaultValues: {
       code: section?.code ?? '',
@@ -325,7 +329,7 @@ function SectionFullEditor({
             render={({ field }) => (
               <SelectField
                 id={`sec-area-${key}`}
-                value={field.value ?? ''}
+                value={typeof field.value === 'string' ? field.value : ''}
                 onChange={field.onChange}
                 options={areaOptions}
                 placeholder="Always asked (no area gate)"
@@ -426,7 +430,7 @@ function ItemWordingEditor({
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<ItemWordingFormData>({
+  } = useForm<ItemWordingFormInput, unknown, ItemWordingFormData>({
     resolver: zodResolver(itemWordingSchema),
     defaultValues: {
       prompt_en: item.prompt_en,
@@ -871,7 +875,7 @@ export function AreaTypeEditor({
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<AreaTypeFormData>({
+  } = useForm<AreaTypeFormInput, unknown, AreaTypeFormData>({
     resolver: zodResolver(areaTypeSchema),
     defaultValues: {
       code: area?.code ?? '',
@@ -952,7 +956,7 @@ export function AreaTypeEditor({
                 id={`area-active-${key}`}
                 label="Active"
                 description="Turn off to hide this area from new pre-screens without breaking past assessments."
-                checked={field.value}
+                checked={field.value ?? true}
                 onChange={field.onChange}
               />
             )}

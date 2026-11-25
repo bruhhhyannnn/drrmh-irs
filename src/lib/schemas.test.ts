@@ -3,6 +3,8 @@ import { test } from 'node:test';
 import {
   assessmentDetailsSchema,
   assessmentPayloadSchema,
+  buildingSchema,
+  bystanderReportSchema,
   completeProfileSchema,
   itemSchema,
   offCampusProfileSchema,
@@ -210,6 +212,11 @@ test('the off-campus profile needs every field and the consent', () => {
   assert.deepEqual(issues({ ...offCampusProfile, address: 'x'.repeat(401) }), ['address']);
 });
 
+test('the consent keeps its own message', () => {
+  const result = offCampusProfileSchema.safeParse({ ...offCampusProfile, consent: false });
+  assert.equal(result.error?.issues[0]?.message, 'Agree to the data privacy notice to continue.');
+});
+
 /* ─── Server-side allowlists (#101) ─── */
 
 test('profile setup accepts only the campus, cluster, unit and position', () => {
@@ -371,4 +378,54 @@ test('a report payload refuses an event or cluster that is not a uuid', () => {
       field
     );
   }
+});
+
+/* ─── Zod 4 (DRRM-051) ─── */
+
+const bystanderPayload = {
+  incident_type_id: U,
+  cluster_id: U,
+  latitude: 14.6,
+  longitude: 121,
+};
+
+test('an oversized list is refused at its cap, not checked entry by entry', () => {
+  // GHSA-mrhx-c7xc-m3w5: zod 3 checked every entry of a list past its cap first, so a few MB of
+  // `{}` made millions of issues and hundreds of MB of memory on the public bystander form.
+  const flood = Array.from({ length: 200_000 }, () => ({}));
+  const bystander = bystanderReportSchema.safeParse({
+    ...bystanderPayload,
+    report_casualties: flood,
+  });
+  assert.equal(bystander.success, false);
+  assert.ok(bystander.error.issues.length < 5, `${bystander.error.issues.length} issues`);
+  const report = reportCreateSchema.safeParse({ ...reportPayload, report_casualties: flood });
+  assert.equal(report.success, false);
+  assert.ok(report.error.issues.length < 5, `${report.error.issues.length} issues`);
+});
+
+test('ids keep the loose uuid check zod 3 had', () => {
+  // Zod 4's uuid() also checks the version and variant digits; guid() is zod 3's pattern.
+  const loose = '11111111-1111-1111-1111-111111111111';
+  assert.equal(reportCreateSchema.safeParse({ ...reportPayload, event_id: loose }).success, true);
+  assert.equal(
+    bystanderReportSchema.safeParse({ ...bystanderPayload, cluster_id: loose }).success,
+    true
+  );
+});
+
+test('a bystander report without a location keeps its message', () => {
+  const { latitude: _lat, ...withoutLocation } = bystanderPayload;
+  const result = bystanderReportSchema.safeParse(withoutLocation);
+  assert.equal(result.success, false);
+  assert.deepEqual(result.error.issues[0]?.path, ['latitude']);
+  assert.equal(result.error.issues[0]?.message, 'Please capture your location');
+  // A coordinate that is there but not a number keeps zod's own message.
+  const wrong = bystanderReportSchema.safeParse({ ...bystanderPayload, latitude: 'north' });
+  assert.notEqual(wrong.error?.issues[0]?.message, 'Please capture your location');
+});
+
+test('a floor count that is not a number keeps its message', () => {
+  const result = buildingSchema.safeParse({ name: 'Annex', unit_id: U, floor_count: 'two' });
+  assert.equal(result.error?.issues[0]?.message, 'Enter the number of floors.');
 });

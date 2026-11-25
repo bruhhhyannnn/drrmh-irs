@@ -1,7 +1,7 @@
 ---
 type: feature
 ticket: DRRM-044
-status: in-progress
+status: done
 branch: feat/DRRM-044-structural-integrity
 modules:
   - '[[assessments]]'
@@ -13,7 +13,7 @@ tags: [plan, feature]
 
 # [DRRM-044] Feature Plan: Structural integrity in the building assessment
 
-- **Status:** `[In Progress]`
+- **Status:** `[Done]`
 - **Target Branch / PR:** `feat/DRRM-044-structural-integrity`
 - **Owner / Author:** DevJom
 
